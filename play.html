@@ -59,6 +59,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   box-shadow:inset 0 -6px 0 rgba(0,0,0,.25);overflow-wrap:anywhere;text-align:center}
 .tile:active{transform:scale(.97)}
 .tile svg{width:2.4em;height:2.4em}
+/* after tapping: gold frame on your pick, the others fade */
+.tile.sel{box-shadow:0 0 0 6px var(--gold),0 0 28px rgba(232,176,75,.75),inset 0 -6px 0 rgba(0,0,0,.25);position:relative;animation:pick .35s cubic-bezier(.2,1.5,.4,1)}
+.tile.sel::after{content:"✓";position:absolute;top:8px;right:10px;width:1.5em;height:1.5em;border-radius:50%;background:var(--gold);color:#2a1c05;display:grid;place-items:center;font-size:.9em}
+.tile.dim{opacity:.25}
+.tile:disabled{cursor:default}
+.locked-in{text-align:center;font-family:var(--display);color:var(--gold);font-size:clamp(1.5rem,7vw,2rem);text-shadow:0 3px 0 var(--red-d)}
+@keyframes pick{from{transform:scale(.92)}to{transform:none}}
 .k0{background:var(--a1)}.k1{background:var(--a2)}.k2{background:var(--a3)}.k3{background:var(--a4)}
 
 /* typed answer */
@@ -177,6 +184,9 @@ function view(){
 
   if(g.phase==="question"){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
+    if(mine&&g.mode==="choice"&&g.choices.includes(mine))return [key+"done:"+mine,header()+`<div class="locked-in">🔒 Locked in!</div>
+      <div class="tiles">${g.choices.map((n,k)=>`<button class="tile k${k} ${n===mine?"sel":"dim"}" disabled aria-pressed="${n===mine}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>
+      <p class="muted" style="text-align:center;margin:0">Eyes on the TV for the reveal.</p>`];
     if(mine)return [key+"done:"+mine,header()+msg("🔒","Locked in!",`<p class="said">You said <b>${esc(mine)}</b></p><p>Eyes on the TV for the reveal.</p>`)];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>No answer this time. Get the next one!</p>")];
     if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>

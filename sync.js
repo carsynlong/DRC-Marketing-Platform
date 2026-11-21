@@ -11,7 +11,7 @@ const Sync = (() => {
   let answers = {};       // phone answers for the current face: name -> answer
   let answersQi = -1;     // which face `answers` belongs to
   let counted = null;     // names whose phone answer was already applied at the reveal
-  let lastPushed = "", pushing = false, polling = false, lastPoll = 0, lastSave = 0, pollKey = "";
+  let lastPushed = "", pushing = false, polling = false, lastPoll = 0, lastSave = 0, pollKey = "", firstPoll = true;
 
   const post = body => fetch("/api/host", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const hasPhone = n => phones.includes(n);
@@ -51,8 +51,12 @@ const Sync = (() => {
     const qi = S.phase === "lobby" ? null : S.qi;
     try {
       const d = await (await fetch(`/api/host${qi == null ? "" : `?qi=${qi}`}`, { cache: "no-store" })).json();
-      const before = phones.join("|");
+      const before = phones.join("|"), had = phones;
       phones = d.players.sort();
+      // Someone who just picked their name on a phone wants to play: switch them on.
+      // (The host can still tap them to sit out. Skipped on the TV's first look after loading.)
+      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
+      firstPoll = false;
       if (d.qi != null && d.qi === S.qi) { answers = d.answers; answersQi = d.qi; }
       if (S.phase === "lobby" && before !== phones.join("|")) render();
       if (S.phase === "question") showCount();

@@ -156,7 +156,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
-const DOUBLE=new Set([11,25]); // last face of each round: sponsor gift
+const DOUBLE=new Set([11,26]); // last face of each round: sponsor gift
 const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
 const Q=[
  {q:"s01",r:"s02",a:"Dash"},{q:"s03",r:"s04",a:"Kyle"},{q:"s05",r:"s06",a:"Grandad"},{q:"s07",r:"s08",a:"Jessie"},
@@ -174,9 +174,10 @@ const Q=[
  {q:"s47",r:"s48",a:"Natalie"},
  {q:"s49",r:"s50",a:"Tinsley"},
  {q:"s51",r:"s52",a:"Jessie"},
+ {q:"s53",r:"s54",a:"Dash"},
 ];
 const ROUNDS=[{at:0,num:"Round 1",name:"The Reaping",sub:"12 faces. Some of these go way back."},
-              {at:12,num:"Round 2",name:"The Quarter Quell",sub:"14 faces. Fewer chances, same glory."}];
+              {at:12,num:"Round 2",name:"The Quarter Quell",sub:"15 faces. Fewer chances, same glory."}];
 const SHAPES=[
  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z" fill="#fff"/></svg>',
  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 12 12 22 2 12z" fill="#fff"/></svg>',

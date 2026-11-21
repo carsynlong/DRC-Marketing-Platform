@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1f18">
+<title>Who's That Tribute? · Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<style>
+/* The phone is a controller: no photos, no sound. Watch the TV. */
+:root{
+  --night:#0d1f18; --night-2:#16302a; --ink:#fbf6ea; --muted:#bccabd;
+  --gold:#e8b04b; --gold-d:#9a6c1c; --red:#b8322a; --red-d:#6e1712;
+  --a1:#c8412f; --a2:#2f6fb3; --a3:#d79a1f; --a4:#3e8a52; --good:#6fd38a; --bad:#ff8a7a;
+  --line:rgba(251,246,234,.16);
+  --display:"Rye","Georgia",serif; --body:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--body);font-size:18px;overflow-x:hidden;
+  background-image:radial-gradient(ellipse at 50% -20%,rgba(184,50,42,.45),transparent 55%),radial-gradient(ellipse at 50% 120%,rgba(232,176,75,.16),transparent 60%);
+  min-height:100dvh;-webkit-user-select:none;user-select:none}
+.app{min-height:100dvh;display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto;
+  padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.1;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;font-size:.75rem;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+
+/* top strip: who I am + score */
+.me{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--night-2);border-radius:14px;padding:10px 14px;box-shadow:0 0 0 1px var(--line)}
+.me .nm{font-weight:800;font-size:1.15rem;overflow-wrap:anywhere}
+.me .pts{font-weight:800;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.me .pts small{display:block;color:var(--muted);font-weight:600;font-size:.75rem}
+
+/* big centered message screens */
+.msg{flex:1;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:10px 0}
+.msg .icon{font-size:4.5rem;line-height:1}
+.msg h1{font-size:clamp(1.9rem,9vw,2.6rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d)}
+.msg p{margin:0;max-width:30ch;line-height:1.45;color:var(--muted)}
+.msg .said{font-size:1.2rem;color:var(--ink)}
+.big{font-family:var(--display);font-size:clamp(3rem,16vw,4.5rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)}
+.gift{display:inline-block;background:linear-gradient(90deg,var(--red),#e0453a);color:#fff;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:.8rem;padding:.45em 1em;border-radius:999px;box-shadow:0 0 0 3px var(--gold)}
+.right h1{color:var(--good)} .wrong h1{color:var(--bad)}
+
+/* name picker */
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick button{min-height:64px;border-radius:14px;background:var(--night-2);box-shadow:0 0 0 2px var(--line);font-weight:800;font-size:1.1rem;padding:8px;overflow-wrap:anywhere}
+.pick button:active{background:var(--gold);color:#2a1c05}
+.pick button:disabled{opacity:.35;cursor:not-allowed}
+.pick button small{display:block;font-weight:600;font-size:.75rem;color:var(--muted)}
+
+/* the four colored answer buttons, same order, colors and shapes as the TV */
+.tiles{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:10px;min-height:min(62dvh,520px)}
+.tile{border-radius:16px;color:#fff;font-weight:800;font-size:clamp(1.15rem,5.6vw,1.6rem);display:grid;place-content:center;justify-items:center;gap:10px;padding:10px;
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.25);overflow-wrap:anywhere;text-align:center}
+.tile:active{transform:scale(.97)}
+.tile svg{width:2.4em;height:2.4em}
+.k0{background:var(--a1)}.k1{background:var(--a2)}.k2{background:var(--a3)}.k3{background:var(--a4)}
+
+/* typed answer */
+.typeit{display:grid;gap:12px;margin-top:auto;margin-bottom:auto}
+.typeit input{font:inherit;font-size:1.5rem;font-weight:800;background:rgba(0,0,0,.3);color:var(--ink);border:3px solid var(--line);border-radius:14px;padding:.6em .7em;width:100%;-webkit-user-select:text;user-select:text}
+.typeit input:focus{outline:none;border-color:var(--gold)}
+.btn{background:var(--gold);color:#2a1c05;font-weight:800;padding:.9em 1.4em;border-radius:999px;font-size:1.2rem;box-shadow:0 4px 0 var(--gold-d);min-height:60px}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--gold-d)}
+.btn:disabled{opacity:.4}
+.link{color:var(--muted);text-decoration:underline;font-size:.9rem;padding:8px}
+
+.toast{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));background:var(--red);color:#fff;font-weight:800;border-radius:14px;padding:14px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.4);z-index:5}
+.offline{text-align:center;font-size:.85rem;font-weight:800;color:#2a1c05;background:var(--gold);border-radius:999px;padding:.35em 1em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="app" id="app" aria-live="polite"></main>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const SHAPES=[
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z" fill="#fff"/></svg>',
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 12 12 22 2 12z" fill="#fff"/></svg>',
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff"/></svg>',
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="#fff"/></svg>'];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+
+// This phone's random id, kept so a reload gets the same name back.
+let pid=store.get("tribute-pid");
+if(!pid){pid=(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36));store.set("tribute-pid",pid)}
+let myName=store.get("tribute-name");
+
+let D={game:undefined,me:null,taken:[],myAnswer:null}; // last server reply
+let pending=null;   // {gid,qi,answer} sent but not yet confirmed by a poll
+let offline=0, timer=0, lastKey="";
+
+async function poll(){
+  clearTimeout(timer);
+  if(document.hidden)return;               // resumes on visibilitychange
+  try{
+    const r=await fetch(`/api/state?pid=${encodeURIComponent(pid)}&name=${encodeURIComponent(myName||"")}`,{cache:"no-store"});
+    if(!r.ok)throw new Error(r.status);
+    D=await r.json(); offline=0;
+    if(D.me!==myName){myName=D.me;store.set("tribute-name",myName)}
+    if(pending&&D.game&&(pending.gid!==D.game.gid||pending.qi!==D.game.qi||D.myAnswer))pending=null;
+  }catch(e){offline++}
+  render();
+  timer=setTimeout(poll,1500);
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
+
+async function post(path,body){
+  const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pid,...body})});
+  return {status:r.status,data:await r.json().catch(()=>({}))};
+}
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3200)}
+
+async function join(name){
+  try{
+    const {status,data}=await post("/api/join",{name});
+    if(status===200){myName=data.me;store.set("tribute-name",myName)}
+    else if(status===409)toast(`Someone already picked ${name}. If that's really you, ask the host.`);
+    else toast("Couldn't pick that name. Try again.");
+  }catch(e){toast("No connection. Try again.")}
+  poll();
+}
+async function leave(){
+  try{await post("/api/join",{leave:true})}catch(e){}
+  myName=null;store.set("tribute-name",null);poll();
+}
+async function answer(text){
+  const g=D.game;text=String(text||"").trim();
+  if(!text||!g)return;
+  pending={gid:g.gid,qi:g.qi,answer:text};render();
+  try{
+    const {status,data}=await post("/api/answer",{name:myName,qi:g.qi,answer:text});
+    if(status===200)pending.answer=data.answer;
+    else{pending=null;toast(status===409?"Too late! Answers are locked.":"That didn't go through. Try again.")}
+  }catch(e){pending=null;toast("No connection. Tap again.")}
+  render();
+}
+
+/* ---------- screens ---------- */
+const meScore=()=>D.game?.scores?.find(s=>s.name===D.me);
+const fmt=n=>Number(n||0).toLocaleString();
+function header(){
+  const s=meScore();
+  return `<div class="me"><div><div class="eyebrow">Playing as</div><div class="nm">${esc(D.me)}</div></div>
+    <div class="pts">${s?`${fmt(s.score)} pts<small>#${s.rank} of ${D.game.scores.length}</small>`:""}</div></div>`;
+}
+const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
+
+function view(){
+  const g=D.game;
+  if(g===undefined)return ["load",msg("🎄","Loading…")];
+  if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>Ask the host to open the game on the TV, then this page will update.</p>")];
+  if(!D.me){
+    const taken=new Set(D.taken||[]);
+    return ["pick:"+[...taken].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Tap your name.</p></section>
+      <div class="pick">${g.names.map(n=>`<button data-name="${esc(n)}" ${taken.has(n)?"disabled":""}>${esc(n)}${taken.has(n)?"<small>taken</small>":""}</button>`).join("")}</div>`];
+  }
+  const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
+  const notYou=`<div style="text-align:center"><button class="link" id="leave">Not ${esc(D.me)}? Pick a different name</button></div>`;
+  if(g.phase==="lobby")return [key+playing, header()+(playing
+    ?msg("🎄","You're in!","<p>Eyes on the TV. The Games begin soon.</p>")
+    :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+notYou];
+  if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")];
+
+  const gift=g.double?`<span class="gift">🎁 Double points</span>`:"";
+  const faceNo=`<div class="eyebrow">Face ${g.qi+1} of ${g.total}</div>`;
+  if(g.phase==="roundcard")return [key,header()+msg("🏹",g.qi===0?"Round 1":"Round 2","<p>Eyes on the TV.</p>")];
+  if(g.phase==="ready")return [key,header()+msg("",`Get ready!`,`${faceNo}${gift}<p>Watch the TV. Your buttons appear here.</p>`)];
+
+  if(g.phase==="question"){
+    const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
+    if(mine)return [key+"done:"+mine,header()+msg("🔒","Locked in!",`<p class="said">You said <b>${esc(mine)}</b></p><p>Eyes on the TV for the reveal.</p>`)];
+    if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>No answer this time. Get the next one!</p>")];
+    if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
+      <div class="tiles">${g.choices.map((n,k)=>`<button class="tile k${k}" data-ans="${esc(n)}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>`];
+    return [key+"type",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
+      <form class="typeit" id="typeit"><label class="eyebrow" for="guess">Who is it?</label>
+      <input id="guess" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
+      <button class="btn" type="submit">Lock it in</button></form>`];
+  }
+  if(g.phase==="reveal"){
+    const mine=D.myAnswer, said=mine?`<p class="said">You said <b>${esc(mine)}</b></p>`:`<p class="said">You didn't answer</p>`;
+    if(g.answer===D.me)return [key+"own",header()+msg("😄","It's your face!",`<p>It was you, ${esc(D.me)}! No points for your own face.</p>`)];
+    const right=(g.correct||[]).includes(D.me);
+    return [key+right+mine,header()+(right
+      ?msg("✅","Right!",`<p class="said">It's ${esc(g.answer)}!</p>`,"right")
+      :msg("❌","Not this time",`<p class="said">It's ${esc(g.answer)}.</p>${said}`,"wrong"))];
+  }
+  if(g.phase==="board"){
+    const got=s&&s.delta>0;
+    return [key+(s?.score),header()+msg(got?"🎉":"🏹",got?`+${fmt(s.delta)}`:"No points",
+      `${s?.streak>1?`<p class="said">🔥 ${s.streak} in a row</p>`:""}<p>You're <b>#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")];
+  }
+  if(g.phase==="final"){
+    const won=s&&s.rank===1&&s.score>0;
+    return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You won!":`You finished #${s?.rank}`,
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>`)];
+  }
+  return [key,header()+msg("📺","Watch the TV")];
+}
+
+function render(){
+  const [k,html]=view();
+  const key=k+(offline>2?"off":"");
+  if(key===lastKey)return;   // nothing changed: leave the screen alone (keeps your typing)
+  lastKey=key;
+  $("#app").innerHTML=(offline>2?`<div class="offline">Reconnecting…</div>`:"")+html;
+  document.querySelectorAll("[data-name]").forEach(b=>b.onclick=()=>join(b.dataset.name));
+  document.querySelectorAll("[data-ans]").forEach(b=>b.onclick=()=>answer(b.dataset.ans));
+  const f=$("#typeit");if(f)f.onsubmit=e=>{e.preventDefault();const i=$("#guess");i.blur();answer(i.value)};
+  const l=$("#leave");if(l)l.onclick=leave;
+}
+poll();
+</script>
+</body>
+</html>

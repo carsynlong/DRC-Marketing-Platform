@@ -132,6 +132,13 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .quip{font-family:var(--display);color:var(--ink);font-size:clamp(1rem,2.4vw,1.4rem);text-align:center;opacity:.9}
 .ctl{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
 .ctl .hint{margin-right:auto}
+.join{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--night-2);border-radius:16px;padding:14px 20px;box-shadow:0 0 0 2px var(--gold);text-align:left}
+.join .qr{width:150px;height:150px;background:#fff;border-radius:10px;padding:6px;box-sizing:border-box;flex:none}.join .qr svg{width:100%;height:100%;display:block}
+.join-t{display:grid;gap:6px}.join-url{font-family:var(--display);color:var(--gold);font-size:clamp(1.2rem,3.2vw,2rem);overflow-wrap:anywhere}
+.linkbtn{color:var(--gold);text-decoration:underline;font-size:inherit;padding:0}
+.phoneprompt .count{font-family:var(--body);font-weight:800;color:var(--gold);font-size:.75em;margin-left:.7em}
+.answers+.phoneprompt{padding:.3em 1em;font-size:clamp(1.1rem,2.6vw,1.7rem)}
+.stage:has(~.answers){max-height:42vh}
 @media (max-width:620px){.answers{grid-template-columns:1fr}.stage{aspect-ratio:4/3}.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -143,6 +150,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 <div class="app" id="app"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 
+<script src="qrcode.js"></script>
+<script src="sync.js"></script>
 <script>
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
@@ -315,6 +324,7 @@ const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 /* ================= GAME ================= */
 function newGame(){
+  Sync.reset();
   S.rounds=Q.map((x,qi)=>{const others=shuffle(NAMES.filter(n=>n!==x.a)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
   S.qi=0; roundCardOrQuestion();
@@ -328,7 +338,7 @@ let readyT=0;
 function beginQuestion(){S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
 function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};playSong("count");render();
-  if(S.mode==="type")document.querySelector(".typed input:not(:disabled)")?.focus();}
+  if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const giftTag=()=>DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
 const ALIASES={"Jonny":["jonny","johnny","jony","jon","jt","jtjt"],"QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana"],
@@ -367,6 +377,7 @@ function drawTimer(){
 }
 function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
 function reveal(){
+  Sync.fillAnswers();
   if(S.mode==="type")S.correct=active().filter(p=>p.name!==cur().a&&matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
@@ -402,11 +413,12 @@ function lobbyView(){
     ${EMBLEM}
     <div class="eyebrow">The 2026 Christmas Games · Game 2</div>
     <h1>Who's That Tribute?</h1>
-    <p>A tribute's face appears way too close for comfort. ${S.mode==="type"?"Pass the laptop around (or shout it to your host) and type your guess in your box before the cannon fires. The game checks spelling for you, and nicknames count.":"Type your guess on your own phone before the cannon fires, then everyone flips their phone around at the reveal. Your host taps everyone who got it right. Spelling doesn't count, but the name has to be right."} Each right answer is worth 1,000 points, plus 100 for every answer in a row. No points for guessing your own face.</p>
+    <p>A tribute's face appears way too close for comfort. ${S.mode==="type"?"Type your guess on your phone before the cannon fires (no phone? type it in your box on the laptop). The game checks spelling for you, and nicknames count.":"Tap the right name on your phone before the cannon fires. No phone? Shout your answer to the host, who taps you in at the reveal."} Each right answer is worth 1,000 points, plus 100 for every answer in a row. No points for guessing your own face.</p>
+    ${Sync.joinCard()}
     <div class="eyebrow">Who's playing? Tap to sit someone out</div>
-    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}</button>`).join("")}</div>
+    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
     <div class="settings"><span class="tiny">How to answer</span>
-      <div class="seg" role="group" aria-label="How to answer"><button data-mode="choice" aria-pressed="${S.mode!=="type"}">📱 On their phones</button> <button data-mode="type" aria-pressed="${S.mode==="type"}">⌨️ Typed on the laptop</button></div></div>
+      <div class="seg" role="group" aria-label="How to answer"><button data-mode="choice" aria-pressed="${S.mode!=="type"}">🔺 Tap 1 of 4 names</button> <button data-mode="type" aria-pressed="${S.mode==="type"}">⌨️ Type the name</button></div></div>
     <div class="settings"><span class="tiny">Seconds per face</span>
       <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
       ${sndBtn()}</div>
@@ -428,16 +440,16 @@ function questionView(){
   const rn=S.qi>=ROUNDS[1].at?ROUNDS[1]:ROUNDS[0];
   const ans=r.choices.map((n,k)=>{const right=n===x.a;
     return `<div class="ans k${k} ${rev?(right?"right":"dim"):""}">${SHAPES[k]}<span>${esc(n)}</span>${rev&&right?'<span class="ck" aria-label="Correct">✓</span>':""}</div>`}).join("");
-  const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Tap everyone who said ${esc(x.a)}</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
+  const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Phones filled in. Tap anyone who said ${esc(x.a)} out loud</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
     <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=p.name===x.a;
-      return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own face\"":""}>${esc(p.name)}${own?' <span class="d">their face</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
+      return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own face\"":""}>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}${own?' <span class="d">their face</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
   const img=rev?src(x.r):src(x.q);
   return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">Face ${S.qi+1} of ${S.rounds.length}</div></div>${giftTag()}
     ${rev?sndBtn():`<div class="timer" aria-label="Seconds left"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="6"/><circle class="arc" cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="176 176"/></svg><div class="n">${S.secs}</div></div>`}</div>
   <div class="stage"><div class="blur" style="background-image:url('${img}')"></div>
     <img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(x.a):"Mystery tribute, zoomed in"}">
-    ${rev?`<div class="tag"><small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked" style="font-size:clamp(1rem,2.4vw,1.6rem)">💥 Time! 📱 PHONES UP!</div>'):""}</div>
-  ${S.mode==="type"?typedView(x,rev):(rev?scoring:`<div class="phoneprompt">${S.locked?"📱 Phones up! Show the host your answer.":"📱 Type your guess on your phone. No peeking at your neighbor!"}</div>`)}
+    ${rev?`<div class="tag"><small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
+  ${S.mode==="type"?typedView(x,rev):`<div class="answers">${ans}</div>${rev?scoring:`<div class="phoneprompt">${S.locked?"💥 Answers locked":"📱 Answer on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>`}`}
   <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":"Space: lock answers"}</span>
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
 }
@@ -445,10 +457,10 @@ function typedView(x,rev){
   const boxes=active().map(p=>{const own=p.name===x.a,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
     const cls=rev?(own?"own":ok?"ok":"no"):"";
     return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
-      ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:""}
-      <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":"Who is it?"}" autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
+      ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
+      <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
   return `${rev?`<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>`:
-    `<div class="eyebrow">${S.locked?"Answers locked":"Type your guess. Enter jumps to the next box."}</div>`}
+    `<div class="bar"><div class="eyebrow">${S.locked?"Answers locked":"Answer on your phone, or type in your box. Enter jumps to the next box."}</div><div class="tiny" id="answered">${Sync.countText()}</div></div>`}
   <div class="typed">${boxes}</div>`;
 }
 function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
@@ -521,7 +533,7 @@ document.addEventListener("keydown",e=>{
   e.preventDefault();primary();
 });
 window.claude?.hot?.snapshot?.(()=>S);
-window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? Sync.saved());
 </script>
 
 </body></html>

@@ -1,14 +1,14 @@
 // A phone claims a name, or lets go of it ("Not you?").
 // POST /api/join { pid, name }      -> { me } or 409 if someone else has it
 // POST /api/join { pid, leave: true }
-import { redis, readGame, reply, text } from "../lib/redis.js";
+import { redis, hash, readGame, reply, text } from "../lib/redis.js";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const pid = text(req.body?.pid, 64);
   if (!pid) return reply(res, 400, { error: "Missing phone id" });
 
-  const all = (await redis.hgetall("players")) || {};
+  const all = await hash("players");
   const mine = Object.keys(all).filter(n => all[n] === pid);
 
   if (req.body.leave) {

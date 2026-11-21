@@ -1,7 +1,7 @@
 // Phones poll this about every 1.5 seconds.
 // GET /api/state?pid=<phone id>&name=<name this phone thinks it has>
 // -> { game, me, taken, myAnswer }
-import { redis, readGame, reply, text } from "../lib/redis.js";
+import { redis, hash, readGame, reply, text } from "../lib/redis.js";
 
 export default async function handler(req, res) {
   const pid = text(req.query.pid, 64);
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (pid && name && (await redis.hget("players", name)) === pid) me = name;
   if (!me) {
     // Name picker (or a phone that forgot its name): send the taken names, never the phone ids.
-    const all = (await redis.hgetall("players")) || {};
+    const all = await hash("players");
     taken = Object.keys(all);
     me = taken.find(n => all[n] === pid) || null;
   }

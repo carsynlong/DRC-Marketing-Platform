@@ -3,13 +3,13 @@
 // POST /api/host { action: "publish", game }    write what phones see
 // POST /api/host { action: "reset", total }     new game: wipe every face's answers
 // POST /api/host { action: "clearPlayers" }     everyone picks their name again
-import { redis, reply } from "../lib/redis.js";
+import { redis, hash, reply } from "../lib/redis.js";
 
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    const players = Object.keys((await redis.hgetall("players")) || {});
+    const players = Object.keys(await hash("players"));
     const qi = Number.parseInt(req.query.qi, 10);
-    const answers = Number.isInteger(qi) ? (await redis.hgetall(`answers:${qi}`)) || {} : {};
+    const answers = Number.isInteger(qi) ? await hash(`answers:${qi}`) : {};
     return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });

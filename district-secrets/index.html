@@ -523,7 +523,8 @@ const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"appli
 function snapshot(){
   const inGame=S.phase!=="lobby"&&S.qi<Q.length;
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
-    locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE};
+    locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE,
+    howto:window.Rules&&Rules.active()?"secrets":undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
   if(S.phase==="interro")g.hot=S.hot;
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;

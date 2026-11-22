@@ -85,6 +85,17 @@ const Sync = (() => {
     const el = document.getElementById("answered");
     if (el) el.textContent = countText();
     document.querySelectorAll("[data-ph]").forEach(m => m.textContent = phoneMark(m.dataset.ph, true));
+    document.querySelectorAll("[data-in]").forEach(c => {
+      const on = current()[c.dataset.in] != null;
+      if (on !== c.classList.contains("in")) { c.classList.toggle("in", on); c.textContent = (on ? "✓ " : "") + c.dataset.in; }
+    });
+  }
+  // Phone players' names; each turns gold the moment they lock in.
+  function whoIn() {
+    const ph = phonePlayers();
+    if (!ph.length) return "";
+    return `<div class="whoin" aria-label="Who has answered">${ph.map(p => { const on = current()[p.name] != null;
+      return `<span data-in="${esc(p.name)}" class="${on ? "in" : ""}">${on ? "✓ " : ""}${esc(p.name)}</span>`; }).join("")}</div>`;
   }
   function phoneMark(name, inner) {
     if (!hasPhone(name)) return "";
@@ -159,5 +170,5 @@ const Sync = (() => {
   }, 250);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S) { pollKey = ""; maybePoll(); } });
 
-  return { hasPhone, countText, phoneMark, fillAnswers, joinCard, reset, saved };
+  return { hasPhone, countText, whoIn, phoneMark, fillAnswers, joinCard, reset, saved };
 })();

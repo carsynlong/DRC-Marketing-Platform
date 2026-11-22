@@ -331,7 +331,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-3";
+const BUILD="ds-build-2026-11-22-4";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -541,6 +541,7 @@ function snapshot(){
     locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE};
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
   if(S.phase==="interro")g.hot=S.hot;
+  if(S.phase==="howto")g.howI=howI;   // which rule the TV is reading, so phones show the same one
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
   if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
   if(S.phase==="final")g.played=Q.length;
@@ -728,17 +729,8 @@ function howView(){
 function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",sound:()=>musicOn,onDone:newGame});
-  if(!window.Rules)return walk();
-  // 📋 how to play, read out loud, then Ready starts the walk-outs
-  const steps=[
-    ["🔏","A real secret from someone in this room appears on the TV. Every one is true."],
-    ["📱","On your phone, type who you think it belongs to. Your guess is sealed, so nobody sees it."],
-    ["⚡","A right guess scores 1,000 points, plus a speed bonus and extra for streaks."],
-    ["🎭","If it's your own secret, type a decoy. You earn 150 points for everyone you fool."]];
-  if(S.opts?.bets)steps.push(["🎲","Feeling lucky? Place a sponsor bet on your phone, but you can lose points if you're wrong."]);
-  steps.push(["💰","The final secret counts double."],["🎉","Tap the emojis on your phone to send them up the TV. Highest score wins!"]);
-  Rules.run({theme:"secrets",title:"How to play",sub:"District Secrets",sound:()=>musicOn,onReady:walk,steps});
+  // District Secrets reads its own How to Play first (howTo, above: it also covers the extras), so Ready goes straight to the walk-outs
+  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",sound:()=>musicOn,onDone:newGame});
 }
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.note=""});

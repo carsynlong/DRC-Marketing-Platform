@@ -160,6 +160,19 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 /* certificate */
 .cert{display:grid;gap:10px;justify-items:center;width:100%}
 .cert img{width:100%;border-radius:6px;box-shadow:0 14px 30px rgba(0,0,0,.6)}
+/* How to play on the phone: one short card per rule, grouped, appearing as the TV reads them */
+.rules{display:grid;gap:8px}
+.rules .sec{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:800;margin:8px 0 0 4px}
+.pstep{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;background:rgba(27,19,40,.9);border-radius:14px;padding:10px 12px;box-shadow:inset 0 0 0 1px var(--line);animation:rise .45s cubic-bezier(.2,1.3,.4,1) both}
+.pstep .e{font-size:2.1rem;text-align:center;line-height:1}
+.pstep b{display:block;font-size:1.12rem;color:var(--ink)}
+.pstep .ln{display:block;font-size:.98rem;line-height:1.35;color:var(--muted);min-height:1.35em}
+.pstep.on{background:var(--parch);box-shadow:0 0 0 3px var(--gold-hi),0 10px 24px rgba(0,0,0,.5)}
+.pstep.on b{color:var(--wax)}.pstep.on .ln{color:var(--parch-ink)}
+.pstep.wait{opacity:.22;animation:none}.pstep.wait .ln{visibility:hidden}
+.pstep .ln i{display:inline-block;width:.45em;border-bottom:2px solid currentColor;animation:blink .8s steps(1) infinite;margin-left:1px}
+@keyframes blink{50%{opacity:0}}
+.progress{display:flex;gap:5px;justify-content:center}.progress i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18)}.progress i.on{background:var(--gold-hi)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -183,7 +196,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-3";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-22-4";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -235,6 +248,20 @@ async function react(e,btn){
   }catch(err){toast("No connection. That emoji didn't reach the TV.")}
 }
 const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to pop it up on the TV with your name</div>${EMOJI.map(([e,l])=>`<button data-react="${e}" aria-label="Send ${l}">${e}<small>${l}</small></button>`).join("")}</div>`;
+/* the rules, short and grouped (matches the TV's order step for step) */
+function phoneRules(o){
+  const r=[["The basics","🤫","A secret appears","A real secret from someone here pops up on the TV."],
+    ["The basics","📱","You guess who","Type WHO it belongs to. Only you see your guess."],
+    ["Points","⚡","Be fast","Right = 1,000 points. Faster = more. Streaks = more."],
+    ["Points","🎭","Your own secret?","Type a decoy. +150 for every person you fool."]];
+  if(o.bets)r.push(["Extras","🎲","Bet on it","🎯 Sure: +500 / −250  ·  💀 All in: ×2 / −500"]);
+  if(o.interro)r.push(["Extras","🔦","The hot seat","Most accused has 15 seconds to defend themselves."]);
+  if(o.story)r.push(["Extras","🎤","Story time","The owner tells the story. Rate it 🔥 😂 🤯"]);
+  if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. Host approves. Played at the end."]);
+  r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
+  r.push(["Have fun","👑","Winning","Most points wins the mystery package. Last secret = double!"]);
+  return r;
+}
 /* bonus secret: written in the lobby, approved by the host, played as a bonus round */
 let mySecret=store.get("ds-mysecret")||"",editing=!mySecret;
 async function writeSecret(){
@@ -372,12 +399,16 @@ function view(){
       <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p></section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
-  if(g.phase==="howto")return [key+editing+mySecret,`<section class="msg" style="flex:none;padding-top:10px"><div class="eyebrow">Listen to the TV</div><h1>📜 How to play</h1></section>
-    <div class="write" style="transform:none"><div class="done" style="display:grid;gap:8px;font-size:1rem;line-height:1.35">
-      <div>🤫 A real secret from someone here shows up on the TV.</div><div>📱 Type <b>who it belongs to</b> right here. Nobody else sees your guess.</div>
-      <div>⚡ Fast right answers score more.</div><div>🎭 Your own secret? Type a decoy to fool everyone.</div>
-      ${g.opts?.bets?"<div>🎲 Feeling sure? Bet on it.</div>":""}${g.opts?.interro?"<div>🔦 Most accused goes in the hot seat.</div>":""}${g.opts?.story?"<div>🎤 Rate the story after each reveal.</div>":""}
-      <div>😂 Tap emojis to pop them up on the TV.</div></div></div>${writeCard()}${reactBar()}`];
+  if(g.phase==="howto"){
+    // same order as the TV's rules, so the card that lights up here is the one being read out loud there
+    const st=phoneRules(g.opts||{}),cur=g.howI==null?-1:g.howI,all=cur>=st.length;
+    let sec="";
+    return [key+":"+cur,`<section class="msg" style="flex:none;padding:4px 0 0"><div class="eyebrow">Listen to the TV · read along here</div><h1>📜 How to play</h1></section>
+      <div class="progress" aria-hidden="true">${st.map((_,i)=>`<i class="${all||i<=cur?"on":""}"></i>`).join("")}</div>
+      <div class="rules">${st.map(([sc,e,t,l],i)=>{const head=sc!==sec?`<div class="sec">${sc}</div>`:"";sec=sc;
+        const state=all?"":i===cur?" on":i>cur?" wait":"";
+        return head+`<div class="pstep${state}"><span class="e" aria-hidden="true">${e}</span><span><b>${t}</b><span class="ln" data-type="${esc(l)}">${i<cur||all?esc(l):""}</span></span></div>`}).join("")}</div>`,"tap"];
+  }
   if(g.phase==="roundcard")return [key,header()+msg("🗝️","The vault opens","<p>Eyes on the TV. You'll type your guesses here.</p>")+soundBtn()];
   if(g.phase==="ready")return [key,header()+msg("",`<span class="big">🔐</span>`,`<div class="eyebrow">Secret ${g.qi+1} of ${g.total}</div>${g.double?'<span class="gift">🎁 Double points</span>':""}<p>Unlocking the next file…</p>`)];
 
@@ -451,9 +482,13 @@ function render(){
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
   countUp();effect(fx);
+  const ty=document.querySelector(".pstep.on .ln");
+  if(ty){clearInterval(render.ty);const full=ty.dataset.type;let n=0;
+    if(calm)ty.textContent=full;else render.ty=setInterval(()=>{n=Math.min(full.length,n+2);ty.innerHTML=esc(full.slice(0,n))+(n<full.length?"<i></i>":"");if(n>=full.length)clearInterval(render.ty)},28);
+    ty.closest(".pstep").scrollIntoView({block:"center",behavior:calm?"auto":"smooth"})}
   const s=meScore();if(s)shownScore=s.score;
   // floating secrets while you wait (never over the name list or the guess box)
-  const busy=document.querySelector("#g,[data-name],#secret,[data-vote]")||D.game?.phase==="interro";   // nothing floating over text people need to read
+  const busy=document.querySelector("#g,[data-name],#secret,[data-vote]")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
   if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
   else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:3,every:[2000,3400]});
 }

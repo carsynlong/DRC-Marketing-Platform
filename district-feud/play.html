@@ -210,7 +210,7 @@ const avOf=n=>`img/p${pad(D.game.names.indexOf(n)+1)}.jpg`;
 function header(){
   const v=(D.game.tally||{})[D.me]||0,bumped=shownVotes!=null&&v!==shownVotes;
   return `<div class="me"><div class="who"><img class="av" src="${avOf(D.me)}" alt=""><div class="nm">${esc(D.me)}</div></div>
-    <div class="pts${bumped?" bump":""}">🎁 ${v}<small>${v===1?"vote":"votes"} so far</small></div></div>`;
+    <div class="pts${bumped?" bump":""}">🎁 ${v}<small>prize race</small></div></div>`;
 }
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
@@ -241,8 +241,8 @@ function view(){
   }
   if(g.kind==="guess"&&g.phase==="reveal"){
     const top=g.answer||[],me=top.includes(D.me),right=mine&&top.includes(mine),who=top.map(esc).join(" & ");
-    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your prize race total.</p>${right?"<p>🎯 And you called it!</p>":""}`,"right"),"right"];
-    if(right)return [key+"right",header()+msg("🎯","You called it!",`<p>The #1 answer: <b>${who}</b></p>`,"right"),"right"];
+    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your prize race total.</p>${right?"<p>🎯 And you called it: +1 more!</p>":""}`,"right"),"right"];
+    if(right)return [key+"right",header()+msg("🎯","You called it! +1",`<p>The #1 answer: <b>${who}</b></p><p>+1 toward the mystery package! 🎁</p>`,"right"),"right"];
     return [key+"wrong",header()+msg("❌",mine?"Not this time":"Survey says…",`<p>The #1 answer: <b>${who}</b></p>${mine?`<p>You guessed ${esc(mine)}.</p>`:""}`,mine?"wrong":""),mine?"wrong":""];
   }
   if(g.kind==="faceoff"&&g.phase==="question"){
@@ -260,7 +260,7 @@ function view(){
     return [key+"tie",header()+msg("❌","Still tied!","<p>Get ready for another face-off…</p>","wrong"),"wrong"];
   }
   if(g.phase==="final"){
-    if(g.winner===D.me)return [key+"pkgme",header()+msg("🎁","You won the mystery package!","<p>Most votes in the district. Go claim your prize!</p>","win")+soundBtn(),"win"];
+    if(g.winner===D.me)return [key+"pkgme",header()+msg("🎁","You won the mystery package!","<p>Top of the prize race. Go claim your prize!</p>","win")+soundBtn(),"win"];
     if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the package!`,"<p>Merry Christmas from District Feud!</p>")+soundBtn(),"ding"];
     return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most votes?</p>")+soundBtn()];
   }

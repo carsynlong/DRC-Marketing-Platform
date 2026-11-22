@@ -470,7 +470,9 @@ NAMES.forEach(n=>{const i=new Image();i.src=AV(n)});
 
 let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true])),use:QUESTIONS.map(()=>true),
   order:[],k:0,tbNext:0,tie:null,results:[],tally:{},pkg:null,bump:{},logoShown:false};
-/* Mystery package: every vote a tribute receives (survey + face-offs) adds to their total. Most votes wins. */
+/* Mystery package: every vote a tribute receives (survey + face-offs) adds to their total,
+   plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
+const GUESS_PTS=1;
 const addVotes=(n,v)=>{if(!v)return;S.tally[n]=(S.tally[n]||0)+v;S.bump[n]=(S.bump[n]||0)+v};
 const cur=()=>QUESTIONS[S.order[S.k]];
 const isTie=q=>q.top.length>1;
@@ -489,7 +491,8 @@ function showQuestion(){clearTimers();S.phase="question";S.tie=null;playSong("th
 function surveySays(){
   if(S.phase!=="question")return;
   S.phase="suspense";stopSong();render();drumroll(1.9);later(poll,1200); // last look at the phones' guesses
-  later(()=>{const q=cur();S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v));sfx("flip");flash(250);later(()=>sfx("ding"),380);
+  later(()=>{const q=cur();S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v));
+    const top=q.top.map(t=>t[0]),got=phoneAnswers();Object.keys(got).filter(n=>top.includes(got[n])).forEach(n=>addVotes(n,GUESS_PTS)); // called it: +1sfx("flip");flash(250);later(()=>sfx("ding"),380);
     if(isTie(q)){later(()=>sfx("buzz"),1450);shake(1450)}
     else{later(()=>{sfx("applause");confetti(140);applause()},500);S.results[S.k]={name:q.top[0][0],votes:q.top[0][1]};later(()=>playSong("strut"),1200)}
     render();},2000);
@@ -574,7 +577,7 @@ const strike=d=>`<svg class="xmark" viewBox="0 0 100 100" aria-hidden="true" sty
 function raceBar(){
   const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
   return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc ${S.bump[n]?"bump":""}">${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i>${S.bump[n]?`<em class="plus">+${S.bump[n]}</em>`:""}</span>`).join("")
-    :'<span class="rc" style="opacity:.75">Every vote counts toward the mystery package</span>'}</div></div>`;
+    :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the mystery package</span>'}</div></div>`;
 }
 function render(){
   const v={lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
@@ -587,7 +590,7 @@ function lobby(){
   return `<section class="lobby">${logo()}
     ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
-    <div class="prize">🎁 <b>Every vote counts.</b> Most votes at the end of the show wins the mystery package.</div>
+    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the mystery package!</div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
@@ -649,14 +652,14 @@ function end(){
 function pkgView(){
   const P=S.pkg,open=P.done,compact=P.rows.length>4?"compact":"";
   const tiles=P.rows.map(([n,v],i)=>tile({n,v,num:i+1,id:"pk"+i,state:open?"open":"",count:open?"":"manual"})).join("");
-  const b=board("Final vote totals",tiles,"Most votes wins the mystery package",compact);
+  const b=board("Final totals",tiles,"Votes + correct guesses · highest total wins the mystery package",compact);
   if(!open) return `<section class="center"><h1 class="ptitle">🎁 Prize Round</h1>${b}</section>`;
   if(!P.winner) return `<section class="center"><div class="tieban late" style="--d:0s">${strike(.15)}Tied for the prize!</div>
     ${podiums(P.lead,n=>S.tally[n])}
     <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">🎰 Lucky spin for the prize</button></div><div class="hint">Space: continue</div>${b}</section>`;
-  const list=board("Final vote totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Most votes wins","compact one");
+  const list=board("Final totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Votes + correct guesses","compact one");
   return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🎁 Mystery package winner</h1>
-    <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":"Most votes in the district"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"vote")}</div>
+    <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"vote")}</div>
     <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
 }
 function pkgFateView(){return spinView("🎰 Lucky spin for the prize",S.pkg.lead[0]);}
@@ -763,7 +766,7 @@ function calledIt(d=1.2){
   const got=phoneAnswers(),names=Object.keys(got);if(!names.length)return"";
   const top=cur().top.map(t=>t[0]),right=names.filter(n=>top.includes(got[n]));
   if(!right.length)return `<div class="called late" style="--d:${d}s"><b>🎯 Nobody called it!</b></div>`;
-  return `<div class="called"><b class="late" style="--d:${d}s">🎯 Called it:</b>${right.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`;
+  return `<div class="called"><b class="late" style="--d:${d}s">🎯 Called it, +${GUESS_PTS} each:</b>${right.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`;
 }
 const joinUrl=()=>`${location.origin}/district-feud/play`;
 const onWebsite=()=>/^https?:$/.test(location.protocol)&&!/claude|anthropic/.test(location.hostname);

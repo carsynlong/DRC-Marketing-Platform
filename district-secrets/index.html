@@ -145,6 +145,14 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .file .ask{margin-top:clamp(12px,2vw,22px);font-family:var(--display);font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--wax);font-size:clamp(.9rem,1.6vw,1.2rem)}
 .stamp{position:absolute;font-family:var(--display);font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--wax);border:5px double var(--wax);border-radius:8px;padding:.15em .6em;
   mix-blend-mode:multiply;opacity:.85;pointer-events:none}
+/* time's up: the folder's cover swings shut over the secret, then SEALED slams onto it */
+.file.closed::after{content:"";position:absolute;inset:0;border-radius:4px;z-index:2;transform-origin:50% 0;
+  background:repeating-linear-gradient(0deg,rgba(80,50,20,.05) 0 2px,transparent 2px 34px),linear-gradient(#ddc89e,#c9b385);
+  box-shadow:inset 0 0 0 2px rgba(80,50,20,.25),inset 0 -14px 30px rgba(80,50,20,.18);animation:fileshut .6s cubic-bezier(.35,1.25,.5,1) both}
+@keyframes fileshut{0%{transform:perspective(900px) rotateX(-95deg);opacity:.4}100%{transform:none;opacity:1}}
+.file.closed .stamp{z-index:3}
+.file.closed .stamp.sealed{animation-delay:.55s}
+.file.closed .fact,.file.closed .ask,.file.closed .fuse{visibility:hidden;transition:visibility 0s .35s}
 .stamp.ts{right:clamp(14px,3vw,40px);top:clamp(58px,7vw,84px);transform:rotate(9deg);font-size:clamp(1rem,2.2vw,1.7rem)}
 .stamp.sealed{left:50%;top:50%;transform:translate(-50%,-50%) rotate(-12deg);font-size:clamp(2.4rem,7vw,5.6rem);animation:slam .45s cubic-bezier(.3,1.6,.5,1) both;opacity:.9;background:rgba(239,226,196,.5)}
 @keyframes slam{from{transform:translate(-50%,-50%) rotate(-12deg) scale(3);opacity:0}to{transform:translate(-50%,-50%) rotate(-12deg) scale(1);opacity:.9}}
@@ -620,7 +628,7 @@ function questionView(){
   const x=cur(),tot=guessers().length;
   return `<div class="top"><div><div class="eyebrow">District Secrets</div><div class="qnum">Secret ${S.qi+1} of ${Q.length}</div></div>${giftTag()}
     <div class="timer" aria-label="Seconds left"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38" fill="#a3182b"/><circle cx="42" cy="42" r="32" fill="none" stroke="#5e0a17" stroke-width="3"/><circle cx="42" cy="42" r="38" fill="none" stroke="#d9b25f" stroke-width="2" stroke-dasharray="3 5"/></svg><div class="n">${S.secs}</div></div></div>
-  <article class="file">
+  <article class="file${S.locked?" closed":""}">
     <div class="hdr"><span>FILE No. ${pad(S.qi+1)}</span><span>CAPITOL ARCHIVES · DISTRICT RECORDS</span></div>
     <div class="stamp ts">Top secret</div>
     <p class="fact" aria-label="${esc(x.f)}"></p>
@@ -727,6 +735,37 @@ if(S.phase==="ready")S.phase="roundcard";
 render();
 setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}},250);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){pollKey="";maybePoll()}});
+
+/* ---------- host menu: a faint ⚙ in the corner, easy to miss on purpose ---------- */
+(function hostMenu(){
+  const b=document.createElement("button");b.textContent="⚙";b.title="Host menu";b.setAttribute("aria-label","Host menu");
+  b.style.cssText="position:fixed;left:6px;bottom:6px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--ink);opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
+  b.onmouseenter=()=>b.style.opacity=".9";b.onmouseleave=()=>b.style.opacity=".18";
+  const m=document.createElement("div");
+  m.style.cssText="position:fixed;left:8px;bottom:38px;z-index:21;background:var(--plum-2);border-radius:12px;padding:8px;display:none;gap:6px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);font:600 14px var(--body,system-ui),sans-serif";
+  const item=(label,fn)=>{const x=document.createElement("button");x.textContent=label;
+    x.style.cssText="background:transparent;color:var(--ink);border:0;text-align:left;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit";
+    x.onmouseenter=()=>x.style.background="rgba(255,255,255,.08)";x.onmouseleave=()=>x.style.background="transparent";
+    x.onclick=()=>{show(false);fn()};m.appendChild(x)};
+  const show=on=>m.style.display=on?"grid":"none";
+  item("↺ Restart from the beginning",restartGame);
+  item("📱 Clear phone names",async()=>{if(!confirm("Clear every phone's name? Everyone will need to tap their name again."))return;
+    try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
+  item("✕ Close",()=>{});
+  b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};
+  document.addEventListener("click",e=>{if(!m.contains(e.target)&&e.target!==b)show(false)});
+  document.body.appendChild(b);document.body.appendChild(m);
+})();
+// Back to the lobby with a clean slate. Phones keep their names and follow along.
+function restartGame(ask=true){
+  if(ask&&!confirm("Restart from the beginning? This ends the current game and clears the scores."))return;
+  clearInterval(readyT);clearInterval(typeT);cancelAnimationFrame(raf);stopSong();
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0});
+  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now()});
+  answers={};answersQi=-1;counted=null;hostOpen=false;
+  post({action:"reset",total:Q.length}).catch(()=>{});
+  render();
+}
 </script>
 </body>
 </html>

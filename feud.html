@@ -458,9 +458,7 @@ function lobby(){
     <div class="prize">🎁 <b>Every vote counts.</b> Most votes at the end of the show wins the mystery package.</div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}</button>`).join("")}</div>
-    <div class="eyebrow">Questions on the board</div>
-    <div class="qlist">${QUESTIONS.map((q,i)=>`<label><input type="checkbox" data-use="${i}" ${S.use[i]?"checked":""}>${esc(q.q)}${isTie(q)?'<span class="tie">Tie</span>':""}</label>`).join("")}</div>
-    <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go" ${S.use.some(Boolean)?"":"disabled"}>Start the show</button></div>
+    <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
     <div class="hint">Space moves the show along · M turns music on or off</div></section>`;
 }
 function question(){
@@ -546,7 +544,6 @@ const musicFor=()=>({lobby:"lobby",question:"think",tb:"think",reveal:"strut",tb
 function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{const n=b.dataset.here;S.present[n]=!S.present[n];render()});
-  document.querySelectorAll("[data-use]").forEach(c=>c.onchange=()=>{S.use[+c.dataset.use]=c.checked;$("#go").disabled=!S.use.some(Boolean)});
   document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>openBallot(b.dataset.vote));
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>castVote(b.dataset.pick));
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);

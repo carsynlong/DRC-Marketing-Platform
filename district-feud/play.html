@@ -100,6 +100,13 @@ body.rb .app{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 .rbar button:active{transform:scale(.88);background:rgba(255,201,46,.3)}
 .puff{position:fixed;z-index:6;pointer-events:none;font-size:1.8rem;animation:puff .9s ease-out forwards}
 @keyframes puff{from{transform:translate(-50%,-50%) scale(.6);opacity:1}to{transform:translate(calc(-50% + var(--x)),calc(-50% - 120px)) scale(1.3);opacity:0}}
+.perk{text-align:center;font-weight:800;color:var(--gold2);font-size:.95rem;margin:-4px 0}
+.perk.x2{font-family:var(--display);color:var(--red-d);background:var(--gold);border-radius:999px;padding:.3em .8em;animation:pulse .5s ease-in-out infinite alternate;font-size:1rem;margin:0}
+.earn{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.earn span{font-weight:800;background:rgba(255,255,255,.1);border-radius:999px;padding:.25em .8em;box-shadow:inset 0 0 0 2px var(--gold);color:#fff}
+.stand{width:100%;display:grid;gap:6px}
+.stand div{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:10px;padding:6px 12px;font-weight:800}
+.stand div.me{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
 /* countdown bar */
 .ptimer{position:relative;height:34px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;box-shadow:inset 0 0 0 2px var(--gold);flex:none}
 .ptimer i{position:absolute;inset:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:left;transition:transform .2s linear}
@@ -246,12 +253,15 @@ function view(){
   if(g.kind==="guess"&&g.phase==="question"){
     if(mine)return [key+"lock:"+mine+g.locked,header()+ptimer(g)+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
     if(g.locked)return [key+"late",header()+msg("🥁","Survey says…","<p>Guesses are locked. Watch the board!</p>")];
-    return [key+"ask",header()+ptimer(g)+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`+nameBtns(g.names)];
+    return [key+"ask",header()+ptimer(g)+(g.mult>1?'<div class="perk x2">💰 DOUBLE POINTS ROUND 💰</div>':"")+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`
+      +(g.speedEnds&&Date.now()<g.speedEnds?`<div class="perk">⚡ Lock in fast for a speed bonus!</div>`:"")+nameBtns(g.names)];
   }
   if(g.kind==="guess"&&g.phase==="reveal"){
     const top=g.answer||[],me=top.includes(D.me),right=mine&&top.includes(mine),who=top.map(esc).join(" & ");
-    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your prize race total.</p>${right?"<p>🎯 And you called it: +1 more!</p>":""}`,"right"),"right"];
-    if(right)return [key+"right",header()+msg("🎯","You called it! +1",`<p>The #1 answer: <b>${who}</b></p><p>+1 toward the mystery package! 🎁</p>`,"right"),"right"];
+    const e=(g.earn||{})[D.me],pts=e?e.pts:1;
+    const perks=e?`<div class="earn"><span>🎯 +${pts} toward the package</span>${e.speed?"<span>⚡ Speed bonus!</span>":""}${e.fire?`<span>🔥 On fire: ${e.streak} in a row!</span>`:e.streak>1?`<span>🎯 ${e.streak} in a row</span>`:""}${g.mult>1?"<span>💰 Double points</span>":""}</div>`:"";
+    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your prize race total.</p>${right?`<p>🎯 And you called it!</p>${perks}`:""}`,"right"),"right"];
+    if(right)return [key+"right",header()+msg(e&&e.fire?"🔥":"🎯",`You called it! +${pts}`,`<p>The #1 answer: <b>${who}</b></p>${perks}`,"right"),"right"];
     return [key+"wrong",header()+msg("❌",mine?"Not this time":"Survey says…",`<p>The #1 answer: <b>${who}</b></p>${mine?`<p>You guessed ${esc(mine)}.</p>`:""}`,mine?"wrong":""),mine?"wrong":""];
   }
   if(g.kind==="faceoff"&&g.phase==="question"){
@@ -272,6 +282,16 @@ function view(){
     if(g.winner===D.me)return [key+"pkgme",header()+msg("🎁","You won the mystery package!","<p>Top of the prize race. Go claim your prize!</p>","win")+soundBtn(),"win"];
     if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the package!`,"<p>Merry Christmas from District Feud!</p>")+soundBtn(),"ding"];
     return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most votes?</p>")+soundBtn()];
+  }
+  if(g.view==="intro"){
+    if(g.spot===D.me)return [key+"spot",header()+msg("🎤","That's YOU on the TV!","<p>Take a bow! The crowd goes wild! 👏</p>","win"),"win"];
+    return [key+"intro",header()+msg("🎤","Meet the contestants!","<p>Watch the TV. Your walk-out is coming up!</p>")];
+  }
+  if(g.view==="double")return [key,header()+msg("💰","Double points!","<p>Final question! Everything counts twice: votes, correct guesses and speed bonuses.</p>","win"),"win"];
+  if(g.view==="half"){
+    const rows=Object.entries(g.tally||{}).sort((a,b)=>b[1]-a[1]),rank=rows.findIndex(r=>r[0]===D.me)+1;
+    return [key,header()+msg("📊","Halftime!",`<p>${rank?`You're <b>#${rank}</b> in the prize race.`:"You're not on the board yet. Plenty of time!"}</p>
+      <div class="stand">${rows.slice(0,6).map(([n,v],i)=>`<div class="${n===D.me?"me":""}"><span>${i+1}. ${esc(n)}${(g.streak||{})[n]>=3?" 🔥":""}</span><span>${v}</span></div>`).join("")}</div>`)+soundBtn()];
   }
   return [key+"w",header()+msg("📺","Eyes on the TV","<p>The next question is coming up.</p>")+soundBtn()];
 }

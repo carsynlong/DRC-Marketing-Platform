@@ -69,7 +69,10 @@ window.Walkout = (() => {
 @keyframes wo-pop{from{transform:scale(.6);opacity:0}}
 @keyframes wo-drop{from{transform:translateY(-140%) rotate(-12deg);opacity:0}}
 @keyframes wo-flash{from{opacity:.6}to{opacity:0}}
-@media (prefers-reduced-motion:reduce){#walkout *{animation:none!important}}`;
+@media (prefers-reduced-motion:reduce){#walkout *{animation:none!important}}
+#walkout .wo-back,#rules .ru-back{position:absolute;top:max(14px,env(safe-area-inset-top,0px));left:max(14px,env(safe-area-inset-left,0px));z-index:2;font:inherit;font-weight:800;font-size:.95rem;
+  color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:10px;padding:.5em .95em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);cursor:pointer}
+#walkout .wo-back:hover,#rules .ru-back:hover{box-shadow:inset 0 0 0 2px #fff}`;
 
   function sfx(kind) {
     if (!soundOn()) return;
@@ -99,15 +102,16 @@ window.Walkout = (() => {
   }
   function onKey(e) {
     if (!root) return;
-    if (e.code === "Space" || e.key === "Enter" || e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); end(); }
+    if (e.code === "Space" || e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); end(); }
+    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); end(true); }
   }
-  function end() {
+  function end(back) {
     if (!root) return;
     timers.forEach(clearTimeout); timers = [];
     try { speechSynthesis.cancel(); } catch (e) {}
     window.removeEventListener("keydown", onKey, true);
     root.remove(); root = null;
-    const f = finish; finish = null; if (f) f();
+    const f = back === true ? null : finish; finish = null; if (f) f();   // Back to setup: don't start the game
   }
 
   function run(o) {
@@ -127,13 +131,14 @@ window.Walkout = (() => {
       i++;
       if (i >= names.length) { later(end, 500); return; }
       const n = names[i], dn = o.district ? o.district(n) : i + 1;
-      root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div>'}<div class="wo-beam"></div>
+      root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div>'}<div class="wo-beam"></div><button class="wo-back" type="button">↩ Back to setup</button>
         <div class="wo-in"><div class="wo-tag">${T.tag}</div>
         <img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">
         <div class="wo-from">From District ${dn}…</div><div class="wo-name">${esc(n)}</div><div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div>
         <div class="wo-dots">${names.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
         <button class="wo-skip" type="button">Skip intros</button><div class="wo-hint">Space: skip</div></div>`;
-      root.querySelector(".wo-skip").onclick = end;
+      root.querySelector(".wo-skip").onclick = () => end();
+      root.querySelector(".wo-back").onclick = () => end(true);
       sfx("whoosh");
       later(() => { sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 500);
       say(`From District ${dn}… ${n}!`);
@@ -141,7 +146,7 @@ window.Walkout = (() => {
     };
     step();
   }
-  return { run, active: () => !!root, end };
+  return { run, active: () => !!root, end, cancel: () => end(true) };
 })();
 
 /* Live leaderboard along the bottom of the TV.
@@ -217,6 +222,7 @@ body.has-ticker{padding-bottom:52px}
      steps:   [["📱", "On your phone, type who you think it is."], ...]
      sound:   () => true/false       read out loud only when the game's sound is on
      onReady: () => {}               the host clicked Ready (or pressed Space)
+     onBack:  () => {}               optional: the host clicked Back to setup (or pressed Esc); nothing starts
    }) */
 window.Rules = (() => {
   const THEMES = {
@@ -244,19 +250,23 @@ window.Rules = (() => {
 #rules .ru-hint{font-size:.85rem;opacity:.65}
 @keyframes ru-pop{from{transform:scale(.5);opacity:0}}
 @keyframes ru-throb{50%{transform:scale(1.06)}}
-@media (prefers-reduced-motion:reduce){#rules *{animation:none!important;transition:none!important}}`;
-  let root = null, ready = null, timers = [], soundOn = () => true, run_id = 0;
+@media (prefers-reduced-motion:reduce){#rules *{animation:none!important;transition:none!important}}
+#walkout .wo-back,#rules .ru-back{position:absolute;top:max(14px,env(safe-area-inset-top,0px));left:max(14px,env(safe-area-inset-left,0px));z-index:2;font:inherit;font-weight:800;font-size:.95rem;
+  color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:10px;padding:.5em .95em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);cursor:pointer}
+#walkout .wo-back:hover,#rules .ru-back:hover{box-shadow:inset 0 0 0 2px #fff}`;
+  let root = null, ready = null, onBack = null, timers = [], soundOn = () => true, run_id = 0;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const clear = () => { timers.forEach(clearTimeout); timers = []; try { speechSynthesis.cancel(); } catch (e) {} };
   function onKey(e) {
     if (!root) return;
     if (e.code === "Space" || e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); go(); }
+    if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); go(true); }
   }
-  function go() {
+  function go(back) {
     if (!root) return;
     clear(); window.removeEventListener("keydown", onKey, true);
     root.remove(); root = null;
-    const f = ready; ready = null; if (f) f();
+    const f = back === true ? onBack : ready; ready = null; onBack = null; if (f) f();   // Back to setup: don't start the game
   }
   /* light each step and read it; the next one starts when the voice finishes (or after a fair pause) */
   function read(title, steps) {
@@ -289,16 +299,17 @@ window.Rules = (() => {
   function run(o) {
     if (root) return;
     const T = THEMES[o.theme] || THEMES.tribute, title = o.title || "How to play", steps = o.steps || [];
-    soundOn = o.sound || (() => true); ready = o.onReady;
+    soundOn = o.sound || (() => true); ready = o.onReady; onBack = o.onBack || null;
     if (!document.getElementById("rules-css")) { const st = document.createElement("style"); st.id = "rules-css"; st.textContent = CSS; document.head.appendChild(st); }
     root = document.createElement("div"); root.id = "rules"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", title);
     root.style.cssText = `--ru-font:${T.font};--ru-ink:${T.ink};--ru-accent:${T.accent};--ru-accent2:${T.accent2};--ru-bg1:${T.bg1};--ru-bg2:${T.bg2};--ru-btn:${T.btnInk}`;
-    root.innerHTML = `<div class="ru-in"><h1>${esc(title)}</h1>${o.sub ? `<div class="ru-sub">${esc(o.sub)}</div>` : ""}
+    root.innerHTML = `<button class="ru-back" type="button">↩ Back to setup</button><div class="ru-in"><h1>${esc(title)}</h1>${o.sub ? `<div class="ru-sub">${esc(o.sub)}</div>` : ""}
       <ol>${steps.map(([ic, t]) => `<li><span class="ru-ic" aria-hidden="true">${ic}</span><span>${esc(t)}</span></li>`).join("")}</ol>
       <div class="ru-ctl"><button class="ru-again" type="button">🔊 Read it again</button><button class="ru-go" type="button">Ready! ▶</button></div>
-      <div class="ru-hint">Space: Ready</div></div>`;
+      <div class="ru-hint">Space: Ready · Esc: back to setup</div></div>`;
     document.body.appendChild(root);
-    root.querySelector(".ru-go").onclick = go;
+    root.querySelector(".ru-go").onclick = () => go();
+    root.querySelector(".ru-back").onclick = () => go(true);
     root.querySelector(".ru-again").onclick = () => read(title, steps);
     window.addEventListener("keydown", onKey, true);
     read(title, steps);

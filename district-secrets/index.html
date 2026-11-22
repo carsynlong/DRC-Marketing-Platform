@@ -331,7 +331,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-4";
+const BUILD="ds-build-2026-11-22-5";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -346,6 +346,7 @@ const Q=[ /* the real fun facts the family sent in; edit wording here */
 ];
 const DOUBLE=new Set([Q.length-1]);   // the last secret is worth double
 const BASE=Q.length;                  // bonus secrets written on phones tonight are added after these
+const BONUS_WRITER=500;               // points for the writer when their bonus secret is played
 const pad=n=>String(n).padStart(2,"0");
 const AV=n=>`img/p${pad(NAMES.indexOf(n)+1)}.jpg`;   // small face
 const RV=n=>`img/r${pad(NAMES.indexOf(n)+1)}.jpg`;   // big selfie for the reveal
@@ -693,7 +694,7 @@ function howSteps(){
   if(o.bets)st.push(["🎲","Feeling sure? Place a <b>sponsor bet</b> before you seal: <b>Sure</b> or <b>All in</b>. Big risk, big reward.","Feeling sure? Place a sponsor bet before you seal your guess. Sure, or all in. Big risk. Big reward."]);
   if(o.interro)st.push(["🔦","When time's up, whoever the room accuses most goes in the <b>hot seat</b>. Defend yourself!","When time is up, whoever the room accuses most goes in the hot seat. Defend yourself!"]);
   if(o.story)st.push(["🎤","Then the owner tells the <b>story</b> behind their secret, and you rate it on your phone.","Then the owner tells the story behind their secret, and you rate it on your phone."]);
-  if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If the host approves it, it's played at the end.","Write a bonus secret on your phone. If the host approves it, it gets played at the end."]);
+  if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
   st.push(["👑","Most points wins the <b>mystery package</b>. The final secret counts <b>double</b>.","Most points wins the mystery package. The final secret counts double. And may the odds be ever in your favor."]);
   return st;
@@ -810,8 +811,9 @@ function score(){
     p.note="";
     if(!p.on){p.delta=0;return}
     if(p.name===name){
-      const st=storyVotes*100*mult;p.delta=fooled*150*mult+st;p.score+=p.delta;p.fooled+=fooled;p.story=(p.story||0)+storyVotes;
-      p.note=[fooled?`🎭 Fooled ${fooled} · +${150*mult} each`:"",storyVotes?`🎤 ${storyVotes} story vote${storyVotes>1?"s":""} +${st}`:""].filter(Boolean).join(" · ");return}
+      const st=storyVotes*100*mult,bw=cur().bonus?BONUS_WRITER:0;   // writing a bonus secret that got played is worth points too
+      p.delta=fooled*150*mult+st+bw;p.score+=p.delta;p.fooled+=fooled;p.story=(p.story||0)+storyVotes;
+      p.note=[bw?`📝 Your bonus secret was played +${bw}`:"",fooled?`🎭 Fooled ${fooled} · +${150*mult} each`:"",storyVotes?`🎤 ${storyVotes} story vote${storyVotes>1?"s":""} +${st}`:""].filter(Boolean).join(" · ");return}
     const bet=S.opts?.bets?S.bets?.[p.name]:null;
     if(S.correct.includes(p.name)){p.streak++;const sp=speed(p.name);let d=(1000+Math.min(p.streak-1,5)*100)*mult+sp;const notes=sp?[`⚡ Speed bonus +${sp}`]:[];
       if(bet==="allin"){d*=2;notes.push("💀 All in paid off: double!")}else if(bet==="sure"){d+=500*mult;notes.push(`🎯 Sure bet +${500*mult}`)}
@@ -868,7 +870,7 @@ function lobbyView(){
       <div class="tiny" style="text-align:center">Host: tap someone to sit them out. No phone? They can whisper their guess to the host.</div>
       <div class="eyebrow" style="text-align:center">Extras · tap to switch on or off</div>
       <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
-      ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved`:"Phones can write a bonus secret while they wait"}</div>`:""}
+      ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved · +500 points each if it's played`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
       <div class="settings"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
@@ -890,7 +892,7 @@ function readyView(){
 }
 function bonusView(){
   return `<section class="center">${EMBLEM}<div class="num">LATE ADDITIONS TO THE ARCHIVE</div><h1>Bonus Round</h1>
-    <p>${Q.length-BASE} fresh secret${Q.length-BASE>1?"s":""}, written tonight by someone in this room. Even the host hasn't heard them out loud.</p>
+    <p>${Q.length-BASE} fresh secret${Q.length-BASE>1?"s":""}, written tonight by someone in this room. Each writer earns <b>+500 points</b> when theirs comes up, so keep a straight face.</p>
     <button class="btn wax" id="begin">Open the new files</button><div class="tiny">Space to begin</div></section>`;
 }
 function interroView(){
@@ -1114,13 +1116,14 @@ setInterval(async()=>{
   document.addEventListener("click",e=>{if(!m.contains(e.target)&&e.target!==b)show(false)});
   document.body.appendChild(b);document.body.appendChild(m);
 })();
-// A QR code for the host's own phone: it lists the bonus secrets people wrote, with who wrote them, to approve or skip.
+// A QR code for the host's own phone: it lists the bonus secrets people wrote (anonymous) to approve or skip.
+// Scanning it once also marks that phone as the host's, so signing in as Carsyn there shows 🔑 Host tools.
 function hostPhone(){
   const url=`${location.origin}/district-secrets/host?k=${S.hostKey}`;dsPost({op:"hostkey",k:S.hostKey}).catch(()=>{});
   let qr="";try{const q=qrcode(0,"M");q.addData(url);q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
   const m=document.createElement("div");m.className="modal";
-  m.innerHTML=`<div class="box"><div class="eyebrow" style="color:#6b5233">Host only</div><h2 style="margin:0">Scan with your phone</h2><div class="qr">${qr}</div>
-    <div class="u">${esc(url)}</div><div class="tiny" style="color:#6b5233">Approve or skip the bonus secrets people wrote. Close this before anyone else scans it.</div><button class="btn wax">Close</button></div>`;
+  m.innerHTML=`<div class="box"><div class="eyebrow" style="color:#6b5233">Host only</div><h2 style="margin:0">Scan once with your phone</h2><div class="qr">${qr}</div>
+    <div class="u">${esc(url)}</div><div class="tiny" style="color:#6b5233">After this, sign in as Carsyn on that phone and tap 🔑 Host tools to approve bonus secrets (you'll never see who wrote them). Close this before anyone else scans it.</div><button class="btn wax">Close</button></div>`;
   m.onclick=e=>{if(e.target===m||e.target.tagName==="BUTTON")m.remove()};document.body.appendChild(m);
 }
 // Back to the lobby with a clean slate. Phones keep their names and follow along.

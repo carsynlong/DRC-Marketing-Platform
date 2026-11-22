@@ -173,6 +173,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .pstep .ln i{display:inline-block;width:.45em;border-bottom:2px solid currentColor;animation:blink .8s steps(1) infinite;margin-left:1px}
 @keyframes blink{50%{opacity:0}}
 .progress{display:flex;gap:5px;justify-content:center}.progress i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.18)}.progress i.on{background:var(--gold-hi)}
+/* 🔑 host tools (Carsyn's phone only) */
+#hostbtn{position:fixed;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:11;background:linear-gradient(180deg,var(--gold-hi),var(--gold));color:#2a1a05;font-weight:800;border-radius:999px;padding:.7em 1.1em;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+#hostbtn b{display:inline-grid;place-items:center;min-width:1.5em;height:1.5em;margin-left:.4em;border-radius:999px;background:var(--wax);color:#fff;font-size:.8em}
+#hosttools{position:fixed;inset:0;z-index:10;background:rgba(11,10,20,.97);overflow:auto;padding:max(16px,env(safe-area-inset-top)) 16px 90px}
+#hosttools .in{max-width:560px;margin:0 auto;display:grid;gap:12px}
+#hosttools h2{font-family:var(--display);color:var(--gold-hi);margin:0}
+#hosttools .hcard{background:var(--parch);color:var(--parch-ink);border-radius:8px;padding:12px 14px;display:grid;gap:10px}
+#hosttools .hcard.skipped{opacity:.55}
+#hosttools .tag{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:.2em .7em;border-radius:999px;justify-self:start}
+#hosttools .new .tag{background:#f6dfa0}#hosttools .approved .tag{background:#bfe9cc}#hosttools .skipped .tag{background:#e7c9c9}
+#hosttools .t{font-family:var(--type);font-size:1.15rem;line-height:1.3}
+#hosttools .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#hosttools .row button{padding:.75em;border-radius:10px;font-weight:800}
+#hosttools .ok{background:#2e7a52;color:#fff}#hosttools .no{background:#e7dcc4;color:#6b5233}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -197,7 +211,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-4";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-22-5";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -249,6 +263,42 @@ async function react(e,btn){
   }catch(err){toast("No connection. That emoji didn't reach the TV.")}
 }
 const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to pop it up on the TV with your name</div>${EMOJI.map(([e,l])=>`<button data-react="${e}" aria-label="Send ${l}">${e}<small>${l}</small></button>`).join("")}</div>`;
+/* 🔑 Host tools: the host's phone scanned the TV's host code once (host.html saves the key);
+   when it's signed in as Carsyn, a button opens the bonus secrets to approve. Anonymous: text only, never who wrote it. */
+const HOST_NAME="Carsyn";
+const hostKey=()=>store.get("ds-hostkey");
+const isHost=()=>D.me===HOST_NAME&&!!hostKey();
+let hostOpen=false,hostList=null,hostErr="",hostT=0;
+async function hostLoad(){
+  try{const r=await fetch(`/api/ds?op=review&k=${encodeURIComponent(hostKey()||"")}`,{cache:"no-store"});
+    if(r.status===403){hostErr="The TV's host code changed. On the TV, open ⚙ → Host phone and scan it again.";hostList=null}
+    else{hostErr="";hostList=(await r.json()).list}
+  }catch(e){hostErr="No connection. Trying again…"}
+  hostDraw();
+}
+async function hostDecide(id,ok){
+  sfx("tap");buzz(15);
+  try{await fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"approve",k:hostKey(),id,ok})})}catch(e){}
+  hostLoad();
+}
+function hostDraw(){
+  let b=$("#hostbtn"),p=$("#hosttools");
+  if(!isHost()){b?.remove();p?.remove();hostOpen=false;clearInterval(hostT);return}
+  const waiting=(hostList||[]).filter(x=>x.status==="new").length;
+  if(!b){b=document.createElement("button");b.id="hostbtn";b.onclick=()=>{hostOpen=!hostOpen;if(hostOpen){hostLoad();clearInterval(hostT);hostT=setInterval(hostLoad,3000)}else clearInterval(hostT);hostDraw()};document.body.appendChild(b)}
+  b.innerHTML=hostOpen?"✕ Close host tools":`🔑 Host tools${waiting?`<b>${waiting}</b>`:""}`;
+  if(!hostOpen){p?.remove();return}
+  if(!p){p=document.createElement("div");p.id="hosttools";document.body.appendChild(p)}
+  const n=(hostList||[]).filter(x=>x.status==="approved").length;
+  p.innerHTML=`<div class="in"><div class="eyebrow">Host only · keep this to yourself</div><h2>📝 Bonus secrets</h2>
+    <p style="margin:0;color:var(--muted)">Anonymous: you see the secret, never who wrote it. Approved ones play as a bonus round after the 8 secrets, and each writer earns +500. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
+    ${hostErr?`<div class="offline" style="background:var(--wax);color:#fff">${esc(hostErr)}</div>`:""}
+    ${hostList&&!hostList.length?`<p style="text-align:center;color:var(--muted)">Nothing yet. This updates by itself.</p>`:""}
+    ${(hostList||[]).map((x,i)=>`<div class="hcard ${x.status}"><span class="tag">Secret ${i+1} · ${x.status}</span><div class="t">“${esc(x.text)}”</div>
+      <div class="row"><button class="ok" data-hok="${esc(x.id)}">✓ Approve</button><button class="no" data-hno="${esc(x.id)}">Skip</button></div></div>`).join("")}</div>`;
+  p.querySelectorAll("[data-hok]").forEach(x=>x.onclick=()=>hostDecide(x.dataset.hok,true));
+  p.querySelectorAll("[data-hno]").forEach(x=>x.onclick=()=>hostDecide(x.dataset.hno,false));
+}
 /* the rules, short and grouped (matches the TV's order step for step) */
 function phoneRules(o){
   const r=[["The basics","🤫","A secret appears","A real secret from someone here pops up on the TV."],
@@ -258,7 +308,7 @@ function phoneRules(o){
   if(o.bets)r.push(["Extras","🎲","Bet on it","🎯 Sure: +500 / −250  ·  💀 All in: ×2 / −500"]);
   if(o.interro)r.push(["Extras","🔦","The hot seat","Most accused has 15 seconds to defend themselves."]);
   if(o.story)r.push(["Extras","🎤","Story time","The owner tells the story. Rate it 🔥 😂 🤯"]);
-  if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. Host approves. Played at the end."]);
+  if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
   r.push(["Have fun","👑","Winning","Most points wins the mystery package. Last secret = double!"]);
   return r;
@@ -273,9 +323,9 @@ async function writeSecret(){
   }catch(e){toast("No connection. Try again.")}
 }
 const writeCard=()=>!D.game?.opts?.bonus?"":editing
-  ?`<div class="write"><b>📝 Add a bonus secret</b><p>Something true that nobody here knows about you. The host approves it, then it's played as a bonus round, and nobody will know it's yours.</p>
+  ?`<div class="write"><b>📝 Add a bonus secret · earn +500 points</b><p>Something true that nobody here knows about you. If it gets played in the bonus round, <b>+500 points go to your score</b>, plus 150 for everyone you fool. It's anonymous: not even the host sees who wrote it.</p>
      <textarea id="secret" maxlength="200" placeholder="I once…">${esc(mySecret)}</textarea><button class="btn" id="sendsecret">🔏 Seal my secret</button></div>`
-  :`<div class="write"><b>📝 Your bonus secret is sealed</b><div class="done">“${esc(mySecret)}”</div><button class="linkish" id="editsecret">Change it</button></div>`;
+  :`<div class="write"><b>📝 Your bonus secret is sealed · +500 if it's played</b><div class="done">“${esc(mySecret)}”</div><button class="linkish" id="editsecret">Change it</button></div>`;
 /* sponsor bet for this secret */
 let myBet={key:"",bet:"hunch"};
 const BETS=[["hunch","🪶","Hunch","normal"],["sure","🎯","Sure","+500 / −250"],["allin","💀","All in","×2 / −500"]];
@@ -394,6 +444,7 @@ function view(){
   const s=meScore(),playing=g.playing.includes(D.me),key=`${g.gid}:${g.phase}:${g.qi}`;
   const notYou=`<button class="switch" id="leave">Not ${esc(D.me)}? Switch name</button>`;
   if(g.phase==="lobby"){
+    if(!playing&&isHost())return [key+"host",msg("🔑","You're the host","<p>You're running the game tonight. Tap <b>🔑 Host tools</b> any time to approve bonus secrets.</p>")+notYou];
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
     return [key+"in"+editing+mySecret+!!g.opts?.bonus,`<section class="msg"><div class="eyebrow">Signed in</div>
       <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
@@ -441,7 +492,7 @@ function view(){
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer;
-    if(g.answer===D.me)return [key+"own",header()+msg("🎭","Your secret is out!",g.fooled?`<p class="said">You fooled ${g.fooled} tribute${g.fooled>1?"s":""}!</p><p>That's 150 points each, coming up on the scoreboard.</p>`:`<p>Nobody was fooled, ${esc(D.me)}. They know you too well.</p>`,"right")+reactBar(),"right"];
+    if(g.answer===D.me)return [key+"own",header()+(g.bonus?`<p class="note" style="text-align:center;margin:0">📝 Your bonus secret was played: +500 points!</p>`:"")+msg("🎭","Your secret is out!",g.fooled?`<p class="said">You fooled ${g.fooled} tribute${g.fooled>1?"s":""}!</p><p>That's 150 points each, coming up on the scoreboard.</p>`:`<p>Nobody was fooled, ${esc(D.me)}. They know you too well.</p>`,"right")+reactBar(),"right"];
     const right=(g.correct||[]).includes(D.me);
     return [key+right+mine,header()+(right
       ?msg("🗝️","You cracked it!",`<p class="said">It's ${esc(g.answer)}!</p>`,"right")
@@ -483,7 +534,7 @@ function render(){
   const es=$("#editsecret");if(es)es.onclick=()=>{editing=true;lastKey="";render();$("#secret")?.focus()};
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
-  countUp();effect(fx);
+  countUp();effect(fx);hostDraw();
   const ty=document.querySelector(".pstep.on .ln");
   if(ty){clearInterval(render.ty);const full=ty.dataset.type;let n=0;
     if(calm)ty.textContent=full;else render.ty=setInterval(()=>{n=Math.min(full.length,n+2);ty.innerHTML=esc(full.slice(0,n))+(n<full.length?"<i></i>":"");if(n>=full.length)clearInterval(render.ty)},28);
@@ -539,6 +590,7 @@ async function certificate(btn){
     FX(60);sfx("win");
   },"image/png");
 }
+setInterval(()=>{if(isHost()&&!hostOpen&&!document.hidden)hostLoad()},10000);
 poll();
 </script>
 </body>

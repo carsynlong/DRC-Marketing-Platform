@@ -9,7 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Special+Elite&family=Manrope:wght@500;700;800&display=swap">
 <style>
-/* The host's own phone: read the bonus secrets people wrote (and who wrote them), approve or skip each one. */
+/* The host's own phone: read the bonus secrets people wrote (anonymous: never who wrote them), approve or skip each one.
+   Opening this link also marks this phone as the host's: sign in as Carsyn on the game page and 🔑 Host tools appears there. */
 :root{--night:#0b0a14;--plum:#1b1328;--wax:#a3182b;--wax-hi:#d8393f;--gold:#d9b25f;--gold-hi:#f6dfa0;--parch:#efe2c4;--parch-ink:#2b1d12;
   --ink:#f4ecdb;--muted:#ab9fbe;--good:#86e0a8;--line:rgba(244,236,219,.14);color-scheme:dark}
 *{box-sizing:border-box}
@@ -39,6 +40,7 @@ button{font:inherit;cursor:pointer;border:0}
 <script>
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const k=new URLSearchParams(location.search).get("k")||"";
+try{if(k)localStorage.setItem("ds-hostkey",k)}catch(e){}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pad=n=>String(n).padStart(2,"0");
 let list=null,err="";
@@ -49,8 +51,8 @@ async function load(){
   }catch(e){err="No connection. Trying again…"}
   render();
 }
-async function decide(name,ok){
-  try{await fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"approve",k,name,ok})})}catch(e){}
+async function decide(id,ok){
+  try{await fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"approve",k,id,ok})})}catch(e){}
   load();
 }
 async function clearAll(){
@@ -62,12 +64,14 @@ function render(){
   const app=document.getElementById("app");
   const n=list?.filter(x=>x.status==="approved").length||0;
   app.innerHTML=`<div><div style="font-size:.75rem;letter-spacing:.18em;color:var(--muted);font-weight:800">HOST ONLY · KEEP THIS SCREEN TO YOURSELF</div><h1>Bonus secrets</h1></div>
-    <p>People write these on their phones while they wait. Approved ones play as a bonus round after the 8 secrets. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
+    <p>Anonymous: you only see the secret, never who wrote it. Approved ones play as a bonus round after the 8 secrets. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
+    <p>✅ This phone is now the host's phone. On the game page, sign in as <b>Carsyn</b> and tap <b>🔑 Host tools</b> to get back here.</p>
+    <a href="play" style="justify-self:start;color:var(--gold-hi);font-weight:800">→ Go to the game page</a>
     ${err?`<div class="bad">${esc(err)}</div>`:""}
     ${list&&!list.length?`<div class="empty">Nothing yet. This updates by itself.</div>`:""}
-    ${(list||[]).map(x=>`<div class="card ${x.status}"><div class="who"><img src="img/p${pad(NAMES.indexOf(x.name)+1)}.jpg" alt="">${esc(x.name)}<small>${{new:"new",approved:"approved",skipped:"skipped"}[x.status]}</small></div>
+    ${(list||[]).map((x,i)=>`<div class="card ${x.status}"><div class="who">🔏 Secret ${i+1}<small>${{new:"new",approved:"approved",skipped:"skipped"}[x.status]}</small></div>
       <div class="t">“${esc(x.text)}”</div>
-      <div class="row"><button class="ok" data-ok="${esc(x.name)}">✓ Approve</button><button class="no" data-no="${esc(x.name)}">Skip</button></div></div>`).join("")}
+      <div class="row"><button class="ok" data-ok="${esc(x.id)}">✓ Approve</button><button class="no" data-no="${esc(x.id)}">Skip</button></div></div>`).join("")}
     ${list?.length?`<button class="clear" id="clear">Throw them all away</button>`:""}`;
   app.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>decide(b.dataset.ok,true));
   app.querySelectorAll("[data-no]").forEach(b=>b.onclick=()=>decide(b.dataset.no,false));

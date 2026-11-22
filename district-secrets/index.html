@@ -312,6 +312,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 
 <script src="/qrcode.js"></script>
 <script src="/ambient.js"></script>
+<script src="/showtime.js"></script>
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
@@ -665,6 +666,12 @@ const cur=()=>Q[S.qi];
 function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 
+/* 🎤 walk-out introductions before the vault opens (showtime.js) */
+function showIntro(){
+  const who=active().map(p=>p.name);
+  if(!who.length||!window.Walkout)return newGame();
+  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",sound:()=>musicOn,onDone:newGame});
+}
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
@@ -943,7 +950,7 @@ function finalView(){
 /* ================= CONTROLS ================= */
 function primary(){
   ensureAudio();
-  if(S.phase==="lobby")return active().length>=2&&newGame();
+  if(S.phase==="lobby")return active().length>=2&&showIntro();
   if(S.phase==="roundcard"||S.phase==="bonuscard")return beginQuestion();
   if(S.phase==="ready")return (clearInterval(readyT),sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?afterLock():lock();
@@ -958,7 +965,7 @@ function wire(){
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",newGame);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("score",score);on("next",next);on("again",newGame);
+  on("go",showIntro);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
@@ -1064,6 +1071,9 @@ function restartGame(ask=true){
   post({action:"reset",total:BASE+40}).catch(()=>{});
   render();
 }
+/* 🏆 live leaderboard along the bottom during the game (showtime.js) */
+if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
+  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 </body>
 </html>

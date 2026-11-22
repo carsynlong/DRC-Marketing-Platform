@@ -254,6 +254,49 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .award img{width:64px;height:64px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
 .award .nm{font-family:var(--type);font-size:1.25rem}.award .why{font-size:.85rem;color:#6b5233;font-weight:700}
 @keyframes deal{from{transform:translateY(60px) rotate(-12deg);opacity:0}}
+/* ---------- extras switches in the lobby ---------- */
+.extras{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.extras button{padding:.4em .85em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:800;font-size:.85rem;opacity:.5}
+.extras button[aria-pressed="true"]{opacity:1;box-shadow:inset 0 0 0 2px var(--gold);background:rgba(217,178,95,.12)}
+.bonusnote{text-align:center;font-family:var(--type);color:var(--parch)}
+/* ---------- the Interrogation: lights down, a spotlight on whoever the room accused most ---------- */
+.interro{position:relative;display:grid;justify-items:center;align-content:center;gap:14px;text-align:center;min-height:76vh}
+.interro::before{content:"";position:fixed;inset:0;z-index:-1;background:rgba(0,0,0,.72);animation:dim .8s both}
+@keyframes dim{from{opacity:0}}
+.interro .cone{position:fixed;left:50%;top:-10vh;width:70vw;height:110vh;transform:translateX(-50%);z-index:-1;pointer-events:none;
+  background:conic-gradient(from 160deg at 50% 0%,transparent 0deg,rgba(255,240,190,.16) 14deg,rgba(255,240,190,.22) 20deg,rgba(255,240,190,.16) 26deg,transparent 40deg);animation:swing 1.4s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes swing{from{transform:translateX(-50%) rotate(-40deg);opacity:0}to{transform:translateX(-50%) rotate(0);opacity:1}}
+.hotseat{display:flex;gap:clamp(16px,4vw,50px);justify-content:center}
+.hotseat .s{display:grid;justify-items:center;gap:8px;animation:pop .7s .9s both cubic-bezier(.2,1.5,.4,1)}
+.hotseat img{width:clamp(150px,20vw,250px);height:clamp(150px,20vw,250px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold-hi),0 0 60px 20px rgba(255,240,190,.35);animation:flickr 2.4s 1.4s infinite}
+@keyframes flickr{0%,100%{filter:none}48%{filter:brightness(1.15)}50%{filter:brightness(.8)}52%{filter:brightness(1.1)}}
+.hotseat .nm{font-family:var(--deco);font-size:clamp(1.8rem,4vw,3rem);color:var(--gold-hi);text-shadow:0 3px 0 var(--wax-d)}
+.interro .charge{font-family:var(--type);font-size:clamp(1.2rem,2.6vw,2rem);color:var(--parch);max-width:40ch;animation:pop .6s 1.3s both}
+.interro .clock{font-family:var(--deco);font-size:clamp(3rem,7vw,5rem);color:#fff;text-shadow:0 0 30px rgba(255,90,60,.6)}
+.interro .clock.out{color:var(--bad);font-size:clamp(2rem,4vw,3rem)}
+/* ---------- Story time ---------- */
+.story{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(18px,3vw,44px);align-items:center;min-height:72vh}
+.story .mic{position:relative;justify-self:center}
+.story .mic img{width:clamp(200px,26vw,340px);height:clamp(200px,26vw,340px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--wax),0 20px 40px rgba(0,0,0,.6);animation:pop .7s both cubic-bezier(.2,1.4,.4,1)}
+.story .mic span{position:absolute;right:-6px;bottom:6px;font-size:clamp(3rem,5vw,4.4rem);animation:bob 1.2s ease-in-out infinite alternate}
+.story h1{font-family:var(--deco);font-size:clamp(2rem,4.6vw,3.6rem);color:var(--gold-hi);text-shadow:0 4px 0 var(--wax-d);margin:0}
+.story .about{font-family:var(--type);color:var(--parch);font-size:clamp(1rem,1.8vw,1.3rem);margin:0}
+.votes{display:grid;gap:10px;margin-top:6px}
+.vote{display:grid;grid-template-columns:2.4em 8em minmax(0,1fr) 2em;align-items:center;gap:10px;font-weight:800;font-size:1.1rem}
+.vote .e{font-size:2rem}.vote .bar{height:18px;border-radius:9px;background:linear-gradient(90deg,var(--wax),var(--gold));width:0;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.vote .c{text-align:right;font-variant-numeric:tabular-nums}
+.story .clock{font-family:var(--deco);font-size:2.2rem;color:var(--gold-hi)}
+/* ---------- bets on the reveal ---------- */
+.bets{display:grid;gap:4px;font-family:var(--type);font-size:clamp(.95rem,1.6vw,1.15rem);animation:pop .6s 1.8s both}
+.bets .lost{color:var(--bad)}.bets .won{color:var(--good)}
+.betcount{font-family:var(--type);color:var(--gold-hi)}
+.row .delta.neg{color:var(--bad)}
+/* ---------- host phone link ---------- */
+.modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(0,0,0,.7)}
+.modal .box{background:var(--parch);color:var(--parch-ink);border-radius:8px;padding:20px 24px;display:grid;gap:10px;justify-items:center;text-align:center;max-width:min(92vw,420px);box-shadow:0 20px 50px rgba(0,0,0,.6)}
+.modal .qr{width:220px;background:#fff;padding:6px;border-radius:4px}.modal .qr svg{display:block;width:100%;height:auto}
+.modal .u{font-family:var(--type);font-size:.85rem;overflow-wrap:anywhere}
+@media (max-width:860px){.story{grid-template-columns:1fr}}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -272,7 +315,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-1";
+const BUILD="ds-build-2026-11-22-2";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -286,6 +329,7 @@ const Q=[ /* the real fun facts the family sent in; edit wording here */
  {f:"I named my dog after a neighbor. Then the neighbor moved away.",a:"QUEEN MOTHER"},
 ];
 const DOUBLE=new Set([Q.length-1]);   // the last secret is worth double
+const BASE=Q.length;                  // bonus secrets written on phones tonight are added after these
 const pad=n=>String(n).padStart(2,"0");
 const AV=n=>`img/p${pad(NAMES.indexOf(n)+1)}.jpg`;   // small face
 const RV=n=>`img/r${pad(NAMES.indexOf(n)+1)}.jpg`;   // big selfie for the reveal
@@ -431,6 +475,9 @@ function sfx(kind){
     o.connect(g);g.connect(sfxBus);env(g,t,.004,.9,1.6);o.start(t);o.stop(t+1.8);setTimeout(()=>sfx("stamp"),380)}
   if(kind==="reveal"){noise(t,.25,.35,sfxBus,"bandpass",1400,1.5); // the seal cracks
     [64,67,71,76,79,83].forEach((m,k)=>osc("sine",hz(m+12),t+.25+k*.07,1.6,.07,sfxBus));[52,59,64].forEach(m=>osc("sawtooth",hz(m),t+.25,1.8,.035,sfxBus,1200,.2))}
+  if(kind==="spot"){noise(t,.12,.6,sfxBus,"lowpass",500);osc("sine",hz(36),t,1.2,.3,sfxBus);osc("sawtooth",hz(48),t+.05,1.6,.04,sfxBus,600,.3)}
+  if(kind==="roll"){const v=.05+(arguments[1]||0)*.18;noise(t,.07,v,sfxBus,"bandpass",1700+Math.random()*300,.9)}
+  if(kind==="mic"){[0,.09,.18].forEach((d,k)=>osc("sine",hz([79,84,88][k]),t+d,.5,.08,sfxBus));noise(t+.3,.6,.08,sfxBus,"bandpass",3000,.7)}
   if(kind==="pop"){osc("sine",hz(84+Math.random()*7|0),t,.15,.05,sfxBus)}
   if(kind==="go"){[76,83,88].forEach((m,k)=>osc("sine",hz(m),t+k*.06,1.1,.13,sfxBus))}
   if(kind==="gong"){osc("sine",hz(40),t,3,.35,sfxBus);osc("sine",hz(52),t,2.4,.14,sfxBus);osc("sine",hz(63.3),t,2,.06,sfxBus);noise(t,.6,.18,sfxBus,"bandpass",500,2)}
@@ -475,13 +522,15 @@ const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"appli
 function snapshot(){
   const inGame=S.phase!=="lobby"&&S.qi<Q.length;
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
-    locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs};
-  if(inGame&&(S.phase==="question"||S.phase==="reveal")){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
+    locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE};
+  if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
+  if(S.phase==="interro")g.hot=S.hot;
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
   if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
-  if(inGame&&["reveal","board","final"].includes(S.phase)){g.answer=Q[S.qi].a;g.correct=S.correct}
+  if(S.phase==="final")g.played=Q.length;
+  if(inGame&&["reveal","story","board","final"].includes(S.phase)){g.answer=Q[S.qi].a;g.correct=S.correct}
   if(inGame){let rank=0,prev=null;
-    g.scores=ranked().map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}return {name:p.name,score:p.score,delta:p.delta,streak:p.streak,rank,note:p.note||""}})}
+    g.scores=ranked().map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}return {name:p.name,score:p.score,delta:p.delta,streak:p.streak,rank,note:p.note||"",right:p.right||0,fooled:p.fooled||0,story:p.story||0}})}
   return JSON.stringify(g);
 }
 async function push(){
@@ -508,6 +557,7 @@ async function poll(){
     if(S.phase==="reveal")lateAnswers();
   }catch(e){}
   polling=false;
+  if(apiOk)pollX();
 }
 function maybePoll(){
   if(document.hidden)return;
@@ -516,6 +566,22 @@ function maybePoll(){
   if(every&&Date.now()-lastPoll>=every)poll();
 }
 const current=()=>answersQi===S.qi?answers:{};
+/* District Secrets extras: bets, story votes and bonus secrets (api/ds.js) */
+let dsx={bets:{},votes:{},approved:[],written:0,qi:-1},pollingX=false;
+const dsPost=body=>fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+async function pollX(){
+  if(pollingX)return;pollingX=true;
+  try{const r=await fetch(`/api/ds?op=tv&qi=${S.qi}`,{cache:"no-store"});if(!r.ok)throw 0;const d=await r.json();
+    const before=`${dsx.written}:${dsx.approved.length}`;dsx={...d,qi:S.qi};
+    if(S.phase==="lobby"&&before!==`${dsx.written}:${dsx.approved.length}`)render();
+    if(S.phase==="question")showBets();
+    if(S.phase==="story")showVotes();
+  }catch(e){}
+  pollingX=false;
+}
+const curX=()=>dsx.qi===S.qi?dsx:{bets:{},votes:{}};
+const bigBets=()=>Object.entries(curX().bets||{}).filter(([n,b])=>b!=="hunch"&&n!==cur().a).length;
+function showBets(){const el=$("#betcount");if(!el)return;const n=bigBets();el.textContent=n?`🎲 ${n} big bet${n>1?"s":""} on the table`:""}
 /* the guessers for this secret: everyone playing except the person it belongs to */
 const guessers=()=>active().filter(p=>p.name!==cur().a);
 function sealedCount(){const got=current();return guessers().filter(p=>got[p.name]!=null).length}
@@ -565,6 +631,7 @@ function awards(){
   add("🔮","Mind Reader","right",n=>`cracked ${n} secret${n>1?"s":""}`);
   add("🎭","Master of Disguise","fooled",n=>`fooled ${n} tribute${n>1?"s":""}`);
   add("🕵️","Most Suspicious","accused",n=>`accused ${n} time${n>1?"s":""}`);
+  add("🎤","Best Storyteller","story",n=>`${n} story vote${n>1?"s":""}`);
   return out;
 }
 function lateAnswers(){
@@ -587,20 +654,22 @@ function joinCard(){
 const SAVE="ds-host-game";
 let S,raf=0,readyT=0,typeT=0,shownIn=[],shownCount=-1,hostOpen=false;
 function freshState(){
-  return {phase:"lobby",secs:30,qi:0,elapsed:0,locked:false,correct:[],guesses:{},gid:0,
-    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,note:""}))};
+  return {phase:"lobby",secs:30,qi:0,elapsed:0,locked:false,correct:[],guesses:{},gid:0,extra:[],bonusDone:false,bets:{},votes:{},
+    opts:{interro:true,bets:true,story:true,bonus:true},
+    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,story:0,note:""}))};
 }
-function saved(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.players?.length===NAMES.length&&g.total===Q.length?g:null}catch(e){return null}}
-function save(){try{localStorage.setItem(SAVE,JSON.stringify({...S,total:Q.length}))}catch(e){}}
+function saved(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.players?.length===NAMES.length&&g.total===BASE?g:null}catch(e){return null}}
+function save(){try{localStorage.setItem(SAVE,JSON.stringify({...S,total:BASE}))}catch(e){}}
 const active=()=>S.players.filter(p=>p.on);
 const cur=()=>Q[S.qi];
 function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 
 function newGame(){
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.note=""});
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
-  post({action:"reset",total:Q.length}).catch(()=>{});
+  Q.length=BASE;S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
+  post({action:"reset",total:BASE+40}).catch(()=>{});dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
 }
 function beginQuestion(){
@@ -630,37 +699,79 @@ function drawTimer(){
   const f=$(".fuse i"),b=$(".fuse b");if(f){f.style.width=(frac*100).toFixed(2)+"%";b.style.left=(frac*100).toFixed(2)+"%"}
 }
 function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();poll()}
+/* after the guesses lock: the Interrogation (if it's on and anyone was accused), then the reveal */
+async function afterLock(){
+  if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
+  if(!S.opts?.interro)return reveal();
+  stopSong();await poll();
+  const t={};Object.values(current()).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
+  const max=Math.max(0,...Object.values(t));
+  if(!max)return reveal();
+  S.hot=Object.keys(t).filter(n=>t[n]===max).slice(0,2);S.hotN=max;S.hotAt=Date.now();
+  S.phase="interro";sfx("spot");render();
+}
+let drumT=0,clockT=0;
+function startClock(sel,secs,from,onOut){
+  clearInterval(clockT);
+  const tickC=()=>{const el=$(sel);if(!el)return clearInterval(clockT);const left=Math.max(0,Math.ceil(secs-(Date.now()-from)/1000));
+    if(left>0){el.textContent=left;el.classList.remove("out")}else{el.textContent="Time!";el.classList.add("out");clearInterval(clockT);onOut&&onOut()}};
+  tickC();clockT=setInterval(tickC,250);
+}
 async function reveal(){
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
-  stopSong();await poll();       // last look at the phones before opening the seal
-  fillAnswers();S.phase="reveal";sfx("reveal");render();setTimeout(()=>confetti(120),600);
+  stopSong();await poll();await pollX();      // last look at the phones before opening the seal
+  fillAnswers();S.bets={...(curX().bets||{})};S.phase="reveal";sfx("reveal");render();setTimeout(()=>confetti(120),600);
+}
+/* Story time: the secret's owner tells the story; phones rate it */
+function storyTime(){S.phase="story";S.storyAt=Date.now();stopSong();sfx("mic");render()}
+const VOTE=[["fire","🔥","Hot"],["lol","😂","Hilarious"],["wow","🤯","Mind-blown"]];
+function showVotes(){
+  const v=curX().votes||{},c={fire:0,lol:0,wow:0};Object.values(v).forEach(x=>{if(c[x]!=null)c[x]++});
+  const max=Math.max(1,...Object.values(c));
+  VOTE.forEach(([k])=>{const b=$(`.vote[data-v="${k}"] .bar`),n=$(`.vote[data-v="${k}"] .c`);if(b)b.style.width=(c[k]/max*100)+"%";if(n)n.textContent=c[k]});
+  const t=$("#votetotal");if(t){const n=Object.keys(v).length;t.textContent=n?`${n} vote${n>1?"s":""} in`:"Waiting for votes…"}
 }
 function score(){
+  if(S.phase==="story")S.votes={...(curX().votes||{})};else S.votes={};
   const name=cur().a,mult=DOUBLE.has(S.qi)?2:1,before=rankMap();
+  const storyVotes=Object.keys(S.votes).filter(n=>n!==name).length;
   const fooled=fooledList().length;
   // speed bonus: up to 500 for sealing a right guess the moment the secret appears
   const speed=n=>Math.round(500*Math.max(0,1-(S.seenAt?.[n]??S.secs)/S.secs)/10)*10*mult;
   S.players.forEach(p=>{
     p.note="";
     if(!p.on){p.delta=0;return}
-    if(p.name===name){p.delta=fooled*150*mult;p.score+=p.delta;p.fooled+=fooled;if(fooled)p.note=`🎭 Fooled ${fooled} · +${150*mult} each`;return}
-    if(S.correct.includes(p.name)){p.streak++;const sp=speed(p.name);p.delta=(1000+Math.min(p.streak-1,5)*100)*mult+sp;p.score+=p.delta;p.right++;if(sp)p.note=`⚡ Speed bonus +${sp}`}
-    else{p.delta=0;p.streak=0}
+    if(p.name===name){
+      const st=storyVotes*100*mult;p.delta=fooled*150*mult+st;p.score+=p.delta;p.fooled+=fooled;p.story=(p.story||0)+storyVotes;
+      p.note=[fooled?`🎭 Fooled ${fooled} · +${150*mult} each`:"",storyVotes?`🎤 ${storyVotes} story vote${storyVotes>1?"s":""} +${st}`:""].filter(Boolean).join(" · ");return}
+    const bet=S.opts?.bets?S.bets?.[p.name]:null;
+    if(S.correct.includes(p.name)){p.streak++;const sp=speed(p.name);let d=(1000+Math.min(p.streak-1,5)*100)*mult+sp;const notes=sp?[`⚡ Speed bonus +${sp}`]:[];
+      if(bet==="allin"){d*=2;notes.push("💀 All in paid off: double!")}else if(bet==="sure"){d+=500*mult;notes.push(`🎯 Sure bet +${500*mult}`)}
+      p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
+    else{p.streak=0;p.delta=0;
+      if(S.guesses?.[p.name]!=null&&(bet==="sure"||bet==="allin")){const loss=(bet==="allin"?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;const lost=-p.delta;p.note=(bet==="allin"?"💀 All in… and wrong":"🎯 Sure… and wrong")+(lost?` −${lost}`:" (no points to lose yet)")}}
   });
   accusations().forEach(([n,c])=>{const q=S.players.find(p=>p.name===n);if(q)q.accused+=c});
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
+  // last of the 8: bonus secrets written on phones tonight (approved on the host phone) become a bonus round
+  if(S.qi===Q.length-1&&S.opts?.bonus&&!S.bonusDone&&dsx.approved?.length){
+    S.extra=dsx.approved.map(x=>({f:x.text,a:x.name,bonus:true}));Q.push(...S.extra);S.bonusDone=true}
   S.phase=S.qi===Q.length-1?"final":"board";
   if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),3200)}else playSong("board");
   render();
 }
-function next(){S.qi++;beginQuestion()}
+function next(){S.qi++;if(Q[S.qi]?.bonus&&!Q[S.qi-1]?.bonus){S.phase="bonuscard";stopSong();sfx("gong");render();return}beginQuestion()}
 
 /* ================= VIEWS ================= */
 const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${musicOn}">${musicOn?"🔊 Music on":"🔇 Music off"}</button>`;
 function render(){
-  cancelAnimationFrame(raf);clearInterval(typeT);
-  const v={lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,reveal:revealView,board:boardView,final:finalView}[S.phase]||lobbyView;
+  cancelAnimationFrame(raf);clearInterval(typeT);clearInterval(clockT);
+  if(S.phase!=="interro"){clearInterval(drumT);drumT=0}
+  const v={lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
+  if(S.phase==="interro"){startClock(".interro .clock",15,S.hotAt||Date.now(),()=>{clearInterval(drumT);drumT=0;sfx("stamp")});
+    if(!drumT){let k=0;drumT=setInterval(()=>{if(++k>15000/90){clearInterval(drumT);return}sfx("roll",k/(15000/90))},90)}}
+  if(S.phase==="story"){startClock(".story .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
   if(S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".sus .bar").forEach(b=>b.style.width=b.dataset.w)));
   if(S.phase==="board"||S.phase==="final")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w)));
@@ -678,7 +789,7 @@ function lobbyView(){
       <h1 class="title">District Secrets</h1>
       <p class="tagline">Twelve tributes. ${Q.length} secrets. Every single one is true.</p>
       ${joinCard()}
-      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
+      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Feeling lucky? Place a <b>🎲 sponsor bet</b>. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
     </div>
     <div class="roster">
       <div class="count" aria-label="${n} of ${on.length} signed in"><span class="n${bump?" bump":""}">${n}</span><span class="of">/ ${on.length}</span><span class="lbl">tributes signed in</span></div>
@@ -687,6 +798,9 @@ function lobbyView(){
         return `<button class="p${ph?" in":""}${ph&&fresh.includes(p.name)?" new":""}${p.on?"":" off"}" data-tog="${i}" aria-pressed="${p.on}" title="Tap to ${p.on?"sit them out":"add them back"}">
           ${ph?'<span class="seal" aria-hidden="true">🔏</span>':""}<img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${!p.on?"sitting out":ph?"signed in":"waiting"}</small></button>`}).join("")}</div>
       <div class="tiny" style="text-align:center">Host: tap someone to sit them out. No phone? They can whisper their guess to the host.</div>
+      <div class="eyebrow" style="text-align:center">Extras · tap to switch on or off</div>
+      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
+      ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved`:"Phones can write a bonus secret while they wait"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
       <div class="settings"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
@@ -706,9 +820,37 @@ const giftTag=()=>DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double
 function readyView(){
   return `<section class="center"><div class="eyebrow">Secret ${S.qi+1} of ${Q.length}</div>${giftTag()}${dialHTML(S.count)}<div class="quip">Unlocking the next file…</div></section>`;
 }
+function bonusView(){
+  return `<section class="center">${EMBLEM}<div class="num">LATE ADDITIONS TO THE ARCHIVE</div><h1>Bonus Round</h1>
+    <p>${Q.length-BASE} fresh secret${Q.length-BASE>1?"s":""}, written tonight by someone in this room. Even the host hasn't heard them out loud.</p>
+    <button class="btn wax" id="begin">Open the new files</button><div class="tiny">Space to begin</div></section>`;
+}
+function interroView(){
+  const names=S.hot||[],n=S.hotN||0,who=names.map(esc).join(" and ");
+  return `<section class="interro"><div class="cone" aria-hidden="true"></div>
+    <div class="eyebrow">🔦 The Interrogation</div>
+    <div class="hotseat">${names.map(nm=>`<div class="s"><img src="${RV(nm)}" alt=""><div class="nm">${esc(nm)}</div></div>`).join("")}</div>
+    <div class="charge">${who}. ${n} tribute${n>1?"s":""} say${n>1?"":"s"} it's ${names.length>1?"one of you":"you"}.<br>You have 15 seconds to defend yourself.</div>
+    <div class="clock">15</div>
+    <div class="ctl" style="justify-content:center"><span class="hint tiny" style="margin:0">Space: open the seal</span><button class="btn wax" id="reveal">Open the seal</button></div></section>`;
+}
+function storyView(){
+  const x=cur();
+  return `<section class="story">
+    <div class="mic"><img src="${RV(x.a)}" alt=""><span aria-hidden="true">🎤</span></div>
+    <div style="display:grid;gap:12px">
+      <div class="eyebrow">Story time</div>
+      <h1>${esc(x.a)} has the floor</h1>
+      <p class="about">The story behind “${esc(x.f)}”</p>
+      <div class="clock">30</div>
+      <div class="votes">${VOTE.map(([k,e,l])=>`<div class="vote" data-v="${k}"><span class="e">${e}</span><span>${l}</span><div><div class="bar"></div></div><span class="c">0</span></div>`).join("")}</div>
+      <div class="tiny" id="votetotal">Rate the story on your phone</div>
+      <div class="ctl"><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>
+    </div></section>`;
+}
 function questionView(){
   const x=cur(),tot=guessers().length;
-  return `<div class="top"><div><div class="eyebrow">District Secrets</div><div class="qnum">Secret ${S.qi+1} of ${Q.length}</div></div>${giftTag()}
+  return `<div class="top"><div><div class="eyebrow">${x.bonus?"📝 Bonus secret":"District Secrets"}</div><div class="qnum">Secret ${S.qi+1} of ${Q.length}</div></div>${giftTag()}
     <div class="timer" aria-label="Seconds left"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38" fill="#a3182b"/><circle cx="42" cy="42" r="32" fill="none" stroke="#5e0a17" stroke-width="3"/><circle cx="42" cy="42" r="38" fill="none" stroke="#d9b25f" stroke-width="2" stroke-dasharray="3 5"/></svg><div class="n">${S.secs}</div></div></div>
   <article class="file${S.locked?" closed":""}">
     <div class="hdr"><span>FILE No. ${pad(S.qi+1)}</span><span>CAPITOL ARCHIVES · DISTRICT RECORDS</span></div>
@@ -720,9 +862,10 @@ function questionView(){
   </article>
   <div class="sealedrow"><div class="envs" aria-hidden="true">${ENV.repeat(tot)}</div>
     <div class="sealedtxt" id="sealedtxt">${sealedLine(sealedCount(),tot)}</div>
+    ${S.opts?.bets?`<div class="betcount" id="betcount"></div>`:""}
     <div class="tiny">${S.locked?"Time! Guesses are locked.":"📱 Type your guess on your phone. It stays secret until the reveal."}</div></div>
-  <div class="ctl"><span class="hint tiny">${S.locked?"Space: open the seal":"Space: lock guesses"}</span>
-    ${S.locked?`<button class="btn wax" id="reveal">Open the seal</button>`:`<button class="btn ghost" id="lock">Lock guesses</button><button class="btn wax" id="reveal">Reveal now</button>`}</div>`;
+  <div class="ctl"><span class="hint tiny">${S.locked?(S.opts?.interro?"Space: the Interrogation":"Space: open the seal"):"Space: lock guesses"}</span>
+    ${S.locked?`<button class="btn wax" id="unseal">${S.opts?.interro?"🔦 Interrogate":"Open the seal"}</button>`:`<button class="btn ghost" id="lock">Lock guesses</button><button class="btn wax" id="unseal">Reveal now</button>`}</div>`;
 }
 function typeFact(){ // the secret types itself out on the file
   const el=$(".file .fact");if(!el)return;const f=`“${cur().f}”`;
@@ -745,11 +888,20 @@ function revealView(){
       ${fooledList().length?`<div class="fooled">🎭 ${esc(x.a)} fooled ${fooledList().length} tribute${fooledList().length>1?"s":""}!</div>`:""}
       <div class="cracked"><h3>${line}</h3>
         ${right.length?`<div class="faces">${right.map((n,i)=>`<div class="face" style="animation-delay:${1.1+i*.12}s"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
+      ${betsHTML()}
       ${suspectsHTML(x.a)}
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>{const own=p.name===x.a;
         return `<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled":""}>${esc(p.name)}<span>${own?"their secret":g[p.name]!=null?"guessed “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`}).join("")}</div></div>`:""}
     </div></section>
-  <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`;
+  <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: ${S.opts?.story?"story time":"scores"}</span>${S.opts?.story?`<button class="btn" id="story">🎤 Story time</button>`:`<button class="btn" id="score">Show scores</button>`}</div>`;
+}
+/* who bet big on this secret, and how it went */
+function betsHTML(){
+  if(!S.opts?.bets)return"";const a=cur().a,out=[];
+  Object.entries(S.bets||{}).forEach(([n,b])=>{if(n===a||b==="hunch"||S.guesses?.[n]==null||!S.players.find(p=>p.name===n)?.on)return;const ok=S.correct.includes(n);
+    out.push(b==="allin"?(ok?`<div class="won">💀 ${esc(n)} went all in… and doubled it!</div>`:`<div class="lost">💀 ${esc(n)} went all in… and lost it.</div>`)
+      :(ok?`<div class="won">🎯 ${esc(n)}'s sure bet paid off</div>`:`<div class="lost">🎯 ${esc(n)} was sure… and wrong</div>`))});
+  return out.length?`<div class="bets">${out.slice(0,5).join("")}</div>`:"";
 }
 function suspectsHTML(real){
   const acc=accusations().slice(0,5);if(!acc.length)return"";const max=acc[0][1];
@@ -760,7 +912,7 @@ function rows(){
   return r.map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}
     return `<div class="row" style="--i:${i}"><div class="fill" data-w="${(p.score/max*100).toFixed(1)}%"></div><div class="rk">${rank}</div><img class="av" src="${AV(p.name)}" alt="">
       <div class="nm">${esc(p.name)}${p.move>0?`<span class="mv up">▲${p.move}</span>`:p.move<0?`<span class="mv dn">▼${-p.move}</span>`:""}${p.streak>1?`<span class="streak">🔥 ${p.streak} in a row</span>`:""}</div>
-      <div class="pts">${p.score.toLocaleString()}${p.delta?`<span class="delta">+${p.delta.toLocaleString()}</span>`:""}</div></div>`}).join("");
+      <div class="pts">${p.score.toLocaleString()}${p.delta>0?`<span class="delta">+${p.delta.toLocaleString()}</span>`:p.delta<0?`<span class="delta neg">−${(-p.delta).toLocaleString()}</span>`:""}</div></div>`}).join("");
 }
 function quip(){
   const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta).length;
@@ -773,7 +925,7 @@ function boardView(){
   return `<div class="top"><div><div class="eyebrow">After secret ${S.qi+1} of ${Q.length}</div><h2 class="qnum">The Capitol Ledger</h2></div>${sndBtn()}</div>
   <div class="quip" style="text-align:center">${quip()}</div>
   <div class="ledger">${rows()}</div>
-  <div class="ctl"><span class="hint tiny">Space: next secret</span><button class="btn wax" id="next">Next secret</button></div>`;
+  <div class="ctl"><span class="hint tiny">Space: next secret</span><button class="btn wax" id="next">${Q[S.qi+1]?.bonus&&!cur().bonus?"📝 On to the bonus round":"Next secret"}</button></div>`;
 }
 function finalView(){
   const r=ranked(),top=r[0]?.score??0,tied=r.filter(p=>p.score===top&&top>0);
@@ -792,18 +944,21 @@ function finalView(){
 function primary(){
   ensureAudio();
   if(S.phase==="lobby")return active().length>=2&&newGame();
-  if(S.phase==="roundcard")return beginQuestion();
+  if(S.phase==="roundcard"||S.phase==="bonuscard")return beginQuestion();
   if(S.phase==="ready")return (clearInterval(readyT),sfx("go"),startQuestion());
-  if(S.phase==="question")return S.locked?reveal():lock();
-  if(S.phase==="reveal")return score();
+  if(S.phase==="question")return S.locked?afterLock():lock();
+  if(S.phase==="interro")return reveal();
+  if(S.phase==="reveal")return S.opts?.story?storyTime():score();
+  if(S.phase==="story")return score();
   if(S.phase==="board")return next();
 }
 function wire(){
   document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const p=S.players[+b.dataset.tog];p.on=!p.on;sfx("click");render()});
   document.querySelectorAll("[data-secs]").forEach(b=>b.onclick=()=>{S.secs=+b.dataset.secs;render()});
+  document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",newGame);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);on("again",newGame);
+  on("go",newGame);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
@@ -819,7 +974,13 @@ document.addEventListener("keydown",e=>{
 });
 /* a TV reload mid-question picks up with the guesses locked */
 S=saved()||freshState();
+S.opts=S.opts||freshState().opts;S.extra=S.extra||[];S.players.forEach(p=>p.story=p.story||0);
+if(S.extra.length)Q.push(...S.extra);               // a reload mid bonus round keeps the bonus secrets
+if(S.phase==="interro")S.phase="question";
 if(S.phase==="question")S.locked=true;
+/* the host phone (approving bonus secrets) proves itself with this key */
+S.hostKey=S.hostKey||(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):Math.random().toString(36).slice(2)+Date.now().toString(36));
+dsPost({op:"hostkey",k:S.hostKey}).catch(()=>{});
 if(S.phase==="ready")S.phase="roundcard";
 render();
 setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
@@ -874,6 +1035,7 @@ setInterval(async()=>{
     x.onmouseenter=()=>x.style.background="rgba(255,255,255,.08)";x.onmouseleave=()=>x.style.background="transparent";
     x.onclick=()=>{show(false);fn()};m.appendChild(x)};
   const show=on=>m.style.display=on?"grid":"none";
+  item("📱 Host phone: approve bonus secrets",hostPhone);
   item("↺ Restart from the beginning",restartGame);
   item("📱 Clear phone names",async()=>{if(!confirm("Clear every phone's name? Everyone will need to tap their name again."))return;
     try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
@@ -882,14 +1044,24 @@ setInterval(async()=>{
   document.addEventListener("click",e=>{if(!m.contains(e.target)&&e.target!==b)show(false)});
   document.body.appendChild(b);document.body.appendChild(m);
 })();
+// A QR code for the host's own phone: it lists the bonus secrets people wrote, with who wrote them, to approve or skip.
+function hostPhone(){
+  const url=`${location.origin}/district-secrets/host?k=${S.hostKey}`;dsPost({op:"hostkey",k:S.hostKey}).catch(()=>{});
+  let qr="";try{const q=qrcode(0,"M");q.addData(url);q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
+  const m=document.createElement("div");m.className="modal";
+  m.innerHTML=`<div class="box"><div class="eyebrow" style="color:#6b5233">Host only</div><h2 style="margin:0">Scan with your phone</h2><div class="qr">${qr}</div>
+    <div class="u">${esc(url)}</div><div class="tiny" style="color:#6b5233">Approve or skip the bonus secrets people wrote. Close this before anyone else scans it.</div><button class="btn wax">Close</button></div>`;
+  m.onclick=e=>{if(e.target===m||e.target.tagName==="BUTTON")m.remove()};document.body.appendChild(m);
+}
 // Back to the lobby with a clean slate. Phones keep their names and follow along.
 function restartGame(ask=true){
   if(ask&&!confirm("Restart from the beginning? This ends the current game and clears the scores."))return;
   clearInterval(readyT);clearInterval(typeT);cancelAnimationFrame(raf);stopSong();
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0});
-  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now()});
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.note=""});
+  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now(),extra:[],bonusDone:false,bets:{},votes:{}});Q.length=BASE;
+  dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   answers={};answersQi=-1;counted=null;hostOpen=false;
-  post({action:"reset",total:Q.length}).catch(()=>{});
+  post({action:"reset",total:BASE+40}).catch(()=>{});
   render();
 }
 </script>

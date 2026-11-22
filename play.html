@@ -107,6 +107,12 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .reacts .lbl{grid-column:1/-1;text-align:center;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
 .reacts button{font-size:1.9rem;min-height:56px;border-radius:12px;background:rgba(255,255,255,.05)}
 .reacts button:active{background:rgba(232,176,75,.25)}
+.mgplay{flex:1;display:grid;grid-template-rows:auto auto 1fr;gap:10px;justify-items:center;text-align:center}
+.mgn{font-family:var(--display);font-size:clamp(3.5rem,18vw,6rem);color:var(--gold);line-height:1;text-shadow:0 4px 0 var(--red-d)}
+.mgbtn{width:100%;min-height:46dvh;border-radius:28px;background:radial-gradient(circle at 50% 40%,#e0453a,#8b1a14);color:#fff;font-family:var(--display);font-size:clamp(3rem,16vw,5rem);
+  box-shadow:0 10px 0 #5e0f0b,0 0 0 4px var(--gold);touch-action:manipulation;-webkit-user-select:none;user-select:none;display:grid;place-content:center}
+.mgbtn small{display:block;font-family:var(--body);font-size:1rem;opacity:.8}
+.mgbtn:active{transform:translateY(6px);box-shadow:0 4px 0 #5e0f0b,0 0 0 4px var(--gold)}
 .tip{min-height:2.6em;text-align:center;color:var(--gold);font-weight:800;font-size:.95rem;max-width:30ch;margin:0 auto;transition:opacity .4s}
 .tiphint{text-align:center;color:var(--muted);font-size:.8rem;margin:0}
 .switch{display:block;margin:4px auto 0;background:transparent;color:var(--ink);font-weight:800;font-size:1rem;padding:.75em 1.3em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);min-height:52px;animation:rise .5s .4s both}
@@ -289,6 +295,33 @@ function countUp(){
     (function step(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(a+(b-a)*e).toLocaleString();if(k<1)requestAnimationFrame(step)})(t0);
   });
 }
+/* ---------- mini-games: tap race and tree climb ---------- */
+const MG={race:{icon:"🏃",title:"Run to the Cornucopia!",how:"When the TV says GO, tap the big button as fast as you can!"},
+          climb:{icon:"🌲",title:"Climb the Tree!",how:"When the TV says GO, shake your phone as hard as you can!"}};
+let mg={id:null,n:0,sent:0,motion:false},mgT=0,lastMag=0,lastShake=0;
+function mgBump(){if(D.game?.mini?.stage!=="live")return;mg.n++;const el=$("#mgn");if(el){el.textContent=mg.n;el.animate([{transform:"scale(1.25)"},{transform:"scale(1)"}],{duration:120})}buzz(8)}
+function onMotion(e){const a=e.accelerationIncludingGravity||e.acceleration;if(!a)return;const m=Math.hypot(a.x||0,a.y||0,a.z||0),now=Date.now();
+  if(Math.abs(m-lastMag)>11&&now-lastShake>150){lastShake=now;mgBump()}lastMag=m}
+async function enableShake(){
+  try{if(typeof DeviceMotionEvent!=="undefined"&&DeviceMotionEvent.requestPermission){const r=await DeviceMotionEvent.requestPermission();if(r!=="granted")throw 0}
+    if(!mg.motion){addEventListener("devicemotion",onMotion);mg.motion=true}toast("✅ Shaking is on. Get ready!")}catch(e){toast("No shaking on this phone: just tap the button instead!")}
+  lastKey="";render()}
+function miniScreen(g,key){
+  const m=g.mini||{},info=MG[m.kind]||MG.race;
+  if(mg.id!==m.id){mg={id:m.id,n:0,sent:0,motion:mg.motion}}
+  if(m.stage==="intro")return [key+"intro"+mg.motion,header()+`<section class="msg"><div class="icon">${info.icon}</div><div class="eyebrow">Mini-game · bonus points</div><h1>${info.title}</h1><p>${info.how}</p>
+      ${m.kind==="climb"?(mg.motion?`<p class="said">✅ Shaking is on</p>`:`<button class="btn" id="shakeon">Allow shaking 📳</button>`):""}<p>Top 3 win +500, +300 and +200!</p></section>`,"gift"];
+  if(m.stage==="count")return [key+"count"+m.count,header()+msg("",`<span class="big">${m.count}</span>`,`<p>${info.title}</p>`,"ready")];
+  if(m.stage==="live")return [key+"live",header()+`<section class="mgplay"><div class="eyebrow">${info.title}</div><div class="mgn" id="mgn">${mg.n}</div>
+      <button class="mgbtn" id="mgtap">${m.kind==="climb"?"SHAKE!<small>or tap here</small>":"TAP!"}</button></section>`];
+  if(m.stage==="tally")return [key+"tally",header()+msg("💥","Time!",`<p class="said">You did ${mg.n}!</p><p>Eyes on the TV…</p>`,"late")];
+  const all=m.all||[],i=all.findIndex(([n])=>n===D.me),bonus=[500,300,200][i];
+  return [key+"done",header()+msg(i===0?"🏆":i>0&&i<3?"🥇":"🏅",i<0?"No score":`You came #${i+1}!`,`<p class="said">${i>=0?`${all[i][1]} ${m.kind==="climb"?"shakes":"taps"}`:""}${bonus?` · <b style="color:var(--good)">+${bonus} points</b>`:""}</p><p>Eyes on the TV.</p>`,bonus?"right":"")+reactBar(),bonus?"points":""];
+}
+// send the count to the TV a few times a second while the race is on
+setInterval(()=>{const m=D.game?.mini;if(D.game?.phase!=="mini"||!m||m.id!==mg.id||(m.stage!=="live"&&m.stage!=="tally")||mg.n===mg.sent)return;
+  const n=mg.n;post("/api/mini",{name:myName,id:m.id,n}).then(()=>{mg.sent=Math.max(mg.sent,n)}).catch(()=>{})},300);
+
 /* arena tips that rotate while you wait */
 const TIPS=["Sponsors love a confident tribute.","Never eat berries you can't name.","Tracker jackers hate being swatted. Swat them anyway.",
   "Find water first. Then find the cocoa.","The President is watching. Smile.","Camouflage tip: wear the ugly sweater.",
@@ -350,7 +383,10 @@ function view(){
   if(g.phase==="lobby")return [key+playing, header()+(playing
     ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div><div class="eyebrow" style="margin-top:4px">Training score</div><div class="train"><span data-from="1" data-to="${Ambient.training(D.me)}">${Ambient.training(D.me)}</span><small>/ 12</small></div></div><p>You're in! Eyes on the TV. The Games begin soon.</p><p class="tiphint">🪂 While you wait: tap the care packages, swat the wasps, catch the bird!</p></section>`
     :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+(playing?reactBar():"")+soundBar()+notYou,playing?"reap":""];
+  if(!playing&&g.tb)return [key+"tbwatch",header()+msg("⚔️","Showdown!","<p>It's a tie at the top. Watch the TV and cheer for your favorite!</p>")+reactBar()];
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
+  if(g.phase==="tbcard")return [key,header()+msg("⚔️","You're in the showdown!","<p>One more face. The fastest right answer wins the Games. Get ready to type!</p>"),"gift"];
+  if(g.phase==="mini")return miniScreen(g,key);
 
   const gift=g.feast?`<span class="gift">🍗 Triple points</span>`:g.double?`<span class="gift">🎁 Double points</span>`:"";
   const faceNo=`<div class="eyebrow">Face ${g.qi+1} of ${g.total}</div>`;
@@ -405,11 +441,13 @@ function render(){
   const f=$("#typeit");if(f)f.onsubmit=e=>{e.preventDefault();const i=$("#guess");i.blur();answer(i.value)};
   const l=$("#leave");if(l)l.onclick=leave;
   document.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>react(b.dataset.react,b));
+  const tap=$("#mgtap");if(tap)tap.onpointerdown=e=>{e.preventDefault();mgBump()};
+  const so=$("#shakeon");if(so)so.onclick=enableShake;
   const sb=$("#snd");if(sb)sb.onclick=()=>{PFX.toggle("sound");lastKey="";render()};
   const mb=$("#mus");if(mb)mb.onclick=()=>{PFX.toggle("music");lastKey="";render()};
   const ph=D.game?.phase;PFX.music(!D.me?null:ph==="lobby"?"jingle":ph==="board"||ph==="final"?"deck":null);
   countUp(); effect(fx);
-  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name]");
+  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name],#mgtap");
   if(!D.me||asking||!D.game){Ambient.set("off");if(asking)Ambient.clear()}
   else Ambient.set("full",{tap:true,sound:k=>PFX.sfx(k),burst:()=>FX(30,"mid"),coin:addCoin,max:3,every:[2000,3400]});
   startTips();

@@ -172,6 +172,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 
 <script src="qrcode.js"></script>
 <script src="sync.js"></script>
+<script src="minigames.js"></script>
 <script>
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
@@ -381,7 +382,7 @@ const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 /* ================= GAME ================= */
 function newGame(){
-  Sync.reset();S.mode="type";S.players.forEach(p=>{if(p.name===HOST)p.on=false});
+  Sync.reset();Party.reset();S.mode="type";S.players.forEach(p=>{if(p.name===HOST)p.on=false});
   // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
   S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
@@ -395,7 +396,7 @@ function roundCardOrQuestion(){
 let readyT=0;
 function beginQuestion(){S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
-function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};playSong("count");render();
+function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const giftTag=()=>S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
@@ -439,34 +440,39 @@ function drawTimer(){
 function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
 function reveal(){
   Sync.fillAnswers();
-  if(S.mode==="type")S.correct=active().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
+  if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 function score(){
+  if(S.rounds[S.qi]?.tb)return Party.scoreTiebreak();
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
     if(S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
     else{p.delta=0;p.streak=0}
   });
+  Party.scored();
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
+  if(S.phase==="final"&&Party.tie())return;   // tied at the top: showdown first
   if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("board");
   render();
 }
-function next(){S.qi++;roundCardOrQuestion();}
+function next(){S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();}
 
 /* ---------- views ---------- */
 function render(){
   cancelAnimationFrame(raf);
   const app=$("#app");
-  app.innerHTML=S.phase==="lobby"?lobbyView():S.phase==="ready"?readyView():S.phase==="roundcard"?roundView():(S.phase==="question"||S.phase==="reveal")?questionView():S.phase==="board"?boardView():finalView();
+  app.innerHTML=S.phase==="lobby"?lobbyView():S.phase==="ready"?readyView():S.phase==="roundcard"?roundView():(S.phase==="question"||S.phase==="reveal")?questionView():S.phase==="board"?boardView():(S.phase==="mini"||S.phase==="tbcard")?Party.view():finalView();
   wire();
+  if(S.phase==="mini"||S.phase==="tbcard")Party.after();
   if(S.phase==="question"){setZoom(S.elapsed/S.secs);drawTimer();if(!S.locked)tick(performance.now())}
   if(S.phase==="reveal")requestAnimationFrame(()=>$(".flash")?.classList.add("go"));
   if(S.phase==="board"||S.phase==="final")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w)));
 }
 const active=()=>S.players.filter(p=>p.on);
+const answering=()=>S.tb?active().filter(p=>S.tb.includes(p.name)):active(); // the showdown limits who answers
 const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${S.sound}">${S.sound?"🔊 Music on":"🔇 Music off"}</button>`;
 
 function lobbyView(){
@@ -514,7 +520,7 @@ function questionView(){
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
 }
 function typedView(x,rev){
-  const boxes=active().map(p=>{const own=false,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
+  const boxes=answering().map(p=>{const own=false,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
     const cls=rev?(own?"own":ok?"ok":"no"):"";
     return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
       ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
@@ -562,6 +568,7 @@ function finalView(){
 /* ---------- controls ---------- */
 function primary(){
   ensureAudio();
+  if(S.phase==="mini"||S.phase==="tbcard")return Party.primary();
   if(S.phase==="lobby")return active().length&&newGame();
   if(S.phase==="roundcard")return beginQuestion();
   if(S.phase==="ready")return (sfx("go"),startQuestion());

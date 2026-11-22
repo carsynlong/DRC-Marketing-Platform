@@ -20,7 +20,9 @@ const Sync = (() => {
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
     const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, // the host can't sign in as a player
-      playing: active().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
+      playing: answering().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
+      tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
+        results: S.mini.results, all: S.mini.all } : undefined,
       feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)) };
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
     if (inGame && ["reveal", "board", "final"].includes(S.phase)) { g.answer = Q[r.qi].a; g.correct = S.correct; }
@@ -59,7 +61,10 @@ const Sync = (() => {
       // (The host can still tap them to sit out. Skipped on the TV's first look after loading.)
       if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (p.name !== HOST && phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
       firstPoll = false;
-      if (d.qi != null && d.qi === S.qi) { answers = d.answers; answersQi = d.qi; }
+      if (d.qi != null && d.qi === S.qi) {
+        if (S.phase === "question") { S.ansAt = S.ansAt || {}; for (const n in d.answers) if (S.ansAt[n] == null && S.qStart) S.ansAt[n] = Date.now() - S.qStart; }
+        answers = d.answers; answersQi = d.qi;
+      }
       if (S.phase === "lobby" && before !== phones.join("|")) render();
       if (S.phase === "question") showCount();
       if (S.phase === "reveal") lateAnswers();
@@ -76,7 +81,7 @@ const Sync = (() => {
   }
 
   /* ---- answer counts on the TV ---- */
-  const phonePlayers = () => active().filter(p => hasPhone(p.name));
+  const phonePlayers = () => answering().filter(p => hasPhone(p.name));
   const current = () => (answersQi === S.qi ? answers : {});
   function countText() {
     const ph = phonePlayers();
@@ -111,7 +116,7 @@ const Sync = (() => {
     let changed = false;
     names.forEach(n => {
       const p = S.players.find(p => p.name === n), v = got[n];
-      if (!p || !p.on || v == null) return;
+      if (!p || !answering().includes(p) || v == null) return;
       if (S.mode === "type") {
         S.typed[n] = v;
         if (counted && matches(v, a) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
@@ -143,7 +148,7 @@ const Sync = (() => {
     if (top < reactSeen) reactSeen = 0;                    // a new game wiped the log
     const fresh = items.filter(x => x.id > reactSeen).sort((a, b) => a.id - b.id).slice(-10);
     reactSeen = Math.max(reactSeen, top);
-    fresh.forEach((x, i) => setTimeout(() => burst(x.name, x.e), i * 260));
+    fresh.forEach((x, i) => { try { Party.emoji(x.name); } catch (e) {} setTimeout(() => burst(x.name, x.e), i * 260); });
   }
   function burst(who, e) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;

@@ -136,7 +136,7 @@
       const list = Object.entries(d.coins || {}).map(([n, c]) => [n, +c]).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]);
       if (list.length) champ = `<div class="fx-champ">🪙 Capitol Coin Champion: <b>${esc(list[0][0])}</b> with ${list[0][1]} coin${list[0][1] > 1 ? "s" : ""}${list[1] ? ` · runner-up ${esc(list[1][0])} (${list[1][1]})` : ""}</div>`;
     } catch (e) {}
-    box.innerHTML = champ + (fallen ? `<div class="eyebrow">🕯️ Fallen tributes: the faces nobody guessed</div><div class="fx-fallen">${fallen}</div>` : "");
+    box.innerHTML = champ + (typeof Party !== "undefined" ? Party.awardsHTML() : "") + (fallen ? `<div class="eyebrow">🕯️ Fallen tributes: the faces nobody guessed</div><div class="fx-fallen">${fallen}</div>` : "");
     const pod = document.querySelector(".podium"); if (S.phase === "final" && pod && box.innerHTML) pod.after(box);
   }
 

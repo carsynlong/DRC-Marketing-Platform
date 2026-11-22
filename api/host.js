@@ -13,7 +13,8 @@ export default async function handler(req, res) {
     const answers = Number.isInteger(qi) ? await hash(`${p}answers:${qi}`) : {};
     const coins = req.query.coins ? await hash(p + "coins") : undefined;
     const react = req.query.react ? await redis.lrange(p + "reactlog", 0, 59) : undefined;   // recent emoji bursts (District Secrets)
-    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, react });
+    const mini = req.query.mini ? await hash(p + "mini") : undefined;     // tap race / tree climb counts (Who's That Tribute)
+    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, react, mini });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });
 
@@ -29,6 +30,10 @@ export default async function handler(req, res) {
   if (action === "reset") {
     const total = Math.min(Math.max(Number(req.body.total) || 0, 1), 100);
     await redis.del(p + "coins", p + "reactlog", ...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
+    return reply(res, 200, { ok: true });
+  }
+  if (action === "miniReset") {
+    await redis.del(p + "mini");
     return reply(res, 200, { ok: true });
   }
   if (action === "clearPlayers") {

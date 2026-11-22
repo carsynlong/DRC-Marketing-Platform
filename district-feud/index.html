@@ -565,6 +565,7 @@ function startGame(){
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
   if(!window.Rules)return startIntro();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
+  stopSong();   // no music while the rules are read out loud
   Rules.run({theme:"feud",title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
     ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
     ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone.`],

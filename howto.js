@@ -65,7 +65,7 @@ window.HowTo = (() => {
   const CSS = `
 #howto{position:fixed;inset:0;z-index:2147483000;overflow-y:auto;-webkit-overflow-scrolling:touch;color:var(--ht-ink);
   font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 50% 0%,var(--ht-bg1),var(--ht-bg2) 70%);
-  padding:max(18px,env(safe-area-inset-top)) 16px calc(100px + env(safe-area-inset-bottom));box-sizing:border-box;animation:ht-in .45s cubic-bezier(.2,1.2,.4,1) both}
+  padding:max(18px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom));box-sizing:border-box;animation:ht-in .45s cubic-bezier(.2,1.2,.4,1) both}
 #howto *{box-sizing:border-box}
 #howto .ht-wrap{max-width:520px;margin:0 auto;display:grid;gap:14px}
 #howto .ht-top{text-align:center}
@@ -83,7 +83,8 @@ window.HowTo = (() => {
 #howto li b{display:block;font-size:1.08rem;line-height:1.2}
 #howto li span{display:block;font-size:.92rem;line-height:1.3;opacity:.82}
 #howto .ht-end{text-align:center;font-weight:800;font-size:1.1rem;color:var(--ht-accent)}
-#howto .ht-bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--ht-bg2) 35%)}
+/* the button sits at the end of the list, after the last card (not floating over the cards) */
+#howto .ht-bar{max-width:520px;margin:22px auto 0;padding:0}
 #howto .ht-ok{display:block;width:100%;max-width:520px;margin:0 auto;font:inherit;font-weight:800;font-size:1.25rem;min-height:58px;border:0;border-radius:16px;cursor:pointer;
   background:var(--ht-accent);color:var(--ht-btn);box-shadow:0 5px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
 #howto .ht-ok:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}

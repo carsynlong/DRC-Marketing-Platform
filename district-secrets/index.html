@@ -328,6 +328,46 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 @keyframes tuout{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
 body.shake .app{animation:quake .5s}
 @keyframes quake{20%{transform:translate(-14px,6px)}40%{transform:translate(12px,-8px)}60%{transform:translate(-8px,4px)}80%{transform:translate(6px,-2px)}}
+/* ---------- curtains (into and out of the Interrogation Room) ---------- */
+#curtains{position:fixed;inset:0;z-index:25;pointer-events:none}
+#curtains i{position:absolute;top:0;bottom:0;width:51%;transition:transform .85s cubic-bezier(.7,0,.3,1);
+  background:linear-gradient(180deg,rgba(0,0,0,.35),transparent 18%),repeating-linear-gradient(90deg,#3a0815 0 18px,#6e1426 18px 34px,#4a0d1c 34px 52px,#2c0610 52px 60px);
+  box-shadow:0 0 60px rgba(0,0,0,.8)}
+#curtains i::after{content:"";position:absolute;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,#f6dfa0 0 6px,#d9b25f 6px 12px)}
+#curtains i.l{left:0;transform:translateX(-102%)}#curtains i.l::after{right:0}
+#curtains i.r{right:0;transform:translateX(102%)}#curtains i.r::after{left:0}
+#curtains.shut i{transform:none}
+#curtains .sign{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.6);opacity:0;transition:.35s .5s;z-index:2;font-family:var(--deco);color:var(--gold-hi);font-size:clamp(1.8rem,4vw,3.2rem);text-align:center;text-shadow:0 4px 0 #2c0610,0 0 30px rgba(0,0,0,.8)}
+#curtains.shut .sign{opacity:1;transform:translate(-50%,-50%)}
+/* ---------- the Interrogation Room ---------- */
+.room{position:relative;display:grid;justify-items:center;align-content:center;gap:12px;text-align:center;min-height:80vh}
+.room::before{content:"";position:fixed;inset:0;z-index:-1;
+  background:radial-gradient(ellipse 45% 60% at 50% 38%,rgba(255,240,190,.16),transparent 70%),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 2px,transparent 2px 46px),repeating-linear-gradient(90deg,rgba(0,0,0,.18) 0 2px,transparent 2px 92px),
+    linear-gradient(180deg,#2a2b30,#15161a 70%,#0c0c0f)}
+.room::after{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 40%,transparent 35%,rgba(0,0,0,.75))}
+.room .lamp{position:fixed;left:50%;top:0;width:0;height:0;z-index:0;transform-origin:0 0;animation:swing 3.2s ease-in-out infinite}
+.room .lamp .cord{position:absolute;left:-1px;top:0;width:2px;height:12vh;background:#111}
+.room .lamp .shade{position:absolute;left:-42px;top:12vh;width:84px;height:40px;background:linear-gradient(180deg,#3d4b45,#1d2622);clip-path:polygon(25% 0,75% 0,100% 100%,0 100%);border-radius:4px}
+.room .lamp .bulb{position:absolute;left:-12px;top:calc(12vh + 32px);width:24px;height:24px;border-radius:50%;background:#fff6c8;box-shadow:0 0 40px 18px rgba(255,240,180,.7)}
+.room .lamp .beam{position:absolute;left:-30vw;top:calc(12vh + 40px);width:60vw;height:70vh;background:linear-gradient(180deg,rgba(255,240,190,.22),rgba(255,240,190,0) 85%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);pointer-events:none}
+@keyframes swing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
+.room .tag{font-family:var(--type);letter-spacing:.2em;color:#cfd6d2;background:rgba(0,0,0,.45);padding:.35em 1em;border:1px solid rgba(255,255,255,.2);margin-top:7vh}
+.room .hotseat{z-index:1}
+.room .hotseat img{width:clamp(120px,24vh,210px);height:clamp(120px,24vh,210px)}
+.room .hotseat .nm{font-size:clamp(1.6rem,3.4vw,2.6rem)}
+.room{gap:8px;min-height:0;padding-bottom:8px}
+.room .hotseat img{box-shadow:0 0 0 6px #e9eadf,0 0 70px 24px rgba(255,240,190,.35)}
+.room .charge{z-index:1}
+.room .clock{font-family:var(--deco);font-size:clamp(3rem,7vw,5.4rem);color:#fff;text-shadow:0 0 30px rgba(255,80,60,.6);z-index:1;line-height:1}
+.room .clock.out{color:var(--bad);font-size:clamp(1.8rem,3.4vw,2.6rem)}
+.room .switched{font-family:var(--display);font-weight:900;font-size:clamp(1.2rem,2.6vw,1.9rem);color:var(--gold-hi);z-index:1;min-height:1.3em}
+.room .switched.bump{animation:bump .6s}
+.room .paper{background:var(--parch);color:var(--parch-ink);font-family:var(--type);padding:.5em 1em;transform:rotate(-1.5deg);box-shadow:0 8px 20px rgba(0,0,0,.6);max-width:60ch;z-index:1}
+.room .how{color:#cfd6d2;max-width:60ch;z-index:1}
+.room .how b{color:#fff}
+.switches{display:grid;gap:4px;font-family:var(--type);font-size:clamp(.95rem,1.6vw,1.15rem);animation:pop .6s 1.9s both}
+.switches .won{color:var(--good)}.switches .lost{color:var(--bad)}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -347,7 +387,7 @@ body.shake .app{animation:quake .5s}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-12";
+const BUILD="ds-build-2026-11-22-13";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -530,6 +570,9 @@ function sfx(kind){
   if(kind==="click")noise(t,.02,.25,sfxBus,"bandpass",5000,8);
   if(kind==="dial"){for(let k=0;k<6;k++)noise(t+k*.06,.02,.25,sfxBus,"bandpass",4200+k*150,8);INST.taiko(t+.38,0,0,1.1)}
   if(kind==="stamp"){INST.taiko(t,0,0,1.4);noise(t,.15,.5,sfxBus,"lowpass",600)}
+  if(kind==="curtain"){noise(t,1.1,.22,sfxBus,"lowpass",700);noise(t+.1,.9,.08,sfxBus,"bandpass",2400,.6)}
+  if(kind==="clank"){noise(t,.25,.6,sfxBus,"lowpass",300);[220,331,447,612].forEach((f,k)=>osc("sine",f,t+.01,1.4-k*.2,.07,sfxBus));osc("sine",55,t,.6,.3,sfxBus)}
+  if(kind==="swap"){osc("triangle",hz(76),t,.18,.12,sfxBus);osc("triangle",hz(71),t+.12,.3,.12,sfxBus);noise(t,.15,.12,sfxBus,"bandpass",3000,2)}
   if(kind==="buzzer"){[110,116.5,220].forEach((f,k)=>osc(k===2?"square":"sawtooth",f,t,1.3,k===2?.05:.12,sfxBus,1800,.01));noise(t,1.2,.06,sfxBus,"bandpass",900,1)}
   if(kind==="bigtick"){const left=arguments[1]||5,hot=(10-left)/9;
     noise(t,.05,.45+hot*.3,sfxBus,"bandpass",left%2?3800:2600,5);osc("sine",hz(left<=3?84:79),t,.18,.06+hot*.08,sfxBus);
@@ -588,7 +631,7 @@ function snapshot(){
     locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE,
     howto:window.Rules&&Rules.active()?"secrets":undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
-  if(S.phase==="interro")g.hot=S.hot;
+  if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
   if(S.phase==="question"&&!S.locked){const left=Math.ceil(S.secs-S.elapsed);if(left<=10)g.left=left}
   if(S.phase==="howto")g.howI=howI;   // which rule the TV is reading, so phones show the same one
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
@@ -642,6 +685,7 @@ async function pollX(){
     if(S.phase==="lobby"&&before!==`${dsx.written}:${dsx.approved.length}`)render();
     if(S.phase==="question")showBets();
     if(S.phase==="story")showVotes();
+    if(S.phase==="interro")showSwitches();
   }catch(e){}
   pollingX=false;
 }
@@ -679,7 +723,10 @@ function burst(name,e){
 const sealedLine=(n,tot)=>n>=tot&&tot?`🔏 All <b>${tot}</b> guesses sealed`:`<b>${n}</b> of ${tot} guesses sealed`;
 /* reveal: phone guesses decide who was right (the host can still fix a call) */
 function fillAnswers(){
-  const a=cur().a,got=current();
+  const a=cur().a,orig=current(),sw={};
+  Object.entries(curX().switches||{}).forEach(([n,v])=>{if(orig[n]!=null&&n!==a&&norm(v)!==norm(orig[n]))sw[n]=v});
+  S.orig={...orig};S.switched=sw;
+  const got={...orig,...sw};   // a vote changed in the Interrogation Room replaces the sealed guess
   S.guesses={...got};S.seenAt=S.seenAt||{};Object.keys(got).forEach(n=>{if(S.seenAt[n]==null)S.seenAt[n]=S.elapsed});
   S.correct=guessers().filter(p=>matches(got[p.name],a)).map(p=>p.name);
   counted=new Set(Object.keys(got));
@@ -739,7 +786,7 @@ function howSteps(){
     ["⚡","A right guess scores <b>1,000 points</b>. Answer fast for a <b>speed bonus</b>, and keep a streak going for extra.","A right guess scores one thousand points. Answer fast for a speed bonus, and keep a streak going for even more."],
     ["🎭","If it's <b>your</b> secret, keep a straight face and type a <b>decoy</b>. You earn 150 for everyone you fool.","If it's your secret, keep a straight face, and type a decoy. You earn a hundred and fifty points for everyone you fool."]];
   if(o.bets)st.push(["🎲","Feeling sure? Place a <b>sponsor bet</b> before you seal: <b>Sure</b> or <b>All in</b>. Big risk, big reward.","Feeling sure? Place a sponsor bet before you seal your guess. Sure, or all in. Big risk. Big reward."]);
-  if(o.interro)st.push(["🔦","When time's up, whoever the room accuses most goes in the <b>hot seat</b>. Defend yourself!","When time is up, whoever the room accuses most goes in the hot seat. Defend yourself!"]);
+  if(o.interro)st.push(["🔦","Then the <b>Interrogation Room</b>: the most accused defends themselves, and you can <b>change your vote</b>. Switch to the right person: <b>+250</b>. Switch away from it: <b>−500</b>.","Then, the Interrogation Room. Whoever is accused most defends themselves, and you can change your vote. Switch to the right person for two hundred and fifty bonus points. But switch away from the right answer, and you lose five hundred."]);
   if(o.story)st.push(["🎤","Then the owner tells the <b>story</b> behind their secret, and you rate it on your phone.","Then the owner tells the story behind their secret, and you rate it on your phone."]);
   if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
@@ -837,8 +884,25 @@ async function afterLock(){
   const t={};Object.values(current()).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
   const max=Math.max(0,...Object.values(t));
   if(!max)return reveal();
-  S.hot=Object.keys(t).filter(n=>t[n]===max).slice(0,2);S.hotN=max;S.hotAt=Date.now();
-  S.phase="interro";sfx("spot");render();
+  S.hot=Object.keys(t).filter(n=>t[n]===max).slice(0,2);S.hotN=max;
+  curtains(()=>{S.phase="interro";S.hotAt=Date.now();S.roomOpen=true;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500)},"🔦 The Interrogation Room");
+}
+const ROOM_SECS=15;
+/* velvet curtains sweep shut, something changes behind them, then they open again */
+function curtains(fn,sign=""){
+  let c=$("#curtains");if(!c){c=document.createElement("div");c.id="curtains";c.setAttribute("aria-hidden","true");c.innerHTML="<i class='l'></i><i class='r'></i><div class='sign'></div>";document.body.appendChild(c)}
+  c.querySelector(".sign").textContent=sign;sfx("curtain");
+  if(calm){fn();return}
+  requestAnimationFrame(()=>c.classList.add("shut"));
+  setTimeout(()=>{fn();setTimeout(()=>{c.classList.remove("shut");sfx("curtain")},650)},1000);
+}
+/* the room closes when its clock runs out: no more vote changes */
+function closeRoom(){if(!S.roomOpen)return;S.roomOpen=false;clearInterval(drumT);drumT=0;sfx("stamp");const s=$(".room .how");if(s)s.innerHTML="🔒 <b>Votes are final.</b> Press Space to open the seal."}
+let switchSeen=0;
+function showSwitches(){
+  const n=Object.keys(curX().switches||{}).filter(x=>x!==cur().a).length,el=$(".room .switched");if(!el)return;
+  if(n>switchSeen){sfx("swap");el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump")}switchSeen=n;
+  el.textContent=n?`🔄 ${n} tribute${n>1?"s":""} changed their vote!`:"";
 }
 let drumT=0,clockT=0;
 function startClock(sel,secs,from,onOut){
@@ -849,8 +913,10 @@ function startClock(sel,secs,from,onOut){
 }
 async function reveal(){
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
+  const fromRoom=S.phase==="interro";if(fromRoom)S.roomOpen=false;
   stopSong();await poll();await pollX();      // last look at the phones before opening the seal
-  fillAnswers();S.bets={...(curX().bets||{})};S.phase="reveal";sfx("reveal");render();setTimeout(()=>confetti(120),600);
+  const go=()=>{fillAnswers();S.bets={...(curX().bets||{})};S.phase="reveal";sfx("reveal");render();setTimeout(()=>confetti(120),600)};
+  if(fromRoom)curtains(go,"🔏 Opening the seal…");else go();
 }
 /* Story time: the secret's owner tells the story; phones rate it */
 function storyTime(){S.phase="story";S.storyAt=Date.now();stopSong();sfx("mic");render()}
@@ -876,7 +942,12 @@ function score(){
       p.delta=fooled*150*mult+st+bw;p.score+=p.delta;p.fooled+=fooled;p.story=(p.story||0)+storyVotes;
       p.note=[bw?`📝 Your bonus secret was played +${bw}`:"",fooled?`🎭 Fooled ${fooled} · +${150*mult} each`:"",storyVotes?`🎤 ${storyVotes} story vote${storyVotes>1?"s":""} +${st}`:""].filter(Boolean).join(" · ");return}
     const bet=S.opts?.bets?S.bets?.[p.name]:null;
-    if(S.correct.includes(p.name)){p.streak++;const sp=speed(p.name);let d=(1000+Math.min(p.streak-1,5)*100)*mult+sp;const notes=sp?[`⚡ Speed bonus +${sp}`]:[];
+    // changed their vote in the Interrogation Room
+    const sw=S.switched?.[p.name]!=null,wasRight=sw&&matches(S.orig?.[p.name],name);
+    if(sw&&!S.correct.includes(p.name)){p.streak=0;const loss=(wasRight?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;
+      p.note=(wasRight?"🔄 Talked out of the right answer":"🔄 Switched… still wrong")+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}
+    if(S.correct.includes(p.name)){p.streak++;const sp=sw?0:speed(p.name);let d=(1000+Math.min(p.streak-1,5)*100)*mult+sp;const notes=sp?[`⚡ Speed bonus +${sp}`]:[];
+      if(sw&&!wasRight){d+=250*mult;notes.push(`🔄 Switched to the right answer +${250*mult}`)}
       if(bet==="allin"){d*=2;notes.push("💀 All in paid off: double!")}else if(bet==="sure"){d+=500*mult;notes.push(`🎯 Sure bet +${500*mult}`)}
       p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
     else{p.streak=0;p.delta=0;
@@ -901,7 +972,7 @@ function render(){
   if(S.phase!=="question"||S.locked)clearRedzone();
   const v={howto:howView,lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
-  if(S.phase==="interro"){startClock(".interro .clock",15,S.hotAt||Date.now(),()=>{clearInterval(drumT);drumT=0;sfx("stamp")});
+  if(S.phase==="interro"){startClock(".room .clock",ROOM_SECS,S.hotAt||Date.now(),closeRoom);showSwitches();
     if(!drumT){let k=0;drumT=setInterval(()=>{if(++k>15000/90){clearInterval(drumT);return}sfx("roll",k/(15000/90))},90)}}
   if(S.phase==="story"){startClock(".story .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
@@ -959,11 +1030,14 @@ function bonusView(){
 }
 function interroView(){
   const names=S.hot||[],n=S.hotN||0,who=names.map(esc).join(" and ");
-  return `<section class="interro"><div class="cone" aria-hidden="true"></div>
-    <div class="eyebrow">🔦 The Interrogation</div>
+  return `<section class="room"><div class="lamp" aria-hidden="true"><div class="cord"></div><div class="shade"></div><div class="bulb"></div><div class="beam"></div></div>
+    <div class="tag">🔦 THE INTERROGATION ROOM</div>
     <div class="hotseat">${names.map(nm=>`<div class="s"><img src="${RV(nm)}" alt=""><div class="nm">${esc(nm)}</div></div>`).join("")}</div>
-    <div class="charge">${who}. ${n} tribute${n>1?"s":""} say${n>1?"":"s"} it's ${names.length>1?"one of you":"you"}.<br>You have 15 seconds to defend yourself.</div>
-    <div class="clock">15</div>
+    <div class="charge">${who}. ${n} tribute${n>1?"s":""} say${n>1?"":"s"} it's ${names.length>1?"one of you":"you"}. Defend yourself!</div>
+    <div class="paper">“${esc(cur().f)}”</div>
+    <div class="clock">${ROOM_SECS}</div>
+    <div class="switched"></div>
+    <p class="how">${S.roomOpen===false?"🔒 <b>Votes are final.</b> Press Space to open the seal.":"📱 Everyone else: <b>keep your vote or change it</b> on your phone. Switch to the right person: <b>+250 bonus</b>. Switch away from it: <b>−500</b>. Switch and still wrong: <b>−250</b>."}</p>
     <div class="ctl" style="justify-content:center"><span class="hint tiny" style="margin:0">Space: open the seal</span><button class="btn wax" id="reveal">Open the seal</button></div></section>`;
 }
 function storyView(){
@@ -1020,12 +1094,19 @@ function revealView(){
       ${fooledList().length?`<div class="fooled">🎭 ${esc(x.a)} fooled ${fooledList().length} tribute${fooledList().length>1?"s":""}!</div>`:""}
       <div class="cracked"><h3>${line}</h3>
         ${right.length?`<div class="faces">${right.map((n,i)=>`<div class="face" style="animation-delay:${1.1+i*.12}s"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
-      ${betsHTML()}
+      ${switchHTML()}${betsHTML()}
       ${suspectsHTML(x.a)}
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>{const own=p.name===x.a;
         return `<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled":""}>${esc(p.name)}<span>${own?"their secret":g[p.name]!=null?"guessed “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`}).join("")}</div></div>`:""}
     </div></section>
   <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: ${S.opts?.story?"story time":"scores"}</span>${S.opts?.story?`<button class="btn" id="story">🎤 Story time</button>`:`<button class="btn" id="score">Show scores</button>`}</div>`;
+}
+/* who changed their vote in the Interrogation Room, and how it went */
+function switchHTML(){
+  const a=cur().a,out=[];
+  Object.keys(S.switched||{}).forEach(n=>{if(!S.players.find(p=>p.name===n)?.on)return;const ok=S.correct.includes(n),was=matches(S.orig?.[n],a);
+    out.push(ok?`<div class="won">🔄 ${esc(n)} switched… to the right answer! +250</div>`:was?`<div class="lost">🔄 ${esc(n)} was right… and got talked out of it!</div>`:`<div class="lost">🔄 ${esc(n)} switched… and still missed</div>`)});
+  return out.length?`<div class="switches">${out.slice(0,5).join("")}</div>`:"";
 }
 /* who bet big on this secret, and how it went */
 function betsHTML(){
@@ -1202,7 +1283,7 @@ function restartGame(ask=true){
 }
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
-  rows:()=>["lobby","howto","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
+  rows:()=>["lobby","howto","board","final","interro"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 </body>
 </html>

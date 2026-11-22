@@ -134,13 +134,16 @@ const Sync = (() => {
   }
 
   /* ---- emoji reactions from phones: a little burst floats up the TV with the sender's name ---- */
+  // The server keeps a short log of recent bursts ({ id, name, e }); show every one newer than the last we showed.
   let reactSeen = null;
-  function floatReacts(r) {
-    if (!reactSeen) { reactSeen = { ...r }; return; }   // first look after loading: don't replay old ones
-    const fresh = [];
-    for (const f in r) { const d = (+r[f] || 0) - (+reactSeen[f] || 0); if (d > 0) fresh.push([f, Math.min(d, 3)]); }
-    reactSeen = { ...r };
-    fresh.slice(0, 8).forEach(([f, n], i) => { const [who, e] = f.split("|"); for (let k = 0; k < n; k++) setTimeout(() => burst(who, e), (i * 3 + k) * 260); });
+  function floatReacts(log) {
+    const items = (log || []).map(x => { try { return typeof x === "string" ? JSON.parse(x) : x; } catch (e) { return null; } }).filter(x => x && x.id);
+    const top = items.reduce((m, x) => Math.max(m, x.id), 0);
+    if (reactSeen === null) { reactSeen = top; return; }   // first look after loading: don't replay old ones
+    if (top < reactSeen) reactSeen = 0;                    // a new game wiped the log
+    const fresh = items.filter(x => x.id > reactSeen).sort((a, b) => a.id - b.id).slice(-10);
+    reactSeen = Math.max(reactSeen, top);
+    fresh.forEach((x, i) => setTimeout(() => burst(x.name, x.e), i * 260));
   }
   function burst(who, e) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;

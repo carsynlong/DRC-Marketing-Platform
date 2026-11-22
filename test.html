@@ -39,8 +39,9 @@ html,body{margin:0;height:100%;background:var(--night);color:var(--ink);font-fam
 </div>
 <script>
 const tvf=document.getElementById("tvf"), tvBox=document.getElementById("tv");
-// shrink the 1280x800 TV to the phone's width
-function fit(){const k=tvBox.clientWidth/1280;tvf.style.transform=`scale(${k})`;tvBox.style.height=Math.round(800*k)+"px"}
+// shrink the TV to fit: full phone width, but never more than ~42% of the screen height (laptops), centered
+function fit(){const k=Math.min(tvBox.clientWidth/1280,innerHeight*.42/800);tvf.style.transform=`scale(${k})`;
+  tvf.style.left=Math.max(0,(tvBox.clientWidth-1280*k)/2)+"px";tvBox.style.height=Math.round(800*k)+"px"}
 addEventListener("resize",fit);fit();
 
 const tv=()=>tvf.contentWindow;

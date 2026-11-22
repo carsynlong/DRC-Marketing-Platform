@@ -92,11 +92,65 @@ window.Walkout = (() => {
     if (kind === "whoosh") burst(t, .5, .22, 900, .5);
     if (kind === "cheer") for (let k = 0; k < 70; k++) burst(t + Math.random() * 1.3, .03 + Math.random() * .05, .04 + Math.random() * .06, 1500 + Math.random() * 2800, 1.4);
   }
+  /* 🎺 Entrance theme: a pounding wrestling-style beat with a big brass "God Rest Ye Merry Gentlemen"
+     (traditional English carol, public domain), sleigh bells, and a BAM on every name. All made in the browser. */
+  const Music = (() => {
+    let out = null, timer = 0, next = 0, i = 0, start = 0, nb = null;
+    const BPM = 132, SPB = 60 / BPM, LEN = 16;           // 4 bars of 4/4, looped
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+    const env = (g, t, a, v, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + d); };
+    function noiseBuf() { if (nb) return nb; nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = nb.getChannelData(0); for (let k = 0; k < d.length; k++) d[k] = Math.random() * 2 - 1; return nb; }
+    function noise(t, dur, vol, type, freq, q, dest) { const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = noiseBuf(); f.type = type; f.frequency.value = freq; if (q) f.Q.value = q;
+      s.connect(f); f.connect(g); g.connect(dest || out); env(g, t, .003, vol, dur); s.start(t, Math.random() * .5); s.stop(t + dur + .05); }
+    function tone(type, f, t, dur, vol, cut, dest, glide) { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + dur);
+      let n = o; if (cut) { const fl = ac.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = cut; o.connect(fl); n = fl; } n.connect(g); g.connect(dest || out); env(g, t, .006, vol, dur); o.start(t); o.stop(t + dur + .05); }
+    const kick = t => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(40, t + .14); o.connect(g); g.connect(out); env(g, t, .003, .7, .28); o.start(t); o.stop(t + .32); };
+    const brass = (m, t, d, v = 1) => { [0, .006].forEach(det => tone("sawtooth", hz(m) * (1 + det), t, d * .95, .07 * v, 2200)); tone("square", hz(m - 12), t, d * .9, .03 * v, 1200); };
+    // the carol melody, in E minor (beats)
+    const MEL = [[64,1],[64,1],[71,1],[71,1],[69,1],[67,1],[66,1],[64,1],[62,1],[64,1],[66,1],[67,1],[69,1],[71,3]];
+    const ROOTS = [40, 36, 38, 35];                       // Em, C, D, B: one per bar
+    function bar(b, t0) {
+      const root = ROOTS[b % 4];
+      for (let k = 0; k < 4; k++) kick(t0 + k * SPB);
+      [1, 3].forEach(k => { noise(t0 + k * SPB, .16, .35, "bandpass", 1800, .8); noise(t0 + k * SPB, .09, .18, "highpass", 5000); });
+      for (let k = 0; k < 8; k++) tone("sawtooth", hz(root) * (k % 2 ? 2 : 1), t0 + k * SPB / 2, SPB * .45, .09, 700);   // driving bass
+      for (let k = 0; k < 16; k++) noise(t0 + k * SPB / 4, .05, k % 4 === 0 ? .07 : .035, "bandpass", 9000, 1.3);        // sleigh bells
+      if (b % 4 === 3) [2, 2.5, 3, 3.25, 3.5, 3.75].forEach((x, k) => tone("sine", 160 - k * 14, t0 + x * SPB, .25, .5, 0, out, 70)); // tom fill
+    }
+    function tick() {
+      while (next < ac.currentTime + .2) {
+        const b = i % 4, t0 = next;
+        bar(b, t0);
+        if (b === 0) { let at = 0; MEL.forEach(([m, d]) => { brass(m, t0 + at * SPB, d * SPB); at += d; }); }
+        i++; next += 4 * SPB;
+      }
+    }
+    return {
+      start() {
+        if (!soundOn() || timer) return;
+        try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (e) { return; }
+        out = ac.createGain(); out.gain.value = .42;
+        const lim = ac.createDynamicsCompressor(); lim.threshold.value = -10; lim.knee.value = 6; lim.ratio.value = 12; lim.attack.value = .003; lim.release.value = .2;   // keeps the BAMs from distorting
+        out.connect(lim); lim.connect(ac.destination);
+        i = 0; next = ac.currentTime + .1; tick(); timer = setInterval(tick, 50);
+      },
+      stop() { clearInterval(timer); timer = 0; if (out) { const o = out; try { o.gain.setTargetAtTime(.0001, ac.currentTime, .15); } catch (e) {} setTimeout(() => { try { o.disconnect(); } catch (e) {} }, 800); out = null; } },
+      duck(v) { if (out) out.gain.setTargetAtTime(v, ac.currentTime, .08); },
+      // 💥 the hit when a name lands: boom + crash + brass stab + bell sparkle
+      bam() {
+        if (!out) return; const t = ac.currentTime + .01;
+        tone("sine", 90, t, 1.2, .7, 0, out, 28); noise(t, 1.6, .32, "highpass", 3000); noise(t, .35, .4, "lowpass", 400);
+        [64, 67, 71, 76].forEach(m => brass(m, t, .9, 1.1));
+        [88, 91, 95, 100].forEach((m, k) => tone("sine", hz(m), t + .08 + k * .05, .6, .08));
+      },
+    };
+  })();
   function say(text) {
     try {
       if (!soundOn() || !window.speechSynthesis) return;
       speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text); u.rate = 1.05; u.pitch = .9;
+      const u = new SpeechSynthesisUtterance(text); u.rate = 1; u.pitch = .85; u.volume = 1;
+      u.onstart = () => Music.duck(.2); u.onend = () => Music.duck(.42);   // the music dips so the announcer is heard
       speechSynthesis.speak(u);
     } catch (e) {}
   }
@@ -109,6 +163,7 @@ window.Walkout = (() => {
     if (!root) return;
     timers.forEach(clearTimeout); timers = [];
     try { speechSynthesis.cancel(); } catch (e) {}
+    Music.stop();
     window.removeEventListener("keydown", onKey, true);
     root.remove(); root = null;
     const f = back === true ? null : finish; finish = null; if (f) f();   // Back to setup: don't start the game
@@ -125,6 +180,7 @@ window.Walkout = (() => {
     document.body.appendChild(root);
     window.addEventListener("keydown", onKey, true);
     const hype = (o.hype || T.hype).slice().sort(() => Math.random() - .5);
+    Music.start();
     let i = -1;
     const step = () => {
       if (!root) return;
@@ -140,8 +196,8 @@ window.Walkout = (() => {
       root.querySelector(".wo-skip").onclick = () => end();
       root.querySelector(".wo-back").onclick = () => end(true);
       sfx("whoosh");
-      later(() => { sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 500);
-      say(`From District ${dn}… ${n}!`);
+      later(() => { Music.bam(); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 500);
+      say(`${i === 0 ? "And now… " : ""}From District ${dn}… ${n}!`);
       later(step, 2300);
     };
     step();

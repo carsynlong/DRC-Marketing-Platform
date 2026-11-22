@@ -327,7 +327,7 @@ function view(){
   if(!D.me){
     const taken=new Set(D.taken||[]), away=new Set(D.away||[]);
     return ["pick:"+[...taken].join("|")+"/"+[...away].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Tap your name.</p></section>
-      <div class="pick">${g.names.map((n,i)=>{const t=taken.has(n)&&!away.has(n),back=away.has(n);
+      <div class="pick">${g.names.filter(n=>n!==g.host).map((n,i)=>{const t=taken.has(n)&&!away.has(n),back=away.has(n);
         return `<button style="--i:${i}" data-name="${esc(n)}" ${t?"disabled":""}>${esc(n)}${t?"<small>taken</small>":back?"<small>tap to rejoin</small>":""}</button>`}).join("")}</div>`];
   }
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
@@ -361,7 +361,6 @@ function view(){
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer, said=mine?`<p class="said">You said <b>${esc(mine)}</b></p>`:`<p class="said">You didn't answer</p>`;
-    if(g.answer===D.me)return [key+"own",header()+msg("😄","It's your face!",`<p>It was you, ${esc(D.me)}! No points for your own face.</p>`,"right"),"own"];
     const right=(g.correct||[]).includes(D.me);
     return [key+right+mine,header()+(right
       ?msg("✅","Right!",`<p class="said">It's ${esc(g.answer)}!</p>`,"right")

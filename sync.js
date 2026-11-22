@@ -19,7 +19,7 @@ const Sync = (() => {
   /* ---- what phones see. Never the photos, and never the right answer before the reveal. ---- */
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
-    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES,
+    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, // the host can't sign in as a player
       playing: active().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
       feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)) };
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
@@ -56,7 +56,7 @@ const Sync = (() => {
       phones = d.players.sort();
       // Someone who just picked their name on a phone wants to play: switch them on.
       // (The host can still tap them to sit out. Skipped on the TV's first look after loading.)
-      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
+      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (p.name !== HOST && phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
       firstPoll = false;
       if (d.qi != null && d.qi === S.qi) { answers = d.answers; answersQi = d.qi; }
       if (S.phase === "lobby" && before !== phones.join("|")) render();
@@ -113,8 +113,8 @@ const Sync = (() => {
       if (!p || !p.on || v == null) return;
       if (S.mode === "type") {
         S.typed[n] = v;
-        if (counted && n !== a && matches(v, a) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
-      } else if (v === a && n !== a && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
+        if (counted && matches(v, a) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
+      } else if (v === a && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
     });
     return changed;
   }
@@ -223,6 +223,7 @@ const Sync = (() => {
       // A game saved before faces were added or removed would replay the old list: start fresh instead.
       if (g.rounds?.length && g.rounds.length !== Q.length) return {};
       if (g.phase) g.mode = "type"; // the game is typed-only now
+      (g.players || []).forEach(p => { if (p.name === HOST) p.on = false; }); // the host never plays
       return g;
     } catch (e) { return {}; }
   }

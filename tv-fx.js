@@ -32,6 +32,20 @@
   @keyframes fxignite{0%{box-shadow:0 0 0 3px #ff7a1a,0 0 0 0 rgba(255,110,20,.9)}60%{box-shadow:0 0 0 3px #ffb300,0 0 0 22px rgba(255,110,20,0)}100%{box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(232,176,75,.7)}}
   .fx-rose{display:inline-block;margin-left:.4em;animation:fxrose 2s ease-in-out infinite alternate}
   @keyframes fxrose{from{transform:rotate(-12deg)}to{transform:rotate(12deg) scale(1.15)}}
+  .fx-horn{width:clamp(220px,30vw,380px);animation:fxflyin 1.1s cubic-bezier(.2,1.3,.4,1) both,fxbob 1.8s 1.1s ease-in-out infinite alternate}.fx-horn svg{width:100%;height:auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))}
+  @keyframes fxbob{to{transform:translateY(-10px) rotate(-2deg)}}
+  /* the sky remembers: a face nobody guessed */
+  .fx-sky{position:fixed;left:0;right:0;top:0;height:46vh;z-index:7;pointer-events:none;display:grid;place-items:center;gap:10px;text-align:center;
+    background:radial-gradient(ellipse at 50% 0,#1c2a4a 0,#0b1020 60%,rgba(11,16,32,0) 100%);animation:fxsky 6s ease-in-out both}
+  .fx-sky img{width:clamp(110px,14vw,170px);height:clamp(110px,14vw,170px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(255,255,255,.5),0 0 60px 10px rgba(160,190,255,.45);filter:grayscale(.6) brightness(1.1)}
+  .fx-sky div{font-family:Rye,Georgia,serif;font-size:clamp(1.1rem,2.4vw,1.7rem);color:#dfe8ff;text-shadow:0 0 18px rgba(160,190,255,.8)}
+  .fx-sky small{display:block;font-family:Outfit,sans-serif;font-size:.6em;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+  @keyframes fxsky{0%{opacity:0;transform:translateY(-30px)}12%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
+  .fx-extra{display:grid;gap:14px;justify-items:center;width:100%;max-width:900px;margin:6px auto}
+  .fx-champ{background:var(--night-2);border-radius:16px;padding:12px 22px;box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(232,176,75,.4);font-weight:800;font-size:clamp(1rem,2.2vw,1.4rem);animation:pop .7s .6s both}
+  .fx-champ b{color:var(--gold)}
+  .fx-fallen{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .fx-fallen img{width:64px;height:64px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgba(255,255,255,.4),0 0 18px rgba(160,190,255,.5);filter:grayscale(.5)}
   .round-card .emblem{animation:fxflyin 1.1s cubic-bezier(.2,1.3,.4,1) both}
   @keyframes fxflyin{from{transform:translate(-60vw,-20vh) rotate(-30deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
   @media (prefers-reduced-motion:reduce){.fx-layer,.fx-flash{display:none}*{animation:none!important}}
@@ -93,16 +107,49 @@
     });
   }
 
+  /* The Feast: a cornucopia replaces the bird on the round card, and treats burst out */
+  function feastCard() {
+    const em = document.querySelector(".round-card .emblem"); if (!em || typeof Ambient === "undefined") return;
+    em.outerHTML = `<div class="fx-horn">${Ambient.CORNUCOPIA}</div>`;
+    if (!calm) ["coin", "bread", "chute", "coin", "berries", "bread", "coin", "sugar", "chute", "coin"].forEach((k, i) => setTimeout(() => Ambient.spawn(k), 400 + i * 220));
+  }
+  /* Nobody guessed this face: it appears in the night sky */
+  function sky() {
+    const r = S.rounds[S.qi]; if (!r) return;
+    S.fallen = (S.fallen || []).filter(q => q !== r.qi).concat(r.qi);
+    if (calm) return;
+    try { sfx("cannon"); } catch (e) {}
+    const d = document.createElement("div"); d.className = "fx-sky";
+    d.innerHTML = `<img src="img/${Q[r.qi].r}.jpg" alt=""><div><small>Nobody guessed this face</small>The sky remembers ${esc(Q[r.qi].a)}</div>`;
+    document.body.appendChild(d); setTimeout(() => d.remove(), 6200);
+  }
+  /* Winner screen: the Capitol coin champion and the faces nobody guessed */
+  async function finale() {
+    const box = document.createElement("div"); box.className = "fx-extra";
+    const fallen = (S.fallen || []).map(qi => `<img src="img/${Q[qi].r}.jpg" alt="${esc(Q[qi].a)}" title="${esc(Q[qi].a)}">`).join("");
+    let champ = "";
+    try {
+      const d = await (await fetch("/api/host?coins=1", { cache: "no-store" })).json();
+      const list = Object.entries(d.coins || {}).map(([n, c]) => [n, +c]).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]);
+      if (list.length) champ = `<div class="fx-champ">🪙 Capitol Coin Champion: <b>${esc(list[0][0])}</b> with ${list[0][1]} coin${list[0][1] > 1 ? "s" : ""}${list[1] ? ` · runner-up ${esc(list[1][0])} (${list[1][1]})` : ""}</div>`;
+    } catch (e) {}
+    box.innerHTML = champ + (fallen ? `<div class="eyebrow">🌌 The sky remembers the faces nobody guessed</div><div class="fx-fallen">${fallen}</div>` : "");
+    const pod = document.querySelector(".podium"); if (S.phase === "final" && pod && box.innerHTML) pod.after(box);
+  }
+
   let prev = {};
   setInterval(() => {
     if (typeof S === "undefined" || !S) return;
     const now = { phase: S.phase, qi: S.qi, locked: S.locked };
     if (now.phase !== prev.phase || now.qi !== prev.qi) {
       if (now.phase !== "ready") clearChute();
-      if (now.phase === "ready" && DOUBLE.has(S.qi)) parachute();
+      if (now.phase === "ready" && DOUBLE.has(S.qi) && S.qi < FEAST) parachute();
       if (now.phase === "question") swoop();
       if (now.phase === "reveal") spotlights();
-      if (now.phase === "final") fireworks(12);
+      if (now.phase === "final") { fireworks(12); setTimeout(finale, 300); }
+      if (now.phase === "roundcard" && S.qi >= FEAST) setTimeout(feastCard, 50);
+      if ((now.phase === "board" || now.phase === "final") && prev.phase === "reveal" && !S.correct.length) sky();
+      if (now.phase === "lobby" || (now.phase === "roundcard" && S.qi === 0)) S.fallen = [];
     }
     if (now.phase === "question" && now.locked && !prev.locked && prev.phase === "question" && prev.qi === now.qi) cannon();
     if (now.phase === "board" || now.phase === "final") blaze();

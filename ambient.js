@@ -141,7 +141,8 @@ const Ambient = (() => {
   }
   let coins = 0;
   Object.assign(KINDS, {
-    coin() { faller("coin", R(34, 48), R(5000, 7500), R(-720, 720), "coin", "points", () => `🪙 +1 Capitol coin!<small>You have ${++coins} coin${coins > 1 ? "s" : ""}. Spend wisely.</small>`); },
+    coin() { faller("coin", R(34, 48), R(5000, 7500), R(-720, 720), "coin", "points", () => { const n = opts.coin ? opts.coin() : ++coins;
+      return `🪙 +1 Capitol coin!<small>You have ${n} coin${n > 1 ? "s" : ""}. Most coins wins a shout-out!</small>`; }); },
     bread() {
       // tossed in an arc across the screen
       const size = R(56, 80), ltr = Math.random() < .5, y = crossY(size), t = R(3500, 5000);
@@ -178,5 +179,17 @@ const Ambient = (() => {
     if (changed) { clearTimeout(timer); timer = setTimeout(loop, 400); }
   }
   function clear() { layer.querySelectorAll(".amb,.amb-ember").forEach(e => e.remove()); }
-  return { set, clear, spawn: k => KINDS[k]?.() };
+  // A tribute's training score, 1 to 12. Same answer on the TV and every phone for the whole day.
+  function training(name) {
+    let h = 2166136261; for (const c of name + new Date().toDateString()) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+    return (h >>> 0) % 12 + 1;
+  }
+  // An original horn of plenty for The Feast
+  const CORNUCOPIA = `<svg viewBox="0 0 220 140" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe39a"/><stop offset=".5" stop-color="#e8b04b"/><stop offset="1" stop-color="#8a5c14"/></linearGradient></defs>
+    <path d="M14 30c10 8 18 6 26 0 30 22 70 30 110 28 20-1 36 10 40 34 3 22-10 40-34 42-40 4-86-12-118-40C18 78 4 52 14 30z" fill="url(#cg)" stroke="#7a5212" stroke-width="2"/>
+    <path d="M40 30c6 20 20 40 40 54M64 40c4 18 16 34 32 46M92 50c2 14 10 28 22 38M120 56c0 12 6 24 16 32" stroke="#9a6c1c" stroke-width="2" fill="none" opacity=".7"/>
+    <ellipse cx="170" cy="96" rx="34" ry="38" fill="#3a2410" stroke="#7a5212" stroke-width="2"/>
+    <circle cx="160" cy="80" r="11" fill="#c8312a"/><circle cx="178" cy="92" r="10" fill="#e8b04b"/><circle cx="162" cy="104" r="10" fill="#3e8a52"/><circle cx="182" cy="112" r="9" fill="#6b2d8a"/>
+    <path d="M150 116c10-6 26-6 36 2-10 6-26 6-36-2z" fill="#c97a2b"/><path d="M176 70l6-8M162 70l-2-9" stroke="#3e8a52" stroke-width="3"/></svg>`;
+  return { set, clear, spawn: k => KINDS[k]?.(), training, CORNUCOPIA };
 })();

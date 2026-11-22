@@ -20,7 +20,8 @@ const Sync = (() => {
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
     const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES,
-      playing: active().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi) };
+      playing: active().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
+      feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)) };
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
     if (inGame && ["reveal", "board", "final"].includes(S.phase)) { g.answer = Q[r.qi].a; g.correct = S.correct; }
     if (inGame) {
@@ -143,7 +144,7 @@ const Sync = (() => {
     const n = ps.length - waiting.length, bump = n !== shownCount; shownCount = n;
     const count = `<div class="count" aria-label="${n} of ${ps.length} players signed in"><span class="n${bump ? " bump" : ""}">${n}</span><span class="of">/ ${ps.length}</span><span class="lbl">players signed in</span></div>`;
     return `<div class="roster">${count}${status}<div class="ppl">${ps.map(p => { const on = hasPhone(p.name);
-      return `<div class="p${on ? " in" : ""}${on && fresh.includes(p.name) ? " new" : ""}"><img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${on ? "✓ signed in" : "waiting…"}</small></div>`; }).join("")}</div>
+      return `<div class="p${on ? " in" : ""}${on && fresh.includes(p.name) ? " new" : ""}"><img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${on ? `✓ signed in${typeof Ambient !== "undefined" ? ` · ⭐ ${Ambient.training(p.name)}` : ""}` : "waiting…"}</small></div>`; }).join("")}</div>
       <div class="tiny">No phone? They can still play by shouting answers to the host.</div></div>`;
   }
 

@@ -309,13 +309,13 @@ function view(){
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
   const notYou=`<button class="switch" id="leave">🔄 Not ${esc(D.me)}? Switch name</button>`;
   if(g.phase==="lobby")return [key+playing, header()+(playing
-    ?`<section class="msg"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div></div><p>You're in! Eyes on the TV. The Games begin soon.</p></section>`
+    ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div></div><p>You're in! Eyes on the TV. The Games begin soon.</p></section>`
     :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+soundBar()+notYou,playing?"reap":""];
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
 
   const gift=g.double?`<span class="gift">🎁 Double points</span>`:"";
   const faceNo=`<div class="eyebrow">Face ${g.qi+1} of ${g.total}</div>`;
-  if(g.phase==="roundcard")return [key,header()+`<section class="msg">${ART.bow}<h1>${g.qi===0?"Round 1":"Round 2"}</h1><p>Let the Games begin. Eyes on the TV.</p></section>`+soundBar(),"gong"];
+  if(g.phase==="roundcard")return [key,header()+`<section class="msg"><img class="round-sym" src="bird.svg" alt=""><h1>${g.qi===0?"Round 1":"Round 2"}</h1><p>Let the Games begin. Eyes on the TV.</p></section>`+soundBar(),"gong"];
   if(g.phase==="ready")return [key,header()+(g.double
       ?`<section class="msg ready">${ART.chute}<h1>Get ready!</h1>${faceNo}${gift}<p>A sponsor sent a gift: this face is worth double!</p></section>`
       :msg("⏳",`Get ready!`,`${faceNo}<p>Watch the TV. Your buttons appear here.</p>`,"ready")),g.double?"gift":""];

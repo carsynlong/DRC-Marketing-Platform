@@ -203,18 +203,8 @@ const SHAPES=[
  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 12 12 22 2 12z" fill="#fff"/></svg>',
  '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff"/></svg>',
  '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="#fff"/></svg>'];
-/* Original emblem: gold ring wrapped in holly, an arrow through it, Santa hat on top */
-const EMBLEM=`<svg class="emblem" viewBox="0 0 200 200" role="img" aria-label="Christmas Games emblem">
- <circle cx="100" cy="112" r="62" fill="none" stroke="#e8b04b" stroke-width="10"/>
- <circle cx="100" cy="112" r="50" fill="none" stroke="#9a6c1c" stroke-width="2"/>
- <path d="M30 160 170 64" stroke="#e8b04b" stroke-width="6" stroke-linecap="round"/>
- <path d="M170 64l-18 2 8 10z" fill="#e8b04b"/><path d="M30 160l10-3-3-9-9 4zm6 6 10-3-3-9" fill="#b8322a"/>
- <g fill="#3e8a52"><path d="M58 162c8-10 22-12 30-4-10 2-14 10-30 4z"/><path d="M142 162c-8-10-22-12-30-4 10 2 14 10 30 4z"/></g>
- <g fill="#ff5a4e"><circle cx="94" cy="160" r="6"/><circle cx="106" cy="160" r="6"/><circle cx="100" cy="151" r="6"/></g>
- <path d="M58 62c10-32 52-48 86-30 10 6 16 16 18 26l-12-2c-4-6-10-10-16-10z" fill="#b8322a"/>
- <rect x="52" y="54" width="96" height="18" rx="9" fill="#fbf6ea"/>
- <circle cx="166" cy="60" r="11" fill="#fbf6ea"/>
-</svg>`;
+/* Original emblem: a golden songbird in a Santa hat (bird.svg) */
+const EMBLEM=`<img class="emblem" src="bird.svg" alt="Christmas Games emblem: a golden songbird in a Santa hat">`;
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -565,5 +555,6 @@ document.addEventListener("keydown",e=>{
 window.claude?.hot?.snapshot?.(()=>S);
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? Sync.saved());
 </script>
+<script src="tv-fx.js"></script>
 
 </body></html>

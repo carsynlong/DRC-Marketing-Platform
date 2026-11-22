@@ -118,8 +118,8 @@
   function sky() {
     const r = S.rounds[S.qi]; if (!r) return;
     S.fallen = (S.fallen || []).filter(q => q !== r.qi).concat(r.qi);
-    // like the films: the music drops out, one cannon booms over the silence, then the music comes back
-    try { stopSong(); setTimeout(() => sfx("cannon"), 250); setTimeout(() => { if (S.phase === "board") playSong("arena"); }, 3400); } catch (e) {}
+    // like the films: everything goes quiet and one cannon booms
+    try { stopSong(); setTimeout(() => sfx("cannon"), 250); } catch (e) {}
     const d = document.createElement("div"); d.className = "fx-sky";
     if (calm) return;
     const who = Q[r.qi].a, dist = typeof DISTRICT !== "undefined" && DISTRICT[who] ? ` of District ${DISTRICT[who]}` : "";
@@ -157,9 +157,9 @@
     if (now.phase === "question" && now.locked && !prev.locked && prev.phase === "question" && prev.qi === now.qi) cannon();
     if (now.phase === "board" || now.phase === "final") blaze();
     // floating things: plenty in the lobby and between faces; only along the edges while a face is up
-    const amb = now.phase === "lobby" || now.phase === "roundcard" || now.phase === "final" ? ["full", { max: 8, every: [900, 1800] }]
-      : now.phase === "question" && !now.locked ? ["edges", { max: 6, every: [1000, 1900] }]
-      : now.phase === "board" ? ["edges", { max: 5, every: [1300, 2300] }] : ["off"];
+    const amb = now.phase === "lobby" || now.phase === "roundcard" || now.phase === "final" ? ["full", { max: 5, every: [1500, 2800] }]
+      : now.phase === "question" && !now.locked ? ["edges", { max: 3, every: [2000, 3400] }]
+      : now.phase === "board" ? ["edges", { max: 2, every: [2800, 4500] }] : ["off"];
     if (typeof Ambient !== "undefined") Ambient.set(...amb);
     prev = now;
   }, 100);

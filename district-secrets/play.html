@@ -337,7 +337,7 @@ function render(){
   // floating secrets while you wait (never over the name list or the guess box)
   const busy=document.querySelector("#g,[data-name]");
   if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
-  else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:5,every:[1300,2400]});
+  else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:3,every:[2000,3400]});
 }
 poll();
 </script>

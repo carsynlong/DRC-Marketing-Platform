@@ -335,6 +335,10 @@ function sfx(kind){
     o.connect(g);g.connect(sfxBus);env(g,t,.004,.9,1.6);o.start(t);o.stop(t+1.8);}
   if(kind==="reveal"){[72,76,79,84].forEach((m,k)=>{osc("square",hz(m),t+k*.08,.25,.09,sfxBus,3500);osc("sine",hz(m+12),t+k*.08,.6,.06,sfxBus)});
     for(let k=0;k<10;k++)noise(t+.3+k*.05,.08,.1,sfxBus,"bandpass",9000,1.3);}
+  // scoreboard: a snare drumroll that builds while the bars grow, then a short brass "ta-da"
+  if(kind==="scoreroll"){for(let k=0;k<26;k++)noise(t+k*.055,.06,.05+k*.009,sfxBus,"bandpass",2400,.9);
+    [[60,64,67,72]].forEach(ch=>ch.forEach(m=>{osc("square",hz(m+12),t+1.5,.9,.06,sfxBus,2800);osc("triangle",hz(m),t+1.5,1.1,.07,sfxBus)}));
+    osc("triangle",hz(48),t+1.5,1.2,.14,sfxBus);noise(t+1.5,.5,.18,sfxBus,"highpass",6000)}
   if(kind==="fanfare"){[[60,0],[64,.15],[67,.3],[72,.45],[67,.75],[72,.9]].forEach(([m,d],k)=>{const dur=k===5?1.6:.3;
     osc("square",hz(m+12),t+d,dur,.1,sfxBus,3000);osc("triangle",hz(m),t+d,dur,.1,sfxBus)});
     [48,55,60].forEach(m=>osc("triangle",hz(m),t+.9,1.6,.12,sfxBus));for(let k=0;k<16;k++)noise(t+.9+k*.06,.08,.1,sfxBus,"bandpass",9000,1.3);}
@@ -438,7 +442,7 @@ function score(){
   });
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("arena");
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else{stopSong();sfx("scoreroll")}
   render();
 }
 function next(){S.qi++;roundCardOrQuestion();}
@@ -571,7 +575,7 @@ function wire(){
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"arena",final:"lobby"}[S.phase];m&&playSong(m)}
+  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:null,final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 document.addEventListener("keydown",e=>{

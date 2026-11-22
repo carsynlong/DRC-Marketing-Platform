@@ -44,14 +44,15 @@ const Sync = (() => {
   function pollEvery() {
     if (S.phase === "question" && !S.locked) return 1000;   // answers coming in
     if (S.phase === "lobby") return 2000;                   // people picking names
-    return 0;
+    return 1500;                                            // otherwise: just checking for emoji reactions
   }
   async function poll() {
     if (polling) return;
     polling = true; lastPoll = Date.now();
     const qi = S.phase === "lobby" ? null : S.qi;
     try {
-      const d = await (await fetch(`/api/host${qi == null ? "" : `?qi=${qi}`}`, { cache: "no-store" })).json();
+      const d = await (await fetch(`/api/host?react=1${qi == null ? "" : `&qi=${qi}`}`, { cache: "no-store" })).json();
+      if (d.react) floatReacts(d.react);
       const before = phones.join("|"), had = phones;
       phones = d.players.sort();
       // Someone who just picked their name on a phone wants to play: switch them on.
@@ -130,6 +131,34 @@ const Sync = (() => {
     const fresh = Object.keys(current()).filter(n => !counted.has(n));
     fresh.forEach(n => counted.add(n));
     if (fresh.length) { apply(fresh); render(); }
+  }
+
+  /* ---- emoji reactions from phones: a little burst floats up the TV with the sender's name ---- */
+  let reactSeen = null;
+  function floatReacts(r) {
+    if (!reactSeen) { reactSeen = { ...r }; return; }   // first look after loading: don't replay old ones
+    const fresh = [];
+    for (const f in r) { const d = (+r[f] || 0) - (+reactSeen[f] || 0); if (d > 0) fresh.push([f, Math.min(d, 3)]); }
+    reactSeen = { ...r };
+    fresh.slice(0, 8).forEach(([f, n], i) => { const [who, e] = f.split("|"); for (let k = 0; k < n; k++) setTimeout(() => burst(who, e), (i * 3 + k) * 260); });
+  }
+  function burst(who, e) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const x = 8 + Math.random() * 84, box = document.createElement("div");
+    box.style.cssText = `position:fixed;left:${x}vw;bottom:-80px;z-index:9;pointer-events:none;width:0;height:0`;
+    for (let k = 0; k < 6; k++) {
+      const s = document.createElement("span"); s.textContent = e;
+      const size = 1.4 + Math.random() * 1.6, dx = (Math.random() - .5) * 140, rise = 55 + Math.random() * 30;
+      s.style.cssText = `position:absolute;left:0;bottom:0;font-size:${size}rem;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))`;
+      s.animate([{ transform: "translate(0,0) scale(.4)", opacity: 0 }, { transform: `translate(${dx * .3}px,-12vh) scale(1.1)`, opacity: 1, offset: .2 },
+        { transform: `translate(${dx}px,-${rise}vh) rotate(${dx / 4}deg) scale(1)`, opacity: 0 }], { duration: 2600 + Math.random() * 900, delay: k * 90, easing: "cubic-bezier(.3,.7,.4,1)", fill: "both" });
+      box.appendChild(s);
+    }
+    const tag = document.createElement("div"); tag.textContent = `${e} ${who}`;
+    tag.style.cssText = "position:absolute;left:0;bottom:0;transform:translateX(-50%);white-space:nowrap;background:#e8b04b;color:#2a1c05;font:800 clamp(.9rem,1.6vw,1.25rem) Outfit,system-ui,sans-serif;padding:.3em .8em;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.45)";
+    tag.animate([{ transform: "translate(-50%,0) scale(.6)", opacity: 0 }, { transform: "translate(-50%,-16vh) scale(1)", opacity: 1, offset: .25 }, { transform: "translate(-50%,-38vh)", opacity: 0 }],
+      { duration: 3000, easing: "ease-out", fill: "both" });
+    box.appendChild(tag); document.body.appendChild(box); setTimeout(() => box.remove(), 4200);
   }
 
   /* ---- lobby: who has signed in on a phone, so the host knows when to start ---- */
@@ -212,7 +241,7 @@ const Sync = (() => {
 
   /* ---- new game: wipe last game's answers ---- */
   function reset() {
-    S.gid = Date.now(); answers = {}; answersQi = -1; counted = null;
+    S.gid = Date.now(); answers = {}; answersQi = -1; counted = null; reactSeen = null;
     post({ action: "reset", total: Q.length }).catch(() => {});
   }
 

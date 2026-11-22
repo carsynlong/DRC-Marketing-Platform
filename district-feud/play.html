@@ -133,6 +133,7 @@ body.rb .app{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 <div class="toast" id="toast" hidden></div>
 <div class="rbar" id="rbar" hidden><div class="lbl">Tap to send it up the TV!</div><div class="row" id="rrow"></div></div>
 <script src="/howto.js"></script>
+<script src="/memes.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -233,7 +234,7 @@ const ptimer=g=>g.ends&&!g.locked?`<div class="ptimer" id="ptimer" data-ends="${
 setInterval(()=>{const t=$("#ptimer");if(!t)return;const ms=+t.dataset.ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000));
   t.querySelector("i").style.transform=`scaleX(${Math.max(0,Math.min(1,ms/(+t.dataset.total*1000))).toFixed(3)})`;
   t.querySelector("b").textContent=sec?`⏱ ${sec}s left`:"⏱ Time's up!";t.classList.toggle("low",sec<=10)},200);
-const lockedCard=(n,line)=>`<section class="msg"><div class="eyebrow">Locked in</div><div class="locked"><img src="${avOf(n)}" alt=""><div class="nm">${esc(n)}</div></div><p>${line}</p><p class="priv">🔒 Only you can see this.</p></section>`;
+const lockedCard=(n,line)=>`<section class="msg"><div class="eyebrow">Locked in</div><div class="locked"><img src="${avOf(n)}" alt=""><div class="nm">${esc(n)}</div></div><p>${line}</p><p class="priv">🔒 Only you can see this.</p>${D.game?Memes.html("feud",D.game.gid,D.game.qi):""}</section>`;
 
 function view(){
   const g=D.game;

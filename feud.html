@@ -192,6 +192,11 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .rc img{width:28px;height:28px;border-radius:50%;object-fit:cover}
 .rc i{font-style:normal;font-family:var(--display);color:var(--gold)}
 
+/* back-to-setup button, always in the corner during a game */
+.home{position:fixed;top:30px;left:max(12px,env(safe-area-inset-left,0px));z-index:6;display:inline-flex;align-items:center;gap:.4em;font-weight:800;font-size:.95rem;
+  padding:.45em .9em;border-radius:10px;background:rgba(6,11,38,.75);color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3)}
+.home:hover{box-shadow:inset 0 0 0 2px var(--gold)}
+@media (max-width:700px){.home span{display:none}.home{padding:.45em .7em}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}.card.flip{transform:rotateX(180deg)}.beam{display:none}}
 </style>
 
@@ -450,8 +455,10 @@ function raceBar(){
 }
 function render(){
   const v={lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
-  $("#app").innerHTML=v();wire();
+  const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup">↩ <span>Back to setup</span></button>`;
+  $("#app").innerHTML=v()+home;wire();
 }
+function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function lobby(){
   return `<section class="lobby">${logo()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
@@ -511,7 +518,7 @@ function end(){
   return `<section class="lobby">${logo(true)}<span class="qtag">The final board</span>
     <div class="recap">${S.order.map((qi,k)=>{const r=S.results[k];if(!r)return"";
       return `<div class="rrow" style="--d:${(k*.12).toFixed(2)}s"><img src="${AV(r.name)}" alt=""><div><small>${esc(QUESTIONS[qi].q)}</small><span>${esc(r.name)}</span></div><em>${r.tb?(r.fate?"Lucky spin":"Face-off"):plural(r.votes,"vote")}</em></div>`}).join("")}</div>
-    <div class="settings">${sndBtn()}<button class="btn red" id="pkgbtn">🎁 Prize round</button></div><div class="hint">Space: Prize round</div></section>`;
+    <div class="settings">${sndBtn()}<button class="btn ghost" id="replay">Play again</button><button class="btn red" id="pkgbtn">🎁 Prize round</button></div><div class="hint">Space: Prize round</div></section>`;
 }
 function pkgView(){
   const P=S.pkg,open=P.done,compact=P.rows.length>4?"compact":"";
@@ -524,7 +531,7 @@ function pkgView(){
   const list=board("Final vote totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Most votes wins","compact one");
   return `<section class="center"><h1 class="ptitle small">🎁 Mystery package winner</h1>
     <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":"Most votes in the district"}</div><div class="crown">👑</div><img class="av" src="${AV(P.winner)}" alt=""><div class="nm">${esc(P.winner)}</div><div class="votes">${plural(S.tally[P.winner],"vote")}</div>
-    <div class="settings">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button></div></div>${list}</div></section>`;
+    <div class="settings">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
 }
 function pkgFateView(){return spinView("🎰 Lucky spin for the prize",S.pkg.lead[0]);}
 
@@ -549,7 +556,9 @@ function wire(){
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
   on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",pkgFate);
   on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("think");render()});
-  on("lobby",()=>{clearTimers();S.phase="lobby";stopSong();render()});
+  on("lobby",goSetup);
+  on("replay",()=>{if(S.phase==="end"&&!confirm("Start the show over? The prize race goes back to zero."))return;clearTimers();stopSong();startGame()});
+  on("home",()=>{if(confirm("Stop this game and go back to setup? The prize race goes back to zero."))goSetup()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m=musicFor();m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});

@@ -4,12 +4,13 @@ import { redis, reply, text, prefix } from "../lib/redis.js";
 
 export const EMOJI = ["🤫", "🔥", "🏹", "🎁", "🕵️", "😱", "😂", "🎄"];                // District Secrets (g=ds)
 export const TRIBUTE_EMOJI = ["🏹", "🔥", "🌹", "🍞", "🐦", "🎁", "😱", "😂"];          // Who's That Tribute
+export const FEUD_EMOJI = ["🎁", "🎄", "🔔", "⭐", "👏", "😂", "😱", "🔥", "❤️", "🤔", "🙈", "🏹"]; // District Feud (g=df)
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const p = prefix(req);
   const pid = text(req.body?.pid, 64), name = text(req.body?.name, 40), e = req.body?.e;
-  if (!(p === "ds:" ? EMOJI : TRIBUTE_EMOJI).includes(e)) return reply(res, 400, { error: "Unknown emoji" });
+  if (!(p === "ds:" ? EMOJI : p === "df:" ? FEUD_EMOJI : TRIBUTE_EMOJI).includes(e)) return reply(res, 400, { error: "Unknown emoji" });
   if (!pid || !name || (await redis.hget(p + "players", name)) !== pid) return reply(res, 403, { error: "Not your name" });
   // At most about three bursts a second per person, so nobody can flood the TV.
   if (!(await redis.set(`${p}rl:${name}`, "1", { nx: true, px: 300 }))) return reply(res, 429, { error: "Slow down" });

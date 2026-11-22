@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060b26">
+<title>District Feud · Play</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Semi+Condensed:wght@500;700;800&display=swap">
+<style>
+/* District Feud, the phone: sign in, guess the #1 answer, vote in secret in face-offs. */
+:root{
+  --stage:#060b26; --navy:#0a1f6b; --blue:#1846c4; --blue2:#2b6af0; --sky:#7fb2ff;
+  --gold:#ffc92e; --gold2:#ffe07a; --gold-d:#b57800; --red:#e3232c; --red-d:#8e0f15; --green:#19a35a; --good:#7dff9e; --bad:#ff8f80;
+  --ink:#fff; --muted:#b9c6ef;
+  --display:"Bungee",Impact,"Arial Black",sans-serif; --body:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%}
+body{background:var(--stage);color:var(--ink);font-family:var(--body);font-size:18px;font-weight:500;overflow-x:hidden;min-height:100dvh;-webkit-user-select:none;user-select:none;
+  background-image:radial-gradient(ellipse 90% 45% at 50% -8%,#1d34a8,rgba(29,52,168,0) 70%),repeating-conic-gradient(from 0deg at 50% 120%,rgba(255,255,255,.045) 0 4deg,transparent 4deg 12deg);background-attachment:fixed}
+.bunting{position:fixed;top:0;left:0;right:0;height:16px;z-index:2;pointer-events:none;
+  background:repeating-linear-gradient(90deg,var(--red) 0 22px,var(--green) 22px 44px,var(--gold) 44px 66px);
+  -webkit-mask:radial-gradient(circle at 11px 0,#000 10px,transparent 11px) 0 0/22px 16px repeat-x;mask:radial-gradient(circle at 11px 0,#000 10px,transparent 11px) 0 0/22px 16px repeat-x}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:6}
+.app{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto;
+  padding:max(26px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;line-height:1.05;text-wrap:balance}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:.75rem;color:var(--gold2);font-weight:800}
+
+/* you, at the top */
+.me{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(180deg,var(--blue),var(--navy));border-radius:14px;padding:8px 12px;box-shadow:inset 0 0 0 2px var(--gold)}
+.me .who{display:flex;align-items:center;gap:10px;min-width:0}
+.me .av{width:44px;height:44px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #fff;flex:none}
+.me .nm{font-family:var(--display);font-size:1.05rem;text-transform:uppercase;overflow-wrap:anywhere;line-height:1.1}
+.me .pts{font-family:var(--display);color:var(--gold);text-align:right;white-space:nowrap;font-size:1.2rem}
+.me .pts small{display:block;font-family:var(--body);font-weight:800;color:#fff;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}
+.me .pts.bump{animation:bump .8s}
+
+/* centered messages */
+.msg{flex:1;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:8px 0;animation:pop .55s cubic-bezier(.2,1.4,.4,1) both}
+.msg .icon{font-size:4.6rem;line-height:1;animation:bob 1.3s ease-in-out infinite alternate}
+.msg h1{font-size:clamp(1.9rem,9vw,2.6rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)}
+.msg p{margin:0;max-width:30ch;line-height:1.4;color:var(--muted);font-size:1.1rem}
+.msg p b{color:#fff}
+.right h1{color:var(--good);text-shadow:0 4px 0 #0b5a2a}
+.right .icon{animation:spinin .8s cubic-bezier(.2,1.5,.4,1) both,bob 1.3s .8s ease-in-out infinite alternate}
+.wrong h1{color:var(--bad)} .wrong .icon,.wrong h1{animation:shake .45s 2}
+.win h1{background:linear-gradient(90deg,var(--gold),#fff6d6,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% 100%;animation:shimmer 1.5s linear infinite;text-shadow:none}
+
+/* sign in */
+.signin{display:grid;gap:6px;text-align:center}
+.logo{font-family:var(--display);font-size:clamp(2.4rem,12vw,3.4rem);line-height:.92;color:#fff;text-shadow:0 2px 0 #c9d8ff,0 4px 0 var(--gold),0 7px 0 var(--gold-d)}
+.logo span{color:var(--gold);text-shadow:0 2px 0 var(--gold2),0 4px 0 var(--red),0 7px 0 var(--red-d)}
+.signin p{margin:6px 0 0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.nb{display:flex;align-items:center;gap:8px;min-height:62px;border-radius:12px;padding:6px 10px 6px 6px;text-align:left;font-family:var(--display);font-size:1rem;text-transform:uppercase;line-height:1.05;overflow-wrap:anywhere;
+  background:linear-gradient(180deg,var(--blue),var(--navy));box-shadow:inset 0 0 0 2px var(--sky),0 5px 0 #050d33;animation:rise .45s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--i)*35ms)}
+.nb img{width:46px;height:46px;border-radius:9px;object-fit:cover;flex:none}
+.nb:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px var(--gold),0 2px 0 #050d33}
+.nb:disabled{opacity:.3;cursor:not-allowed}
+.nb small{display:block;font-family:var(--body);font-weight:800;font-size:.7rem;color:var(--gold2);text-transform:none}
+.nb.pick{box-shadow:inset 0 0 0 3px var(--gold),0 5px 0 #050d33}
+.big .nb{min-height:110px;flex-direction:column;justify-content:center;text-align:center;font-size:1.2rem}
+.big .nb img{width:72px;height:72px;border-radius:50%;box-shadow:0 0 0 3px #fff}
+
+/* nameplate card */
+.plate{position:relative;width:min(86%,320px);border-radius:16px;padding:18px 16px 16px;text-align:center;background:linear-gradient(180deg,var(--blue),var(--navy));
+  box-shadow:inset 0 0 0 4px var(--gold),0 20px 40px rgba(0,0,0,.6);animation:deal .9s cubic-bezier(.2,1.3,.4,1) both}
+.plate::before{content:"";position:absolute;top:-16px;left:28%;right:28%;height:22px;border-radius:50% 50% 6px 6px/100% 100% 6px 6px;background:radial-gradient(ellipse at 50% 25%,#ff9398,var(--red) 55%,var(--red-d));box-shadow:0 4px 0 #4a060a;animation:glow 1s ease-in-out infinite alternate}
+.plate img{width:60%;aspect-ratio:1;border-radius:50%;object-fit:cover;margin:6px auto 10px;display:block;box-shadow:0 0 0 5px #fff,0 0 0 9px var(--gold)}
+.plate .nm{font-family:var(--display);font-size:clamp(1.6rem,8vw,2.2rem);text-transform:uppercase;line-height:1;overflow-wrap:anywhere}
+
+/* question card */
+.q{background:linear-gradient(180deg,#123aa8,#0a2272);border-radius:14px;padding:14px 16px;text-align:center;box-shadow:inset 0 0 0 3px #4f86ff,0 0 0 3px var(--gold);animation:pop .5s cubic-bezier(.2,1.3,.4,1) both}
+.q .eyebrow{margin-bottom:4px}
+.q p{margin:0;font-weight:800;text-transform:uppercase;font-size:clamp(1.3rem,6vw,1.7rem);line-height:1.08}
+.ask{font-family:var(--display);text-align:center;color:var(--gold);font-size:1.3rem;text-shadow:0 3px 0 var(--red-d)}
+.locked{display:grid;justify-items:center;gap:8px}
+.locked img{width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px #fff,0 0 0 10px var(--gold);animation:stamp .55s cubic-bezier(.3,1.6,.5,1) both}
+.locked .nm{font-family:var(--display);font-size:1.6rem;text-transform:uppercase}
+.priv{font-size:.9rem;color:var(--muted)}
+
+.sound{display:flex;justify-content:center}
+.sound button{font-weight:800;font-size:.9rem;padding:.55em 1.1em;border-radius:999px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);color:var(--muted)}
+.switch{display:block;margin:0 auto;color:var(--muted);font-weight:800;font-size:.95rem;padding:.7em 1.2em;border-radius:999px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);min-height:48px}
+.toast{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));background:var(--red);color:#fff;font-weight:800;border-radius:14px;padding:14px;text-align:center;box-shadow:0 0 0 3px var(--gold),0 8px 24px rgba(0,0,0,.4);z-index:7}
+.offline{text-align:center;font-size:.85rem;font-weight:800;color:#2a1a05;background:var(--gold);border-radius:999px;padding:.35em 1em}
+.says{font-family:var(--display);font-size:clamp(2rem,10vw,2.8rem);color:var(--gold);animation:pulse .45s ease-in-out infinite alternate;text-shadow:0 4px 0 var(--red-d)}
+/* emoji bar: tap to send a burst up the TV */
+body.rb .app{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+.rbar{position:fixed;left:0;right:0;bottom:0;z-index:5;padding:8px max(10px,env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(10,31,107,.96),rgba(5,13,51,.98));border-top:3px solid var(--gold);box-shadow:0 -8px 24px rgba(0,0,0,.4)}
+.rbar .lbl{text-align:center;font-family:var(--display);font-size:.72rem;color:var(--gold2);letter-spacing:.06em;margin-bottom:6px}
+.rbar .row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:520px;margin:0 auto}
+.rbar button{font-size:1.75rem;line-height:1;padding:7px 0;border-radius:12px;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 2px rgba(127,178,255,.35)}
+.rbar button:active{transform:scale(.88);background:rgba(255,201,46,.3)}
+.puff{position:fixed;z-index:6;pointer-events:none;font-size:1.8rem;animation:puff .9s ease-out forwards}
+@keyframes puff{from{transform:translate(-50%,-50%) scale(.6);opacity:1}to{transform:translate(calc(-50% + var(--x)),calc(-50% - 120px)) scale(1.3);opacity:0}}
+.perk{text-align:center;font-weight:800;color:var(--gold2);font-size:.95rem;margin:-4px 0}
+.perk.x2{font-family:var(--display);color:var(--red-d);background:var(--gold);border-radius:999px;padding:.3em .8em;animation:pulse .5s ease-in-out infinite alternate;font-size:1rem;margin:0}
+.earn{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.earn span{font-weight:800;background:rgba(255,255,255,.1);border-radius:999px;padding:.25em .8em;box-shadow:inset 0 0 0 2px var(--gold);color:#fff}
+.stand{width:100%;display:grid;gap:6px}
+.stand div{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.08);border-radius:10px;padding:6px 12px;font-weight:800}
+.stand div.me{box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold)}
+/* countdown bar */
+.ptimer{position:relative;height:34px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;box-shadow:inset 0 0 0 2px var(--gold);flex:none}
+.ptimer i{position:absolute;inset:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:left;transition:transform .2s linear}
+.ptimer b{position:relative;display:grid;place-items:center;height:100%;font-family:var(--display);font-weight:400;color:#061447;font-size:1rem}
+.ptimer.low i{background:linear-gradient(90deg,var(--red),#ff6a70)} .ptimer.low b{color:#fff;animation:pulse .5s ease-in-out infinite alternate}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
+@keyframes rise{from{transform:translateY(24px);opacity:0}to{opacity:1}}
+@keyframes deal{from{transform:translateY(90px) rotate(-14deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes stamp{from{transform:scale(2.2) rotate(-12deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes bob{to{transform:translateY(-10px) rotate(5deg)}}
+@keyframes bump{40%{transform:scale(1.25)}}
+@keyframes pulse{to{transform:scale(1.08);opacity:.75}}
+@keyframes glow{to{filter:brightness(1.4)}}
+@keyframes spinin{from{transform:scale(0) rotate(-200deg)}to{transform:none}}
+@keyframes shake{25%{transform:translateX(-10px) rotate(-4deg)}75%{transform:translateX(10px) rotate(4deg)}}
+@keyframes shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="bunting" aria-hidden="true"></div>
+<main class="app" id="app"></main>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="toast" id="toast" hidden></div>
+<div class="rbar" id="rbar" hidden><div class="lbl">Tap to send it up the TV!</div><div class="row" id="rrow"></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const store={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){}}};
+const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+
+/* this phone's id, kept so a reload gets the same name back */
+let pid=store.get("df-pid");
+if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("df-pid",pid)}
+let myName=store.get("df-name");
+let D={game:undefined,me:null,taken:[],myAnswer:null},pending=null,offline=0,timer=0,lastKey="",shownVotes=null;
+let sound=store.get("df-sound")!=="off";
+
+async function poll(){
+  clearTimeout(timer);if(document.hidden)return;
+  try{
+    const r=await fetch(`/api/state?g=df&pid=${encodeURIComponent(pid)}&name=${encodeURIComponent(myName||"")}`,{cache:"no-store"});
+    if(!r.ok)throw new Error(r.status);
+    D=await r.json();offline=0;
+    if(D.me!==myName){myName=D.me;store.set("df-name",myName)}
+    if(pending&&D.game&&(pending.gid!==D.game.gid||pending.qi!==D.game.qi||D.myAnswer))pending=null;
+  }catch(e){offline++}
+  render();timer=setTimeout(poll,1500);
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
+async function post(path,body){
+  const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:"df",pid,...body})});
+  return {status:r.status,data:await r.json().catch(()=>({}))};
+}
+function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3400)}
+async function join(name){
+  sfx("tap");
+  try{const {status,data}=await post("/api/join",{name});
+    if(status===200){myName=data.me;store.set("df-name",myName)}
+    else if(status===409)toast(`Someone already signed in as ${name}. If that's really you, ask the host.`);
+    else toast("Couldn't sign in. Try again.");
+  }catch(e){toast("No connection. Try again.")}
+  poll();
+}
+async function leave(){try{await post("/api/join",{leave:true})}catch(e){}myName=null;store.set("df-name",null);poll()}
+async function send(choice){
+  const g=D.game;if(!g||!choice)return;
+  pending={gid:g.gid,qi:g.qi,answer:choice};render();
+  try{const {status,data}=await post("/api/answer",{name:myName,qi:g.qi,answer:choice});
+    if(status===200)pending.answer=data.answer;
+    else{pending=null;toast(status===409?"Too late! That one's locked.":"That didn't go through. Try again.")}
+  }catch(e){pending=null;toast("No connection. Try again.")}
+  render();
+}
+
+/* ---------- little sounds (the TV plays the music) ---------- */
+let AC=null;
+function sfx(kind){
+  if(!sound)return;
+  try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume()}catch(e){return}
+  const t=AC.currentTime+.01,hz=m=>440*Math.pow(2,(m-69)/12);
+  const tone=(m,d,dur,v,type="sine")=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=hz(m);o.connect(g);g.connect(AC.destination);
+    g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(v,t+d+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d+dur);o.start(t+d);o.stop(t+d+dur+.05)};
+  if(kind==="tap")tone(84,0,.08,.08,"triangle");
+  if(kind==="welcome")[67,71,74,79].forEach((m,k)=>tone(m+12,k*.09,.7,.08));
+  if(kind==="lock"){tone(93,0,.4,.08);tone(98,.08,.5,.07)}
+  if(kind==="right")[72,76,79,84].forEach((m,k)=>tone(m,k*.08,.5,.1,"triangle"));
+  if(kind==="wrong")[52,50].forEach((m,k)=>tone(m,k*.2,.4,.14,"sawtooth"));
+  if(kind==="win")[67,72,76,79,84].forEach((m,k)=>tone(m,k*.12,k===4?1.4:.4,.1,"triangle"));
+  if(kind==="ding")tone(93,0,1,.1);
+}
+const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
+  const size=()=>{c.width=innerWidth;c.height=innerHeight};size();addEventListener("resize",size);
+  const cols=["#ffc92e","#ffffff","#e3232c","#2b6af0","#19a35a","#ffe07a"];
+  function loop(){x.clearRect(0,0,c.width,c.height);P=P.filter(p=>p.y<c.height+30&&p.life-->0);
+    for(const p of P){p.vy+=.22;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-3,-7,6,14);x.restore()}
+    if(P.length)requestAnimationFrame(loop);else on=false}
+  return n=>{if(calm)return;for(let i=0;i<n;i++)P.push({x:c.width/2,y:c.height*.4,vx:(Math.random()-.5)*16,vy:-(6+Math.random()*10),r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[i%6],life:300});
+    if(!on){on=true;requestAnimationFrame(loop)}}})();
+function effect(fx){
+  if(!fx)return;sfx(fx);
+  if(fx==="welcome"){FX(50);buzz([20,40,20])}
+  if(fx==="lock")buzz(40);
+  if(fx==="right"){FX(100);buzz([30,50,30])}
+  if(fx==="wrong")buzz(200);
+  if(fx==="win"){FX(150);setTimeout(()=>FX(150),800);buzz([40,60,40,60,120])}
+}
+
+/* ---------- screens ---------- */
+const pad=n=>String(n).padStart(2,"0");
+const avOf=n=>`img/p${pad(D.game.names.indexOf(n)+1)}.jpg`;
+function header(){
+  const v=(D.game.tally||{})[D.me]||0,bumped=shownVotes!=null&&v!==shownVotes;
+  return `<div class="me"><div class="who"><img class="av" src="${avOf(D.me)}" alt=""><div class="nm">${esc(D.me)}</div></div>
+    <div class="pts${bumped?" bump":""}">🎁 ${v}<small>prize race</small></div></div>`;
+}
+const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
+const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
+const qcard=(g,label)=>`<div class="q"><div class="eyebrow">${label}</div><p>${esc(g.q||"")}</p></div>`;
+const nameBtns=(list,cls="")=>`<div class="grid ${cls}">${list.map((n,i)=>`<button class="nb" style="--i:${i}" data-choice="${esc(n)}"><img src="${avOf(n)}" alt="">${esc(n)}</button>`).join("")}</div>`;
+const ptimer=g=>g.ends&&!g.locked?`<div class="ptimer" id="ptimer" data-ends="${g.ends}" data-total="${g.secs||30}"><i></i><b>⏱</b></div>`:"";
+setInterval(()=>{const t=$("#ptimer");if(!t)return;const ms=+t.dataset.ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000));
+  t.querySelector("i").style.transform=`scaleX(${Math.max(0,Math.min(1,ms/(+t.dataset.total*1000))).toFixed(3)})`;
+  t.querySelector("b").textContent=sec?`⏱ ${sec}s left`:"⏱ Time's up!";t.classList.toggle("low",sec<=10)},200);
+const lockedCard=(n,line)=>`<section class="msg"><div class="eyebrow">Locked in</div><div class="locked"><img src="${avOf(n)}" alt=""><div class="nm">${esc(n)}</div></div><p>${line}</p><p class="priv">🔒 Only you can see this.</p></section>`;
+
+function view(){
+  const g=D.game;
+  if(g===undefined)return ["load",msg("📺","Tuning in…")];
+  if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>Ask the host to open District Feud on the TV. This page will update by itself.</p>")];
+  if(!D.me){
+    const away=new Set(D.away||[]),taken=new Set((D.taken||[]).filter(n=>!away.has(n)));
+    return ["pick:"+[...taken].join("|"),`<section class="signin"><div class="eyebrow">The Christmas</div><div class="logo">District<br><span>Feud</span></div><p>Who are you? Tap your name.</p></section>
+      <div class="grid">${g.names.map((n,i)=>`<button class="nb" style="--i:${i}" data-name="${esc(n)}" ${taken.has(n)?"disabled":""}><img src="${avOf(n)}" alt=""><span>${esc(n)}${taken.has(n)?"<small>signed in</small>":""}</span></button>`).join("")}</div>`];
+  }
+  const key=`${g.gid}:${g.view}:${g.qi}`,notYou=`<button class="switch" id="leave">Not ${esc(D.me)}? Switch name</button>`;
+  const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
+  if(g.phase==="lobby")
+    return [key,`<section class="msg"><div class="eyebrow">You're on the show!</div>
+      <div class="plate"><img src="${avOf(D.me)}" alt=""><div class="nm">${esc(D.me)}</div></div>
+      <p style="margin-top:10px">Welcome, <b>${esc(D.me)}</b>! Eyes on the TV. You'll guess the #1 answers right here.</p></section>${soundBtn()}${notYou}`,"welcome"];
+
+  if(g.kind==="guess"&&g.phase==="question"){
+    if(mine)return [key+"lock:"+mine+g.locked,header()+ptimer(g)+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
+    if(g.locked)return [key+"late",header()+msg("🥁","Survey says…","<p>Guesses are locked. Watch the board!</p>")];
+    return [key+"ask",header()+ptimer(g)+(g.mult>1?'<div class="perk x2">💰 DOUBLE POINTS ROUND 💰</div>':"")+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`
+      +(g.speedEnds&&Date.now()<g.speedEnds?`<div class="perk">⚡ Lock in fast for a speed bonus!</div>`:"")+nameBtns(g.names)];
+  }
+  if(g.kind==="guess"&&g.phase==="reveal"){
+    const top=g.answer||[],me=top.includes(D.me),right=mine&&top.includes(mine),who=top.map(esc).join(" & ");
+    const e=(g.earn||{})[D.me],pts=e?e.pts:1;
+    const perks=e?`<div class="earn"><span>🎯 +${pts} toward the package</span>${e.speed?"<span>⚡ Speed bonus!</span>":""}${e.fire?`<span>🔥 On fire: ${e.streak} in a row!</span>`:e.streak>1?`<span>🎯 ${e.streak} in a row</span>`:""}${g.mult>1?"<span>💰 Double points</span>":""}</div>`:"";
+    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your prize race total.</p>${right?`<p>🎯 And you called it!</p>${perks}`:""}`,"right"),"right"];
+    if(right)return [key+"right",header()+msg(e&&e.fire?"🔥":"🎯",`You called it! +${pts}`,`<p>The #1 answer: <b>${who}</b></p>${perks}`,"right"),"right"];
+    return [key+"wrong",header()+msg("❌",mine?"Not this time":"Survey says…",`<p>The #1 answer: <b>${who}</b></p>${mine?`<p>You guessed ${esc(mine)}.</p>`:""}`,mine?"wrong":""),mine?"wrong":""];
+  }
+  if(g.kind==="faceoff"&&g.phase==="question"){
+    const tied=g.tied||[];
+    if(tied.includes(D.me))return [key+"tied",header()+qcard(g,`⚡ Face-off ${g.round}`)+msg("⚡","You're in the face-off!",`<p>Hands off! Everyone else votes in secret between ${tied.map(n=>`<b>${esc(n)}</b>`).join(" and ")}.</p>`)];
+    if(!g.playing.includes(D.me))return [key+"out",header()+msg("📺","Watch the TV","<p>Ask the host to tap your name on the TV to join in.</p>")];
+    if(mine)return [key+"lock:"+mine,header()+lockedCard(mine,"Your secret face-off vote. Wait for the count on the TV!"),"lock"];
+    if(g.locked)return [key+"late",header()+msg("🗳️","Counting the votes…","<p>Watch the TV!</p>")];
+    return [key+"ask",header()+qcard(g,`⚡ Face-off ${g.round} · Vote in secret`)+`<div class="ask">Tap your pick</div>`+nameBtns(tied,"big")+`<p class="priv" style="text-align:center;margin:0">🔒 Nobody sees who you vote for.</p>`];
+  }
+  if(g.kind==="faceoff"&&g.phase==="reveal"){
+    const lead=g.lead||[],won=lead.length===1;
+    if(won&&lead[0]===D.me)return [key+"won",header()+msg("🏆","You won the face-off!","<p>The district has spoken!</p>","win"),"win"];
+    if(won)return [key+"w",header()+msg("⚡",`${esc(lead[0])} wins!`,`<p>${mine?`You voted for ${esc(mine)}.`:"Eyes on the TV."}</p>`,mine===lead[0]?"right":""),mine===lead[0]?"right":""];
+    return [key+"tie",header()+msg("❌","Still tied!","<p>Get ready for another face-off…</p>","wrong"),"wrong"];
+  }
+  if(g.phase==="final"){
+    if(g.winner===D.me)return [key+"pkgme",header()+msg("🎁","You won the mystery package!","<p>Top of the prize race. Go claim your prize!</p>","win")+soundBtn(),"win"];
+    if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the package!`,"<p>Merry Christmas from District Feud!</p>")+soundBtn(),"ding"];
+    return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most votes?</p>")+soundBtn()];
+  }
+  if(g.view==="intro"){
+    if(g.spot===D.me)return [key+"spot",header()+msg("🎤","That's YOU on the TV!","<p>Take a bow! The crowd goes wild! 👏</p>","win"),"win"];
+    return [key+"intro",header()+msg("🎤","Meet the contestants!","<p>Watch the TV. Your walk-out is coming up!</p>")];
+  }
+  if(g.view==="double")return [key,header()+msg("💰","Double points!","<p>Final question! Everything counts twice: votes, correct guesses and speed bonuses.</p>","win"),"win"];
+  if(g.view==="half"){
+    const rows=Object.entries(g.tally||{}).sort((a,b)=>b[1]-a[1]),rank=rows.findIndex(r=>r[0]===D.me)+1;
+    return [key,header()+msg("📊","Halftime!",`<p>${rank?`You're <b>#${rank}</b> in the prize race.`:"You're not on the board yet. Plenty of time!"}</p>
+      <div class="stand">${rows.slice(0,6).map(([n,v],i)=>`<div class="${n===D.me?"me":""}"><span>${i+1}. ${esc(n)}${(g.streak||{})[n]>=3?" 🔥":""}</span><span>${v}</span></div>`).join("")}</div>`)+soundBtn()];
+  }
+  return [key+"w",header()+msg("📺","Eyes on the TV","<p>The next question is coming up.</p>")+soundBtn()];
+}
+/* ---------- emoji reactions ---------- */
+const EMOJI=["🎁","🎄","🔔","⭐","👏","😂","😱","🔥","❤️","🤔","🙈","🏹"];
+let lastReact=0;
+$("#rrow").innerHTML=EMOJI.map(e=>`<button data-emoji="${e}" aria-label="Send ${e}">${e}</button>`).join("");
+$("#rrow").addEventListener("click",e=>{
+  const b=e.target.closest("[data-emoji]");if(!b||!D.me)return;
+  const now=Date.now();if(now-lastReact<320)return;lastReact=now;
+  buzz(12);
+  if(!calm){const r=b.getBoundingClientRect();for(let i=0;i<3;i++){const p=document.createElement("div");p.className="puff";p.textContent=b.dataset.emoji;
+    p.style.cssText=`left:${r.left+r.width/2}px;top:${r.top}px;--x:${Math.round(Math.random()*80-40)}px;animation-delay:${i*70}ms`;document.body.appendChild(p);setTimeout(()=>p.remove(),1200)}}
+  post("/api/react",{name:D.me,e:b.dataset.emoji}).catch(()=>{});
+});
+function render(){
+  const showBar=!!(D.game&&D.me);document.body.classList.toggle("rb",showBar);$("#rbar").hidden=!showBar;
+  const [k,html,fx]=view();
+  const v=D.game&&D.me?((D.game.tally||{})[D.me]||0):null;
+  const key=k+(offline>2?"off":"")+"|"+v;
+  if(key===lastKey)return;   // nothing changed: leave the screen alone
+  const sameScreen=lastKey.split("|")[0]===key.split("|")[0];lastKey=key;
+  $("#app").innerHTML=(offline>2?`<div class="offline">Reconnecting…</div>`:"")+html;
+  document.querySelectorAll("[data-name]").forEach(b=>b.onclick=()=>join(b.dataset.name));
+  document.querySelectorAll("[data-choice]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-choice]").forEach(x=>x.disabled=true);b.classList.add("pick");sfx("lock");send(b.dataset.choice)});
+  const l=$("#leave");if(l)l.onclick=leave;
+  const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("df-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
+  if(!sameScreen)effect(fx);
+  shownVotes=v;
+}
+poll();
+</script>
+</body>
+</html>

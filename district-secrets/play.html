@@ -131,6 +131,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 <main class="app" id="app"></main>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" hidden></div>
+<script src="/ambient.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -315,6 +316,9 @@ function view(){
   }
   return [key,header()+msg("📺","Watch the TV")];
 }
+// vault keys collected by tapping floating keys (kept on this phone, per game)
+let keys=(()=>{try{return JSON.parse(store.get("ds-keys"))||{gid:null,n:0}}catch(e){return {gid:null,n:0}}})();
+function addKey(){if(!D.game)return 0;if(keys.gid!==D.game.gid)keys={gid:D.game.gid,n:0};keys.n++;store.set("ds-keys",JSON.stringify(keys));return keys.n}
 function render(){
   const [k,html,fx]=view();
   const key=k+(offline>2?"off":"");
@@ -330,6 +334,10 @@ function render(){
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
   countUp();effect(fx);
   const s=meScore();if(s)shownScore=s.score;
+  // floating secrets while you wait (never over the name list or the guess box)
+  const busy=document.querySelector("#g,[data-name]");
+  if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
+  else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:5,every:[1300,2400]});
 }
 poll();
 </script>

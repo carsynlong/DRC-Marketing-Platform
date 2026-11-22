@@ -145,6 +145,15 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .file .ask{margin-top:clamp(12px,2vw,22px);font-family:var(--display);font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:var(--wax);font-size:clamp(.9rem,1.6vw,1.2rem)}
 .stamp{position:absolute;font-family:var(--display);font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--wax);border:5px double var(--wax);border-radius:8px;padding:.15em .6em;
   mix-blend-mode:multiply;opacity:.85;pointer-events:none}
+/* time's up: the folder's cover swings shut over the secret, then SEALED slams onto it */
+.file.closed::after{content:"";position:absolute;inset:0;border-radius:4px;z-index:2;transform-origin:50% 0;
+  background:repeating-linear-gradient(0deg,rgba(80,50,20,.05) 0 2px,transparent 2px 34px),linear-gradient(#ddc89e,#c9b385);
+  box-shadow:inset 0 0 0 2px rgba(80,50,20,.25),inset 0 -14px 30px rgba(80,50,20,.18);animation:fileshut .6s cubic-bezier(.35,1.25,.5,1) both}
+@keyframes fileshut{0%{transform:perspective(900px) rotateX(-95deg);opacity:.4}100%{transform:none;opacity:1}}
+.file.closed .stamp{z-index:3}
+.file.closed .stamp.ts{font-size:clamp(.75rem,1.3vw,1.05rem);top:clamp(12px,1.8vw,22px);right:clamp(12px,1.8vw,26px);border-width:3px;transition:all .35s}
+.file.closed .stamp.sealed{animation-delay:.55s}
+.file.closed .fact,.file.closed .ask,.file.closed .fuse{visibility:hidden;transition:visibility 0s .35s}
 .stamp.ts{right:clamp(14px,3vw,40px);top:clamp(58px,7vw,84px);transform:rotate(9deg);font-size:clamp(1rem,2.2vw,1.7rem)}
 .stamp.sealed{left:50%;top:50%;transform:translate(-50%,-50%) rotate(-12deg);font-size:clamp(2.4rem,7vw,5.6rem);animation:slam .45s cubic-bezier(.3,1.6,.5,1) both;opacity:.9;background:rgba(239,226,196,.5)}
 @keyframes slam{from{transform:translate(-50%,-50%) rotate(-12deg) scale(3);opacity:0}to{transform:translate(-50%,-50%) rotate(-12deg) scale(1);opacity:.9}}
@@ -258,6 +267,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <div id="toast" hidden></div>
 
 <script src="/qrcode.js"></script>
+<script src="/ambient.js"></script>
 <script>
 /* ================= THE SECRETS ================= */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
@@ -280,9 +290,11 @@ const DISTRICT=n=>NAMES.indexOf(n)+1;
 Q.forEach(x=>{const i=new Image();i.src=RV(x.a)});
 
 /* typed guesses: forgiving match (nicknames, caps, spaces, one typo) */
-const ALIASES={"Jonny":["jonny","johnny","jony","jon","jt"],"QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
-  "Grandad":["grandad","granddad","grandpa","grampa","papa","don"],"Elisha":["elisha","mom","momma","mama"],"Jessie":["jessie","jessi","jess","jessica"],
-  "Kamdon":["kamdon","camden","kamden","camdon","kam","cam"],"Tinsley":["tinsley","tins"],"Natalie":["natalie","nat","nattie"],"Brandon":["brandon"],"Kyle":["kyle"],"Dash":["dash"],"Carsyn":["carsyn","carson"]};
+const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt"],
+  "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
+  "Grandad":["grandad","granddad","grandpa","grampa","papa","don","dawn","donjackson"],"Elisha":["elisha","mom","momma","mama"],
+  "Jessie":["jessie","jesse","jessi","jess","jessica"],"Kamdon":["kamdon","kamden","kam"],
+  "Tinsley":["tinsley","tins"],"Natalie":["natalie","nat","nattie"],"Brandon":["brandon"],"Kyle":["kyle"],"Dash":["dash"],"Carsyn":["carsyn","carson"]};
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
@@ -485,7 +497,7 @@ async function poll(){
     // someone just signed in on a phone: they want to play
     if(S.phase==="lobby"&&!firstPoll)S.players.forEach(p=>{if(phones.includes(p.name)&&!had.includes(p.name)){p.on=true;sfx("seal")}});
     firstPoll=false;
-    if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0)sfx("seal")
+    if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0){flyEnvelope();sfx("seal")}
       // when each guess first showed up, for the speed bonus
       if(S.phase==="question"&&!S.locked){S.seenAt=S.seenAt||{};Object.keys(answers).forEach(n=>{if(S.seenAt[n]==null)S.seenAt[n]=S.elapsed})}}
     if(d.react)floatReacts(d.react);
@@ -697,7 +709,7 @@ function questionView(){
   const x=cur(),tot=guessers().length;
   return `<div class="top"><div><div class="eyebrow">District Secrets</div><div class="qnum">Secret ${S.qi+1} of ${Q.length}</div></div>${giftTag()}
     <div class="timer" aria-label="Seconds left"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38" fill="#a3182b"/><circle cx="42" cy="42" r="32" fill="none" stroke="#5e0a17" stroke-width="3"/><circle cx="42" cy="42" r="38" fill="none" stroke="#d9b25f" stroke-width="2" stroke-dasharray="3 5"/></svg><div class="n">${S.secs}</div></div></div>
-  <article class="file">
+  <article class="file${S.locked?" closed":""}">
     <div class="hdr"><span>FILE No. ${pad(S.qi+1)}</span><span>CAPITOL ARCHIVES · DISTRICT RECORDS</span></div>
     <div class="stamp ts">Top secret</div>
     <p class="fact" aria-label="${esc(x.f)}"></p>
@@ -809,8 +821,70 @@ S=saved()||freshState();
 if(S.phase==="question")S.locked=true;
 if(S.phase==="ready")S.phase="roundcard";
 render();
-setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}},250);
+setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
+
+/* ---------- floating secrets: envelopes, wax seals, keys, quills, magnifiers, padlocks, scrolls ---------- */
+let lastArena="";
+function arena(){
+  if(typeof Ambient==="undefined")return;
+  const ph=S.phase,k=`${ph}:${S.qi}:${S.locked}`;
+  const m=ph==="lobby"||ph==="roundcard"||ph==="final"||ph==="ready"?["full",{theme:"ds",max:8,every:[900,1800]}]
+    :ph==="question"||ph==="board"?["edges",{theme:"ds",max:6,every:[1100,2000]}]:["off"];
+  Ambient.set(...m);
+  if(k!==lastArena){ if(ph==="question"&&!S.locked&&!lastArena.startsWith("question:"+S.qi))sweep(); lastArena=k; }
+}
+// a big magnifying glass sweeps across the secret file as it appears
+function sweep(){
+  if(calm)return;
+  const el=document.createElement("div");el.innerHTML=Ambient.ART.magnifier;
+  el.style.cssText="position:fixed;z-index:6;pointer-events:none;width:clamp(120px,14vw,200px);left:0;top:30vh;filter:drop-shadow(0 10px 20px rgba(0,0,0,.5))";
+  document.body.appendChild(el);
+  el.animate([{transform:"translate(-25vw,0) rotate(-15deg)"},{transform:"translate(30vw,8vh) rotate(10deg)"},{transform:"translate(60vw,-4vh) rotate(-8deg)"},{transform:"translate(110vw,6vh) rotate(12deg)"}],
+    {duration:3200,easing:"ease-in-out"}).onfinish=()=>el.remove();
+}
+// a sealed guess just came in: an envelope flies into the row
+function flyEnvelope(){
+  if(calm)return;
+  const row=document.querySelector(".envs");if(!row)return;
+  const r=row.getBoundingClientRect(),el=document.createElement("div");el.innerHTML=Ambient.ART.envelope;
+  el.style.cssText="position:fixed;z-index:6;pointer-events:none;width:70px;left:0;top:0";
+  document.body.appendChild(el);
+  const fromX=Math.random()<.5?-80:innerWidth+10,toX=r.left+r.width/2-35,toY=r.top;
+  el.animate([{transform:`translate(${fromX}px,${innerHeight*.9}px) rotate(-30deg) scale(.6)`},{transform:`translate(${(fromX+toX)/2}px,${toY-160}px) rotate(15deg) scale(1.2)`},
+    {transform:`translate(${toX}px,${toY}px) rotate(0) scale(.8)`,opacity:1},{transform:`translate(${toX}px,${toY+10}px) scale(.4)`,opacity:0}],{duration:1300,easing:"ease-in-out"}).onfinish=()=>el.remove();
+}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){pollKey="";maybePoll()}});
+
+/* ---------- host menu: a faint ⚙ in the corner, easy to miss on purpose ---------- */
+(function hostMenu(){
+  const b=document.createElement("button");b.textContent="⚙";b.title="Host menu";b.setAttribute("aria-label","Host menu");
+  b.style.cssText="position:fixed;left:6px;bottom:6px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--ink);opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
+  b.onmouseenter=()=>b.style.opacity=".9";b.onmouseleave=()=>b.style.opacity=".18";
+  const m=document.createElement("div");
+  m.style.cssText="position:fixed;left:8px;bottom:38px;z-index:21;background:var(--plum-2);border-radius:12px;padding:8px;display:none;gap:6px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);font:600 14px var(--body,system-ui),sans-serif";
+  const item=(label,fn)=>{const x=document.createElement("button");x.textContent=label;
+    x.style.cssText="background:transparent;color:var(--ink);border:0;text-align:left;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit";
+    x.onmouseenter=()=>x.style.background="rgba(255,255,255,.08)";x.onmouseleave=()=>x.style.background="transparent";
+    x.onclick=()=>{show(false);fn()};m.appendChild(x)};
+  const show=on=>m.style.display=on?"grid":"none";
+  item("↺ Restart from the beginning",restartGame);
+  item("📱 Clear phone names",async()=>{if(!confirm("Clear every phone's name? Everyone will need to tap their name again."))return;
+    try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
+  item("✕ Close",()=>{});
+  b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};
+  document.addEventListener("click",e=>{if(!m.contains(e.target)&&e.target!==b)show(false)});
+  document.body.appendChild(b);document.body.appendChild(m);
+})();
+// Back to the lobby with a clean slate. Phones keep their names and follow along.
+function restartGame(ask=true){
+  if(ask&&!confirm("Restart from the beginning? This ends the current game and clears the scores."))return;
+  clearInterval(readyT);clearInterval(typeT);cancelAnimationFrame(raf);stopSong();
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0});
+  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now()});
+  answers={};answersQi=-1;counted=null;hostOpen=false;
+  post({action:"reset",total:Q.length}).catch(()=>{});
+  render();
+}
 </script>
 </body>
 </html>

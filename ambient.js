@@ -23,6 +23,24 @@ const Ambient = (() => {
       <path d="M36 6c8-6 20-4 24 2-8 2-16 2-24-2z" fill="#3e8a52"/>
       <circle cx="14" cy="34" r="9" fill="#2a1240"/><circle cx="34" cy="30" r="10" fill="#3a1a5a"/><circle cx="56" cy="34" r="9" fill="#2a1240"/><circle cx="24" cy="48" r="8" fill="#341650"/><circle cx="46" cy="48" r="8" fill="#2a1240"/>
       <circle cx="31" cy="26" r="2.5" fill="#b9a3d9"/><circle cx="11" cy="31" r="2" fill="#b9a3d9"/><circle cx="53" cy="31" r="2" fill="#b9a3d9"/></svg>`,
+    // ---- District Secrets theme ----
+    envelope: `<svg viewBox="0 0 80 56"><rect x="2" y="4" width="76" height="48" rx="4" fill="#efe2c4" stroke="#8a6a26" stroke-width="2"/><path d="M2 8l38 26L78 8" fill="none" stroke="#8a6a26" stroke-width="2"/>
+      <circle cx="40" cy="32" r="9" fill="#a3182b" stroke="#5e0a17" stroke-width="1.5"/><path d="M36 32h8M40 28v8" stroke="#f6dfa0" stroke-width="1.6"/></svg>`,
+    seal: `<svg viewBox="0 0 60 60"><path d="M30 3c5 0 7 4 11 5s9-1 11 3-1 8 1 12 6 6 4 11-7 5-9 9-1 9-6 11-8-2-12-2-7 4-12 2-3-7-6-11-8-4-9-9 3-7 4-11-2-9 2-12 8 0 11-3 6-5 11-5z" fill="#a3182b" stroke="#5e0a17" stroke-width="1.5"/>
+      <circle cx="30" cy="30" r="15" fill="none" stroke="#5e0a17" stroke-width="2"/><path d="M30 19l3.2 6.6 7.3.8-5.4 5 1.5 7.2-6.6-3.6-6.6 3.6 1.5-7.2-5.4-5 7.3-.8z" fill="#d8393f" stroke="#5e0a17" stroke-width="1"/></svg>`,
+    key: `<svg viewBox="0 0 90 40"><circle cx="18" cy="20" r="14" fill="none" stroke="#d9b25f" stroke-width="6"/><circle cx="18" cy="20" r="5" fill="#d9b25f"/>
+      <path d="M32 20h52M70 20v10M80 20v8M60 20v6" stroke="#d9b25f" stroke-width="6" stroke-linecap="round"/><path d="M8 12c4-6 14-6 18 0" stroke="#f6dfa0" stroke-width="2" fill="none"/></svg>`,
+    quill: `<svg viewBox="0 0 40 120"><path d="M20 118l2-30" stroke="#8a6a26" stroke-width="3" stroke-linecap="round"/>
+      <path d="M22 88C6 70 4 36 26 4c4 30 4 60-4 84z" fill="#f4ecdb" stroke="#ab9fbe" stroke-width="1.5"/><path d="M22 86c2-26 3-52 4-80" stroke="#ab9fbe" stroke-width="1.2" fill="none"/>
+      <path d="M12 60l9-4M10 44l12-6M13 28l10-6" stroke="#cfc3df" stroke-width="1.2"/></svg>`,
+    magnifier: `<svg viewBox="0 0 80 80"><circle cx="32" cy="32" r="22" fill="rgba(200,230,255,.25)" stroke="#d9b25f" stroke-width="7"/>
+      <path d="M48 48l24 24" stroke="#6b3d1a" stroke-width="10" stroke-linecap="round"/><path d="M20 24c2-6 8-10 14-10" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".8"/></svg>`,
+    lock: `<svg viewBox="0 0 60 70"><path d="M16 30V20a14 14 0 0 1 28 0v10" fill="none" stroke="#c9b385" stroke-width="6"/><rect x="6" y="28" width="48" height="38" rx="6" fill="#d9b25f" stroke="#8a6a26" stroke-width="2"/>
+      <circle cx="30" cy="44" r="5" fill="#2b1d12"/><path d="M30 46v10" stroke="#2b1d12" stroke-width="4" stroke-linecap="round"/></svg>`,
+    scroll: `<svg viewBox="0 0 90 60"><rect x="12" y="8" width="66" height="44" fill="#efe2c4" stroke="#8a6a26" stroke-width="1.5"/>
+      <rect x="4" y="4" width="12" height="52" rx="6" fill="#c9b385" stroke="#8a6a26" stroke-width="1.5"/><rect x="74" y="4" width="12" height="52" rx="6" fill="#c9b385" stroke="#8a6a26" stroke-width="1.5"/>
+      <path d="M22 20h44M22 28h40M22 36h44" stroke="#8a6a26" stroke-width="2" opacity=".6"/><text x="45" y="49" text-anchor="middle" font-family="Georgia,serif" font-size="9" font-weight="700" fill="#a3182b">CLASSIFIED</text></svg>`,
+    question: `<svg viewBox="0 0 50 70"><text x="25" y="58" text-anchor="middle" font-family="Georgia,serif" font-size="64" font-weight="900" fill="#d9b25f" stroke="#8a6a26" stroke-width="1.5">?</text></svg>`,
     // a gold Capitol coin (original design: laurel wreath and a star)
     coin: `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="28" fill="#e8b04b" stroke="#9a6c1c" stroke-width="3"/><circle cx="30" cy="30" r="21" fill="none" stroke="#9a6c1c" stroke-width="1.5"/>
       <path d="M18 40c-6-8-6-18 0-24M42 40c6-8 6-18 0-24" stroke="#9a6c1c" stroke-width="2" fill="none"/>
@@ -125,7 +143,7 @@ const Ambient = (() => {
     },
     embers() {
       for (let i = 0; i < 6; i++) {
-        const e = document.createElement("div"); e.className = "amb-ember"; layer.appendChild(e);
+        const e = document.createElement("div"); e.className = "amb-ember"; if (opts.theme === "ds") e.style.cssText = "background:#f6dfa0;box-shadow:0 0 8px 2px #d9b25f"; layer.appendChild(e);
         const x = mode === "edges" ? (Math.random() < .5 ? R(0, W() * .1) : R(W() * .9, W())) : R(0, W());
         e.animate([{ transform: `translate(${x}px,${H() + 10}px)`, opacity: 1 }, { transform: `translate(${x + R(-60, 60)}px,${H() * R(.3, .7)}px)`, opacity: 0 }],
           { duration: R(2500, 4500), delay: i * 180, easing: "ease-out", fill: "backwards" }).onfinish = () => e.remove();
@@ -164,11 +182,49 @@ const Ambient = (() => {
       if (opts.tap) tapped(el, "flame", (x, y) => { opts.sound?.("fire"); popup(x, y, "🔥 Tribute on fire!<small>Too hot to handle</small>"); });
     },
   });
+  const NOTES = ["Rumor has it the elves are unionizing.", "Someone in this room has never seen a single Christmas movie. Allegedly.",
+    "Classified: the fruitcake is 11 years old.", "Top secret: Santa's real weight.", "Psst. The cookies on the counter are store-bought.",
+    "Confidential: the reindeer prefer carrots.", "Leaked memo: Rudolph's nose is battery-powered.", "Off the record: someone regifted last year.",
+    "Eyes only: the tree is slightly crooked.", "Redacted: [this part has been eaten by the dog]."];
+  let keys = 0;
+  Object.assign(KINDS, {
+    envelope() {
+      const size = opts.tap ? R(64, 84) : R(56, 86), x = fallX(size), t = R(9000, 12500), el = sprite(ART.envelope, size, opts.tap);
+      el.animate([{ transform: `translate(${x}px,${-size}px) rotate(-10deg)` }, { transform: `translate(${x + 30}px,${H() * .35}px) rotate(12deg)` },
+        { transform: `translate(${x - 20}px,${H() * .7}px) rotate(-8deg)` }, { transform: `translate(${x + 10}px,${H() + 20}px) rotate(10deg)` }], { duration: t, easing: "linear" }).onfinish = () => el.remove();
+      if (opts.tap) tapped(el, "envelope", (x, y) => { opts.sound?.("seal"); opts.burst?.(); popup(x, y, `<small>✉️ A secret note</small>${NOTES[Math.random() * NOTES.length | 0]}`); });
+    },
+    seal() { faller("seal", R(36, 52), R(6000, 8500), R(-540, 540), "seal", "seal", () => "🔴 Sealed with wax.<small>And maybe a kiss</small>"); },
+    key() { faller("key", R(60, 80), R(6000, 8500), R(-720, 720), "key", "right", () => { const n = opts.key ? opts.key() : ++keys;
+      return `🗝️ You found a key!<small>${n} key${n > 1 ? "s" : ""} to the vault</small>`; }); },
+    lock() { faller("lock", R(34, 46), R(6500, 9000), R(-180, 180), "lock", "tap", () => "🔒 Locked tight.<small>Nice try, detective</small>"); },
+    scroll() { faller("scroll", R(60, 84), R(7000, 9500), R(-300, 300), "scroll", "shh", () => `📜 Classified memo<small>${NOTES[Math.random() * NOTES.length | 0]}</small>`); },
+    quill() {
+      const size = R(26, 36), ltr = Math.random() < .5, x0 = ltr ? -60 : W() + 20, x1 = ltr ? W() * R(.5, 1.1) : W() * R(-.1, .5), t = R(9000, 12000), el = sprite(ART.quill, size, opts.tap);
+      el.animate([{ transform: `translate(${x0}px,${R(-40, H() * .2)}px) rotate(${ltr ? 30 : -30}deg)` }, { transform: `translate(${(x0 + x1) / 2}px,${H() * .5}px) rotate(${ltr ? -20 : 20}deg)` },
+        { transform: `translate(${x1}px,${H() + 40}px) rotate(${ltr ? 25 : -25}deg)` }], { duration: t, easing: "ease-in-out" }).onfinish = () => el.remove();
+      if (opts.tap) tapped(el, "quill", (x, y) => { opts.sound?.("shh"); popup(x, y, "🪶 Your secret is safe with us.<small>Probably.</small>"); });
+    },
+    magnifier() {
+      const size = R(56, 80), ltr = Math.random() < .5, y = crossY(size), t = R(5000, 7500), el = sprite(ART.magnifier, size, opts.tap);
+      const x0 = ltr ? -size - 20 : W() + 20, x1 = ltr ? W() + 20 : -size - 20, frames = [];
+      for (let i = 0; i <= 6; i++) frames.push({ transform: `translate(${x0 + (x1 - x0) * i / 6}px,${y + Math.sin(i * 1.4) * 30}px) rotate(${(i % 2 ? -1 : 1) * 12}deg)` });
+      el.animate(frames, { duration: t, easing: "ease-in-out" }).onfinish = () => el.remove();
+      if (opts.tap) tapped(el, "magnifier", (x, y) => { opts.sound?.("right"); popup(x, y, "🔍 Clue found!<small>It's definitely someone in this room.</small>"); });
+    },
+    question() {
+      const size = R(28, 44), x = fallX(size), t = R(5000, 7000), el = sprite(ART.question, size, opts.tap);
+      el.animate([{ transform: `translate(${x}px,${H() + 20}px) rotate(-10deg)`, opacity: 1 }, { transform: `translate(${x + R(-40, 40)}px,${H() * .25}px) rotate(10deg)`, opacity: 0 }], { duration: t, easing: "ease-out" }).onfinish = () => el.remove();
+      if (opts.tap) tapped(el, "question", (x, y) => { opts.sound?.("tap"); popup(x, y, "❓ Who could it be?<small>Trust no one.</small>"); });
+    },
+  });
+  const BAG_DS = ["envelope", "envelope", "envelope", "seal", "seal", "key", "key", "lock", "scroll", "scroll", "quill", "magnifier", "magnifier", "question", "question", "embers"];
   const BAG = ["bird", "bird", "chute", "chute", "chute", "rose", "wasp", "wasp", "berries", "embers", "coin", "coin", "bread", "bread", "arrow", "sugar", "flame"];
 
   function spawn() {
     if (mode === "off" || document.hidden || calm) return;
-    if (live() < (opts.max || 6)) KINDS[BAG[Math.random() * BAG.length | 0]]();
+    const bag = opts.theme === "ds" ? BAG_DS : BAG;
+    if (live() < (opts.max || 6)) KINDS[bag[Math.random() * bag.length | 0]]();
   }
   function loop() { clearTimeout(timer); if (mode === "off") return; spawn(); timer = setTimeout(loop, R(opts.every?.[0] || 1400, opts.every?.[1] || 2600)); }
 
@@ -191,5 +247,5 @@ const Ambient = (() => {
     <ellipse cx="170" cy="96" rx="34" ry="38" fill="#3a2410" stroke="#7a5212" stroke-width="2"/>
     <circle cx="160" cy="80" r="11" fill="#c8312a"/><circle cx="178" cy="92" r="10" fill="#e8b04b"/><circle cx="162" cy="104" r="10" fill="#3e8a52"/><circle cx="182" cy="112" r="9" fill="#6b2d8a"/>
     <path d="M150 116c10-6 26-6 36 2-10 6-26 6-36-2z" fill="#c97a2b"/><path d="M176 70l6-8M162 70l-2-9" stroke="#3e8a52" stroke-width="3"/></svg>`;
-  return { set, clear, spawn: k => KINDS[k]?.(), training, CORNUCOPIA };
+  return { set, clear, spawn: k => KINDS[k]?.(), training, CORNUCOPIA, ART };
 })();

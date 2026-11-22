@@ -21,8 +21,8 @@
   .fx-chute{position:absolute;left:50%;top:0;width:clamp(140px,16vw,220px);margin-left:calc(clamp(140px,16vw,220px)/-2);animation:fxdrift 3s ease-in-out both,fxsway 1.8s 3s ease-in-out infinite alternate}
   @keyframes fxdrift{from{transform:translateY(-110%) rotate(-14deg)}to{transform:translateY(18vh) rotate(0)}}
   @keyframes fxsway{from{transform:translateY(18vh) rotate(-6deg)}to{transform:translateY(18vh) rotate(6deg)}}
-  .fx-bird{position:absolute;top:12vh;left:-20vw;width:clamp(90px,11vw,150px);animation:fxswoop 2.6s cubic-bezier(.45,.05,.4,1) both}
-  @keyframes fxswoop{0%{transform:translate(0,0) rotate(8deg)}50%{transform:translate(65vw,8vh) rotate(-6deg)}100%{transform:translate(135vw,-14vh) rotate(-18deg)}}
+  .fx-bird{position:absolute;top:1vh;left:-20vw;width:clamp(70px,8vw,110px);animation:fxswoop 2.6s cubic-bezier(.45,.05,.4,1) both}
+  @keyframes fxswoop{0%{transform:translate(0,4vh) rotate(8deg)}50%{transform:translate(65vw,0) rotate(-6deg)}100%{transform:translate(135vw,-6vh) rotate(-18deg)}}
   .fx-beam{position:absolute;top:-10vh;width:22vw;height:130vh;background:linear-gradient(rgba(255,241,200,.38),rgba(255,241,200,0) 80%);transform-origin:50% 0;filter:blur(6px);animation:fxsweep 2.2s ease-in-out both}
   @keyframes fxsweep{0%{opacity:0;transform:rotate(var(--a))}20%{opacity:1}100%{opacity:0;transform:rotate(calc(var(--a) * -1))}}
   .row.fx-blaze{box-shadow:0 0 0 2px #ff7a1a,0 0 26px rgba(255,90,20,.65)!important;animation:fxflick .22s infinite alternate}
@@ -34,12 +34,13 @@
   @keyframes fxrose{from{transform:rotate(-12deg)}to{transform:rotate(12deg) scale(1.15)}}
   .fx-horn{width:clamp(220px,30vw,380px);animation:fxflyin 1.1s cubic-bezier(.2,1.3,.4,1) both,fxbob 1.8s 1.1s ease-in-out infinite alternate}.fx-horn svg{width:100%;height:auto;filter:drop-shadow(0 10px 24px rgba(0,0,0,.6))}
   @keyframes fxbob{to{transform:translateY(-10px) rotate(-2deg)}}
-  /* the sky remembers: a face nobody guessed */
+  /* a fallen tribute: a face nobody guessed */
   .fx-sky{position:fixed;left:0;right:0;top:0;height:46vh;z-index:7;pointer-events:none;display:grid;place-items:center;gap:10px;text-align:center;
     background:radial-gradient(ellipse at 50% 0,#1c2a4a 0,#0b1020 60%,rgba(11,16,32,0) 100%);animation:fxsky 6s ease-in-out both}
   .fx-sky img{width:clamp(110px,14vw,170px);height:clamp(110px,14vw,170px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(255,255,255,.5),0 0 60px 10px rgba(160,190,255,.45);filter:grayscale(.6) brightness(1.1)}
   .fx-sky div{font-family:Rye,Georgia,serif;font-size:clamp(1.1rem,2.4vw,1.7rem);color:#dfe8ff;text-shadow:0 0 18px rgba(160,190,255,.8)}
   .fx-sky small{display:block;font-family:Outfit,sans-serif;font-size:.6em;letter-spacing:.14em;text-transform:uppercase;opacity:.8}
+  .fx-sky small.sub{text-transform:none;letter-spacing:.02em;font-size:.55em;margin-top:.4em;opacity:.85}
   @keyframes fxsky{0%{opacity:0;transform:translateY(-30px)}12%{opacity:1;transform:none}85%{opacity:1}100%{opacity:0}}
   .fx-extra{display:grid;gap:14px;justify-items:center;width:100%;max-width:900px;margin:6px auto}
   .fx-champ{background:var(--night-2);border-radius:16px;padding:12px 22px;box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(232,176,75,.4);font-weight:800;font-size:clamp(1rem,2.2vw,1.4rem);animation:pop .7s .6s both}
@@ -113,14 +114,16 @@
     em.outerHTML = `<div class="fx-horn">${Ambient.CORNUCOPIA}</div>`;
     if (!calm) ["coin", "bread", "chute", "coin", "berries", "bread", "coin", "sugar", "chute", "coin"].forEach((k, i) => setTimeout(() => Ambient.spawn(k), 400 + i * 220));
   }
-  /* Nobody guessed this face: it appears in the night sky */
+  /* Nobody guessed this face: a cannon sounds and the fallen tribute appears in the night sky */
   function sky() {
     const r = S.rounds[S.qi]; if (!r) return;
     S.fallen = (S.fallen || []).filter(q => q !== r.qi).concat(r.qi);
-    if (calm) return;
-    try { sfx("cannon"); } catch (e) {}
+    // like the films: the music drops out, one cannon booms over the silence, then the music comes back
+    try { stopSong(); setTimeout(() => sfx("cannon"), 250); setTimeout(() => { if (S.phase === "board") playSong("arena"); }, 3400); } catch (e) {}
     const d = document.createElement("div"); d.className = "fx-sky";
-    d.innerHTML = `<img src="img/${Q[r.qi].r}.jpg" alt=""><div><small>Nobody guessed this face</small>The sky remembers ${esc(Q[r.qi].a)}</div>`;
+    if (calm) return;
+    const who = Q[r.qi].a, dist = typeof DISTRICT !== "undefined" && DISTRICT[who] ? ` of District ${DISTRICT[who]}` : "";
+    d.innerHTML = `<img src="img/${Q[r.qi].r}.jpg" alt=""><div><small>🔔 A cannon sounds in the arena</small>Tribute ${esc(who)}${dist} has fallen<small class="sub">Not one tribute recognized this face.</small></div>`;
     document.body.appendChild(d); setTimeout(() => d.remove(), 6200);
   }
   /* Winner screen: the Capitol coin champion and the faces nobody guessed */
@@ -133,7 +136,7 @@
       const list = Object.entries(d.coins || {}).map(([n, c]) => [n, +c]).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]);
       if (list.length) champ = `<div class="fx-champ">🪙 Capitol Coin Champion: <b>${esc(list[0][0])}</b> with ${list[0][1]} coin${list[0][1] > 1 ? "s" : ""}${list[1] ? ` · runner-up ${esc(list[1][0])} (${list[1][1]})` : ""}</div>`;
     } catch (e) {}
-    box.innerHTML = champ + (fallen ? `<div class="eyebrow">🌌 The sky remembers the faces nobody guessed</div><div class="fx-fallen">${fallen}</div>` : "");
+    box.innerHTML = champ + (fallen ? `<div class="eyebrow">🕯️ Fallen tributes: the faces nobody guessed</div><div class="fx-fallen">${fallen}</div>` : "");
     const pod = document.querySelector(".podium"); if (S.phase === "final" && pod && box.innerHTML) pod.after(box);
   }
 

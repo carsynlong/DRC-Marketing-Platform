@@ -177,6 +177,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
+const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
+const groupOf=n=>GIRLS.has(n)?"girls":"boys";
 const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
 const Q=[
  {q:"s01",r:"s02",a:"Dash"},{q:"s03",r:"s04",a:"Kyle"},{q:"s05",r:"s06",a:"Grandad"},{q:"s07",r:"s08",a:"Jessie"},
@@ -218,7 +220,7 @@ Q.forEach(x=>{[x.q,x.r].forEach(id=>{const i=new Image();i.src=src(id)})});
 
 let S, raf=0;
 function freshState(){
-  return {phase:"lobby",secs:20,sound:true,mode:"choice",typed:{},
+  return {phase:"lobby",secs:30,sound:true,mode:"type",typed:{},
     players:NAMES.map(n=>({name:n,on:n!=="Carsyn",score:0,streak:0,delta:0})),
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
@@ -365,8 +367,9 @@ const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 /* ================= GAME ================= */
 function newGame(){
-  Sync.reset();
-  S.rounds=Q.map((x,qi)=>{const others=shuffle(NAMES.filter(n=>n!==x.a)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
+  Sync.reset();S.mode="type";
+  // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
+  S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
   S.qi=0; roundCardOrQuestion();
 }
@@ -382,8 +385,11 @@ function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const giftTag=()=>S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
-const ALIASES={"Jonny":["jonny","johnny","jony","jon","jt","jtjt"],"QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana"],
-  "Grandad":["grandad","granddad","grandpa","grampa","papa","don","donjackson"],"Elisha":["elisha","mom","momma","mama"],"Jessie":["jessie","jessi","jess","jessica"]};
+const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt"],
+  "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
+  "Grandad":["grandad","granddad","grandpa","grampa","papa","don","dawn","donjackson"],"Elisha":["elisha","mom","momma","mama"],
+  "Jessie":["jessie","jesse","jessi","jess","jessica"],"Kamdon":["kamdon","kamden","kam"],
+  "Tinsley":["tinsley","tins"],"Natalie":["natalie","nat","nattie"],"Brandon":["brandon"],"Kyle":["kyle"],"Dash":["dash"],"Carsyn":["carsyn","carson"]};
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
@@ -431,7 +437,7 @@ function score(){
   });
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("board");
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("arena");
   render();
 }
 function next(){S.qi++;roundCardOrQuestion();}
@@ -454,15 +460,13 @@ function lobbyView(){
     ${EMBLEM}
     <div class="eyebrow">The 2026 Christmas Games · Game 2</div>
     <h1>Who's That Tribute?</h1>
-    <p>A tribute's face appears way too close for comfort. ${S.mode==="type"?"Type your guess on your phone before the cannon fires (no phone? type it in your box on the laptop). The game checks spelling for you, and nicknames count.":"Tap the right name on your phone before the cannon fires. No phone? Shout your answer to the host, who taps you in at the reveal."} Each right answer is worth 1,000 points, plus 100 for every answer in a row. No points for guessing your own face.</p>
+    <p>A tribute's face appears way too close for comfort. Sign in on your phone, then type who you think it is before the cannon fires. Your guess is sealed: nobody sees it until the reveal. Spelling slips and nicknames count. Each right answer is worth 1,000 points, plus 100 for every answer in a row. No points for guessing your own face.</p>
     ${Sync.joinCard()}
     ${Sync.roster()}
     <div class="eyebrow">Who's playing? Tap to sit someone out</div>
     <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
-    <div class="settings"><span class="tiny">How to answer</span>
-      <div class="seg" role="group" aria-label="How to answer"><button data-mode="choice" aria-pressed="${S.mode!=="type"}">🔺 Tap 1 of 4 names</button> <button data-mode="type" aria-pressed="${S.mode==="type"}">⌨️ Type the name</button></div></div>
     <div class="settings"><span class="tiny">Seconds per face</span>
-      <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
+      <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30,45].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
       ${sndBtn()}</div>
     <div class="settings"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
@@ -501,8 +505,9 @@ function typedView(x,rev){
     return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
       ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
       <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
-  return `${rev?`<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>`:
-    `<div class="bar"><div class="eyebrow">${S.locked?"Answers locked":"Answer on your phone, or type in your box. Enter jumps to the next box."}</div><div class="tiny" id="answered">${Sync.countText()}</div></div>`}
+  // while a face is up the TV never shows guesses: only who has sealed one (their name turns gold)
+  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":"📱 Type your guess on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
+  return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
   <div class="typed">${boxes}</div>`;
 }
 function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
@@ -553,7 +558,6 @@ function primary(){
 function wire(){
   document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const p=S.players[+b.dataset.tog];p.on=!p.on;render()});
   document.querySelectorAll("[data-secs]").forEach(b=>b.onclick=()=>{S.secs=+b.dataset.secs;render()});
-  document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;render()});
   const ins=[...document.querySelectorAll("[data-type]")];
   ins.forEach((inp,k)=>{inp.oninput=()=>{S.typed[inp.dataset.type]=inp.value};
     inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();(ins[k+1]||inp).focus();if(!ins[k+1])inp.blur()}}});
@@ -566,7 +570,7 @@ function wire(){
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
+  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"arena",final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 document.addEventListener("keydown",e=>{

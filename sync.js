@@ -19,7 +19,7 @@ const Sync = (() => {
   /* ---- what phones see. Never the photos, and never the right answer before the reveal. ---- */
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
-    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES,
+    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, // the host can't sign in as a player
       playing: active().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
       feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)) };
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
@@ -44,19 +44,20 @@ const Sync = (() => {
   function pollEvery() {
     if (S.phase === "question" && !S.locked) return 1000;   // answers coming in
     if (S.phase === "lobby") return 2000;                   // people picking names
-    return 0;
+    return 1500;                                            // otherwise: just checking for emoji reactions
   }
   async function poll() {
     if (polling) return;
     polling = true; lastPoll = Date.now();
     const qi = S.phase === "lobby" ? null : S.qi;
     try {
-      const d = await (await fetch(`/api/host${qi == null ? "" : `?qi=${qi}`}`, { cache: "no-store" })).json();
+      const d = await (await fetch(`/api/host?react=1${qi == null ? "" : `&qi=${qi}`}`, { cache: "no-store" })).json();
+      if (d.react) floatReacts(d.react);
       const before = phones.join("|"), had = phones;
       phones = d.players.sort();
       // Someone who just picked their name on a phone wants to play: switch them on.
       // (The host can still tap them to sit out. Skipped on the TV's first look after loading.)
-      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
+      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (p.name !== HOST && phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
       firstPoll = false;
       if (d.qi != null && d.qi === S.qi) { answers = d.answers; answersQi = d.qi; }
       if (S.phase === "lobby" && before !== phones.join("|")) render();
@@ -113,8 +114,8 @@ const Sync = (() => {
       if (!p || !p.on || v == null) return;
       if (S.mode === "type") {
         S.typed[n] = v;
-        if (counted && n !== a && matches(v, a) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
-      } else if (v === a && n !== a && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
+        if (counted && matches(v, a) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
+      } else if (v === a && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
     });
     return changed;
   }
@@ -130,6 +131,37 @@ const Sync = (() => {
     const fresh = Object.keys(current()).filter(n => !counted.has(n));
     fresh.forEach(n => counted.add(n));
     if (fresh.length) { apply(fresh); render(); }
+  }
+
+  /* ---- emoji reactions from phones: a little burst floats up the TV with the sender's name ---- */
+  // The server keeps a short log of recent bursts ({ id, name, e }); show every one newer than the last we showed.
+  let reactSeen = null;
+  function floatReacts(log) {
+    const items = (log || []).map(x => { try { return typeof x === "string" ? JSON.parse(x) : x; } catch (e) { return null; } }).filter(x => x && x.id);
+    const top = items.reduce((m, x) => Math.max(m, x.id), 0);
+    if (reactSeen === null) { reactSeen = top; return; }   // first look after loading: don't replay old ones
+    if (top < reactSeen) reactSeen = 0;                    // a new game wiped the log
+    const fresh = items.filter(x => x.id > reactSeen).sort((a, b) => a.id - b.id).slice(-10);
+    reactSeen = Math.max(reactSeen, top);
+    fresh.forEach((x, i) => setTimeout(() => burst(x.name, x.e), i * 260));
+  }
+  function burst(who, e) {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const x = 8 + Math.random() * 84, box = document.createElement("div");
+    box.style.cssText = `position:fixed;left:${x}vw;bottom:-80px;z-index:9;pointer-events:none;width:0;height:0`;
+    for (let k = 0; k < 6; k++) {
+      const s = document.createElement("span"); s.textContent = e;
+      const size = 1.4 + Math.random() * 1.6, dx = (Math.random() - .5) * 140, rise = 55 + Math.random() * 30;
+      s.style.cssText = `position:absolute;left:0;bottom:0;font-size:${size}rem;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5))`;
+      s.animate([{ transform: "translate(0,0) scale(.4)", opacity: 0 }, { transform: `translate(${dx * .3}px,-12vh) scale(1.1)`, opacity: 1, offset: .2 },
+        { transform: `translate(${dx}px,-${rise}vh) rotate(${dx / 4}deg) scale(1)`, opacity: 0 }], { duration: 2600 + Math.random() * 900, delay: k * 90, easing: "cubic-bezier(.3,.7,.4,1)", fill: "both" });
+      box.appendChild(s);
+    }
+    const tag = document.createElement("div"); tag.textContent = `${e} ${who}`;
+    tag.style.cssText = "position:absolute;left:0;bottom:0;transform:translateX(-50%);white-space:nowrap;background:#e8b04b;color:#2a1c05;font:800 clamp(.9rem,1.6vw,1.25rem) Outfit,system-ui,sans-serif;padding:.3em .8em;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.45)";
+    tag.animate([{ transform: "translate(-50%,0) scale(.6)", opacity: 0 }, { transform: "translate(-50%,-16vh) scale(1)", opacity: 1, offset: .25 }, { transform: "translate(-50%,-38vh)", opacity: 0 }],
+      { duration: 3000, easing: "ease-out", fill: "both" });
+    box.appendChild(tag); document.body.appendChild(box); setTimeout(() => box.remove(), 4200);
   }
 
   /* ---- lobby: who has signed in on a phone, so the host knows when to start ---- */
@@ -212,7 +244,7 @@ const Sync = (() => {
 
   /* ---- new game: wipe last game's answers ---- */
   function reset() {
-    S.gid = Date.now(); answers = {}; answersQi = -1; counted = null;
+    S.gid = Date.now(); answers = {}; answersQi = -1; counted = null; reactSeen = null;
     post({ action: "reset", total: Q.length }).catch(() => {});
   }
 
@@ -222,6 +254,8 @@ const Sync = (() => {
       const g = JSON.parse(localStorage.getItem(SAVE)) || {};
       // A game saved before faces were added or removed would replay the old list: start fresh instead.
       if (g.rounds?.length && g.rounds.length !== Q.length) return {};
+      if (g.phase) g.mode = "type"; // the game is typed-only now
+      (g.players || []).forEach(p => { if (p.name === HOST) p.on = false; }); // the host never plays
       return g;
     } catch (e) { return {}; }
   }

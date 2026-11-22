@@ -12,9 +12,8 @@ export default async function handler(req, res) {
     const qi = Number.parseInt(req.query.qi, 10);
     const answers = Number.isInteger(qi) ? await hash(`${p}answers:${qi}`) : {};
     const coins = req.query.coins ? await hash(p + "coins") : undefined;
-    // District Feud: the latest emoji reactions from phones (each has a seq so the TV shows it once)
-    const reacts = req.query.r ? (await redis.lrange(p + "reacts", 0, -1)).map(r => { try { return JSON.parse(r); } catch { return null; } }).filter(Boolean) : undefined;
-    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, reacts });
+    const react = req.query.react ? await redis.lrange(p + "reactlog", 0, 59) : undefined;   // recent emoji bursts (District Secrets)
+    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, react });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });
 
@@ -29,7 +28,7 @@ export default async function handler(req, res) {
   }
   if (action === "reset") {
     const total = Math.min(Math.max(Number(req.body.total) || 0, 1), 100);
-    await redis.del(p + "coins", ...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
+    await redis.del(p + "coins", p + "reactlog", ...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
     return reply(res, 200, { ok: true });
   }
   if (action === "clearPlayers") {

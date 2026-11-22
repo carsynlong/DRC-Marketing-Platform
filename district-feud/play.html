@@ -272,11 +272,11 @@ let lastReact=0;
 $("#rrow").innerHTML=EMOJI.map(e=>`<button data-emoji="${e}" aria-label="Send ${e}">${e}</button>`).join("");
 $("#rrow").addEventListener("click",e=>{
   const b=e.target.closest("[data-emoji]");if(!b||!D.me)return;
-  const now=Date.now();if(now-lastReact<180)return;lastReact=now;
+  const now=Date.now();if(now-lastReact<320)return;lastReact=now;
   buzz(12);
   if(!calm){const r=b.getBoundingClientRect();for(let i=0;i<3;i++){const p=document.createElement("div");p.className="puff";p.textContent=b.dataset.emoji;
     p.style.cssText=`left:${r.left+r.width/2}px;top:${r.top}px;--x:${Math.round(Math.random()*80-40)}px;animation-delay:${i*70}ms`;document.body.appendChild(p);setTimeout(()=>p.remove(),1200)}}
-  post("/api/react",{name:D.me,emoji:b.dataset.emoji}).then(r=>{if(r.status===429)toast("Whoa, slow down! 😅")}).catch(()=>{});
+  post("/api/react",{name:D.me,e:b.dataset.emoji}).catch(()=>{});
 });
 function render(){
   const showBar=!!(D.game&&D.me);document.body.classList.toggle("rb",showBar);$("#rbar").hidden=!showBar;

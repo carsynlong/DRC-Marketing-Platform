@@ -177,6 +177,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
+const HOST="Carsyn"; // runs the game, so never plays (her faces are still in it)
 const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
 const groupOf=n=>GIRLS.has(n)?"girls":"boys";
 const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
@@ -220,8 +221,8 @@ Q.forEach(x=>{[x.q,x.r].forEach(id=>{const i=new Image();i.src=src(id)})});
 
 let S, raf=0;
 function freshState(){
-  return {phase:"lobby",secs:20,sound:true,mode:"choice",typed:{},
-    players:NAMES.map(n=>({name:n,on:n!=="Carsyn",score:0,streak:0,delta:0})),
+  return {phase:"lobby",secs:30,sound:true,mode:"type",typed:{},
+    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0})),
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked) S.locked=true; render(); }
@@ -306,7 +307,16 @@ function mkArena(){
     for(let k=0;k<4;k++)ev.push([b+k,"hat",0,.5,.4])});
   return {bpm:96,len:32,ev};
 }
-const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),arena:mkArena()};
+function mkWish(){ // "We Wish You a Merry Christmas" (traditional English carol), 3/4, scoreboard
+  const mel=[[0,2],[67,1], [72,1],[72,.5],[74,.5],[72,.5],[71,.5], [69,1],[69,1],[69,1], [74,1],[74,.5],[76,.5],[74,.5],[72,.5], [71,1],[67,1],[67,1],
+    [76,1],[76,.5],[77,.5],[76,.5],[74,.5], [72,1],[69,1],[67,.5],[67,.5], [69,1],[74,1],[71,1], [72,3]];
+  const ev=seq(mel,"lead").map(e=>(e[2]+=12,e));
+  const roots=[43,36,41,38,43,40,41,43,36];
+  roots.forEach((r,i)=>{const b=i*3;ev.push([b,"bass",r,1,1],[b+1,"bass",r+7,1,.7],[b+2,"bass",r+7,1,.7],[b,"kick",0,1,.7]);
+    for(let k=0;k<6;k++)ev.push([b+k/2,"sleigh",0,.5,k%2?.5:.9])});
+  return {bpm:150,len:27,ev};
+}
+const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkWish(),arena:mkArena()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
@@ -334,6 +344,10 @@ function sfx(kind){
     o.connect(g);g.connect(sfxBus);env(g,t,.004,.9,1.6);o.start(t);o.stop(t+1.8);}
   if(kind==="reveal"){[72,76,79,84].forEach((m,k)=>{osc("square",hz(m),t+k*.08,.25,.09,sfxBus,3500);osc("sine",hz(m+12),t+k*.08,.6,.06,sfxBus)});
     for(let k=0;k<10;k++)noise(t+.3+k*.05,.08,.1,sfxBus,"bandpass",9000,1.3);}
+  // scoreboard: a snare drumroll that builds while the bars grow, then a short brass "ta-da"
+  if(kind==="scoreroll"){for(let k=0;k<26;k++)noise(t+k*.055,.06,.05+k*.009,sfxBus,"bandpass",2400,.9);
+    [[60,64,67,72]].forEach(ch=>ch.forEach(m=>{osc("square",hz(m+12),t+1.5,.9,.06,sfxBus,2800);osc("triangle",hz(m),t+1.5,1.1,.07,sfxBus)}));
+    osc("triangle",hz(48),t+1.5,1.2,.14,sfxBus);noise(t+1.5,.5,.18,sfxBus,"highpass",6000)}
   if(kind==="fanfare"){[[60,0],[64,.15],[67,.3],[72,.45],[67,.75],[72,.9]].forEach(([m,d],k)=>{const dur=k===5?1.6:.3;
     osc("square",hz(m+12),t+d,dur,.1,sfxBus,3000);osc("triangle",hz(m),t+d,dur,.1,sfxBus)});
     [48,55,60].forEach(m=>osc("triangle",hz(m),t+.9,1.6,.12,sfxBus));for(let k=0;k<16;k++)noise(t+.9+k*.06,.08,.1,sfxBus,"bandpass",9000,1.3);}
@@ -367,7 +381,7 @@ const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 /* ================= GAME ================= */
 function newGame(){
-  Sync.reset();
+  Sync.reset();S.mode="type";S.players.forEach(p=>{if(p.name===HOST)p.on=false});
   // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
   S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
@@ -425,19 +439,19 @@ function drawTimer(){
 function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
 function reveal(){
   Sync.fillAnswers();
-  if(S.mode==="type")S.correct=active().filter(p=>p.name!==cur().a&&matches(S.typed[p.name],cur().a)).map(p=>p.name);
+  if(S.mode==="type")S.correct=active().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 function score(){
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
-    if(p.name!==name&&S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
-    else{p.delta=0;if(p.name!==name)p.streak=0}
+    if(S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
+    else{p.delta=0;p.streak=0}
   });
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("arena");
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("board");
   render();
 }
 function next(){S.qi++;roundCardOrQuestion();}
@@ -460,15 +474,13 @@ function lobbyView(){
     ${EMBLEM}
     <div class="eyebrow">The 2026 Christmas Games · Game 2</div>
     <h1>Who's That Tribute?</h1>
-    <p>A tribute's face appears way too close for comfort. ${S.mode==="type"?"Type your guess on your phone before the cannon fires (no phone? type it in your box on the laptop). The game checks spelling for you, and nicknames count.":"Tap the right name on your phone before the cannon fires. No phone? Shout your answer to the host, who taps you in at the reveal."} Each right answer is worth 1,000 points, plus 100 for every answer in a row. No points for guessing your own face.</p>
+    <p>A tribute's face appears way too close for comfort. Sign in on your phone, then type who you think it is before the cannon fires. Your guess is sealed: nobody sees it until the reveal. Spelling slips and nicknames count. Each right answer is worth 1,000 points, plus 100 for every answer in a row. Yes, you can score on your own face.</p>
     ${Sync.joinCard()}
     ${Sync.roster()}
     <div class="eyebrow">Who's playing? Tap to sit someone out</div>
-    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
-    <div class="settings"><span class="tiny">How to answer</span>
-      <div class="seg" role="group" aria-label="How to answer"><button data-mode="choice" aria-pressed="${S.mode!=="type"}">🔺 Tap 1 of 4 names</button> <button data-mode="type" aria-pressed="${S.mode==="type"}">⌨️ Type the name</button></div></div>
+    <div class="chips">${S.players.map((p,i)=>p.name===HOST?"":`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
     <div class="settings"><span class="tiny">Seconds per face</span>
-      <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
+      <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30,45].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
       ${sndBtn()}</div>
     <div class="settings"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
@@ -489,7 +501,7 @@ function questionView(){
   const ans=r.choices.map((n,k)=>{const right=n===x.a;
     return `<div class="ans k${k} ${rev?(right?"right":"dim"):""}">${SHAPES[k]}<span>${esc(n)}</span>${rev&&right?'<span class="ck" aria-label="Correct">✓</span>':""}</div>`}).join("");
   const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Phones filled in. Tap anyone who said ${esc(x.a)} out loud</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
-    <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=p.name===x.a;
+    <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=false;
       return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own face\"":""}>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}${own?' <span class="d">their face</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
   const img=rev?src(x.r):src(x.q);
   return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">Face ${S.qi+1} of ${S.rounds.length}</div></div>${giftTag()}
@@ -502,13 +514,14 @@ function questionView(){
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
 }
 function typedView(x,rev){
-  const boxes=active().map(p=>{const own=p.name===x.a,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
+  const boxes=active().map(p=>{const own=false,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
     const cls=rev?(own?"own":ok?"ok":"no"):"";
     return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
       ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
       <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
-  return `${rev?`<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>`:
-    `<div class="bar"><div class="eyebrow">${S.locked?"Answers locked":"Answer on your phone, or type in your box. Enter jumps to the next box."}</div><div class="tiny" id="answered">${Sync.countText()}</div></div>`}
+  // while a face is up the TV never shows guesses: only who has sealed one (their name turns gold)
+  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":"📱 Type your guess on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
+  return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
   <div class="typed">${boxes}</div>`;
 }
 function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
@@ -559,7 +572,6 @@ function primary(){
 function wire(){
   document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const p=S.players[+b.dataset.tog];p.on=!p.on;render()});
   document.querySelectorAll("[data-secs]").forEach(b=>b.onclick=()=>{S.secs=+b.dataset.secs;render()});
-  document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;render()});
   const ins=[...document.querySelectorAll("[data-type]")];
   ins.forEach((inp,k)=>{inp.oninput=()=>{S.typed[inp.dataset.type]=inp.value};
     inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();(ins[k+1]||inp).focus();if(!ins[k+1])inp.blur()}}});
@@ -572,7 +584,7 @@ function wire(){
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"arena",final:"lobby"}[S.phase];m&&playSong(m)}
+  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 document.addEventListener("keydown",e=>{

@@ -382,8 +382,11 @@ function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const giftTag=()=>S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
-const ALIASES={"Jonny":["jonny","johnny","jony","jon","jt","jtjt"],"QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana"],
-  "Grandad":["grandad","granddad","grandpa","grampa","papa","don","donjackson"],"Elisha":["elisha","mom","momma","mama"],"Jessie":["jessie","jessi","jess","jessica"]};
+const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt"],
+  "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
+  "Grandad":["grandad","granddad","grandpa","grampa","papa","don","dawn","donjackson"],"Elisha":["elisha","mom","momma","mama"],
+  "Jessie":["jessie","jesse","jessi","jess","jessica"],"Kamdon":["kamdon","kamden","kam"],
+  "Tinsley":["tinsley","tins"],"Natalie":["natalie","nat","nattie"],"Brandon":["brandon"],"Kyle":["kyle"],"Dash":["dash"],"Carsyn":["carsyn","carson"]};
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}

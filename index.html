@@ -177,6 +177,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
+const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
+const groupOf=n=>GIRLS.has(n)?"girls":"boys";
 const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
 const Q=[
  {q:"s01",r:"s02",a:"Dash"},{q:"s03",r:"s04",a:"Kyle"},{q:"s05",r:"s06",a:"Grandad"},{q:"s07",r:"s08",a:"Jessie"},
@@ -366,7 +368,8 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 /* ================= GAME ================= */
 function newGame(){
   Sync.reset();
-  S.rounds=Q.map((x,qi)=>{const others=shuffle(NAMES.filter(n=>n!==x.a)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
+  // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
+  S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
   S.qi=0; roundCardOrQuestion();
 }

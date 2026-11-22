@@ -257,6 +257,42 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 @keyframes racebump{30%{transform:scale(1.25);color:var(--gold)}}
 .rc .plus{font-style:normal;font-family:var(--display);color:#7dff9e;font-size:.9rem;animation:plusup 1.6s ease-out both}
 @keyframes plusup{0%{opacity:0;transform:translateY(10px)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+/* 🎤 meet the contestants */
+.introsec{display:grid;justify-items:center;gap:12px;text-align:center}
+.iav{width:clamp(190px,30vh,300px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 8px var(--gold),0 0 0 16px var(--red),0 0 120px rgba(255,230,150,.75);animation:zoomin .7s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes zoomin{from{transform:scale(.15) rotate(-25deg);opacity:0}}
+.ifrom{font-family:var(--display);color:var(--gold2);font-size:clamp(1.1rem,2.8vw,1.9rem);animation:pop .45s .25s both}
+.iname{font-family:var(--display);font-size:clamp(3rem,9vw,6.4rem);color:#fff;text-shadow:0 5px 0 var(--red),0 9px 0 var(--red-d),0 0 40px rgba(255,201,46,.5);line-height:1;text-transform:uppercase;animation:ltdrop .65s .5s cubic-bezier(.2,1.5,.4,1) both}
+.ihype{font-size:clamp(1.2rem,2.6vw,1.8rem);color:var(--gold2);font-weight:800;animation:pop .45s .95s both}
+.idots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.idots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}.idots i.on{background:var(--gold)}
+/* 💰 double points */
+.dbl{font-family:var(--display);font-size:clamp(3rem,11vw,8rem);line-height:.95;color:var(--gold);text-shadow:0 6px 0 var(--red),0 10px 0 var(--red-d),0 0 60px rgba(255,201,46,.85);
+  animation:dblin .8s cubic-bezier(.2,1.6,.4,1) both,pulse .45s .8s ease-in-out infinite alternate}
+@keyframes dblin{from{transform:scale(4) rotate(-12deg);opacity:0}}
+.alarm{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(circle,rgba(227,35,44,.4),transparent 70%);animation:alarm .5s steps(1) infinite}
+@keyframes alarm{50%{opacity:.15}}
+.x2{font-family:var(--display);background:var(--gold);color:var(--red-d);padding:.25em .8em;border-radius:999px;box-shadow:0 0 0 3px var(--red);font-size:clamp(.9rem,2vw,1.2rem);animation:pulse .5s ease-in-out infinite alternate}
+/* 📊 the room says / halftime bars */
+.rbars{display:grid;gap:10px;width:100%;max-width:900px}
+.rbar{display:grid;grid-template-columns:auto minmax(110px,190px) 1fr auto;align-items:center;gap:12px;text-align:left}
+.rbar img{width:54px;height:54px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #fff}
+.rbar .nm{font-family:var(--display);text-transform:uppercase;font-size:clamp(1rem,2vw,1.3rem)}
+.rbar .bar{height:36px;border-radius:8px;background:linear-gradient(90deg,var(--gold),var(--gold2));width:var(--w);transform-origin:left;animation:grow .9s var(--d) cubic-bezier(.2,1.2,.4,1) both;box-shadow:0 0 0 2px var(--gold-d)}
+.rbar.top .bar{background:linear-gradient(90deg,var(--red),#ff6a70);box-shadow:0 0 0 2px var(--red-d),0 0 20px rgba(227,35,44,.6)}
+@keyframes grow{from{transform:scaleX(0)}}
+.rbar b{font-family:var(--display);font-weight:400;color:var(--gold);font-size:1.6rem;min-width:2ch}
+.rbar.fire .nm::after{content:" 🔥"}
+/* 🔥 banners */
+.leader{position:fixed;left:50%;top:50%;z-index:10;display:flex;align-items:center;gap:22px;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#3a2000;padding:16px 36px 16px 16px;border-radius:22px;
+  box-shadow:0 0 0 6px var(--red),0 0 0 10px var(--gold),0 24px 70px rgba(0,0,0,.65);animation:leaderin 3.3s cubic-bezier(.2,1.4,.4,1) both;pointer-events:none;max-width:92vw;box-sizing:border-box}
+.leader img{width:clamp(90px,12vw,130px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px #fff;flex:none}
+.leader small{display:block;font-family:var(--display);color:var(--red);font-size:clamp(1rem,2.4vw,1.6rem)}
+.leader b{display:block;font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,5vw,3.4rem);text-transform:uppercase;line-height:1.05}
+.leader span{display:block;font-weight:800;font-size:1.1rem}
+@keyframes leaderin{0%{transform:translate(-50%,-50%) scale(3) rotate(-10deg);opacity:0}12%{transform:translate(-50%,-50%) scale(1) rotate(-3deg);opacity:1}86%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-3deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(.7) rotate(-3deg)}}
+.jab{font-size:clamp(1.15rem,2.4vw,1.6rem);font-weight:800;color:#fff;background:rgba(227,35,44,.85);padding:.3em 1em;border-radius:12px;box-shadow:0 0 0 3px var(--gold);transform:rotate(-1.5deg)}
+.race .rc.fire{color:#ffb02e;text-shadow:0 0 12px #ff6a00}
+.perks{font-weight:800;color:var(--gold2);font-size:clamp(.95rem,1.8vw,1.15rem)}
 /* 30-second question timer */
 .tq{display:flex;align-items:center;gap:14px;justify-content:center}
 .timer{position:relative;width:clamp(84px,9vw,112px);aspect-ratio:1;flex:none;animation:pop .5s .3s cubic-bezier(.2,1.6,.4,1) both}
@@ -387,7 +423,15 @@ function mkFaceoff(){ // face-off: "God Rest Ye Merry Gentlemen" (traditional En
     for(let k=0;k<16;k++)ev.push([b+k/4,"hat",0,.25,k%2?.5:.9])});
   return {bpm:152,len:16,ev};
 }
-const SONGS={lobby:mkWish(),think:mkThink(),strut:mkStrut(),joy:mkJoy(),faceoff:mkFaceoff()};
+function mkHalftime(){ // original halftime marching-band cue
+  const a=[[67,.5],[67,.5],[72,1],[67,.5],[72,.5],[76,1],[74,.5],[72,.5],[71,.5],[72,.5],[74,2]];
+  const b=[[72,.5],[72,.5],[76,1],[72,.5],[76,.5],[79,1],[77,.5],[76,.5],[74,.5],[76,.5],[72,2]];
+  const ev=[...seq([...a,...b],"brass",-12),...seq([...a,...b],"glock",-12,.4)];
+  [36,36,41,43,36,36,43,36].forEach((r,i)=>{const t=i*2;ev.push([t,"pluck",r,1,1],[t+1,"pluck",r+7,1,.8],[t,"kick",0,1,1]);
+    [0,.5,.75,1,1.5,1.75].forEach((o,k)=>ev.push([t+o,"clap",0,.25,k===3?.9:.45]));ev.push([t+1,"sleigh",0,.5,.8])});
+  return {bpm:116,len:16,ev};
+}
+const SONGS={lobby:mkWish(),think:mkThink(),strut:mkStrut(),joy:mkJoy(),faceoff:mkFaceoff(),half:mkHalftime()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
@@ -409,6 +453,10 @@ function sfx(kind){
   if(kind==="blip")osc("square",1900,t,.03,.04,sfxBus,4000);
   if(kind==="pop"){noise(t,.35,.3,sfxBus,"lowpass",700);for(let k=0;k<9;k++)noise(t+.12+k*.035,.02,.08,sfxBus,"highpass",6000)}
   if(kind==="whoosh")noise(t,.5,.25,sfxBus,"bandpass",900,.5);
+  if(kind==="cheer"){for(let k=0;k<70;k++)noise(t+Math.random()*1.3,.03+Math.random()*.05,.04+Math.random()*.06,sfxBus,"bandpass",1500+Math.random()*2800,1.4);
+    [0,.25,.5].forEach(o=>noise(t+o,.25,.06,sfxBus,"bandpass",3200,3))}
+  if(kind==="siren"){for(let k=0;k<6;k++){const o=AC.createOscillator(),g=AC.createGain(),f=k%2?660:880;o.type="square";o.frequency.setValueAtTime(f,t+k*.32);
+    o.connect(g);g.connect(sfxBus);env(g,t+k*.32,.01,.06,.3);o.start(t+k*.32);o.stop(t+k*.32+.33)}}
   if(kind==="tap")osc("triangle",1040,t,.08,.12,sfxBus);
   if(kind==="flip")noise(t,.28,.28,sfxBus,"bandpass",1600,.6);
   if(kind==="ding")[0,.15].forEach(o=>{osc("sine",1760,t+o,1.3,.2,sfxBus);osc("sine",1760*2.76,t+o,.3,.05,sfxBus);osc("triangle",880,t+o,.6,.08,sfxBus)});
@@ -467,15 +515,15 @@ const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 
 /* The family's survey. Only the #1 answer is on the board (two names = a tie). Edit wording here. */
 const QUESTIONS=[
-  {q:"Who would be the first tribute eliminated?",          top:[["Jessie",3]]},
-  {q:"Who would start an argument in the arena?",           top:[["Jonny",10]]},
-  {q:"Who would survive the Hunger Games?",                 top:[["Jonny",3]]},
-  {q:"Who would get lost in the arena?",                    top:[["QUEEN MOTHER",4],["Carsyn",4]]},
-  {q:"Who would show up late to the Reaping?",              top:[["Jessie",4]]},
-  {q:"Who would volunteer as tribute?",                     top:[["QUEEN MOTHER",4],["Natalie",4]]},
-  {q:"Who would betray their alliance?",                    top:[["Kyle",7]]},
-  {q:"Who would be the best with sponsors?",                top:[["Tinsley",7]]},
-  {q:"Who would be the Capitol's favorite?",                top:[["Carsyn",3],["Tinsley",3]]},
+  {jab:"{n} tripped over the starting podium. 💀",q:"Who would be the first tribute eliminated?",          top:[["Jessie",3]]},
+  {jab:"{n} would start an argument… with the referee. 🗣️",q:"Who would start an argument in the arena?",           top:[["Jonny",10]]},
+  {jab:"{n} would survive the Games AND complain about the food. 🍗",q:"Who would survive the Hunger Games?",                 top:[["Jonny",3]]},
+  {jab:"{n} would get lost… in a one-room arena. 🗺️",q:"Who would get lost in the arena?",                    top:[["QUEEN MOTHER",4],["Carsyn",4]]},
+  {jab:"{n}'s alarm is still on snooze. ⏰",q:"Who would show up late to the Reaping?",              top:[["Jessie",4]]},
+  {jab:"{n} volunteered before they even read the rules. 🙋",q:"Who would volunteer as tribute?",                     top:[["QUEEN MOTHER",4],["Natalie",4]]},
+  {jab:"{n}: “Alliance? I don't know her.” 🗡️",q:"Who would betray their alliance?",                    top:[["Kyle",7]]},
+  {jab:"{n} gets sponsor gifts AND hot cocoa delivered. ☕",q:"Who would be the best with sponsors?",                top:[["Tinsley",7]]},
+  {jab:"{n} gets a standing ovation in the Capitol. 👏",q:"Who would be the Capitol's favorite?",                top:[["Carsyn",3],["Tinsley",3]]},
 ];
 /* Face-off questions: everyone votes in secret except the tied tributes. Up to 3 per tie, then a lucky spin. */
 const TIEBREAKERS=[
@@ -505,13 +553,40 @@ let timers=[];const later=(fn,ms)=>timers.push(setTimeout(fn,ms));const clearTim
 const winFx=()=>{sfx("fanfare");sfx("applause");confetti(220,true)};
 
 /* ---------- flow ---------- */
+const SPEED_SECS=10;      // lock in a correct guess this fast for a speed bonus (+1)
+const FIRE_AT=3;          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
+const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
+const HYPE=["Here to win the package!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
+  "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
-  S.k=0;S.results=[];S.tbNext=0;S.tally={};S.bump={};S.pkg=null;gid=Date.now()%1e7;answers={};answersQi=-1;
+  S.k=0;S.results=[];S.tbNext=0;S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
+  startIntro();
+}
+/* 🎤 Meet the contestants: everyone here gets a spotlight walk-out */
+function announce(t){try{if(!S.sound||!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.05;u.pitch=.9;u.volume=1;speechSynthesis.speak(u)}catch(e){}}
+function startIntro(){
+  clearTimers();const who=NAMES.filter(n=>S.present[n]);if(!who.length)return goQuestion();
+  const hype=HYPE.slice().sort(()=>Math.random()-.5);
+  S.intro={who,i:-1,hype};S.phase="intro";playSong("strut");introStep();
+}
+function introStep(){
+  const I=S.intro;if(S.phase!=="intro")return;I.i++;
+  if(I.i>=I.who.length){later(goQuestion,600);return}
+  render();const n=I.who[I.i];sfx("whoosh");later(()=>{sfx("cheer");flash()},500);
+  announce(`From District ${NAMES.indexOf(n)+1}… ${n}!`);
+  later(introStep,2300);
+}
+function finishIntro(){clearTimers();try{speechSynthesis.cancel()}catch(e){}goQuestion()}
+const isFinal=()=>S.order.length>=3&&S.k===S.order.length-1;
+/* 💰 the last question is double points, with a big intro */
+function goQuestion(){
+  clearTimers();
+  if(isFinal()&&S.phase!=="double"){S.phase="double";stopSong();sfx("siren");later(()=>{sfx("fanfare");fireworks(3)},900);render();later(()=>S.phase==="double"&&showQuestion(),5200);return}
   showQuestion();
 }
-function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.ends=Date.now()+TIMER_SECS*1000;playSong("think");render();}
+function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
 setInterval(()=>{
   if(S.phase!=="question"||!S.ends)return;
@@ -520,14 +595,47 @@ setInterval(()=>{
   const r=$("#tring");if(r)r.style.strokeDashoffset=(213.6*(1-Math.max(0,ms)/(TIMER_SECS*1000))).toFixed(1);
   if(ms<=0){S.ends=0;sfx("buzz");surveySays()}
 },100);
-function surveySays(){
+/* time's up (or the host pressed it): lock the phones, show what the room guessed, then the reveal */
+async function surveySays(){
   if(S.phase!=="question")return;
-  S.ends=0;S.phase="suspense";stopSong();render();drumroll(1.9);later(poll,1200); // last look at the phones' guesses
-  later(()=>{const q=cur();S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v));
-    const top=q.top.map(t=>t[0]),got=phoneAnswers();Object.keys(got).filter(n=>top.includes(got[n])).forEach(n=>addVotes(n,GUESS_PTS)); // called it: +1sfx("flip");flash(250);later(()=>sfx("ding"),380);
-    if(isTie(q)){later(()=>sfx("buzz"),1450);shake(1450);later(()=>playSong("faceoff"),2300)}
-    else{later(()=>{sfx("applause");confetti(140);applause()},500);S.results[S.k]={name:q.top[0][0],votes:q.top[0][1]};later(()=>playSong("strut"),1200)}
+  S.ends=0;S.phase="lock";stopSong();render();
+  await poll();if(S.phase!=="lock")return;
+  if(Object.keys(phoneAnswers()).length){S.phase="room";sfx("whoosh");render();later(runSurvey,4600)}
+  else runSurvey();
+}
+function runSurvey(){
+  S.phase="suspense";render();drumroll(1.9);
+  later(()=>{const q=cur(),m=S.mult||1;S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v*m));
+    scoreGuesses(q.top.map(t=>t[0]));
+    sfx("flip");flash(250);later(()=>sfx("ding"),380);
+    if(isTie(q)){later(()=>sfx("buzz"),1450);shake(1450);later(()=>playSong("faceoff"),2300);later(leaderCheck,3600)}
+    else{later(()=>{sfx("applause");confetti(140);applause()},500);S.results[S.k]={name:q.top[0][0],votes:q.top[0][1]};later(()=>playSong("strut"),1200);later(leaderCheck,3000)}
     render();},2000);
+}
+/* 🎯 phone guesses: +1 for calling it, +1 ⚡ speed bonus, +1 🔥 when on fire, all doubled in the finale */
+function scoreGuesses(top){
+  const got=phoneAnswers(),m=S.mult||1;S.earn={};S.newFire=[];
+  phones.forEach(n=>{
+    if(!top.includes(got[n])){S.streak[n]=0;return}
+    const speed=S.seen[n]!=null&&S.seen[n]-S.qStart<=(SPEED_SECS+1)*1000;
+    S.streak[n]=(S.streak[n]||0)+1;const fire=S.streak[n]>=FIRE_AT;if(S.streak[n]===FIRE_AT)S.newFire.push(n);
+    const pts=(GUESS_PTS+(speed?1:0)+(fire?1:0))*m;addVotes(n,pts);S.earn[n]={pts,speed,fire,streak:S.streak[n]};
+  });
+}
+/* 🔥 NEW LEADER and ON FIRE banners */
+let bannerQ=[],bannerOn=false;
+function banner(html,sound){bannerQ.push([html,sound]);if(!bannerOn)nextBanner()}
+function nextBanner(){
+  const b=bannerQ.shift();if(!b){bannerOn=false;return}bannerOn=true;
+  const el=document.createElement("div");el.className="leader";el.innerHTML=b[0];document.body.appendChild(el);
+  sfx(b[1]||"cheer");flash();setTimeout(()=>{el.remove();nextBanner()},3300);
+}
+function leaderCheck(){
+  (S.newFire||[]).forEach(n=>banner(`<img src="${AV(n)}" alt=""><div><small>🔥 3 in a row! 🔥</small><b>${esc(n)} is on fire!</b></div>`,"cheer"));S.newFire=[];
+  const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);if(!rows.length)return;
+  if(rows[1]&&rows[1][1]===rows[0][1])return;       // tied at the top: nobody leads yet
+  const n=rows[0][0];if(n===S.leader)return;S.leader=n;
+  banner(`<img src="${AV(n)}" alt=""><div><small>🔥 New leader! 🔥</small><b>${esc(n)}</b><span>${plural(rows[0][1],"point")} in the prize race</span></div>`,"cheer");
 }
 function startTie(){const q=cur();S.tie={names:q.top.map(t=>t[0]),round:0,q:null,votes:{},voted:[]};nextTiebreaker();}
 function nextTiebreaker(){
@@ -548,9 +656,9 @@ async function countVotes(){
   if(S.phase!=="tb"||!S.tie.voted.length)return;
   S.phase="tbsuspense";stopSong();render();drumroll(1.9);
   later(()=>{const T=S.tie,max=Math.max(...T.names.map(n=>T.votes[n])),lead=T.names.filter(n=>T.votes[n]===max);
-    T.names.forEach(n=>addVotes(n,T.votes[n]));
+    T.names.forEach(n=>addVotes(n,T.votes[n]*(S.mult||1)));
     T.lead=lead;S.phase="tbresult";
-    if(lead.length===1){S.results[S.k]={name:lead[0],votes:cur().top[0][1],tb:true};later(()=>{winFx();applause();flash()},700);later(()=>playSong("strut"),2000)}
+    if(lead.length===1){S.results[S.k]={name:lead[0],votes:cur().top[0][1],tb:true};later(()=>{winFx();applause();flash()},700);later(()=>playSong("strut"),2000);later(leaderCheck,3200)}
     else{later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300)}
     render();},2000);
 }
@@ -564,7 +672,13 @@ function fate(){
   const T=S.tie;S.phase="fate";stopSong();render();
   spin(T.names,w=>{S.results[S.k]={name:w,votes:cur().top[0][1],tb:true,fate:true};T.lead=[w];S.phase="tbresult";winFx();applause();flash();later(()=>playSong("strut"),1400);render()});
 }
-function nextQuestion(){clearTimers();S.k++;if(S.k>=S.order.length){S.phase="end";stopSong();sfx("fanfare");confetti(160,true);fireworks(4);later(()=>S.phase==="end"&&playSong("joy"),2200);render();}else showQuestion();}
+function nextQuestion(){
+  clearTimers();S.k++;
+  if(S.k>=S.order.length){S.phase="end";stopSong();sfx("fanfare");confetti(160,true);fireworks(4);later(()=>S.phase==="end"&&playSong("joy"),2200);render();return}
+  /* 📊 halftime standings */
+  if(!S.halfDone&&S.order.length>=7&&S.k===HALFTIME_AFTER){S.halfDone=true;S.phase="half";stopSong();sfx("fanfare");later(()=>playSong("half"),1200);confetti(80);render();return}
+  goQuestion();
+}
 
 /* Prize round: flip everyone's total from the bottom of the board up, #1 last. */
 function packageReveal(){
@@ -608,21 +722,47 @@ const podiums=(names,scoreOf,clsOf=()=>"",cls="")=>`<div class="podiums ${cls}">
 const strike=d=>`<svg class="xmark" viewBox="0 0 100 100" aria-hidden="true" style="--d:${d}s"><path d="M20 20 80 80M80 20 20 80" stroke="#fff" stroke-width="30" stroke-linecap="round"/><path d="M20 20 80 80M80 20 20 80" stroke="#e3232c" stroke-width="18" stroke-linecap="round"/></svg>`;
 function raceBar(){
   const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
-  return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc ${S.bump[n]?"bump":""}">${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i>${S.bump[n]?`<em class="plus">+${S.bump[n]}</em>`:""}</span>`).join("")
+  return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc ${S.bump[n]?"bump":""} ${(S.streak||{})[n]>=FIRE_AT?"fire":""}">${(S.streak||{})[n]>=FIRE_AT?"🔥":""}${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i>${S.bump[n]?`<em class="plus">+${S.bump[n]}</em>`:""}</span>`).join("")
     :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the mystery package</span>'}</div></div>`;
 }
 function render(){
-  const v={lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
+  const v={intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
   const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup">↩ <span>Back to setup</span></button>`;
   document.body.classList.toggle("focus",["suspense","tbsuspense"].includes(S.phase));
   $("#app").innerHTML=v()+home;S.bump={};wire();countUps();
 }
 function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
+function introView(){
+  const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
+  return `<div class="rays" style="--d:0s"></div><section class="center introsec"><span class="qtag">🎤 Meet the contestants</span>
+    <img class="iav" src="${AV(n)}" alt=""><div class="ifrom">From District ${NAMES.indexOf(n)+1}…</div><div class="iname">${esc(n)}</div><div class="ihype">${esc(I.hype[I.i%I.hype.length])}</div>
+    <div class="idots">${I.who.map((_,k)=>`<i class="${k<=I.i?"on":""}"></i>`).join("")}</div>
+    <div class="ctl"><button class="btn ghost" id="skipintro">Skip intros</button></div><div class="hint">Space: skip</div></section>`;
+}
+function doubleView(){
+  return `<div class="alarm"></div><div class="rays" style="--d:.3s"></div><section class="center"><span class="qtag">Final question</span>
+    <div class="dbl">💰 Double<br>points! 💰</div><p class="sub late" style="--d:1s"><b>Everything counts twice</b>: votes, correct guesses, speed bonuses and face-offs.</p>
+    <div class="ctl late" style="--d:1.4s"><button class="btn red" id="dblgo">Let's go!</button></div></section>${raceBar()}`;
+}
+function barRows(rows,cls=n=>""){const max=Math.max(1,...rows.map(r=>r[1]));
+  return `<div class="rbars">${rows.map(([n,v],i)=>`<div class="rbar ${i===0?"top":""} ${cls(n)}"><img src="${AV(n)}" alt=""><span class="nm">${esc(n)}</span><div><div class="bar" style="--w:${Math.max(4,v/max*100).toFixed(1)}%;--d:${(.3+i*.12).toFixed(2)}s"></div></div><b class="late" style="--d:${(1+i*.12).toFixed(2)}s">${v}</b></div>`).join("")}</div>`}
+function roomView(){
+  const got=phoneAnswers(),c={};Object.values(got).forEach(a=>c[a]=(c[a]||0)+1);
+  const rows=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,6),n=Object.keys(got).length;
+  return `<section class="center">${tag()}<h2 class="qhead">${esc(cur().q)}</h2><div class="says" style="animation:none">📊 The room says…</div>
+    ${barRows(rows)}<p class="sub">${n} ${n===1?"guess":"guesses"} locked in. Let's see if you're right…</p></section>${raceBar()}`;
+}
+function halfView(){
+  const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  return `<div class="rays" style="--d:.2s"></div><section class="center"><h1 class="ptitle">📊 Halftime!</h1><p class="sub">Here's the prize race so far. Everything can still change!</p>
+    ${rows.length?barRows(rows,n=>(S.streak||{})[n]>=FIRE_AT?"fire":""):'<p class="sub">No points yet!</p>'}
+    <div class="ctl">${sndBtn()}<button class="btn red" id="half2">▶ Start the second half</button></div><div class="hint">Space: second half</div></section>`;
+}
 function lobby(){
   return `<section class="lobby">${logo()}
     ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
-    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the mystery package!<br><small>⏱ ${TIMER_SECS} seconds to guess each question.</small></div>
+    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the mystery package!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
@@ -631,8 +771,9 @@ function lobby(){
 function question(){
   const left=Math.max(0,Math.ceil(((S.ends||Date.now())-Date.now())/1000));
   const timer=`<div class="timer ${left<=10?"low":""}" id="timer" aria-label="Seconds left"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" id="tring" cx="40" cy="40" r="34"/></svg><b id="tsec">${left}</b></div>`;
-  return `<section class="center"><div class="tq">${tag()}${timer}</div>${board(cur().q,tile({}),undefined,"","drop",true)}
-    <p class="sub late" style="--d:1s">${phones.length?"Lock in your guess on your phone, or shout it out!":"Shout your guesses!"} Who's the district's <b>#1 answer</b>?</p>${guessedLine()}
+  const x2=(S.mult||1)>1?'<span class="x2">💰 ×2</span>':"";
+  return `<section class="center"><div class="tq">${tag()}${timer}${x2}</div>${board(cur().q,tile({}),undefined,"","drop",true)}
+    ${phones.length?"":`<p class="sub late" style="--d:1s">Shout your guesses! Who's the district's <b>#1 answer</b>?</p>`}${guessedLine()}${phones.length?`<div class="perks late" style="--d:1.2s">Lock in your guess on your phone! ⚡ First ${SPEED_SECS} seconds = speed bonus · 🔥 ${FIRE_AT} in a row = on fire</div>`:""}
     <div class="ctl"><button class="btn red" id="says">Survey says…</button>${sndBtn()}</div><div class="hint">Survey says starts by itself when time runs out · Space: Survey says now</div></section>${raceBar()}`;
 }
 function suspense(){return `<section class="center">${tag()}${board(cur().q,tile({state:"wig"}))}<div class="says">Survey says…</div></section>${raceBar()}`;}
@@ -642,7 +783,7 @@ function reveal(){
     <div class="ctl"><div class="tieban late" style="--d:1.3s">${strike(1.45)}It's a tie!</div><button class="btn red late" style="--d:2.3s" id="tie">⚡ Face-off!</button></div>
     <p class="sub late" style="--d:2.3s">Everyone except ${q.top.map(t=>`<b>${esc(t[0])}</b>`).join(" and ")} votes in secret.</p>${calledIt(2.4)}<div class="hint">Space: start the face-off</div></section>${raceBar()}`;
   return `<div class="rays"></div><section class="center">${tag()}${board(q.q,tiles)}
-    <p class="sub late" style="--d:.9s">The district has spoken: <b>${esc(q.top[0][0])}</b> is the #1 answer!</p>${calledIt()}
+    <div class="jab late" style="--d:1s">${esc((q.jab||"The district has spoken: {n}!").replace("{n}",q.top[0][0]))}</div>${calledIt()}
     <div class="ctl late" style="--d:1s">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
 }
 function tb(){
@@ -669,6 +810,7 @@ function tbresult(){
   if(won) return `<div class="rays" style="--d:.7s"></div><section class="center"><span class="qtag">${r.fate?"Lucky spin winner":"Face-off winner"}</span><h2 class="qhead">${esc(cur().q)}</h2>
     ${podiums(T.names,sc,n=>n===r.name?"win":"lose")}
     <p class="sub">${r.fate?`The lucky spin picked <b>${esc(r.name)}</b>!`:`<b>${esc(r.name)}</b> wins the face-off, ${T.names.map(n=>T.votes[n]).sort((a,b)=>b-a).join(" to ")}!`}</p>
+    ${cur().jab?`<div class="jab late" style="--d:1.2s">${esc(cur().jab.replace("{n}",r.name))}</div>`:""}
     <div class="ctl">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
   const more=T.round<TB_PER_TIE;
   return `<section class="center">${podiums(T.lead,sc)}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>
@@ -703,6 +845,9 @@ function primary(){
   ensureAudio();
   const p=S.phase;
   if(p==="lobby")return startGame();
+  if(p==="intro")return finishIntro();
+  if(p==="double")return showQuestion();
+  if(p==="half")return goQuestion();
   if(p==="question")return surveySays();
   if(p==="reveal")return isTie(cur())?startTie():nextQuestion();
   if(p==="tb"&&S.tie.voted.length&&S.tie.voted.length>=voters().length)return countVotes();
@@ -710,12 +855,13 @@ function primary(){
   if(p==="end")return packageReveal();
   if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return pkgFate();
 }
-const musicFor=()=>({lobby:"lobby",question:"think",tb:"faceoff",reveal:S.order.length&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
+const musicFor=()=>({intro:"strut",half:"half",lobby:"lobby",question:"think",tb:"faceoff",reveal:S.order.length&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
 function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{const n=b.dataset.here;S.present[n]=!S.present[n];render()});
   document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>openBallot(b.dataset.vote));
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>castVote(b.dataset.pick));
+  on("skipintro",finishIntro);on("dblgo",showQuestion);on("half2",goQuestion);
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
   on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",pkgFate);
   on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("faceoff");render()});
@@ -734,12 +880,14 @@ const G="df";
 let pollFails=0,lastSeq=-1,phones=[],answers={},answersQi=-1,apiOk=false,firstPoll=true,lastPushed="",pushing=false,polling=false,lastPoll=0,gid=Date.now()%1e7;
 const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:G,...body})});
 const hasPhone=n=>phones.includes(n);
-function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult"].includes(p)&&S.tie)return 50+S.tie.qn;if(["question","suspense","reveal"].includes(p))return S.k;return null}
+function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult"].includes(p)&&S.tie)return 50+S.tie.qn;if(["question","lock","room","suspense","reveal"].includes(p))return S.k;return null}
 const phoneAnswers=()=>answersQi===curQi()?answers:{};
 function snapshot(){
   const p=S.phase,g={gid,view:p,names:NAMES,playing:NAMES.filter(n=>S.present[n]),num:S.k+1,total:S.order.length,phase:p==="lobby"?"lobby":"watch",locked:true,mode:"choice",tally:S.tally};
-  if(p==="question"||p==="suspense")Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,secs:TIMER_SECS});
-  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0])});
+  if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
+  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1});
+  if(p==="intro"&&S.intro)g.spot=S.intro.who[S.intro.i]||null;
+  if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense"});
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q});
   if(["end","pkg","pkgfate"].includes(p)){g.phase="final";if(p==="pkg"&&S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
@@ -764,6 +912,7 @@ async function poll(){
     firstPoll=false;
     if(d.qi!=null&&d.qi===curQi()){
       const n0=Object.keys(phoneAnswers()).length;answers=d.answers||{};answersQi=d.qi;const n1=Object.keys(answers).length;
+      if(S.phase==="question"&&S.seen)Object.keys(answers).forEach(n=>{if(S.seen[n]==null)S.seen[n]=Date.now()}); // when each guess arrived (speed bonus)
       if(S.phase==="question"&&n1>n0){sfx("cash");const e=$("#guessed");if(e){e.outerHTML=guessedLine(true)}}
       if(S.phase==="tb")mergePhoneVotes();
     }
@@ -795,12 +944,13 @@ function guessedLine(bump){
   const n=Object.keys(phoneAnswers()).length;
   return `<div class="guessed ${bump?"bump":""}" id="guessed">📱 ${n} ${n===1?"guess":"guesses"} locked in</div>`;
 }
-/* who called it on their phone */
+/* who called it on their phone, with what they earned */
 function calledIt(d=1.2){
-  const got=phoneAnswers(),names=Object.keys(got);if(!names.length)return"";
-  const top=cur().top.map(t=>t[0]),right=names.filter(n=>top.includes(got[n]));
+  const got=phoneAnswers();if(!Object.keys(got).length)return "";
+  const right=Object.keys(S.earn||{});
   if(!right.length)return `<div class="called late" style="--d:${d}s"><b>🎯 Nobody called it!</b></div>`;
-  return `<div class="called"><b class="late" style="--d:${d}s">🎯 Called it, +${GUESS_PTS} each:</b>${right.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`;
+  return `<div class="called"><b class="late" style="--d:${d}s">🎯 Called it:</b>${right.map((n,i)=>{const e=S.earn[n];
+    return `<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)} +${e.pts}${e.speed?" ⚡":""}${e.fire?" 🔥":""}</span>`}).join("")}</div>`;
 }
 const joinUrl=()=>`${location.origin}/district-feud/play`;
 const onWebsite=()=>/^https?:$/.test(location.protocol)&&!/claude|anthropic/.test(location.hostname);

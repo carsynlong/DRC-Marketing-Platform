@@ -381,6 +381,12 @@ const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
     if(!on){on=true;requestAnimationFrame(loop)}}})();
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 /* ================= GAME ================= */
+/* 🎤 walk-out introductions before the first question (showtime.js) */
+function showIntro(){
+  const who=active().map(p=>p.name).filter(n=>n!==HOST);
+  if(!who.length||!window.Walkout)return newGame();
+  Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame});
+}
 function newGame(){
   Sync.reset();Party.reset();S.mode="type";
   // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
@@ -572,7 +578,7 @@ function finalView(){
 function primary(){
   ensureAudio();
   if(S.phase==="mini"||S.phase==="tbcard")return Party.primary();
-  if(S.phase==="lobby")return active().length&&newGame();
+  if(S.phase==="lobby")return active().length&&showIntro();
   if(S.phase==="roundcard")return beginQuestion();
   if(S.phase==="ready")return (sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?reveal():lock();
@@ -590,7 +596,7 @@ function wire(){
   document.querySelectorAll("button[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);
     i<0?S.correct.push(n):S.correct.splice(i,1);b.setAttribute("aria-pressed",i<0);sfx(i<0?"tap":"untap");$("#cnt").textContent=S.correct.length+" correct"});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",newGame);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
+  on("go",showIntro);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
@@ -608,5 +614,11 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 </script>
 <script src="ambient.js"></script>
 <script src="tv-fx.js"></script>
+<script src="showtime.js"></script>
+<script>
+/* 🏆 live leaderboard along the bottom during the game (showtime.js) */
+if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV,
+  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().filter(p=>p.name!==HOST).map(p=>({name:p.name,score:p.score}))});
+</script>
 
 </body></html>

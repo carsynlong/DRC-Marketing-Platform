@@ -137,7 +137,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .award .ic{font-size:1.6rem}.award b{display:block;font-family:var(--display);color:var(--wax);font-size:.85rem;letter-spacing:.06em;text-transform:uppercase}
 /* write a bonus secret */
 .write{display:grid;gap:8px;background:var(--parch);color:var(--parch-ink);border-radius:6px;padding:12px 14px;box-shadow:0 10px 22px rgba(0,0,0,.45);transform:rotate(-.6deg)}
-.write b{font-family:var(--display);color:var(--wax);font-size:.95rem;letter-spacing:.04em}
+.write b{font-family:var(--display);color:var(--wax);font-size:.95rem;letter-spacing:.04em;padding-right:34px}
+.write{position:relative}
+.write .x{position:absolute;top:6px;right:6px;width:36px;height:36px;border-radius:50%;background:rgba(107,82,51,.14);color:#6b5233;font-size:1.1rem;font-weight:800;line-height:1}
+.write .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.write .two button{min-height:46px;border-radius:12px;font-weight:800;font-size:.95rem;background:#e7dcc4;color:#6b5233;box-shadow:0 3px 0 #c9b385}
 .write p{margin:0;font-size:.85rem;color:#6b5233}
 .write textarea{font-family:var(--type);font-size:1.05rem;border:2px dashed #c9b385;border-radius:6px;background:rgba(255,255,255,.4);padding:8px;min-height:74px;resize:vertical;color:var(--parch-ink);-webkit-user-select:text;user-select:text}
 .write .btn{min-height:48px;font-size:1rem}
@@ -211,7 +215,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-9";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-22-11";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -316,6 +320,11 @@ function phoneRules(o){
 /* bonus secret: written in the lobby, approved by the host, played as a bonus round */
 // the bonus secret card: ask first (Yes / No thanks), then write, then sealed. "No thanks" is remembered on this phone.
 let mySecret=store.get("ds-mysecret")||"",editing=false,declined=store.get("ds-nobonus")==="1";
+async function deleteSecret(){
+  if(!confirm("Delete your bonus secret? It won't be played."))return;
+  try{const {status}=await post("/api/ds",{op:"unsecret",name:myName});if(status!==200){toast("That didn't go through. Try again.");return}}catch(e){toast("No connection. Try again.");return}
+  mySecret="";store.set("ds-mysecret",null);editing=false;declined=true;store.set("ds-nobonus","1");sfx("tap");toast("Deleted. It won't be played.");lastKey="";render();
+}
 async function writeSecret(){
   const t=$("#secret")?.value.trim();if(!t){$("#secret")?.focus();return}
   try{const {status,data}=await post("/api/ds",{op:"secret",name:myName,text:t});
@@ -326,11 +335,15 @@ async function writeSecret(){
 const writeCard=()=>!D.game?.opts?.bonus?"":
   !mySecret&&!editing&&declined?`<button class="linkish" id="yesbonus" style="justify-self:center;color:var(--muted)">📝 Changed your mind? Add a bonus secret (+500)</button>`
   :!mySecret&&!editing?`<div class="write"><b>📝 Want to add a bonus secret?</b><p>Something true nobody here knows about you. If it gets played, <b>+500 points</b> go to your score. Totally optional, and anonymous.</p>
+     <button class="x" id="nobonus" aria-label="No thanks">✕</button>
      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" id="yesbonus" style="min-height:48px;font-size:1rem">✍️ Yes, write one</button><button class="btn" id="nobonus" style="min-height:48px;font-size:1rem;background:#e7dcc4;color:#6b5233;box-shadow:0 4px 0 #c9b385">No thanks</button></div></div>`
   :editing
   ?`<div class="write"><b>📝 Add a bonus secret · earn +500 points</b><p>Something true that nobody here knows about you. If it gets played in the bonus round, <b>+500 points go to your score</b>, plus 150 for everyone you fool. It's anonymous: not even the host sees who wrote it.</p>
-     <textarea id="secret" maxlength="200" placeholder="I once…">${esc(mySecret)}</textarea><button class="btn" id="sendsecret">🔏 Seal my secret</button>${mySecret?"":`<button class="linkish" id="nobonus">Never mind, no thanks</button>`}</div>`
-  :`<div class="write"><b>📝 Your bonus secret is sealed · +500 if it's played</b><div class="done">“${esc(mySecret)}”</div><button class="linkish" id="editsecret">Change it</button></div>`;
+     <button class="x" id="${mySecret?"canceledit":"nobonus"}" aria-label="Never mind">✕</button>
+     <textarea id="secret" maxlength="200" placeholder="I once…">${esc(mySecret)}</textarea><button class="btn" id="sendsecret">🔏 Seal my secret</button>
+     <button class="linkish" id="${mySecret?"canceledit":"nobonus"}">${mySecret?"Never mind, keep the one I have":"Never mind, no thanks"}</button></div>`
+  :`<div class="write"><b>📝 Your bonus secret is sealed · +500 if it's played</b><div class="done">“${esc(mySecret)}”</div>
+     <div class="two"><button id="editsecret">✏️ Change it</button><button id="delsecret">🗑 Delete it</button></div></div>`;
 /* sponsor bet for this secret */
 let myBet={key:"",bet:"hunch"};
 const BETS=[["hunch","🪶","Hunch","normal"],["sure","🎯","Sure","+500 / −250"],["allin","💀","All in","×2 / −500"]];
@@ -538,7 +551,9 @@ function render(){
   const ss=$("#sendsecret");if(ss)ss.onclick=writeSecret;
   const es=$("#editsecret");if(es)es.onclick=()=>{editing=true;lastKey="";render();$("#secret")?.focus()};
   const yb=$("#yesbonus");if(yb)yb.onclick=()=>{sfx("tap");editing=true;declined=false;store.set("ds-nobonus",null);lastKey="";render();$("#secret")?.focus()};
-  const nb=$("#nobonus");if(nb)nb.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()};
+  document.querySelectorAll("#canceledit").forEach(b=>b.onclick=()=>{sfx("tap");editing=false;lastKey="";render()});
+  const ds=$("#delsecret");if(ds)ds.onclick=deleteSecret;
+  document.querySelectorAll("#nobonus").forEach(b=>b.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()});
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
   countUp();effect(fx);hostDraw();

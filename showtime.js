@@ -413,13 +413,15 @@ window.Rules = (() => {
   return { run, active: () => !!root, go };
 })();
 
-/* 🎵 Lobby music for all three games: Carsyn's recording (sfx/lobby.wav, cut from 0:06.55), looped with no gap.
-   Each game's playSong("lobby") calls LobbyMusic.start() instead of its own lobby tune; stopSong() calls LobbyMusic.stop(). */
+/* 🎵 Lobby music for all three games: Carsyn's own track, looped with no gap.
+   When SRC is set, each game's playSong("lobby") calls LobbyMusic.start() instead of its own lobby tune; stopSong() calls LobbyMusic.stop().
+   SRC is null until the track is added: the games play their own lobby music meanwhile. */
 window.LobbyMusic = (() => {
+  const SRC = null;   // e.g. "/sfx/lobby.m4a"
   let ac = null, buf = null, loading = null, src = null, gain = null, want = false;
   function load() {
     if (buf) return Promise.resolve(buf);
-    return loading = loading || fetch("/sfx/lobby.wav").then(r => r.arrayBuffer())
+    return loading = loading || fetch(SRC).then(r => r.arrayBuffer())
       .then(a => new Promise((ok, no) => ac.decodeAudioData(a, ok, no))).then(b => (buf = b));
   }
   async function start() {
@@ -441,5 +443,5 @@ window.LobbyMusic = (() => {
     setTimeout(() => { try { s.stop(); g.disconnect(); } catch (e) {} }, 600);
   }
   function duck(v) { if (gain) gain.gain.setTargetAtTime(v, ac.currentTime, .1); }
-  return { start, stop, duck, playing: () => !!src };
+  return { start, stop, duck, playing: () => !!src, enabled: !!SRC };
 })();

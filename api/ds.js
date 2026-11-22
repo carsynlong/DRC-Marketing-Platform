@@ -3,6 +3,7 @@
 //
 // Phones:
 //   POST { op: "secret", pid, name, text }        write (or rewrite) your bonus secret
+//   POST { op: "unsecret", pid, name }            delete your bonus secret (it won't be played)
 //   POST { op: "bet",    pid, name, qi, bet }     hunch | sure | allin, until guesses lock
 //   POST { op: "vote",   pid, name, qi, v }       rate the story: fire | lol | wow (during story time)
 // Host phone (needs the key the TV shows in its host menu). Anonymous: the host sees the text, never who wrote it.
@@ -51,6 +52,11 @@ export default async function handler(req, res) {
     const id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);   // lets the host approve it without seeing the name
     await redis.hset(P + "subs", { [q.name]: JSON.stringify({ text: t, t: Date.now(), id }) });
     await redis.hdel(P + "approved", q.name);   // a rewritten secret needs approving again
+    return reply(res, 200, { ok: true });
+  }
+  if (op === "unsecret") {
+    if (!(await isPlayer(q.name, q.pid))) return reply(res, 403, { error: "Not your name" });
+    await redis.hdel(P + "subs", q.name); await redis.hdel(P + "approved", q.name);
     return reply(res, 200, { ok: true });
   }
   if (op === "bet" || op === "vote") {

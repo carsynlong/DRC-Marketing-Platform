@@ -321,7 +321,7 @@ const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkWish(),arena:mkArena()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
-  if(name==="lobby"&&window.LobbyMusic){song=SONGS[name];LobbyMusic.start();return}   // Carsyn's lobby music (showtime.js)
+  if(name==="lobby"&&window.LobbyMusic?.enabled){song=SONGS[name];LobbyMusic.start();return}   // Carsyn's lobby music (showtime.js)
   song=SONGS[name];tempoMul=1;step=0;nextT=AC.currentTime+.08;
   const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=nextT,i=0;
   timerId=setInterval(()=>{

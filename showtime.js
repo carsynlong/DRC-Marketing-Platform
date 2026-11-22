@@ -413,19 +413,25 @@ window.Rules = (() => {
   return { run, active: () => !!root, go };
 })();
 
-/* 🎵 Lobby music for all three games: Carsyn's own track, looped with no gap.
-   When SRC is set, each game's playSong("lobby") calls LobbyMusic.start() instead of its own lobby tune; stopSong() calls LobbyMusic.stop().
-   SRC is null until the track is added: the games play their own lobby music meanwhile. */
+/* 🎵 Lobby music: Carsyn's own tracks, one per game, looped.
+   A game with a track calls LobbyMusic.start(game) from playSong("lobby") instead of its own lobby tune; stopSong() calls LobbyMusic.stop().
+   A game set to null plays its own lobby music. */
 window.LobbyMusic = (() => {
-  const SRC = null;   // e.g. "/sfx/lobby.m4a"
-  let ac = null, buf = null, loading = null, src = null, gain = null, want = false;
+  const TRACKS = {
+    tribute: "/sfx/lobby-tribute.m4a",   // Caesar Flick, from 0:06.55 (the flashy host: presenting the tributes)
+    feud: "/sfx/lobby-feud.m4a",         // track 2, from 0:13 (upbeat, game show)
+    secrets: "/sfx/lobby-secrets.m4a",   // The Hanging Tree, from 1:34 (dark and haunting: the mystery game)
+  };
+  let ac = null, buf = null, bufFor = null, loading = null, src = null, gain = null, want = false, SRC = null;
   function load() {
-    if (buf) return Promise.resolve(buf);
+    if (buf && bufFor === SRC) return Promise.resolve(buf);
+    if (bufFor !== SRC) { buf = null; loading = null; }
+    bufFor = SRC;
     return loading = loading || fetch(SRC).then(r => r.arrayBuffer())
       .then(a => new Promise((ok, no) => ac.decodeAudioData(a, ok, no))).then(b => (buf = b));
   }
-  async function start() {
-    want = true;
+  async function start(game) {
+    want = true; SRC = TRACKS[game] || SRC;
     try {
       if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
       if (ac.state === "suspended") ac.resume();
@@ -443,5 +449,5 @@ window.LobbyMusic = (() => {
     setTimeout(() => { try { s.stop(); g.disconnect(); } catch (e) {} }, 600);
   }
   function duck(v) { if (gain) gain.gain.setTargetAtTime(v, ac.currentTime, .1); }
-  return { start, stop, duck, playing: () => !!src, enabled: !!SRC };
+  return { start, stop, duck, playing: () => !!src, has: game => !!TRACKS[game] };
 })();

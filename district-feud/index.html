@@ -129,10 +129,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .says{font-family:var(--display);font-size:clamp(2.4rem,8vw,5.6rem);color:var(--gold);text-shadow:0 5px 0 var(--gold-d),0 0 34px rgba(255,201,46,.6);animation:pulse .45s ease-in-out infinite alternate}
 .qtag{font-family:var(--display);background:var(--red);color:#fff;padding:.3em 1em;border-radius:999px;box-shadow:0 0 0 3px var(--gold),0 4px 0 var(--red-d);font-size:clamp(.85rem,2vw,1.15rem);text-transform:uppercase}
 .qhead{font-family:var(--body);font-weight:800;text-transform:uppercase;font-size:clamp(1.3rem,3.2vw,2.2rem)}
-.strike{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;z-index:7}
-.strike svg{width:min(60vw,62vh);height:auto;filter:drop-shadow(0 0 40px rgba(227,35,44,.9)) drop-shadow(0 10px 0 rgba(0,0,0,.4));animation:slam 1.7s var(--d,0s) both}
-@keyframes slam{0%{transform:scale(3);opacity:0}14%{transform:scale(1);opacity:1}72%{opacity:1}100%{opacity:0}}
-.tieban{font-family:var(--display);font-size:clamp(2rem,min(6vw,9vh),4.4rem);color:#fff;background:var(--red);padding:.1em .55em;border-radius:14px;box-shadow:0 0 0 4px var(--gold),0 8px 0 var(--red-d)}
+/* small buzzer X that slams into the tie banner */
+.xmark{width:.95em;height:.95em;flex:none;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35));animation:slam .5s cubic-bezier(.2,1.4,.4,1) var(--d,0s) both}
+@keyframes slam{from{transform:scale(3) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
+.tieban{font-family:var(--display);font-size:clamp(2rem,min(6vw,9vh),4.4rem);color:#fff;background:var(--red);padding:.1em .55em;border-radius:14px;box-shadow:0 0 0 4px var(--gold),0 8px 0 var(--red-d);display:inline-flex;align-items:center;gap:.35em}
 
 /* face-off podiums */
 .podiums{display:flex;gap:clamp(12px,3vw,40px);justify-content:center;align-items:flex-end;flex-wrap:wrap}
@@ -447,7 +447,7 @@ function tile({n,v,state="",num=1,id="",delay=0}){
 const board=(q,tiles="",eyebrow="We surveyed the district",cls="",wrap="")=>`<div class="bulbs boardwrap ${wrap}"><div class="board"><div class="cane"></div><div class="eyebrow">${eyebrow}</div><div class="bq">${esc(q)}</div><div class="slots ${cls}">${tiles}</div><div class="cane"></div></div></div>`;
 const podium=(n,score,cls="")=>`<div class="podium ${cls}"><div class="buzz"></div><div class="pbody"><img src="${AV(n)}" alt=""><div class="plate">${esc(n)}</div><div class="score">${score}</div></div></div>`;
 const podiums=(names,scoreOf,clsOf=()=>"")=>`<div class="podiums">${names.map((n,i)=>(i?'<div class="vsx">VS</div>':"")+podium(n,scoreOf(n),clsOf(n))).join("")}</div>`;
-const strike=d=>`<div class="strike" aria-hidden="true"><svg viewBox="0 0 100 100" style="--d:${d}s"><path d="M20 20 80 80M80 20 20 80" stroke="#fff" stroke-width="30" stroke-linecap="round"/><path d="M20 20 80 80M80 20 20 80" stroke="#e3232c" stroke-width="18" stroke-linecap="round"/></svg></div>`;
+const strike=d=>`<svg class="xmark" viewBox="0 0 100 100" aria-hidden="true" style="--d:${d}s"><path d="M20 20 80 80M80 20 20 80" stroke="#fff" stroke-width="30" stroke-linecap="round"/><path d="M20 20 80 80M80 20 20 80" stroke="#e3232c" stroke-width="18" stroke-linecap="round"/></svg>`;
 function raceBar(){
   const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
   return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc">${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i></span>`).join("")
@@ -477,8 +477,8 @@ function suspense(){return `<section class="center">${tag()}${board(cur().q,tile
 function reveal(){
   const q=cur(),tiles=q.top.map(([n,v],i)=>tile({n,v,state:"flip",delay:i*.15})).join("");
   if(isTie(q)) return `<section class="center">${tag()}${board(q.q,tiles)}
-    <div class="ctl"><div class="tieban late" style="--d:2s">It's a tie!</div><button class="btn red late" style="--d:2.3s" id="tie">⚡ Face-off!</button></div>
-    <p class="sub late" style="--d:2.3s">Everyone except ${q.top.map(t=>`<b>${esc(t[0])}</b>`).join(" and ")} votes in secret.</p><div class="hint">Space: start the face-off</div></section>${strike(1.4)}${raceBar()}`;
+    <div class="ctl"><div class="tieban late" style="--d:1.3s">${strike(1.45)}It's a tie!</div><button class="btn red late" style="--d:2.3s" id="tie">⚡ Face-off!</button></div>
+    <p class="sub late" style="--d:2.3s">Everyone except ${q.top.map(t=>`<b>${esc(t[0])}</b>`).join(" and ")} votes in secret.</p><div class="hint">Space: start the face-off</div></section>${raceBar()}`;
   return `<section class="center">${tag()}${board(q.q,tiles)}
     <p class="sub late" style="--d:.9s">The district has spoken: <b>${esc(q.top[0][0])}</b> is the #1 answer!</p>
     <div class="ctl late" style="--d:1s">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
@@ -508,9 +508,9 @@ function tbresult(){
     <p class="sub">${r.fate?`The lucky spin picked <b>${esc(r.name)}</b>!`:`<b>${esc(r.name)}</b> wins the face-off, ${T.names.map(n=>T.votes[n]).sort((a,b)=>b-a).join(" to ")}!`}</p>
     <div class="ctl">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
   const more=T.round<TB_PER_TIE;
-  return `<section class="center">${podiums(T.lead,n=>T.votes[n])}<div class="tieban late" style="--d:.9s">Still tied!</div>
+  return `<section class="center">${podiums(T.lead,n=>T.votes[n])}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>
     <p class="sub late" style="--d:1s">${more?"On to another face-off question.":"Three face-offs and still tied. Time for a lucky spin!"}</p>
-    <div class="ctl late" style="--d:1s"><button class="btn red" id="${more?"again":"fate"}">${more?"⚡ Next face-off":"🎰 Lucky spin"}</button></div><div class="hint">Space: continue</div></section>${strike(.1)}${raceBar()}`;
+    <div class="ctl late" style="--d:1s"><button class="btn red" id="${more?"again":"fate"}">${more?"⚡ Next face-off":"🎰 Lucky spin"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
 }
 const spinView=(label,n)=>`<section class="center"><span class="qtag">${label}</span><div class="bulbs"><div class="board spinbox"><img id="fateImg" src="${AV(n)}" alt=""><div class="nm" id="fateName">${esc(n)}</div></div></div></section>`;
 function fateView(){return spinView("🎰 Lucky spin",S.tie.names[0])+raceBar();}
@@ -525,9 +525,9 @@ function pkgView(){
   const tiles=P.rows.map(([n,v],i)=>tile({n,v,num:i+1,id:"pk"+i,state:open?"open":""})).join("");
   const b=board("Final vote totals",tiles,"Most votes wins the mystery package",compact);
   if(!open) return `<section class="center"><h1 class="ptitle">🎁 Prize Round</h1>${b}</section>`;
-  if(!P.winner) return `<section class="center"><div class="tieban late" style="--d:.9s">Tied for the prize!</div>
+  if(!P.winner) return `<section class="center"><div class="tieban late" style="--d:0s">${strike(.15)}Tied for the prize!</div>
     ${podiums(P.lead,n=>S.tally[n])}
-    <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">🎰 Lucky spin for the prize</button></div><div class="hint">Space: continue</div>${b}</section>${strike(.1)}`;
+    <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">🎰 Lucky spin for the prize</button></div><div class="hint">Space: continue</div>${b}</section>`;
   const list=board("Final vote totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Most votes wins","compact one");
   return `<section class="center"><h1 class="ptitle small">🎁 Mystery package winner</h1>
     <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":"Most votes in the district"}</div><div class="crown">👑</div><img class="av" src="${AV(P.winner)}" alt=""><div class="nm">${esc(P.winner)}</div><div class="votes">${plural(S.tally[P.winner],"vote")}</div>

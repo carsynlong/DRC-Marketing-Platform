@@ -179,6 +179,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 
 <script src="phone-fx.js"></script>
 <script src="ambient.js"></script>
+<script src="howto.js"></script>
 <script>
 const SHAPES=[
  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z" fill="#fff"/></svg>',
@@ -446,6 +447,7 @@ function view(){
 }
 
 function render(){
+  if(window.HowTo)HowTo.sync(D.game);   // How to play cards while the TV shows them
   const [k,html,fx]=view();
   const key=k+(offline>2?"off":"");
   if(key===lastKey)return;   // nothing changed: leave the screen alone (keeps your typing)

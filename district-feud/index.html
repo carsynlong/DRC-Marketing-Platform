@@ -897,6 +897,7 @@ function snapshot(){
   if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
   if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1});
   if(p==="intro"&&S.intro)g.spot=S.intro.who[S.intro.i]||null;
+  if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense"});
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q});

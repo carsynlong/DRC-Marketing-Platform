@@ -118,9 +118,10 @@
   function sky() {
     const r = S.rounds[S.qi]; if (!r) return;
     S.fallen = (S.fallen || []).filter(q => q !== r.qi).concat(r.qi);
-    if (calm) return;
-    try { sfx("cannon"); } catch (e) {}
+    // like the films: the music drops out, one cannon booms over the silence, then the music comes back
+    try { stopSong(); setTimeout(() => sfx("cannon"), 250); setTimeout(() => { if (S.phase === "board") playSong("arena"); }, 3400); } catch (e) {}
     const d = document.createElement("div"); d.className = "fx-sky";
+    if (calm) return;
     const who = Q[r.qi].a, dist = typeof DISTRICT !== "undefined" && DISTRICT[who] ? ` of District ${DISTRICT[who]}` : "";
     d.innerHTML = `<img src="img/${Q[r.qi].r}.jpg" alt=""><div><small>🔔 A cannon sounds in the arena</small>Tribute ${esc(who)}${dist} has fallen<small class="sub">Not one tribute recognized this face.</small></div>`;
     document.body.appendChild(d); setTimeout(() => d.remove(), 6200);

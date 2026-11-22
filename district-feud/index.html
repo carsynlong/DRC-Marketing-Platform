@@ -591,7 +591,7 @@ function lobby(){
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
-    <div class="hint">Space moves the show along · M turns music on or off</div></section>`;
+    <div class="hint">Space moves the show along · M turns music on or off · <span style="opacity:.7">version QR-3</span></div></section>`;
 }
 function question(){
   return `<section class="center">${tag()}${board(cur().q,tile({}),undefined,"","drop",true)}
@@ -767,8 +767,10 @@ function calledIt(d=1.2){
 }
 const joinUrl=()=>`${location.origin}/district-feud/play`;
 const onWebsite=()=>/^https?:$/.test(location.protocol)&&!/claude|anthropic/.test(location.hostname);
+const SITE="whos-that-tribute.vercel.app/district-feud";
 function joinCard(){
-  if(!apiOk&&!onWebsite())return "";
+  if(!apiOk&&!onWebsite())return `<div class="join"><div><div class="eyebrow">Want phones to join?</div><div class="jurl">${SITE}</div>
+    <p>This copy can't connect phones. Open District Feud on your website (the address above) to get the QR code, phone guesses, secret phone votes and emoji reactions.</p></div></div>`;
   let qr="";try{const q=qrcode(0,"M");q.addData(joinUrl());q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
   return `<div class="join"><div class="qr" aria-label="QR code for ${esc(joinUrl())}">${qr||"📱"}</div>
     <div><div class="eyebrow">Join on your phone</div><div class="jurl">${esc(joinUrl().replace(/^https?:\/\//,""))}</div>

@@ -169,7 +169,14 @@ const Sync = (() => {
   }
 
   /* ---- keep a copy so a TV reload doesn't lose the game ---- */
-  function saved() { try { return JSON.parse(localStorage.getItem(SAVE)) || {}; } catch (e) { return {}; } }
+  function saved() {
+    try {
+      const g = JSON.parse(localStorage.getItem(SAVE)) || {};
+      // A game saved before faces were added or removed would replay the old list: start fresh instead.
+      if (g.rounds?.length && g.rounds.length !== Q.length) return {};
+      return g;
+    } catch (e) { return {}; }
+  }
   function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }
 
   setInterval(() => {

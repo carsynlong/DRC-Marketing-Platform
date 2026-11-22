@@ -15,7 +15,7 @@
 html,body{margin:0;height:100%;background:var(--night);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;overflow:hidden}
 .wrap{height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
 .tv{position:relative;flex:none;overflow:hidden;background:#000;border-bottom:3px solid var(--gold)}
-.tv iframe{position:absolute;top:0;left:0;width:1280px;height:800px;border:0;transform-origin:0 0;pointer-events:none}
+.tv iframe{position:absolute;top:0;left:0;width:1280px;height:800px;border:0;transform-origin:0 0}
 .tv .label{position:absolute;left:8px;top:6px;z-index:2;background:rgba(0,0,0,.6);color:var(--gold);font-weight:800;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;padding:.2em .6em;border-radius:999px}
 .host{flex:none;display:flex;gap:8px;align-items:center;padding:8px 12px;background:var(--night-2)}
 .host .what{flex:1;font-size:.8rem;color:var(--muted);line-height:1.2}
@@ -57,6 +57,29 @@ function refresh(){
   document.getElementById("setup").hidden=S.phase==="lobby";
 }
 setInterval(refresh,300);
+
+/* Tapping a name on the mini TV counts as your answer, and that name gets a gold frame. */
+const mef=document.getElementById("mef");
+let picked=null, pickedQi=-1;
+function markPick(){
+  try{
+    const S=state(),doc=tvf.contentDocument;if(!S||!doc)return;
+    if(S.qi!==pickedQi||!["question","reveal"].includes(S.phase))picked=null;
+    if(!doc.getElementById("pickstyle"))doc.head.insertAdjacentHTML("beforeend",
+      '<style id="pickstyle">.ans.picked{box-shadow:0 0 0 7px #e8b04b,0 0 34px rgba(232,176,75,.9)!important;transform:scale(1.03)}</style>');
+    doc.querySelectorAll(".ans").forEach(a=>a.classList.toggle("picked",!!picked&&a.querySelector("span")?.textContent===picked));
+  }catch(e){}
+}
+setInterval(markPick,250);
+tvf.addEventListener("load",()=>{
+  tvf.contentDocument.addEventListener("click",e=>{
+    const tile=e.target.closest(".ans");if(!tile)return;
+    const S=state();if(!S||S.phase!=="question"||S.locked||picked)return;
+    e.stopPropagation();
+    picked=tile.querySelector("span").textContent;pickedQi=S.qi;markPick();
+    try{mef.contentWindow.answer(picked)}catch(err){}
+  },true);
+});
 document.getElementById("next").onclick=()=>{
   const w=tv(),S=state(); if(!S) return;
   try{w.ensureAudio()}catch(e){}

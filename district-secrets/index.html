@@ -331,7 +331,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-7";
+const BUILD="ds-build-2026-11-22-8";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -505,6 +505,16 @@ function playSong(name){
   },25);
 }
 function stopSong(){clearInterval(timerId);timerId=0;song=null}
+/* 📣 Carsyn's own "the games" clip (sfx/the-games.m4a): when the game begins, on G, or by clicking "The 2026 Christmas Games".
+   The music dips while it plays. */
+let gamesClip=null;
+function playGames(){
+  if(!musicOn)return;
+  try{gamesClip=gamesClip||new Audio("/sfx/the-games.m4a");gamesClip.currentTime=0;gamesClip.volume=1;
+    if(musicBus&&AC)musicBus.gain.setTargetAtTime(.12,AC.currentTime,.1);
+    gamesClip.onended=()=>{if(musicBus&&AC)musicBus.gain.setTargetAtTime(.5,AC.currentTime,.3)};
+    gamesClip.play().catch(()=>{})}catch(e){}
+}
 function sfx(kind){
   if(!musicOn||!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")noise(t,.03,.3,sfxBus,"bandpass",3800,6);
@@ -764,7 +774,7 @@ function newGame(){
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
   Q.length=BASE;S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
   post({action:"reset",total:BASE+40}).catch(()=>{});dsPost({op:"reset",total:BASE+40}).catch(()=>{});
-  S.phase="roundcard";stopSong();sfx("gong");render();
+  S.phase="roundcard";stopSong();sfx("gong");render();setTimeout(playGames,700);
 }
 function beginQuestion(){
   S.phase="ready";S.count=3;stopSong();render();sfx("dial");clearInterval(readyT);
@@ -880,7 +890,7 @@ function lobbyView(){
     :waiting.length<=4?`<div class="status">Waiting on ${waiting.map(esc).join(", ")}</div>`:"";
   return `<section class="lobby">
     <div class="hero">${EMBLEM}
-      <div class="eyebrow">The 2026 Christmas Games · Game 6</div>
+      <button class="eyebrow" id="thegames" title="Play the games sound (or press G)" style="cursor:pointer">📣 The 2026 Christmas Games · Game 6</button>
       <h1 class="title">District Secrets</h1>
       <p class="tagline">Twelve tributes. ${Q.length} secrets. Every single one is true.</p>
       ${joinCard()}
@@ -899,7 +909,7 @@ function lobbyView(){
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
       <div class="settings"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
-      <div class="tiny" style="text-align:center">Space moves the game on · M mutes</div>
+      <div class="tiny" style="text-align:center">Space moves the game on · M mutes · G plays “the games”</div>
     </div></section>`;
 }
 function roundView(){
@@ -1054,7 +1064,7 @@ function wire(){
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("score",score);on("next",next);on("again",newGame);
+  on("thegames",()=>{ensureAudio();playGames()});on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
@@ -1064,6 +1074,7 @@ function wire(){
 }
 document.addEventListener("keydown",e=>{
   if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if((e.key==="g"||e.key==="G")&&!e.target.closest?.("input,textarea")){ensureAudio();playGames();return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(e.target.closest&&e.target.closest("button,input"))return;
   e.preventDefault();primary();

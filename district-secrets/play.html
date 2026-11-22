@@ -211,7 +211,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-7";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-22-8";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");

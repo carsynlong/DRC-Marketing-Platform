@@ -36,6 +36,13 @@ window.Walkout = (() => {
   };
 
   let root = null, timers = [], finish = null, ac = null, soundOn = () => true;
+  // the silly bits for each walk-out (shuffled per show)
+  const PROPS = [{ e: "🎅" }, { e: "🕶️", eyes: 1 }, { e: "👑" }, { e: "🦌" }, { e: "🎩" }, { e: "🥸", eyes: 1 }, { e: "🎀" }, { e: "🧝" }, { e: "⭐" }, { e: "🤠" }];
+  const FUNNY = ["airhorn", "whistle", "kazoo", "boing", "airhorn", "kazoo"];
+  const CONF = ["🎉", "✨", "❄️", "🎄", "⭐", "🍪", "🎁", "🔔"];
+  const STATS = ["🍪 Cookies eaten today: 14", "🤫 Secrets kept: 2 (allegedly)", "🎄 Ugly sweater rating: 11/10", "🦌 Reindeer games won: 3", "😴 Naps taken this week: 9",
+    "🎁 Gifts peeked at early: ALL of them", "☕ Hot cocoa level: dangerous", "🕺 Dance moves: questionable", "🏹 Trash talk level: elite", "🧦 Socks received: 37 pairs",
+    "📺 Hallmark movies watched: 22", "🍬 Candy canes hidden in pockets: 6", "🎶 Times sang Mariah this week: 40", "🛷 Sled crashes: undefeated"];
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -51,11 +58,25 @@ window.Walkout = (() => {
 #walkout .wo-in{position:relative;display:grid;justify-items:center;gap:clamp(6px,1.4vh,14px);max-width:900px}
 #walkout .wo-tag{font-family:var(--wo-font);font-size:clamp(.95rem,2.2vw,1.4rem);color:var(--wo-ink);background:var(--wo-accent2);padding:.3em 1em;border-radius:999px;box-shadow:0 0 0 3px var(--wo-accent)}
 #walkout .wo-av{width:clamp(170px,30vh,300px);aspect-ratio:1;border-radius:50%;object-fit:cover;
-  box-shadow:0 0 0 8px var(--wo-accent),0 0 0 16px var(--wo-accent2),0 0 120px rgba(255,236,170,.6);animation:wo-zoom .7s cubic-bezier(.2,1.4,.4,1) both}
-#walkout .wo-from{font-family:var(--wo-font);color:var(--wo-accent);font-size:clamp(1.1rem,2.8vw,1.9rem);animation:wo-pop .45s .25s both}
+  box-shadow:0 0 0 8px var(--wo-accent),0 0 0 16px var(--wo-accent2),0 0 120px rgba(255,236,170,.6);animation:wo-zoom .7s 1.25s cubic-bezier(.2,1.4,.4,1) both}
+#walkout .wo-from{font-family:var(--wo-font);color:var(--wo-accent);font-size:clamp(1.1rem,2.8vw,1.9rem);animation:wo-pop .45s .1s both}
 #walkout .wo-name{font-family:var(--wo-font);font-size:clamp(2.8rem,9vw,6.2rem);line-height:1;color:var(--wo-ink);text-transform:uppercase;overflow-wrap:anywhere;
-  text-shadow:0 5px 0 var(--wo-accent2),0 0 40px color-mix(in srgb,var(--wo-accent) 60%,transparent);animation:wo-drop .65s .5s cubic-bezier(.2,1.5,.4,1) both}
-#walkout .wo-hype{font-size:clamp(1.15rem,2.6vw,1.8rem);font-weight:800;color:var(--wo-accent);animation:wo-pop .45s .95s both}
+  text-shadow:0 5px 0 var(--wo-accent2),0 0 40px color-mix(in srgb,var(--wo-accent) 60%,transparent);}
+#walkout .wo-name span{display:inline-block;animation:wo-drop .55s cubic-bezier(.2,1.6,.4,1) both;animation-delay:calc(1.35s + var(--k)*55ms)}
+#walkout .wo-hype{font-size:clamp(1.15rem,2.6vw,1.8rem);font-weight:800;color:var(--wo-accent);animation:wo-pop .45s 2.3s both}
+/* 🎉 the funny bits: a prop drops onto the photo, a silly stat card, emoji confetti, a searching spotlight */
+#walkout .wo-photo{position:relative;display:grid;place-items:center}
+#walkout .wo-prop{position:absolute;left:50%;top:-6%;font-size:clamp(4rem,11vh,7rem);line-height:1;transform:translateX(-50%) rotate(-8deg);filter:drop-shadow(0 6px 10px rgba(0,0,0,.5));
+  animation:wo-propfall 1s 3.1s cubic-bezier(.3,1.5,.5,1) both}
+#walkout .wo-prop.eyes{top:28%;font-size:clamp(3.4rem,9vh,5.6rem)}
+#walkout .wo-stat{font-size:clamp(1rem,2.1vw,1.35rem);font-weight:800;color:var(--wo-ink);background:rgba(0,0,0,.35);border-radius:12px;padding:.45em 1em;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--wo-accent) 60%,transparent);
+  animation:wo-stamp .5s 2.8s cubic-bezier(.3,1.6,.5,1) both}
+#walkout .wo-conf{position:absolute;top:-8vh;font-size:clamp(1.6rem,3.4vw,2.6rem);pointer-events:none;animation:wo-fall var(--t) var(--d) linear both}
+#walkout .wo-search{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--x,50%) 45%,rgba(255,246,210,.22) 0,transparent 22%);animation:wo-hunt 1.2s ease-in-out both}
+@keyframes wo-propfall{0%{transform:translate(-50%,-120vh) rotate(-40deg)}70%{transform:translate(-50%,0) rotate(6deg)}85%{transform:translate(-50%,-6%) rotate(-4deg)}100%{transform:translate(-50%,0) rotate(-8deg)}}
+@keyframes wo-stamp{from{transform:scale(2.2) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes wo-fall{from{transform:translateY(0) rotate(0);opacity:1}to{transform:translateY(118vh) rotate(var(--r));opacity:.9}}
+@keyframes wo-hunt{0%{--x:20%;opacity:0}15%{opacity:1}100%{opacity:0}}
 #walkout .wo-dots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 #walkout .wo-dots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}
 #walkout .wo-dots i.on{background:var(--wo-accent)}
@@ -69,6 +90,9 @@ window.Walkout = (() => {
 @keyframes wo-pop{from{transform:scale(.6);opacity:0}}
 @keyframes wo-drop{from{transform:translateY(-140%) rotate(-12deg);opacity:0}}
 @keyframes wo-flash{from{opacity:.6}to{opacity:0}}
+@property --x{syntax:"<percentage>";inherits:false;initial-value:50%}
+#walkout .wo-search{animation:wo-hunt2 1.2s ease-in-out both}
+@keyframes wo-hunt2{0%{--x:15%;opacity:0}20%{opacity:1}50%{--x:80%}80%{--x:50%;opacity:1}100%{--x:50%;opacity:0}}
 @media (prefers-reduced-motion:reduce){#walkout *{animation:none!important}}
 #walkout .wo-back,#rules .ru-back{position:absolute;top:max(14px,env(safe-area-inset-top,0px));left:max(14px,env(safe-area-inset-left,0px));z-index:2;font:inherit;font-weight:800;font-size:.95rem;
   color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:10px;padding:.5em .95em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);cursor:pointer}
@@ -90,6 +114,15 @@ window.Walkout = (() => {
       s.start(at, Math.random() * .5); s.stop(at + dur + .05);
     };
     if (kind === "whoosh") burst(t, .5, .22, 900, .5);
+    const tone = (type, f, at, dur, vol, glide) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, at);
+      if (glide) o.frequency.exponentialRampToValueAtTime(glide, at + dur); o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + .02); g.gain.setValueAtTime(vol, at + dur * .8); g.gain.exponentialRampToValueAtTime(.0001, at + dur); o.start(at); o.stop(at + dur + .05); };
+    if (kind === "drumroll") for (let k = 0; k < 26; k++) burst(t + k * .045, .06, .05 + k * .009, 1800 + Math.random() * 400, .8);
+    if (kind === "airhorn") [0, .32].forEach(d => [233, 235.5, 466].forEach(f => tone("sawtooth", f, t + d, d ? .7 : .26, .07, f * 1.02)));
+    if (kind === "whistle") tone("sine", 600, t, .7, .12, 2400);
+    if (kind === "boing") { tone("sine", 160, t, .45, .25, 620); tone("sine", 620, t + .12, .5, .12, 180); }
+    if (kind === "kazoo") [[392, .14], [440, .14], [494, .14], [587, .5]].reduce((at, [f, d]) => { tone("sawtooth", f, at, d, .05, f * 1.01); tone("square", f * 2, at, d, .015); return at + d; }, t);
+    if (kind === "drop") tone("sine", 1800, t, .8, .1, 300);
     if (kind === "cheer") for (let k = 0; k < 70; k++) burst(t + Math.random() * 1.3, .03 + Math.random() * .05, .04 + Math.random() * .06, 1500 + Math.random() * 2800, 1.4);
   }
   /* 🎺 Entrance theme: a pounding wrestling-style beat with a big brass "God Rest Ye Merry Gentlemen"
@@ -180,6 +213,7 @@ window.Walkout = (() => {
     document.body.appendChild(root);
     window.addEventListener("keydown", onKey, true);
     const hype = (o.hype || T.hype).slice().sort(() => Math.random() - .5);
+    const stats = STATS.slice().sort(() => Math.random() - .5), seed = Math.random() * 100 | 0;
     Music.start();
     let i = -1;
     const step = () => {
@@ -187,18 +221,24 @@ window.Walkout = (() => {
       i++;
       if (i >= names.length) { later(end, 500); return; }
       const n = names[i], dn = o.district ? o.district(n) : i + 1;
-      root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div>'}<div class="wo-beam"></div><button class="wo-back" type="button">↩ Back to setup</button>
+      const prop = PROPS[(i + seed) % PROPS.length], stat = stats[i % stats.length], funny = FUNNY[(i + seed) % FUNNY.length];
+      const conf = calm ? "" : Array.from({ length: 18 }, (_, k) => `<span class="wo-conf" style="left:${(k * 5.6 + Math.random() * 4).toFixed(1)}%;--t:${(2.2 + Math.random() * 1.6).toFixed(2)}s;--d:${(1.5 + Math.random() * .9).toFixed(2)}s;--r:${(Math.random() * 720 - 360) | 0}deg">${CONF[(k + i) % CONF.length]}</span>`).join("");
+      root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div><div class="wo-search"></div>'}<div class="wo-beam"></div>${conf}<button class="wo-back" type="button">↩ Back to setup</button>
         <div class="wo-in"><div class="wo-tag">${T.tag}</div>
-        <img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">
-        <div class="wo-from">From District ${dn}…</div><div class="wo-name">${esc(n)}</div><div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div>
+        <div class="wo-photo"><img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">${calm ? "" : `<span class="wo-prop${prop.eyes ? " eyes" : ""}" aria-hidden="true">${prop.e}</span>`}</div>
+        <div class="wo-from">From District ${dn}…</div><div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>
+        <div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div><div class="wo-stat">${esc(stat)}</div>
         <div class="wo-dots">${names.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
         <button class="wo-skip" type="button">Skip intros</button><div class="wo-hint">Space: skip</div></div>`;
       root.querySelector(".wo-skip").onclick = () => end();
       root.querySelector(".wo-back").onclick = () => end(true);
-      sfx("whoosh");
-      later(() => { Music.bam(); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 500);
-      say(`${i === 0 ? "And now… " : ""}From District ${dn}… ${n}!`);
-      later(step, 2300);
+      // ~5 seconds each: drumroll → BAM (photo + name) → a funny sound and confetti → the prop drops on their head
+      sfx("whoosh"); Music.duck(.12); sfx("drumroll");
+      say(`${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!`);
+      later(() => { Music.bam(); Music.duck(.42); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 1250);
+      later(() => sfx(funny), 1900);
+      later(() => sfx("drop"), 3050); later(() => sfx("boing"), 3700);
+      later(step, 4900);
     };
     step();
   }

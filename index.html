@@ -137,6 +137,11 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .join-t{display:grid;gap:6px}.join-url{font-family:var(--display);color:var(--gold);font-size:clamp(1.2rem,3.2vw,2rem);overflow-wrap:anywhere}
 /* lobby: who has signed in on a phone */
 .roster{display:grid;gap:10px;justify-items:center;width:100%;max-width:1220px}
+.roster .count{display:flex;align-items:baseline;gap:.35em;font-family:var(--display);color:var(--gold);text-shadow:0 3px 0 var(--red-d)}
+.roster .count .n{font-size:clamp(3rem,8vw,5rem);line-height:1;display:inline-block}
+.roster .count .n.bump{animation:pop .6s cubic-bezier(.2,1.8,.4,1)}
+.roster .count .of{font-size:clamp(1.4rem,3.5vw,2.2rem)}
+.roster .count .lbl{font-family:var(--body);font-weight:800;font-size:clamp(.9rem,1.8vw,1.2rem);color:var(--ink);text-shadow:none;letter-spacing:.08em;text-transform:uppercase}
 .roster .status{font-family:var(--display);font-size:clamp(1.1rem,2.6vw,1.6rem);color:var(--ink)}
 .roster .status.all{color:var(--good);animation:bob 1s ease-in-out infinite alternate}
 .roster .ppl{display:flex;flex-wrap:wrap;gap:10px 12px;justify-content:center}

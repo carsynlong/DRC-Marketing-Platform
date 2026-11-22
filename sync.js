@@ -132,15 +132,17 @@ const Sync = (() => {
   }
 
   /* ---- lobby: who has signed in on a phone, so the host knows when to start ---- */
-  let shownIn = [];
+  let shownIn = [], shownCount = -1;
   function roster() {
     const ps = active();
     if (!ps.length) return "";
     const waiting = ps.filter(p => !hasPhone(p.name)).map(p => p.name);
     const fresh = phones.filter(n => !shownIn.includes(n)); shownIn = phones.slice();
     const status = !waiting.length ? `<div class="status all">🎉 Everyone's in! Start the Games</div>`
-      : `<div class="status">📱 ${ps.length - waiting.length} of ${ps.length} signed in${waiting.length <= 4 ? ` · waiting on ${waiting.map(esc).join(", ")}` : ""}</div>`;
-    return `<div class="roster">${status}<div class="ppl">${ps.map(p => { const on = hasPhone(p.name);
+      : waiting.length <= 4 ? `<div class="status">Waiting on ${waiting.map(esc).join(", ")}</div>` : "";
+    const n = ps.length - waiting.length, bump = n !== shownCount; shownCount = n;
+    const count = `<div class="count" aria-label="${n} of ${ps.length} players signed in"><span class="n${bump ? " bump" : ""}">${n}</span><span class="of">/ ${ps.length}</span><span class="lbl">players signed in</span></div>`;
+    return `<div class="roster">${count}${status}<div class="ppl">${ps.map(p => { const on = hasPhone(p.name);
       return `<div class="p${on ? " in" : ""}${on && fresh.includes(p.name) ? " new" : ""}"><img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${on ? "✓ signed in" : "waiting…"}</small></div>`; }).join("")}</div>
       <div class="tiny">No phone? They can still play by shouting answers to the host.</div></div>`;
   }

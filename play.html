@@ -400,6 +400,7 @@ function view(){
   if(D.me===g.host&&(g.phase==="question"||g.phase==="reveal"))return hostScreen(g,key);
   if(!playing&&g.tb)return [key+"tbwatch",header()+msg("⚔️","Showdown!","<p>It's a tie at the top. Watch the TV and cheer for your favorite!</p>")+reactBar()];
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
+  if(g.phase==="rules")return [key,header()+msg("📜","Listen up, tribute!","<p>The rules are being read on the TV. Eyes up!</p>")+reactBar()];
   if(g.phase==="tbcard")return [key,header()+msg("⚔️","You're in the showdown!","<p>One more face. The fastest right answer wins the Games. Get ready to type!</p>"),"gift"];
   if(g.phase==="mini")return miniScreen(g,key);
 

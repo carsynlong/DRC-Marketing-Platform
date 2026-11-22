@@ -211,7 +211,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-5";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-22-7";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -314,7 +314,8 @@ function phoneRules(o){
   return r;
 }
 /* bonus secret: written in the lobby, approved by the host, played as a bonus round */
-let mySecret=store.get("ds-mysecret")||"",editing=!mySecret;
+// the bonus secret card: ask first (Yes / No thanks), then write, then sealed. "No thanks" is remembered on this phone.
+let mySecret=store.get("ds-mysecret")||"",editing=false,declined=store.get("ds-nobonus")==="1";
 async function writeSecret(){
   const t=$("#secret")?.value.trim();if(!t){$("#secret")?.focus();return}
   try{const {status,data}=await post("/api/ds",{op:"secret",name:myName,text:t});
@@ -322,9 +323,13 @@ async function writeSecret(){
     else toast(data.error||"That didn't go through. Try again.");
   }catch(e){toast("No connection. Try again.")}
 }
-const writeCard=()=>!D.game?.opts?.bonus?"":editing
+const writeCard=()=>!D.game?.opts?.bonus?"":
+  !mySecret&&!editing&&declined?`<button class="linkish" id="yesbonus" style="justify-self:center;color:var(--muted)">📝 Changed your mind? Add a bonus secret (+500)</button>`
+  :!mySecret&&!editing?`<div class="write"><b>📝 Want to add a bonus secret?</b><p>Something true nobody here knows about you. If it gets played, <b>+500 points</b> go to your score. Totally optional, and anonymous.</p>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn" id="yesbonus" style="min-height:48px;font-size:1rem">✍️ Yes, write one</button><button class="btn" id="nobonus" style="min-height:48px;font-size:1rem;background:#e7dcc4;color:#6b5233;box-shadow:0 4px 0 #c9b385">No thanks</button></div></div>`
+  :editing
   ?`<div class="write"><b>📝 Add a bonus secret · earn +500 points</b><p>Something true that nobody here knows about you. If it gets played in the bonus round, <b>+500 points go to your score</b>, plus 150 for everyone you fool. It's anonymous: not even the host sees who wrote it.</p>
-     <textarea id="secret" maxlength="200" placeholder="I once…">${esc(mySecret)}</textarea><button class="btn" id="sendsecret">🔏 Seal my secret</button></div>`
+     <textarea id="secret" maxlength="200" placeholder="I once…">${esc(mySecret)}</textarea><button class="btn" id="sendsecret">🔏 Seal my secret</button>${mySecret?"":`<button class="linkish" id="nobonus">Never mind, no thanks</button>`}</div>`
   :`<div class="write"><b>📝 Your bonus secret is sealed · +500 if it's played</b><div class="done">“${esc(mySecret)}”</div><button class="linkish" id="editsecret">Change it</button></div>`;
 /* sponsor bet for this secret */
 let myBet={key:"",bet:"hunch"};
@@ -446,7 +451,7 @@ function view(){
   if(g.phase==="lobby"){
     if(!playing&&isHost())return [key+"host",msg("🔑","You're the host","<p>You're running the game tonight. Tap <b>🔑 Host tools</b> any time to approve bonus secrets.</p>")+notYou];
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
-    return [key+"in"+editing+mySecret+!!g.opts?.bonus,`<section class="msg"><div class="eyebrow">Signed in</div>
+    return [key+"in"+editing+declined+mySecret+!!g.opts?.bonus,`<section class="msg"><div class="eyebrow">Signed in</div>
       <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
       <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p></section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
@@ -500,7 +505,7 @@ function view(){
   }
   if(g.phase==="board"){
     const got=s&&s.delta>0,lost=s&&s.delta<0;
-    return [key+(s?.score)+editing+mySecret,header()+msg(got?"🎉":lost?"💀":"🕯️",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:lost?`−${fmt(-s.delta)}`:"No points",
+    return [key+(s?.score)+editing+declined+mySecret,header()+msg(got?"🎉":lost?"💀":"🕯️",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:lost?`−${fmt(-s.delta)}`:"No points",
       `${s?.note?`<p class="note">${esc(s.note)}</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire 🔥</div>`:""}${s?.streak>1?`<p class="said">${s.streak} in a row</p>`:""}<p>You're <b style="color:var(--ink)">#${s?.rank}</b> with ${fmt(s?.score)} points.</p>`,got?"right":lost?"wrong":"")+standings()+(g.qi<g.base-1?writeCard():"")+reactBar()+soundBtn()];
   }
   if(g.phase==="final"){
@@ -532,6 +537,8 @@ function render(){
   document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>vote(b.dataset.vote));
   const ss=$("#sendsecret");if(ss)ss.onclick=writeSecret;
   const es=$("#editsecret");if(es)es.onclick=()=>{editing=true;lastKey="";render();$("#secret")?.focus()};
+  const yb=$("#yesbonus");if(yb)yb.onclick=()=>{sfx("tap");editing=true;declined=false;store.set("ds-nobonus",null);lastKey="";render();$("#secret")?.focus()};
+  const nb=$("#nobonus");if(nb)nb.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()};
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
   countUp();effect(fx);hostDraw();

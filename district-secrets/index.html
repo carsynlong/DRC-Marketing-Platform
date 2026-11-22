@@ -331,7 +331,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-5";
+const BUILD="ds-build-2026-11-22-7";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -396,10 +396,10 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",
 const calm=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,3600)}
 
-/* ================= MUSIC: new arrangements of public-domain carols =================
-   lobby: "O Come, O Come, Emmanuel" on a music box over a low drone and a slow heartbeat
-   question: "We Three Kings" as plucked strings over a ticking clock and war drums
-   scoreboard: "Good King Wenceslas" on handbells with tambourine */
+/* ================= MUSIC: original mystery music (detective / heist style, written for this game) =================
+   lobby:      "Mystery Lounge"  slow walking bass, vibraphone chords, brushes, snaps and a sneaky tiptoe melody (D minor)
+   question:   "The Sneak"       creeping plucked strings, a ticking clock and a heartbeat (speeds up in the last 5 seconds)
+   scoreboard: "Case Closed"     jazzier walking bass, snaps, vibes and a little sleigh-bell sparkle (F minor) */
 let AC=null,master,musicBus,sfxBus,noiseBuf,song=null,timerId=0,tempoMul=1,musicOn=true;
 function ensureAudio(){
   try{
@@ -427,6 +427,15 @@ function noise(t,dur,vol,dest,type,freq,q){
   f.type=type;f.frequency.value=freq;if(q)f.Q.value=q;s.connect(f);f.connect(g);g.connect(dest);env(g,t,.003,vol,dur);s.start(t,Math.random()*.5);s.stop(t+dur+.05);
 }
 const INST={
+  vibe:(t,m,d,v)=>{osc("sine",hz(m),t,Math.max(.6,d),v*.2,musicBus);osc("sine",hz(m)*4,t,.18,v*.04,musicBus);
+    const o=AC.createOscillator(),g=AC.createGain(),lfo=AC.createOscillator(),lg=AC.createGain();   // the vibraphone's slow wobble
+    o.type="sine";o.frequency.value=hz(m);lfo.frequency.value=5.5;lg.gain.value=v*.05;lfo.connect(lg);lg.connect(g.gain);o.connect(g);g.connect(musicBus);
+    env(g,t,.01,v*.08,Math.max(.8,d*1.3));o.start(t);lfo.start(t);o.stop(t+Math.max(.8,d*1.3)+.05);lfo.stop(t+Math.max(.8,d*1.3)+.05)},
+  upright:(t,m,d,v)=>{osc("triangle",hz(m),t,Math.min(d,.55),v*.5,musicBus,600);osc("sine",hz(m),t,.08,v*.25,musicBus)},
+  brush:(t,m,d,v)=>noise(t,.18,v*.07,musicBus,"bandpass",4200,.6),
+  ride:(t,m,d,v)=>{noise(t,.12,v*.06,musicBus,"highpass",7500);osc("sine",hz(100),t,.3,v*.012,musicBus)},
+  snap:(t,m,d,v)=>{noise(t,.03,v*.22,musicBus,"bandpass",2600,3);noise(t+.005,.02,v*.1,musicBus,"highpass",6000)},
+  sleigh:(t,m,d,v)=>{noise(t,.08,v*.06,musicBus,"bandpass",9500,1.4);noise(t+.03,.06,v*.04,musicBus,"bandpass",7200,1.6)},
   box:(t,m,d,v)=>{osc("sine",hz(m),t,1.6,v*.22,musicBus);osc("sine",hz(m)*4.02,t,.25,v*.05,musicBus);osc("triangle",hz(m)*2,t,.4,v*.04,musicBus)},
   drone:(t,m,d,v)=>{osc("sawtooth",hz(m),t,d,v*.05,musicBus,420,.8);osc("sine",hz(m-12),t,d,v*.12,musicBus,0,.8)},
   pluck:(t,m,d,v)=>{osc("triangle",hz(m),t,.35,v*.3,musicBus,1800);osc("square",hz(m),t,.12,v*.05,musicBus,1200)},
@@ -441,29 +450,45 @@ const INST={
   tamb:(t,m,d,v)=>{noise(t,.12,v*.1,musicBus,"highpass",7000);noise(t+.02,.06,v*.06,musicBus,"bandpass",10000,2)},
 };
 function seq(mel,inst,sh=0){let b=0;const ev=[];mel.forEach(([m,d])=>{if(m)ev.push([b,inst,m+sh,d,1]);b+=d});return ev}
-function mkEmmanuel(){ // "O Come, O Come, Emmanuel" (traditional), E minor
-  const L1=[[64,1],[67,1],[71,1],[71,1],[71,1],[69,1],[72,1],[71,1],[69,1],[67,3]];
-  const L2=[[69,1],[71,1],[67,1],[64,1],[67,1],[69,1],[66,1],[64,1],[62,1],[64,3]];
-  const ev=seq([...L1,...L2,...L1,...L2],"box",12);
-  for(let b=0;b<48;b+=12){ev.push([b,"drone",40,12,1]);ev.push([b+6,"drone",43,6,.7])}
-  for(let b=0;b<48;b+=4)ev.push([b,"heart",0,1,.8]);
-  return {bpm:76,len:48,ev};
+const SW=.66;   // swing: the off-beat lands two-thirds through the beat
+function mkLounge(){ // "Mystery Lounge" (original), D minor, 8 bars of 4
+  const ev=[],chords=[[65,69,72,76],[65,69,72,76],[58,62,65,69],[58,62,65,69],[58,62,64,67],[58,62,64,67],[61,67,70,76],[61,64,67,70]];
+  const walk=[[38,41,45,48],[50,48,45,41],[34,38,41,45],[46,45,41,38],[43,46,50,52],[43,41,40,38],[45,49,52,55],[45,43,41,40]];
+  const mel=[[],[[1,69,.5],[1+SW,70,.3],[2,69,1]],[[0,65,.6],[1,64,1.5]],[[0,62,2.5]],[[0,64,.5],[SW,65,.3],[1,67,.5],[1+SW,70,1.2]],[[0,69,3]],[[0,73,.5],[1,70,.5],[2,67,.5],[3,64,.8]],[[0,62,1],[2,81,.3],[2+SW,86,.3],[3,93,.6]]];
+  for(let bar=0;bar<8;bar++){const b=bar*4;
+    walk[bar].forEach((m,k)=>ev.push([b+k,"upright",m,1,k?.8:1]));
+    chords[bar].forEach(m=>ev.push([b,"vibe",m,2,.55],[b+2+SW,"vibe",m,1.2,.35]));
+    mel[bar].forEach(([o,m,d])=>ev.push([b+o,m>80?"box":"vibe",m,d,.9]));
+    [0,1,1+SW,2,3,3+SW].forEach(o=>ev.push([b+o,"ride",0,.5,o%1?.6:1]));
+    ev.push([b+1,"brush",0,1,1],[b+3,"brush",0,1,1],[b+1,"snap",0,1,.8],[b+3,"snap",0,1,.8]);
+    if(bar%2)ev.push([b,"heart",0,1,.35]);}
+  return {bpm:92,len:32,ev};
 }
-function mkKings(){ // "We Three Kings" (John Henry Hopkins Jr., 1857), E minor 3/4
-  const L=[[71,2],[69,1],[67,2],[64,1],[66,1],[67,1],[66,1],[64,3]];
-  const ev=seq([...L,...L],"pluck");
-  [40,40,38,40,40,40,38,40].forEach((r,i)=>{const b=i*3;ev.push([b,"cello",r,3,1],[b,"taiko",0,1,1],[b+2,"taiko",0,1,.45]);
-    for(let k=0;k<3;k++)ev.push([b+k,"tick",k%2,1,1])});
-  return {bpm:132,len:24,ev};
+function mkSneak(){ // "The Sneak" (original), D minor: tiptoe plucks over a creeping bass, clock and heartbeat
+  const ev=[],bass=[[38,0,38,39,38,0,37,0],[38,0,38,39,38,0,37,0],[43,0,43,44,43,0,42,0],[45,0,45,46,44,0,45,0]];
+  const tip=[[[1.5,74],[2,75],[2.5,74],[3,73]],[[1.5,77],[2,76],[2.5,75],[3,74]],[[1.5,79],[2,80],[2.5,79],[3,78]],[[0.5,81],[1,80],[1.5,79],[2,78],[2.5,77],[3,76],[3.5,73]]];
+  for(let bar=0;bar<4;bar++){const b=bar*4;
+    bass[bar].forEach((m,k)=>{if(m)ev.push([b+k/2,"pluck",m,.5,k%2?.7:1])});
+    tip[bar].forEach(([o,m])=>ev.push([b+o,"pluck",m,.5,.55]));
+    for(let k=0;k<8;k++)ev.push([b+k/2,"tick",k%2,.5,k%2?.6:1]);
+    ev.push([b,"heart",0,1,.9],[b,"cello",bar<2?26:31,4,.7]);
+    if(bar===3)ev.push([b+3.5,"vibe",86,.5,.5]);}
+  return {bpm:116,len:16,ev};
 }
-function mkWenceslas(){ // "Good King Wenceslas" (Piae Cantiones, 1582), G major
-  const A=[[67,1],[67,1],[67,1],[69,1],[67,1],[67,1],[62,2],[64,1],[62,1],[64,1],[66,1],[67,2],[67,2]];
-  const B=[[74,1],[72,1],[71,1],[69,1],[71,1],[69,1],[67,2],[64,1],[62,1],[64,1],[66,1],[67,2],[67,2]];
-  const ev=seq([...A,...A,...B,...A],"bell",12);
-  for(let i=0;i<32;i++){const b=i*2,r=[43,43,38,43][(i>>1)%4];ev.push([b,"bass",r,1,1],[b+1,"bass",r+7,1,.7],[b+1,"tamb",0,1,1])}
-  return {bpm:116,len:64,ev};
+function mkCaseClosed(){ // "Case Closed" (original), F minor swing
+  const roots=[41,46,39,44,37,43,48,48],ev=[];
+  const chord=[[63,68,72,75],[61,65,68,72],[61,67,70,74],[60,63,67,72],[60,65,68,72],[59,65,68,71],[60,63,67,70],[58,64,67,70]];
+  const mel=[[[0,72],[SW,75],[1,77]],[[2,80],[2+SW,77]],[[0,79],[1,75]],[[0,72],[2,75],[2+SW,77]],[[0,80],[1,82],[1+SW,80]],[[0,77],[2,74]],[[0,75],[SW,77],[1,79],[2,84]],[[0,82],[1,79],[2,76]]];
+  roots.forEach((r,bar)=>{const b=bar*4,nx=roots[(bar+1)%8];
+    [r,r+3,r+7,nx+(nx>r?-1:1)].forEach((m,k)=>ev.push([b+k,"upright",m,1,k?.8:1]));
+    chord[bar].forEach(m=>ev.push([b+SW,"vibe",m,.8,.45],[b+3,"vibe",m,.8,.3]));
+    mel[bar].forEach(([o,m])=>ev.push([b+o,"vibe",m,.7,.85]));
+    [0,1,1+SW,2,3,3+SW].forEach(o=>ev.push([b+o,"ride",0,.5,o%1?.6:1]));
+    ev.push([b+1,"snap",0,1,1],[b+3,"snap",0,1,1],[b+1,"brush",0,1,.8],[b+3,"brush",0,1,.8]);
+    for(let k=0;k<4;k++)ev.push([b+k+SW,"sleigh",0,.5,.5]);});
+  return {bpm:104,len:32,ev};
 }
-const SONGS={lobby:mkEmmanuel(),count:mkKings(),board:mkWenceslas()};
+const SONGS={lobby:mkLounge(),count:mkSneak(),board:mkCaseClosed()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong();if(!musicOn||!ensureAudio())return;

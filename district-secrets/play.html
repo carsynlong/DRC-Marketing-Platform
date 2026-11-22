@@ -222,7 +222,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-12";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-22-13";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -317,7 +317,7 @@ function phoneRules(o){
     ["Points","⚡","Be fast","Right = 1,000 points. Faster = more. Streaks = more."],
     ["Points","🎭","Your own secret?","Type a decoy. +150 for every person you fool."]];
   if(o.bets)r.push(["Extras","🎲","Bet on it","🎯 Sure: +500 / −250  ·  💀 All in: ×2 / −500"]);
-  if(o.interro)r.push(["Extras","🔦","The hot seat","Most accused has 15 seconds to defend themselves."]);
+  if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
   if(o.story)r.push(["Extras","🎤","Story time","The owner tells the story. Rate it 🔥 😂 🤯"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
@@ -360,6 +360,16 @@ async function pickBet(b){
   try{const {status}=await post("/api/ds",{op:"bet",name:myName,qi:g.qi,bet:b});if(status===409)toast("Too late! Guesses are locked.")}catch(e){}
 }
 const betPicker=()=>!D.game?.opts?.bets?"":`<div class="bet"><div class="lbl">🎲 Sponsor bet · how sure are you?</div>${BETS.map(([k,e,l,h])=>`<button type="button" class="${k}" data-bet="${k}" aria-pressed="${betNow()===k}"><span>${e}</span>${l}<small>${h}</small></button>`).join("")}</div>`;
+/* Interrogation Room: change your vote */
+let mySwitch={key:"",to:null,open:false};
+async function switchVote(){
+  const v=$("#sw")?.value.trim();if(!v){$("#sw")?.focus();return}
+  const g=D.game;
+  try{const {status,data}=await post("/api/ds",{op:"switch",name:myName,qi:g.qi,guess:v});
+    if(status===200){mySwitch.to=v;mySwitch.open=false;sfx("seal");buzz(40);lastKey="";render()}
+    else toast(status===409?(data.error||"The room is closed."):"That didn't go through. Try again.");
+  }catch(e){toast("No connection. Try again.")}
+}
 /* story votes */
 let myVote={key:"",v:null};
 async function vote(v){
@@ -493,10 +503,24 @@ function view(){
   if(g.phase==="bonuscard")return [key,header()+msg("📝","Bonus round!","<p>Fresh secrets, written tonight by people in this room. Eyes on the TV.</p>")+soundBtn()];
   const mineSecret=g.own&&g.own===ownTag(g.gid,g.qi,D.me);
   if(g.phase==="interro"){
-    const hot=(g.hot||[]).includes(D.me),pic=n=>`img/r${pad(g.names.indexOf(n)+1)}.jpg`;
-    return [key+"i"+hot,header()+(hot
-      ?msg("","🔦 You're in the hot seat!",`<img class="hot" src="${pic(D.me)}" alt=""><p class="said">The room thinks it's you. Defend yourself!</p><p>Out loud. You have 15 seconds.</p>`,"wrong")
-      :msg("🔦","The Interrogation",`<p class="said">${(g.hot||[]).map(esc).join(" and ")} ${g.hot?.length>1?"are":"is"} in the hot seat.</p><p>Do you believe them?</p>`))+reactBar(),hot?"wrong":"shh"];
+    // 🔦 the Interrogation Room: keep your sealed guess or change it, while the room is open
+    const hot=(g.hot||[]).includes(D.me),pic=n=>`img/r${pad(g.names.indexOf(n)+1)}.jpg`,mine=D.myAnswer,k=`${g.gid}:${g.qi}`;
+    if(mySwitch.key!==k)mySwitch={key:k,to:null,open:false};
+    const top=`<section class="msg" style="flex:none;padding:6px 0 0"><div class="eyebrow">🔦 The Interrogation Room</div>
+      ${hot?`<img class="hot" src="${pic(D.me)}" alt="" style="width:min(40%,150px)"><h1 style="font-size:1.6rem">You're in the hot seat!</h1><p class="said">Defend yourself, out loud!</p>`
+        :`<h1 style="font-size:1.5rem">${(g.hot||[]).map(esc).join(" & ")} ${g.hot?.length>1?"are":"is"} in the hot seat</h1>`}
+      ${g.roomOpen?`<div class="hurry" id="roomclock">⏱ Room closes in <b>${g.roomLeft||""}</b></div>`:""}</section>`;
+    if(mineSecret)return [key+"own"+g.roomOpen,header()+top+msg("🤫","They're trying to crack YOU","<p>Keep a straight face… or point the finger at someone else!</p>")+reactBar(),"shh"];
+    if(!mine)return [key+"none"+g.roomOpen,header()+top+msg("","You didn't seal a guess","<p>Sit back and watch the interrogation.</p>")+reactBar()];
+    if(!g.roomOpen)return [key+"closed"+mySwitch.to,header()+top+msg("🔒","Votes are final",`<p class="said">Your vote: <b>${esc(mySwitch.to||mine)}</b></p><p>Eyes on the TV for the reveal.</p>`)+reactBar(),"tap"];
+    const now=mySwitch.to||mine;
+    return [key+"room"+now+mySwitch.open,header()+top+`<div class="write" style="transform:none">
+        <b>${mySwitch.to?"🔄 You changed your vote":"Your sealed guess"}</b><div class="done" style="font-size:1.4rem">“${esc(now)}”</div>
+        ${mySwitch.to?`<p>Was: ${esc(mine)}</p>`:""}
+        ${mySwitch.open?`<form id="swform" style="display:grid;gap:8px"><input id="sw" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Who is it really?" style="font-family:var(--type);font-size:1.3rem;padding:.5em;border-radius:10px;border:2px dashed #c9b385;background:rgba(255,255,255,.5);color:var(--parch-ink);text-align:center">
+            <button class="btn" type="submit">🔄 Switch my vote</button><button class="linkish" type="button" id="swcancel">Never mind</button></form>`
+          :`<div class="two"><button id="keepvote">✅ Keep it</button><button id="changevote">🔄 Change my vote</button></div>`}
+        <p style="font-size:.82rem">Switch to the right person: <b>+250 bonus</b> · switch away from it: <b>−500</b> · switch and still wrong: <b>−250</b></p></div>`,""];
   }
   if(g.phase==="story"){
     if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!","<p class=\"said\">Tell everyone the story behind your secret.</p><p>Everyone's rating it on their phones. Make it a good one!</p>","right"),"right"];
@@ -555,9 +579,11 @@ function render(){
   lastKey=key;
   const typing=$("#g")?.value,focused=document.activeElement?.id==="g";   // keep a half-typed guess when the screen redraws
   const drafting=$("#secret")?.value,dfocus=document.activeElement?.id==="secret";
+  const swd=$("#sw")?.value,swf=document.activeElement?.id==="sw";
   $("#app").innerHTML=(offline>2?`<div class="offline">Reconnecting…</div>`:"")+html;
   const gi=$("#g");if(gi&&typing){gi.value=typing;if(focused)gi.focus()}
   const si=$("#secret");if(si&&drafting){si.value=drafting;if(dfocus)si.focus()}
+  const swi=$("#sw");if(swi&&swd){swi.value=swd;if(swf)swi.focus()}
   document.querySelectorAll("[data-name]").forEach(b=>b.onclick=()=>join(b.dataset.name));
   const f=$("#guess");if(f)f.onsubmit=e=>{e.preventDefault();const i=$("#g");if(!i.value.trim()){i.focus();return}i.blur();send(i.value)};
   const l=$("#leave");if(l)l.onclick=leave;
@@ -571,6 +597,12 @@ function render(){
   const ds=$("#delsecret");if(ds)ds.onclick=deleteSecret;
   document.querySelectorAll("#nobonus").forEach(b=>b.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()});
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
+  const cv=$("#changevote");if(cv)cv.onclick=()=>{sfx("tap");mySwitch.open=true;lastKey="";render();$("#sw")?.focus()};
+  const kv=$("#keepvote");if(kv)kv.onclick=()=>{sfx("tap");buzz(15);toast("Kept. Your sealed guess stands.")};
+  const sc=$("#swcancel");if(sc)sc.onclick=()=>{mySwitch.open=false;lastKey="";render()};
+  const sf=$("#swform");if(sf)sf.onsubmit=e=>{e.preventDefault();$("#sw")?.blur();switchVote()};
+  // the room's clock counts down here between polls
+  clearInterval(render.rc);if($("#roomclock")&&D.game?.roomLeft){const end=Date.now()+D.game.roomLeft*1000;render.rc=setInterval(()=>{const b=$("#roomclock b");if(!b)return clearInterval(render.rc);b.textContent=Math.max(0,Math.ceil((end-Date.now())/1000))},200)}
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
   countUp();effect(fx);hostDraw();
   // the hurry banner counts down here between polls

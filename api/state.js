@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
   // "I'm still here": a name whose phone stops checking in for 30 seconds can be picked up again (rejoin).
   if (me) await redis.set(`${p}seen:${me}`, "1", { ex: 30 });
-  if (me && (game.phase === "question" || game.phase === "reveal")) {
+  if (me && (game.phase === "question" || game.phase === "reveal" || game.phase === "interro")) {
     myAnswer = await redis.hget(`${p}answers:${game.qi}`, me);
   }
   reply(res, 200, { game, me, taken, away, myAnswer });

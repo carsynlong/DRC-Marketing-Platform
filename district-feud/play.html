@@ -100,6 +100,11 @@ body.rb .app{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 .rbar button:active{transform:scale(.88);background:rgba(255,201,46,.3)}
 .puff{position:fixed;z-index:6;pointer-events:none;font-size:1.8rem;animation:puff .9s ease-out forwards}
 @keyframes puff{from{transform:translate(-50%,-50%) scale(.6);opacity:1}to{transform:translate(calc(-50% + var(--x)),calc(-50% - 120px)) scale(1.3);opacity:0}}
+/* countdown bar */
+.ptimer{position:relative;height:34px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;box-shadow:inset 0 0 0 2px var(--gold);flex:none}
+.ptimer i{position:absolute;inset:0;background:linear-gradient(90deg,var(--gold),var(--gold2));transform-origin:left;transition:transform .2s linear}
+.ptimer b{position:relative;display:grid;place-items:center;height:100%;font-family:var(--display);font-weight:400;color:#061447;font-size:1rem}
+.ptimer.low i{background:linear-gradient(90deg,var(--red),#ff6a70)} .ptimer.low b{color:#fff;animation:pulse .5s ease-in-out infinite alternate}
 @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:none;opacity:1}}
 @keyframes rise{from{transform:translateY(24px);opacity:0}to{opacity:1}}
 @keyframes deal{from{transform:translateY(90px) rotate(-14deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
@@ -216,6 +221,10 @@ const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div cl
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
 const qcard=(g,label)=>`<div class="q"><div class="eyebrow">${label}</div><p>${esc(g.q||"")}</p></div>`;
 const nameBtns=(list,cls="")=>`<div class="grid ${cls}">${list.map((n,i)=>`<button class="nb" style="--i:${i}" data-choice="${esc(n)}"><img src="${avOf(n)}" alt="">${esc(n)}</button>`).join("")}</div>`;
+const ptimer=g=>g.ends&&!g.locked?`<div class="ptimer" id="ptimer" data-ends="${g.ends}" data-total="${g.secs||30}"><i></i><b>⏱</b></div>`:"";
+setInterval(()=>{const t=$("#ptimer");if(!t)return;const ms=+t.dataset.ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000));
+  t.querySelector("i").style.transform=`scaleX(${Math.max(0,Math.min(1,ms/(+t.dataset.total*1000))).toFixed(3)})`;
+  t.querySelector("b").textContent=sec?`⏱ ${sec}s left`:"⏱ Time's up!";t.classList.toggle("low",sec<=10)},200);
 const lockedCard=(n,line)=>`<section class="msg"><div class="eyebrow">Locked in</div><div class="locked"><img src="${avOf(n)}" alt=""><div class="nm">${esc(n)}</div></div><p>${line}</p><p class="priv">🔒 Only you can see this.</p></section>`;
 
 function view(){
@@ -235,9 +244,9 @@ function view(){
       <p style="margin-top:10px">Welcome, <b>${esc(D.me)}</b>! Eyes on the TV. You'll guess the #1 answers right here.</p></section>${soundBtn()}${notYou}`,"welcome"];
 
   if(g.kind==="guess"&&g.phase==="question"){
-    if(mine)return [key+"lock:"+mine+g.locked,header()+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
+    if(mine)return [key+"lock:"+mine+g.locked,header()+ptimer(g)+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
     if(g.locked)return [key+"late",header()+msg("🥁","Survey says…","<p>Guesses are locked. Watch the board!</p>")];
-    return [key+"ask",header()+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`+nameBtns(g.names)];
+    return [key+"ask",header()+ptimer(g)+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`+nameBtns(g.names)];
   }
   if(g.kind==="guess"&&g.phase==="reveal"){
     const top=g.answer||[],me=top.includes(D.me),right=mine&&top.includes(mine),who=top.map(esc).join(" & ");

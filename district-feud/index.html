@@ -257,6 +257,16 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 @keyframes racebump{30%{transform:scale(1.25);color:var(--gold)}}
 .rc .plus{font-style:normal;font-family:var(--display);color:#7dff9e;font-size:.9rem;animation:plusup 1.6s ease-out both}
 @keyframes plusup{0%{opacity:0;transform:translateY(10px)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+/* 30-second question timer */
+.tq{display:flex;align-items:center;gap:14px;justify-content:center}
+.timer{position:relative;width:clamp(84px,9vw,112px);aspect-ratio:1;flex:none;animation:pop .5s .3s cubic-bezier(.2,1.6,.4,1) both}
+.timer svg{width:100%;height:100%;transform:rotate(-90deg);display:block}
+.timer circle{fill:none;stroke-width:8}
+.timer .bg{stroke:rgba(255,255,255,.15);fill:rgba(6,11,38,.7)}
+.timer .fg{stroke:var(--gold);stroke-linecap:round;stroke-dasharray:213.6;transition:stroke-dashoffset .12s linear}
+.timer b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:400;font-size:clamp(1.9rem,3.4vw,2.7rem);color:#fff}
+.timer.low .fg{stroke:var(--red)}
+.timer.low b{color:#ff6a70;animation:pulse .5s ease-in-out infinite alternate}
 /* emoji reactions from phones */
 #reacts{position:fixed;inset:0;pointer-events:none;z-index:7;overflow:hidden}
 .rx{position:absolute;bottom:-70px;display:flex;flex-direction:column;align-items:center;font-size:var(--s);line-height:1;opacity:0;
@@ -327,6 +337,8 @@ const INST={
   clap:(t,m,d,v)=>{[0,.012,.026].forEach(o=>noise(t+o,.06,v*.15,musicBus,"bandpass",1400,1.2))},
   sleigh:(t,m,d,v)=>{noise(t,.08,v*.11,musicBus,"bandpass",9500,1.2);noise(t+.02,.06,v*.06,musicBus,"bandpass",7000,1.5)},
   hat:(t,m,d,v)=>noise(t,.035,v*.08,musicBus,"highpass",8000),
+  bam:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(m||120,t);o.frequency.exponentialRampToValueAtTime((m||120)*.42,t+.25);
+    o.connect(g);g.connect(musicBus);env(g,t,.003,v*.9,.45);o.start(t);o.stop(t+.5);noise(t,.18,v*.35,musicBus,"lowpass",900)},
   kick:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);
     o.connect(g);g.connect(musicBus);env(g,t,.003,v*.7,.22);o.start(t);o.stop(t+.3)},
 };
@@ -364,7 +376,18 @@ function mkJoy(){ // grand finale: "Joy to the World" (Isaac Watts / Lowell Maso
     for(let k=0;k<4;k++)ev.push([b+k/2,"sleigh",0,.5,k%2?.5:.9])});
   return {bpm:112,len:16,ev};
 }
-const SONGS={lobby:mkWish(),think:mkThink(),strut:mkStrut(),joy:mkJoy()};
+function mkFaceoff(){ // face-off: "God Rest Ye Merry Gentlemen" (traditional English) in minor, over pounding BAM-BAM drums
+  const mel=[[64,1],[64,1],[71,1],[71,1],[69,1],[67,1],[66,1],[64,1],[62,1],[64,1],[66,1],[67,1],[69,1],[71,3]];
+  const ev=[...seq(mel,"brass"),...seq(mel,"brass",-12,.6),...seq(mel,"glock",0,.35)];
+  [40,36,38,35].forEach((r,i)=>{const b=i*4;
+    for(let k=0;k<8;k++)ev.push([b+k/2,"pluck",r+(k%2?12:0),.5,1]);          // driving octave bass
+    ev.push([b,"bam",130,1,1],[b+.5,"bam",110,1,.9]);                       // BAM-BAM
+    ev.push([b+2,"bam",130,1,.8],[b+2.5,"bam",110,1,.7],[b+3.5,"bam",90,1,.6]);
+    ev.push([b,"kick",0,1,1],[b+1,"clap",0,1,.9],[b+3,"clap",0,1,.9],[b,"stab",r+12,1,.9],[b+1.5,"stab",r+12,1,.7]);
+    for(let k=0;k<16;k++)ev.push([b+k/4,"hat",0,.25,k%2?.5:.9])});
+  return {bpm:152,len:16,ev};
+}
+const SONGS={lobby:mkWish(),think:mkThink(),strut:mkStrut(),joy:mkJoy(),faceoff:mkFaceoff()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
@@ -473,6 +496,7 @@ let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true]
 /* Mystery package: every vote a tribute receives (survey + face-offs) adds to their total,
    plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
 const GUESS_PTS=1;
+const TIMER_SECS=30; // seconds to guess each question; Survey says starts by itself when it runs out
 const addVotes=(n,v)=>{if(!v)return;S.tally[n]=(S.tally[n]||0)+v;S.bump[n]=(S.bump[n]||0)+v};
 const cur=()=>QUESTIONS[S.order[S.k]];
 const isTie=q=>q.top.length>1;
@@ -487,13 +511,21 @@ function startGame(){
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
   showQuestion();
 }
-function showQuestion(){clearTimers();S.phase="question";S.tie=null;playSong("think");render();}
+function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.ends=Date.now()+TIMER_SECS*1000;playSong("think");render();}
+/* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
+setInterval(()=>{
+  if(S.phase!=="question"||!S.ends)return;
+  const ms=S.ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000)),el=$("#tsec");
+  if(el&&el.textContent!==String(sec)){el.textContent=sec;$("#timer").classList.toggle("low",sec<=10);if(sec<=10&&sec>0)sfx("tick")}
+  const r=$("#tring");if(r)r.style.strokeDashoffset=(213.6*(1-Math.max(0,ms)/(TIMER_SECS*1000))).toFixed(1);
+  if(ms<=0){S.ends=0;sfx("buzz");surveySays()}
+},100);
 function surveySays(){
   if(S.phase!=="question")return;
-  S.phase="suspense";stopSong();render();drumroll(1.9);later(poll,1200); // last look at the phones' guesses
+  S.ends=0;S.phase="suspense";stopSong();render();drumroll(1.9);later(poll,1200); // last look at the phones' guesses
   later(()=>{const q=cur();S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v));
     const top=q.top.map(t=>t[0]),got=phoneAnswers();Object.keys(got).filter(n=>top.includes(got[n])).forEach(n=>addVotes(n,GUESS_PTS)); // called it: +1sfx("flip");flash(250);later(()=>sfx("ding"),380);
-    if(isTie(q)){later(()=>sfx("buzz"),1450);shake(1450)}
+    if(isTie(q)){later(()=>sfx("buzz"),1450);shake(1450);later(()=>playSong("faceoff"),2300)}
     else{later(()=>{sfx("applause");confetti(140);applause()},500);S.results[S.k]={name:q.top[0][0],votes:q.top[0][1]};later(()=>playSong("strut"),1200)}
     render();},2000);
 }
@@ -501,14 +533,14 @@ function startTie(){const q=cur();S.tie={names:q.top.map(t=>t[0]),round:0,q:null
 function nextTiebreaker(){
   clearTimers();const T=S.tie;T.round++;T.q=TIEBREAKERS[S.tbNext%TIEBREAKERS.length];S.tbNext++;
   T.votes=Object.fromEntries(T.names.map(n=>[n,0]));T.voted=[];T.voter=null;T.lead=null;T.qn=S.tbNext;T.enter=true;
-  S.phase="tb";playSong("think");sfx("whoosh");render();
+  S.phase="tb";playSong("faceoff");sfx("whoosh");render();
 }
 const voters=()=>NAMES.filter(n=>S.present[n]&&!S.tie.names.includes(n));
 function openBallot(name){S.tie.voter=name;S.phase="ballot";stopSong();sfx("tap");render();}
 function castVote(pick){
   const T=S.tie;if(!T.voter||T.voted.includes(T.voter))return;
   T.votes[pick]++;T.voted.push(T.voter);T.voter=null;S.phase="cast";sfx("cash");render();
-  later(()=>{if(S.phase==="cast"){S.phase="tb";playSong("think");render()}},1800);
+  later(()=>{if(S.phase==="cast"){S.phase="tb";playSong("faceoff");render()}},1800);
 }
 async function countVotes(){
   clearTimers();if(S.phase!=="tb")return;
@@ -519,7 +551,7 @@ async function countVotes(){
     T.names.forEach(n=>addVotes(n,T.votes[n]));
     T.lead=lead;S.phase="tbresult";
     if(lead.length===1){S.results[S.k]={name:lead[0],votes:cur().top[0][1],tb:true};later(()=>{winFx();applause();flash()},700);later(()=>playSong("strut"),2000)}
-    else{later(()=>sfx("buzz"),150);shake(150)}
+    else{later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300)}
     render();},2000);
 }
 function spin(names,done){
@@ -590,16 +622,18 @@ function lobby(){
   return `<section class="lobby">${logo()}
     ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
-    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the mystery package!</div>
+    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the mystery package!<br><small>⏱ ${TIMER_SECS} seconds to guess each question.</small></div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
     <div class="hint">Space moves the show along · M turns music on or off · <span style="opacity:.7">version QR-3</span></div></section>`;
 }
 function question(){
-  return `<section class="center">${tag()}${board(cur().q,tile({}),undefined,"","drop",true)}
+  const left=Math.max(0,Math.ceil(((S.ends||Date.now())-Date.now())/1000));
+  const timer=`<div class="timer ${left<=10?"low":""}" id="timer" aria-label="Seconds left"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" id="tring" cx="40" cy="40" r="34"/></svg><b id="tsec">${left}</b></div>`;
+  return `<section class="center"><div class="tq">${tag()}${timer}</div>${board(cur().q,tile({}),undefined,"","drop",true)}
     <p class="sub late" style="--d:1s">${phones.length?"Lock in your guess on your phone, or shout it out!":"Shout your guesses!"} Who's the district's <b>#1 answer</b>?</p>${guessedLine()}
-    <div class="ctl"><button class="btn red" id="says">Survey says…</button>${sndBtn()}</div><div class="hint">Space: Survey says</div></section>${raceBar()}`;
+    <div class="ctl"><button class="btn red" id="says">Survey says…</button>${sndBtn()}</div><div class="hint">Survey says starts by itself when time runs out · Space: Survey says now</div></section>${raceBar()}`;
 }
 function suspense(){return `<section class="center">${tag()}${board(cur().q,tile({state:"wig"}))}<div class="says">Survey says…</div></section>${raceBar()}`;}
 function reveal(){
@@ -676,7 +710,7 @@ function primary(){
   if(p==="end")return packageReveal();
   if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return pkgFate();
 }
-const musicFor=()=>({lobby:"lobby",question:"think",tb:"think",reveal:"strut",tbresult:"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
+const musicFor=()=>({lobby:"lobby",question:"think",tb:"faceoff",reveal:S.order.length&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
 function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{const n=b.dataset.here;S.present[n]=!S.present[n];render()});
@@ -684,7 +718,7 @@ function wire(){
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>castVote(b.dataset.pick));
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
   on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",pkgFate);
-  on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("think");render()});
+  on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("faceoff");render()});
   on("lobby",goSetup);
   on("replay",()=>{if(S.phase==="end"&&!confirm("Start the show over? The prize race goes back to zero."))return;clearTimers();stopSong();startGame()});
   on("home",()=>{if(confirm("Stop this game and go back to setup? The prize race goes back to zero."))goSetup()});
@@ -704,7 +738,7 @@ function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult
 const phoneAnswers=()=>answersQi===curQi()?answers:{};
 function snapshot(){
   const p=S.phase,g={gid,view:p,names:NAMES,playing:NAMES.filter(n=>S.present[n]),num:S.k+1,total:S.order.length,phase:p==="lobby"?"lobby":"watch",locked:true,mode:"choice",tally:S.tally};
-  if(p==="question"||p==="suspense")Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question"});
+  if(p==="question"||p==="suspense")Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,secs:TIMER_SECS});
   if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0])});
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense"});
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q});

@@ -237,12 +237,6 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .burst i{position:absolute;left:0;top:0;font-style:normal;font-size:var(--s);line-height:1;transform:translate(-50%,-50%);animation:spray var(--t) cubic-bezier(.15,.7,.3,1) var(--d) forwards;opacity:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))}
 @keyframes tagpop{0%{transform:translate(-50%,-50%) scale(.2);opacity:0}12%{transform:translate(-50%,-50%) scale(1.12);opacity:1}22%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{transform:translate(-50%,-160%) scale(.95);opacity:0}}
 @keyframes spray{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}8%{opacity:1}75%{opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1.1);opacity:0}}
-/* Capitol leak: a hint that drops onto the file */
-.leak{display:inline-flex;align-items:center;gap:.6em;margin-top:12px;background:var(--parch-ink);color:var(--gold-hi);font-family:var(--type);font-size:clamp(1rem,2vw,1.4rem);padding:.45em 1em;border-radius:4px;transform:rotate(-1deg);animation:leakin .6s cubic-bezier(.2,1.5,.4,1) both;box-shadow:0 6px 14px rgba(0,0,0,.35)}
-.leak b{font-family:var(--deco);font-size:1.5em;color:#fff;letter-spacing:.1em}
-@keyframes leakin{0%{transform:translateX(-40px) rotate(-6deg);opacity:0;filter:blur(4px)}50%{filter:blur(0);opacity:1}70%{transform:translateX(6px) rotate(1deg)}100%{transform:rotate(-1deg)}}
-.file.glitch{animation:glitch .5s steps(2) 1}
-@keyframes glitch{20%{transform:rotate(-.6deg) translateX(-6px);filter:hue-rotate(40deg)}40%{transform:rotate(-.6deg) translateX(6px)}60%{transform:rotate(-.6deg) translateX(-3px);filter:none}}
 /* suspect board: who the room accused (never who accused them) */
 .suspects{display:grid;gap:8px;background:rgba(27,19,40,.75);border-radius:14px;padding:12px 16px;box-shadow:inset 0 0 0 1px var(--line);animation:pop .6s 1.3s both}
 .suspects h3{margin:0;font-family:var(--display);font-size:1.05rem;color:var(--muted);letter-spacing:.08em}
@@ -277,6 +271,8 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script src="/ambient.js"></script>
 <script>
 /* ================= THE SECRETS ================= */
+/* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
+const BUILD="ds-build-2026-11-22-1";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -436,7 +432,6 @@ function sfx(kind){
   if(kind==="reveal"){noise(t,.25,.35,sfxBus,"bandpass",1400,1.5); // the seal cracks
     [64,67,71,76,79,83].forEach((m,k)=>osc("sine",hz(m+12),t+.25+k*.07,1.6,.07,sfxBus));[52,59,64].forEach(m=>osc("sawtooth",hz(m),t+.25,1.8,.035,sfxBus,1200,.2))}
   if(kind==="pop"){osc("sine",hz(84+Math.random()*7|0),t,.15,.05,sfxBus)}
-  if(kind==="leak"){noise(t,.5,.25,sfxBus,"bandpass",1800,.6);[0,.14,.28].forEach((d,k)=>osc("square",hz(k===2?88:84),t+.5+d,.1,.06,sfxBus,3000))}
   if(kind==="go"){[76,83,88].forEach((m,k)=>osc("sine",hz(m),t+k*.06,1.1,.13,sfxBus))}
   if(kind==="gong"){osc("sine",hz(40),t,3,.35,sfxBus);osc("sine",hz(52),t,2.4,.14,sfxBus);osc("sine",hz(63.3),t,2,.06,sfxBus);noise(t,.6,.18,sfxBus,"bandpass",500,2)}
   if(kind==="fanfare"){ // original victor's fanfare
@@ -479,9 +474,9 @@ const hasPhone=n=>phones.includes(n);
 const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:"ds",...body})});
 function snapshot(){
   const inGame=S.phase!=="lobby"&&S.qi<Q.length;
-  const g={gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
+  const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs};
-  if(inGame&&(S.phase==="question"||S.phase==="reveal")){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.leaked)g.leak=leakLetter()}
+  if(inGame&&(S.phase==="question"||S.phase==="reveal")){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
   if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
   if(inGame&&["reveal","board","final"].includes(S.phase)){g.answer=Q[S.qi].a;g.correct=S.correct}
@@ -564,8 +559,6 @@ function accusations(){
   const t={};Object.values(S.guesses||{}).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
   return Object.entries(t).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
 }
-const leakLetter=()=>{const a=cur().a;return a[0].toUpperCase()};
-function leakHTML(){const a=cur().a;return `<div class="leak">🕵️ Capitol leak: their name starts with <b>${esc(leakLetter())}</b></div>`}
 function awards(){
   const ps=active(),best=k=>{const m=Math.max(0,...ps.map(p=>p[k]||0));return m>0?ps.filter(p=>(p[k]||0)===m):[]};
   const out=[],add=(ic,t,k,why)=>{const w=best(k);if(w.length)out.push({ic,t,name:w.map(p=>p.name).join(" & "),av:w[0].name,why:why(w[0][k])})};
@@ -615,7 +608,7 @@ function beginQuestion(){
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}
     sfx("dial");const d=$(".dial");if(d)d.outerHTML=dialHTML(S.count)},900);
 }
-function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};S.leaked=false;hostOpen=false;S.typed=0;playSong("count");render()}
+function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};hostOpen=false;S.typed=0;playSong("count");render()}
 function tick(last){
   cancelAnimationFrame(raf);
   const loop=now=>{
@@ -626,7 +619,6 @@ function tick(last){
     const left=Math.ceil(S.secs-S.elapsed);
     if(left!==before&&left<=5&&left>0){sfx(left%2?"tick":"tock");tempoMul=1.25;$(".timer")?.classList.add("hurry")}
     drawTimer();
-    if(!S.leaked&&S.elapsed>=S.secs*2/3)leak();
     if(S.elapsed>=S.secs){lock();return}
     raf=requestAnimationFrame(loop);
   };
@@ -636,10 +628,6 @@ function drawTimer(){
   const left=Math.max(0,Math.ceil(S.secs-S.elapsed)),frac=1-S.elapsed/S.secs;
   const n=$(".timer .n");if(n)n.textContent=left;
   const f=$(".fuse i"),b=$(".fuse b");if(f){f.style.width=(frac*100).toFixed(2)+"%";b.style.left=(frac*100).toFixed(2)+"%"}
-}
-function leak(){ // a third of the time left: the Capitol lets a hint slip
-  S.leaked=true;sfx("leak");const f=$(".file"),ask=$(".file .ask");
-  if(ask){ask.insertAdjacentHTML("beforebegin",leakHTML());f.classList.remove("glitch");void f.offsetWidth;f.classList.add("glitch")}
 }
 function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();poll()}
 async function reveal(){
@@ -690,7 +678,7 @@ function lobbyView(){
       <h1 class="title">District Secrets</h1>
       <p class="tagline">Twelve tributes. ${Q.length} secrets. Every single one is true.</p>
       ${joinCard()}
-      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. Stuck? Wait for the <b>🕵️ Capitol leak</b>. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
+      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
     </div>
     <div class="roster">
       <div class="count" aria-label="${n} of ${on.length} signed in"><span class="n${bump?" bump":""}">${n}</span><span class="of">/ ${on.length}</span><span class="lbl">tributes signed in</span></div>
@@ -726,7 +714,7 @@ function questionView(){
     <div class="hdr"><span>FILE No. ${pad(S.qi+1)}</span><span>CAPITOL ARCHIVES · DISTRICT RECORDS</span></div>
     <div class="stamp ts">Top secret</div>
     <p class="fact" aria-label="${esc(x.f)}"></p>
-    ${S.leaked?leakHTML():""}<div class="ask">Whose secret is it?</div>
+    <div class="ask">Whose secret is it?</div>
     ${S.locked?'<div class="stamp sealed">Sealed</div>':""}
     <div class="fuse" aria-hidden="true"><i></i><b></b></div>
   </article>
@@ -867,6 +855,12 @@ function flyEnvelope(){
     {transform:`translate(${toX}px,${toY}px) rotate(0) scale(.8)`,opacity:1},{transform:`translate(${toX}px,${toY+10}px) scale(.4)`,opacity:0}],{duration:1300,easing:"ease-in-out"}).onfinish=()=>el.remove();
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){pollKey="";maybePoll()}});
+/* a newer version went live: reload, but only between rounds (the game is saved, so nothing is lost) */
+setInterval(async()=>{
+  if(!["lobby","board","final"].includes(S.phase)||location.protocol==="file:")return;
+  try{const t=await (await fetch(location.pathname+"?v="+Date.now(),{cache:"no-store"})).text();
+    const m=t.match(/const BUILD="([^"]+)"/);if(m&&m[1]!==BUILD){save();location.reload()}}catch(e){}
+},45000);
 
 /* ---------- host menu: a faint ⚙ in the corner, easy to miss on purpose ---------- */
 (function hostMenu(){

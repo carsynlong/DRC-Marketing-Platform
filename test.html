@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d1f18">
+<title>Who's That Tribute? · Test run</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<style>
+/* One-phone test run: a mini TV on top, your player screen below, one button to run the game.
+   It uses the real game, so don't open it while a real game is being played. */
+:root{--night:#0d1f18;--night-2:#16302a;--ink:#fbf6ea;--muted:#bccabd;--gold:#e8b04b;--gold-d:#9a6c1c;--line:rgba(251,246,234,.16);color-scheme:dark}
+*{box-sizing:border-box;touch-action:manipulation}
+html,body{margin:0;height:100%;background:var(--night);color:var(--ink);font-family:"Outfit",system-ui,sans-serif;overflow:hidden}
+.wrap{height:100dvh;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+.tv{position:relative;flex:none;overflow:hidden;background:#000;border-bottom:3px solid var(--gold)}
+.tv iframe{position:absolute;top:0;left:0;width:1280px;height:800px;border:0;transform-origin:0 0;pointer-events:none}
+.tv .label{position:absolute;left:8px;top:6px;z-index:2;background:rgba(0,0,0,.6);color:var(--gold);font-weight:800;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;padding:.2em .6em;border-radius:999px}
+.host{flex:none;display:flex;gap:8px;align-items:center;padding:8px 12px;background:var(--night-2)}
+.host .what{flex:1;font-size:.8rem;color:var(--muted);line-height:1.2}
+.host .what b{color:var(--ink);display:block;font-size:.95rem}
+.next{background:var(--gold);color:#2a1c05;font:inherit;font-weight:800;font-size:1.05rem;border:0;border-radius:999px;padding:.7em 1.2em;box-shadow:0 4px 0 var(--gold-d);min-height:50px;white-space:nowrap;cursor:pointer}
+.next:active{transform:translateY(2px);box-shadow:0 2px 0 var(--gold-d)}
+.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.me{flex:1;min-height:0}
+.me iframe{width:100%;height:100%;border:0;display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tv" id="tv"><span class="label">📺 TV</span><iframe id="tvf" src="/" title="TV screen" allow="autoplay"></iframe></div>
+  <div class="host">
+    <div class="what" id="what"><b>Loading…</b></div>
+    <button class="next ghost" id="setup" hidden>Setup</button>
+    <button class="next" id="next">Next ▶</button>
+  </div>
+  <div class="me"><iframe id="mef" src="/play" title="Your phone"></iframe></div>
+</div>
+<script>
+const tvf=document.getElementById("tvf"), tvBox=document.getElementById("tv");
+// shrink the 1280x800 TV to the phone's width
+function fit(){const k=tvBox.clientWidth/1280;tvf.style.transform=`scale(${k})`;tvBox.style.height=Math.round(800*k)+"px"}
+addEventListener("resize",fit);fit();
+
+const tv=()=>tvf.contentWindow;
+const LABEL={lobby:["Lobby","Start the Games"],roundcard:["Round card","Begin round"],ready:["Countdown","Go"],
+  reveal:["Reveal","Show scores"],board:["Scoreboard","Next face"],final:["Winner!","Play again"]};
+function state(){try{return tv().eval("S")}catch(e){return null}}
+function refresh(){
+  const S=state(); if(!S) return;
+  let [what,btn]=LABEL[S.phase]||["",""];
+  if(S.phase==="question"){what=S.locked?"Time's up":"Answer below!";btn=S.locked?"Reveal":"Lock answers"}
+  const face=S.phase!=="lobby"&&S.rounds?.length?` · face ${S.qi+1} of ${S.rounds.length}`:"";
+  document.getElementById("what").innerHTML=`<b>${what}</b>${S.phase==="lobby"?"Pick your name below first":"Host controls"+face}`;
+  document.getElementById("next").textContent=btn+" ▶";
+  document.getElementById("setup").hidden=S.phase==="lobby";
+}
+setInterval(refresh,300);
+document.getElementById("next").onclick=()=>{
+  const w=tv(),S=state(); if(!S) return;
+  try{w.ensureAudio()}catch(e){}
+  if(S.phase==="final") return w.newGame();
+  w.primary();
+};
+document.getElementById("setup").onclick=()=>{
+  const w=tv();if(!confirm("Stop this game and go back to setup?"))return;
+  w.eval('clearInterval(readyT);S.phase="lobby";stopSong();render()');
+};
+</script>
+</body>
+</html>

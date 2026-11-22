@@ -385,7 +385,17 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 function showIntro(){
   const who=active().map(p=>p.name).filter(n=>n!==HOST);
   if(!who.length||!window.Walkout)return newGame();
-  Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame});
+  if(!window.Rules)return walk();
+  // 📋 how to play, read out loud, then Ready starts the walk-outs
+  Rules.run({theme:"tribute",title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
+    ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
+    ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
+    ["⏱️","You have 30 seconds before the cannon fires."],
+    ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
+    ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
+    ["🍗","The last round, The Feast, is worth triple points."],
+    ["🎉","Tap the emojis on your phone to send them up the TV. Highest score wins!"]]});
 }
 function newGame(){
   Sync.reset();Party.reset();S.mode="type";S.players.forEach(p=>{if(p.name===HOST)p.on=false});

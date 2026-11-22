@@ -1,6 +1,7 @@
 /* Show extras shared by Who's That Tribute and District Secrets:
    1. Walkout: player introductions at the start of the show.
    2. Ticker:  a live leaderboard bar along the bottom of the TV.
+   3. Rules:   a "How to play" screen the announcer reads out loud, then a Ready button.
 
    Walk-out introductions:
    Each player gets a spotlight: their photo zooms in, "From District N…", their name, a hype line and a cheer.
@@ -206,4 +207,100 @@ body.has-ticker{padding-bottom:52px}
     }, 300);
   }
   return { start };
+})();
+
+/* "How to play": the steps light up one at a time while the announcer voice reads them.
+   Rules.run({
+     theme:   "tribute" | "secrets" | "feud"
+     title:   "How to play"
+     steps:   [["📱", "On your phone, type who you think it is."], ...]
+     sound:   () => true/false       read out loud only when the game's sound is on
+     onReady: () => {}               the host clicked Ready (or pressed Space)
+   }) */
+window.Rules = (() => {
+  const THEMES = {
+    tribute: { font: '"Rye", Georgia, serif', ink: "#fbf6ea", accent: "#e8b04b", accent2: "#b8322a", bg1: "#16302a", bg2: "#0d1f18", btnInk: "#2a1c05" },
+    secrets: { font: '"Cinzel Decorative", "Cinzel", Georgia, serif', ink: "#f4ecdb", accent: "#d9b25f", accent2: "#a3182b", bg1: "#251a36", bg2: "#0b0a14", btnInk: "#2b1d12" },
+    feud: { font: '"Bungee", Impact, sans-serif', ink: "#ffffff", accent: "#ffc92e", accent2: "#e3232c", bg1: "#1846c4", bg2: "#060b26", btnInk: "#3a2000" },
+  };
+  const CSS = `
+#rules{position:fixed;inset:0;z-index:2147483001;display:grid;place-items:center;overflow:auto;color:var(--ru-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  background:radial-gradient(ellipse at 50% 30%,var(--ru-bg1),var(--ru-bg2) 75%);padding:24px 16px;box-sizing:border-box}
+#rules .ru-in{width:100%;max-width:980px;display:grid;gap:clamp(8px,1.5vh,16px);justify-items:center;text-align:center}
+#rules h1{margin:0;font-family:var(--ru-font);font-weight:400;font-size:clamp(2rem,min(5.5vw,8vh),4.2rem);line-height:1;color:var(--ru-accent);text-shadow:0 4px 0 var(--ru-accent2);animation:ru-pop .6s cubic-bezier(.2,1.5,.4,1) both}
+#rules .ru-sub{font-weight:700;opacity:.8;font-size:clamp(1rem,2vw,1.25rem)}
+#rules ol{list-style:none;margin:0;padding:0;display:grid;gap:clamp(5px,1vh,10px);width:100%;text-align:left}
+#rules li{display:flex;align-items:center;gap:16px;padding:clamp(6px,1.1vh,13px) 18px;border-radius:14px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);
+  font-size:clamp(1rem,min(2.2vw,2.9vh),1.5rem);font-weight:700;line-height:1.25;opacity:.4;transition:opacity .35s,transform .35s,box-shadow .35s,background .35s}
+#rules li .ru-ic{font-size:1.6em;flex:none;width:1.4em;text-align:center}
+#rules li.seen{opacity:.85}
+#rules li.now{opacity:1;transform:scale(1.03);background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 3px var(--ru-accent),0 0 30px color-mix(in srgb,var(--ru-accent) 35%,transparent)}
+#rules .ru-ctl{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+#rules button{font:inherit;font-weight:800;border:0;cursor:pointer;border-radius:14px;padding:.75em 1.5em;font-size:clamp(1rem,2vw,1.3rem)}
+#rules .ru-go{background:var(--ru-accent);color:var(--ru-btn);box-shadow:0 5px 0 color-mix(in srgb,var(--ru-accent) 55%,#000);animation:ru-throb 1.3s ease-in-out infinite}
+#rules .ru-again{background:rgba(255,255,255,.08);color:var(--ru-ink);box-shadow:inset 0 0 0 2px rgba(255,255,255,.3)}
+#rules button:focus-visible{outline:3px solid var(--ru-accent);outline-offset:3px}
+#rules .ru-hint{font-size:.85rem;opacity:.65}
+@keyframes ru-pop{from{transform:scale(.5);opacity:0}}
+@keyframes ru-throb{50%{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){#rules *{animation:none!important;transition:none!important}}`;
+  let root = null, ready = null, timers = [], soundOn = () => true, run_id = 0;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const clear = () => { timers.forEach(clearTimeout); timers = []; try { speechSynthesis.cancel(); } catch (e) {} };
+  function onKey(e) {
+    if (!root) return;
+    if (e.code === "Space" || e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); go(); }
+  }
+  function go() {
+    if (!root) return;
+    clear(); window.removeEventListener("keydown", onKey, true);
+    root.remove(); root = null;
+    const f = ready; ready = null; if (f) f();
+  }
+  /* light each step and read it; the next one starts when the voice finishes (or after a fair pause) */
+  function read(title, steps) {
+    clear(); const id = ++run_id;
+    const items = [...root.querySelectorAll("li")];
+    items.forEach(li => li.classList.remove("now", "seen"));
+    const voice = soundOn() && window.speechSynthesis;
+    const speak = (text, then) => {
+      if (!voice) { timers.push(setTimeout(then, 1400)); return; }
+      let done = false; const t0 = Date.now();
+      const next = () => { if (done || id !== run_id) return; const wait = 1500 - (Date.now() - t0); // each step stays lit at least 1.5s
+        if (wait > 0) { timers.push(setTimeout(next, wait)); return; } done = true; then(); };
+      try {
+        const u = new SpeechSynthesisUtterance(text); u.rate = 1; u.pitch = .95; u.onend = next; u.onerror = next;
+        speechSynthesis.speak(u);
+      } catch (e) {}
+      timers.push(setTimeout(next, 1500 + text.length * 75)); // in case the voice never says it's done
+    };
+    let i = -1;
+    const step = () => {
+      if (!root || id !== run_id) return;
+      if (i >= 0) { items[i].classList.remove("now"); items[i].classList.add("seen"); }
+      i++;
+      if (i >= steps.length) { speak("When everyone's ready, press Ready!", () => {}); return; }
+      items[i].classList.add("now"); items[i].scrollIntoView({ block: "nearest", behavior: "smooth" });
+      speak(steps[i][1].replace(/[^\p{L}\p{N}\s.,!?'’:;#-]/gu, ""), step);
+    };
+    speak(title, step);
+  }
+  function run(o) {
+    if (root) return;
+    const T = THEMES[o.theme] || THEMES.tribute, title = o.title || "How to play", steps = o.steps || [];
+    soundOn = o.sound || (() => true); ready = o.onReady;
+    if (!document.getElementById("rules-css")) { const st = document.createElement("style"); st.id = "rules-css"; st.textContent = CSS; document.head.appendChild(st); }
+    root = document.createElement("div"); root.id = "rules"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", title);
+    root.style.cssText = `--ru-font:${T.font};--ru-ink:${T.ink};--ru-accent:${T.accent};--ru-accent2:${T.accent2};--ru-bg1:${T.bg1};--ru-bg2:${T.bg2};--ru-btn:${T.btnInk}`;
+    root.innerHTML = `<div class="ru-in"><h1>${esc(title)}</h1>${o.sub ? `<div class="ru-sub">${esc(o.sub)}</div>` : ""}
+      <ol>${steps.map(([ic, t]) => `<li><span class="ru-ic" aria-hidden="true">${ic}</span><span>${esc(t)}</span></li>`).join("")}</ol>
+      <div class="ru-ctl"><button class="ru-again" type="button">🔊 Read it again</button><button class="ru-go" type="button">Ready! ▶</button></div>
+      <div class="ru-hint">Space: Ready</div></div>`;
+    document.body.appendChild(root);
+    root.querySelector(".ru-go").onclick = go;
+    root.querySelector(".ru-again").onclick = () => read(title, steps);
+    window.addEventListener("keydown", onKey, true);
+    read(title, steps);
+  }
+  return { run, active: () => !!root, go };
 })();

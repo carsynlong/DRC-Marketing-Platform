@@ -19,8 +19,8 @@ const Sync = (() => {
   /* ---- what phones see. Never the photos, and never the right answer before the reveal. ---- */
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
-    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, // the host can't sign in as a player
-      playing: answering().map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
+    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, hostPick: S.phase === "reveal" || S.phase === "board" ? S.hostPick || null : undefined,
+      playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
       tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
         results: S.mini.results, all: S.mini.all } : undefined,
       feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)) };
@@ -59,7 +59,7 @@ const Sync = (() => {
       phones = d.players.sort();
       // Someone who just picked their name on a phone wants to play: switch them on.
       // (The host can still tap them to sit out. Skipped on the TV's first look after loading.)
-      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (p.name !== HOST && phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
+      if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
       firstPoll = false;
       if (d.qi != null && d.qi === S.qi) {
         if (S.phase === "question") { S.ansAt = S.ansAt || {}; for (const n in d.answers) if (S.ansAt[n] == null && S.qStart) S.ansAt[n] = Date.now() - S.qStart; }
@@ -260,7 +260,6 @@ const Sync = (() => {
       // A game saved before faces were added or removed would replay the old list: start fresh instead.
       if (g.rounds?.length && g.rounds.length !== Q.length) return {};
       if (g.phase) g.mode = "type"; // the game is typed-only now
-      (g.players || []).forEach(p => { if (p.name === HOST) p.on = false; }); // the host never plays
       return g;
     } catch (e) { return {}; }
   }
@@ -274,5 +273,7 @@ const Sync = (() => {
   }, 250);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S) { pollKey = ""; maybePoll(); } });
 
-  return { restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
+  // the host's 🔮 prediction for this face (a number), if she made one
+  function hostPick() { const v = current()[HOST]; const m = /^🔮(\d+)$/.exec(v || ""); return m ? +m[1] : null; }
+  return { hostPick, restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
 })();

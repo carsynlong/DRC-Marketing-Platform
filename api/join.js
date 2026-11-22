@@ -19,7 +19,7 @@ export default async function handler(req, res) {
 
   const name = text(req.body.name, 40);
   const game = await readGame(p);
-  if (!game || !name || !game.names?.includes(name) || name === game.host) return reply(res, 400, { error: "Unknown name" });
+  if (!game || !name || !game.names?.includes(name)) return reply(res, 400, { error: "Unknown name" });
   if (all[name] === pid) return reply(res, 200, { me: name }); // same phone, reloaded
 
   // HSETNX only writes if nobody has this name yet, so two phones can't both win it.

@@ -156,7 +156,7 @@ const Party = (() => {
 
   /* ---------------- tie-breaker showdown ---------------- */
   function tie() {  // called when the last face is scored; true if a showdown takes over
-    const r = ranked(), top = r[0]?.score ?? 0, tied = r.filter(p => p.score === top && top > 0).map(p => p.name);
+    const r = ranked(), top = r[0]?.score ?? 0, tied = r.filter(p => p.score === top && top > 0 && p.name !== HOST).map(p => p.name); // the host knows every face, so she shares a tie instead
     if (tied.length < 2) return false;
     startShowdown(tied, false); return true;
   }

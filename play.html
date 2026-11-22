@@ -295,6 +295,20 @@ function countUp(){
     (function step(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(a+(b-a)*e).toLocaleString();if(k<1)requestAnimationFrame(step)})(t0);
   });
 }
+/* ---------- the host (🔮 Gamemaker): knows every face, so she predicts how many will get it right ---------- */
+function hostScreen(g,key){
+  const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null),pick=/^🔮(\d+)$/.exec(mine||"")?.[1];
+  if(g.phase==="reveal"){const n=(g.correct||[]).length,d=pick==null?null:Math.abs(+pick-n);
+    return [key+"hr"+pick,header()+msg(d===0?"🔮":d===1?"✨":"🎙️",d===0?"Perfect prediction!":d===1?"So close!":pick==null?"No prediction":"Not this time",
+      `<p class="said">${n} tribute${n===1?"":"s"} got it right${pick!=null?` · you said ${pick}`:""}</p><p>${d===0?"+500 points":d===1?"+200 points":"Points on the scoreboard."}</p>`,d!=null&&d<2?"right":"")+reactBar(),d===0?"right":""];}
+  if(pick!=null)return [key+"hp"+pick,header()+msg("🔮",`You predicted ${pick}`,"<p>Exactly right: +500. Off by one: +200. Eyes on the TV!</p>")+reactBar(),"lock"];
+  if(g.locked)return [key+"hl",header()+msg("💥","Time's up!","<p>No prediction this time.</p>")];
+  const n=(g.playing||[]).length;
+  return [key+"ha",header()+`<section class="msg" style="flex:none"><div class="icon">🔮</div><h1>You're the Gamemaker</h1>
+    <p>You know this face! How many tributes will get it right?</p></section>
+    <div class="pick">${Array.from({length:n+1},(_,i)=>`<button data-pred="${i}">${i}<small>${i===0?"nobody":i===n?"everyone":"tributes"}</small></button>`).join("")}</div>`];
+}
+
 /* ---------- mini-games: tap race and tree climb ---------- */
 const MG={race:{icon:"🏃",title:"Run to the Cornucopia!",how:"When the TV says GO, tap the big button as fast as you can!"},
           climb:{icon:"🌲",title:"Climb the Tree!",how:"When the TV says GO, shake your phone as hard as you can!"}};
@@ -375,7 +389,7 @@ function view(){
   if(!D.me){
     const taken=new Set(D.taken||[]), away=new Set(D.away||[]);
     return ["pick:"+[...taken].join("|")+"/"+[...away].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Tap your name.</p></section>
-      <div class="pick">${g.names.filter(n=>n!==g.host).map((n,i)=>{const t=taken.has(n)&&!away.has(n),back=away.has(n);
+      <div class="pick">${g.names.map((n,i)=>{const t=taken.has(n)&&!away.has(n),back=away.has(n);
         return `<button style="--i:${i}" data-name="${esc(n)}" ${t?"disabled":""}>${esc(n)}${t?"<small>taken</small>":back?"<small>tap to rejoin</small>":""}</button>`}).join("")}</div>`];
   }
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
@@ -383,6 +397,7 @@ function view(){
   if(g.phase==="lobby")return [key+playing, header()+(playing
     ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div><div class="eyebrow" style="margin-top:4px">Training score</div><div class="train"><span data-from="1" data-to="${Ambient.training(D.me)}">${Ambient.training(D.me)}</span><small>/ 12</small></div></div><p>You're in! Eyes on the TV. The Games begin soon.</p><p class="tiphint">🪂 While you wait: tap the care packages, swat the wasps, catch the bird!</p></section>`
     :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+(playing?reactBar():"")+soundBar()+notYou,playing?"reap":""];
+  if(D.me===g.host&&(g.phase==="question"||g.phase==="reveal"))return hostScreen(g,key);
   if(!playing&&g.tb)return [key+"tbwatch",header()+msg("⚔️","Showdown!","<p>It's a tie at the top. Watch the TV and cheer for your favorite!</p>")+reactBar()];
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
   if(g.phase==="tbcard")return [key,header()+msg("⚔️","You're in the showdown!","<p>One more face. The fastest right answer wins the Games. Get ready to type!</p>"),"gift"];
@@ -441,13 +456,14 @@ function render(){
   const f=$("#typeit");if(f)f.onsubmit=e=>{e.preventDefault();const i=$("#guess");i.blur();answer(i.value)};
   const l=$("#leave");if(l)l.onclick=leave;
   document.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>react(b.dataset.react,b));
+  document.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>answer("🔮"+b.dataset.pred));
   const tap=$("#mgtap");if(tap)tap.onpointerdown=e=>{e.preventDefault();mgBump()};
   const so=$("#shakeon");if(so)so.onclick=enableShake;
   const sb=$("#snd");if(sb)sb.onclick=()=>{PFX.toggle("sound");lastKey="";render()};
   const mb=$("#mus");if(mb)mb.onclick=()=>{PFX.toggle("music");lastKey="";render()};
   const ph=D.game?.phase;PFX.music(!D.me?null:ph==="lobby"?"jingle":ph==="board"||ph==="final"?"deck":null);
   countUp(); effect(fx);
-  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name],#mgtap");
+  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name],#mgtap,[data-pred]");
   if(!D.me||asking||!D.game){Ambient.set("off");if(asking)Ambient.clear()}
   else Ambient.set("full",{tap:true,sound:k=>PFX.sfx(k),burst:()=>FX(30,"mid"),coin:addCoin,max:3,every:[2000,3400]});
   startTips();

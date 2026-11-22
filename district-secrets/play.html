@@ -241,7 +241,7 @@ function view(){
   if(g===undefined)return ["load",msg("🔏","Opening the vault…")];
   if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>Ask the host to open District Secrets on the TV. This page will update by itself.</p>")];
   if(!D.me){
-    const taken=new Set(D.taken||[]);
+    const away=new Set(D.away||[]),taken=new Set((D.taken||[]).filter(n=>!away.has(n)));  // a quiet phone's name can be picked up again
     return ["pick:"+[...taken].join("|"),`<section class="signin"><div class="eyebrow">District Secrets</div><h1>Who are you?</h1><p>Tap your name to sign in.</p></section>
       <div class="pick">${g.names.map((n,i)=>`<button style="--i:${i}" data-name="${esc(n)}" ${taken.has(n)?"disabled":""}>${esc(n)}${taken.has(n)?"<small>signed in</small>":""}</button>`).join("")}</div>`];
   }

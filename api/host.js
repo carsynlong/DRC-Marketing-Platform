@@ -1,7 +1,7 @@
 // Only the TV uses this.
 // GET  /api/host?qi=3                      -> { players: [names with a phone], answers: {name: answer} }
 // POST /api/host { action: "publish", game }    write what phones see
-// POST /api/host { action: "reset", total }     new game: wipe every face's answers
+// POST /api/host { action: "reset", total }     new game: wipe every face's answers and the coins
 // POST /api/host { action: "clearPlayers" }     everyone picks their name again
 import { redis, hash, reply, prefix } from "../lib/redis.js";
 
@@ -11,7 +11,8 @@ export default async function handler(req, res) {
     const players = Object.keys(await hash(p + "players"));
     const qi = Number.parseInt(req.query.qi, 10);
     const answers = Number.isInteger(qi) ? await hash(`${p}answers:${qi}`) : {};
-    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers });
+    const coins = req.query.coins ? await hash(p + "coins") : undefined;
+    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });
 
@@ -26,7 +27,7 @@ export default async function handler(req, res) {
   }
   if (action === "reset") {
     const total = Math.min(Math.max(Number(req.body.total) || 0, 1), 100);
-    await redis.del(...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
+    await redis.del(p + "coins", ...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
     return reply(res, 200, { ok: true });
   }
   if (action === "clearPlayers") {

@@ -180,6 +180,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 <script src="phone-fx.js"></script>
 <script src="ambient.js"></script>
 <script src="howto.js"></script>
+<script src="memes.js"></script>
 <script>
 const SHAPES=[
  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z" fill="#fff"/></svg>',
@@ -417,7 +418,7 @@ function view(){
     if(mine&&g.mode==="choice"&&g.choices.includes(mine))return [key+"done:"+mine,header()+`<div class="shot">${ART.arrow}${ART.target}</div><div class="locked-in"><span class="lk">🔒</span> Locked in!</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:0" class="tile k${k} ${n===mine?"sel":"dim"}" disabled aria-pressed="${n===mine}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>
       <p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages for sponsor gifts!</p>${reactBar()}`,"lock"];
-    if(mine)return [key+"done:"+mine,header()+`<section class="msg"><div class="shot">${ART.arrow}${ART.target}</div><h1>Locked in!</h1><p class="said">You said <b>${esc(mine)}</b></p><p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages for sponsor gifts!</p></section>${reactBar()}`,"lock"];
+    if(mine)return [key+"done:"+mine,header()+`<section class="msg"><div class="shot">${ART.arrow}${ART.target}</div><h1>Locked in!</h1><p class="said">You said <b>${esc(mine)}</b></p>${Memes.html("tribute",g.gid,g.qi)}</section>${reactBar()}`,"lock"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you answered. Get the next one!</p>","late"),"cannon"];
     if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:${k}" class="tile k${k}" data-ans="${esc(n)}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>`,"whistle"];
@@ -465,7 +466,7 @@ function render(){
   const mb=$("#mus");if(mb)mb.onclick=()=>{PFX.toggle("music");lastKey="";render()};
   const ph=D.game?.phase;PFX.music(!D.me?null:ph==="lobby"?"jingle":ph==="board"||ph==="final"?"deck":null);
   countUp(); effect(fx);
-  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name],#mgtap,[data-pred]");
+  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name],#mgtap,[data-pred],#app figure");
   if(!D.me||asking||!D.game){Ambient.set("off");if(asking)Ambient.clear()}
   else Ambient.set("full",{tap:true,sound:k=>PFX.sfx(k),burst:()=>FX(30,"mid"),coin:addCoin,max:3,every:[2000,3400]});
   startTips();

@@ -207,6 +207,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 <div class="toast" id="toast" hidden></div>
 <script src="/ambient.js"></script>
 <script src="/howto.js"></script>
+<script src="/memes.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -531,7 +532,7 @@ function view(){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
     const b=betNow(),bl={sure:"🎯 Sure bet: +500 if right, −250 if wrong",allin:"💀 All in: double if right, −500 if wrong"}[b];
     if(mine)return [key+"sealed:"+mine+b,header()+`<section class="msg">${ENV}<h1>Sealed!</h1>
-      <p class="said">${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b></p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p></section>${reactBar()}`,"seal"];
+      <p class="said">${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b></p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p>${Memes.html("secrets",g.gid,g.qi)}</section>${reactBar()}`,"seal"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you sealed a guess. Get the next one!</p>","wrong"),"wrong"];
     return [key+"ask"+mineSecret+b+!!g.left,header()+fileCard(g)+(!mineSecret?betPicker():"")+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>`:"")+
@@ -613,7 +614,7 @@ function render(){
     ty.closest(".pstep").scrollIntoView({block:"center",behavior:calm?"auto":"smooth"})}
   const s=meScore();if(s)shownScore=s.score;
   // floating secrets while you wait (never over the name list or the guess box)
-  const busy=document.querySelector("#g,[data-name],#secret,[data-vote]")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
+  const busy=document.querySelector("#g,[data-name],#secret,[data-vote],#app figure")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
   if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
   else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:3,every:[2000,3400]});
 }

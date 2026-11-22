@@ -117,9 +117,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .reacts button:active{transform:scale(.85);background:rgba(217,178,95,.2)}
 .fly{position:fixed;font-size:2.4rem;pointer-events:none;z-index:8;animation:fly2 1s ease-out forwards}
 @keyframes fly2{to{transform:translate(var(--dx),-55vh) scale(1.4) rotate(var(--rot));opacity:0}}
-.leak{background:var(--parch-ink);color:var(--gold-hi);font-family:var(--type);border-radius:4px;padding:.45em .8em;margin-top:10px;display:inline-block;animation:pop .5s both}
-.leak b{font-family:var(--deco);color:#fff;font-size:1.3em}
 .note{font-weight:800;color:var(--gold-hi)}
+/* who's in the lead: a strip under your name, and a mini leaderboard on the score screens */
+.lead{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:-6px;font-weight:800;font-size:.88rem;color:var(--muted)}
+.lead img{width:24px;height:24px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--gold)}
+.lead b{color:var(--gold-hi)}
+.lead.mine{color:var(--gold-hi);animation:bump 1.2s ease-in-out infinite alternate}
+.mini{display:grid;gap:6px;background:rgba(27,19,40,.85);border-radius:16px;padding:10px 12px;box-shadow:inset 0 0 0 1px var(--line);animation:rise .5s .2s both}
+.mini .lbl{text-align:center;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.mr{display:grid;grid-template-columns:1.6em 32px minmax(0,1fr) auto;align-items:center;gap:10px;padding:5px 8px;border-radius:10px;font-weight:800}
+.mr .rk{font-family:var(--deco);color:var(--gold-hi);text-align:center}
+.mr img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.mr .nm{overflow-wrap:anywhere}.mr .pt{font-variant-numeric:tabular-nums}
+.mr.me{background:rgba(217,178,95,.16);box-shadow:inset 0 0 0 2px var(--gold)}
+.mr.gap{padding:0;text-align:center;color:var(--muted);display:block;font-size:.8rem}
 .awards{display:grid;gap:8px;width:100%}
 .award{display:flex;align-items:center;gap:10px;background:var(--parch);color:var(--parch-ink);border-radius:6px;padding:8px 12px;text-align:left;font-weight:700;font-size:.95rem}
 .award.me{box-shadow:0 0 0 3px var(--gold),0 0 20px rgba(217,178,95,.5)}
@@ -147,6 +158,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
+const BUILD="ds-build-2026-11-22-1";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -160,6 +172,7 @@ async function poll(){
     if(!r.ok)throw new Error(r.status);
     D=await r.json();offline=0;
     if(D.me!==myName){myName=D.me;store.set("ds-name",myName)}
+    if(D.game?.v&&D.game.v!==BUILD&&store.get("ds-reloaded")!==D.game.v){store.set("ds-reloaded",D.game.v);location.reload();return}
     if(pending&&D.game&&(pending.gid!==D.game.gid||pending.qi!==D.game.qi||D.myAnswer))pending=null;
   }catch(e){offline++}
   render();timer=setTimeout(poll,1500);
@@ -190,7 +203,11 @@ async function react(e,btn){
     for(let k=0;k<4;k++){const el=document.createElement("div");el.className="fly";el.textContent=set[k%set.length];
       el.style.left=r.left+r.width/2-18+"px";el.style.top=r.top+"px";el.style.setProperty("--dx",(k-1.5)*36+(Math.random()*20-10)+"px");el.style.setProperty("--rot",(Math.random()*50-25)+"deg");
       el.style.fontSize=k?"1.6rem":"2.4rem";document.body.appendChild(el);setTimeout(()=>el.remove(),1000)}}
-  try{await post("/api/react",{name:myName,e})}catch(err){}
+  try{const {status}=await post("/api/react",{name:myName,e});
+    if(status===400)toast("This page is out of date. Refresh it to get the new emojis.");
+    else if(status===403)toast("You're not signed in on this phone anymore. Tap your name again.");
+    else if(status>=500)toast("That emoji didn't reach the TV. Try again.");
+  }catch(err){toast("No connection. That emoji didn't reach the TV.")}
 }
 const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to pop it up on the TV with your name</div>${EMOJI.map(([e,l])=>`<button data-react="${e}" aria-label="Send ${l}">${e}<small>${l}</small></button>`).join("")}</div>`;
 async function leave(){try{await post("/api/join",{leave:true})}catch(e){}myName=null;store.set("ds-name",null);poll()}
@@ -257,14 +274,32 @@ const fmt=n=>Number(n||0).toLocaleString();
 const meScore=()=>D.game?.scores?.find(s=>s.name===D.me);
 const dist=()=>D.game.names.indexOf(D.me)+1;
 const av=()=>`img/p${pad(dist())}.jpg`;
+/* the leader (or leaders, if tied), under your own name and points */
+function leadLine(){
+  const sc=D.game?.scores||[],top=sc[0];if(!top||top.score<=0)return"";
+  const leaders=sc.filter(x=>x.score===top.score),me=leaders.some(x=>x.name===D.me);
+  if(me&&leaders.length===1)return `<div class="lead mine">👑 You're in the lead!</div>`;
+  const pic=n=>`<img src="img/p${pad(D.game.names.indexOf(n)+1)}.jpg" alt="">`;
+  return `<div class="lead">👑 ${leaders.length>1?"Tied for the lead":"In the lead"}: ${pic(leaders[0].name)}<b>${leaders.map(x=>esc(x.name)).join(" & ")}</b> · ${fmt(top.score)}</div>`;
+}
+/* top 3, plus you if you're further down */
+function standings(){
+  const sc=D.game?.scores||[];if(!sc.length)return"";
+  const top=sc.slice(0,3),me=sc.find(x=>x.name===D.me);
+  if(me&&!top.includes(me)&&me.rank<=top[top.length-1].rank)top[top.length-1]=me;   // tied with 3rd: show you in the top 3
+  const rows=[...top];
+  const pic=n=>`<img src="img/p${pad(D.game.names.indexOf(n)+1)}.jpg" alt="">`;
+  const row=x=>`<div class="mr${x.name===D.me?" me":""}"><span class="rk">${x.rank}</span>${pic(x.name)}<span class="nm">${esc(x.name)}${x.rank===1&&x.score>0?" 👑":""}</span><span class="pt">${fmt(x.score)}</span></div>`;
+  return `<div class="mini"><div class="lbl">Leaderboard</div>${rows.map(row).join("")}${me&&!top.includes(me)?`<div class="mr gap">⋯</div>${row(me)}`:""}</div>`;
+}
 function header(){
   const s=meScore();
   return `<div class="me"><div class="who"><img class="av" src="${av()}" alt=""><div><div class="eyebrow">District ${dist()}</div><div class="nm">${esc(D.me)}</div></div></div>
-    <div class="pts${s&&s.score!==shownScore?" bump":""}">${s?`<span data-from="${shownScore}" data-to="${s.score}">${fmt(s.score)}</span> pts<small>#${s.rank} of ${D.game.scores.length}</small>`:""}</div></div>`;
+    <div class="pts${s&&s.score!==shownScore?" bump":""}">${s?`<span data-from="${shownScore}" data-to="${s.score}">${fmt(s.score)}</span> pts<small>#${s.rank} of ${D.game.scores.length}</small>`:""}</div></div>${leadLine()}`;
 }
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
-const fileCard=g=>`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${esc(g.fact||"")}”</p>${g.leak?`<div class="leak">🕵️ Leak: starts with <b>${esc(g.leak)}</b></div>`:""}</div>`;
+const fileCard=g=>`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${esc(g.fact||"")}”</p></div>`;
 
 function view(){
   const g=D.game;
@@ -293,7 +328,7 @@ function view(){
     if(mine)return [key+"sealed:"+mine,header()+`<section class="msg">${ENV}<h1>Sealed!</h1>
       <p class="said">${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b></p><p>Only you can see this. Eyes on the TV for the reveal.</p></section>${reactBar()}`,"seal"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you sealed a guess. Get the next one!</p>","wrong"),"wrong"];
-    return [key+"ask"+mineSecret+(g.leak||""),header()+fileCard(g)+(mineSecret
+    return [key+"ask"+mineSecret,header()+fileCard(g)+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
@@ -310,12 +345,12 @@ function view(){
   if(g.phase==="board"){
     const got=s&&s.delta>0;
     return [key+(s?.score),header()+msg(got?"🎉":"🕯️",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:"No points",
-      `${s?.note?`<p class="note">${esc(s.note)}</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire 🔥</div>`:""}${s?.streak>1?`<p class="said">${s.streak} in a row</p>`:""}<p>You're <b style="color:var(--ink)">#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")+reactBar()+soundBtn()];
+      `${s?.note?`<p class="note">${esc(s.note)}</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire 🔥</div>`:""}${s?.streak>1?`<p class="said">${s.streak} in a row</p>`:""}<p>You're <b style="color:var(--ink)">#${s?.rank}</b> with ${fmt(s?.score)} points.</p>`,got?"right":"")+standings()+reactBar()+soundBtn()];
   }
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You know all!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+standings()+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }

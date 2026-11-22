@@ -240,6 +240,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <div id="toast" hidden></div>
 
 <script src="/qrcode.js"></script>
+<script src="/ambient.js"></script>
 <script>
 /* ================= THE SECRETS ================= */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
@@ -465,7 +466,7 @@ async function poll(){
     // someone just signed in on a phone: they want to play
     if(S.phase==="lobby"&&!firstPoll)S.players.forEach(p=>{if(phones.includes(p.name)&&!had.includes(p.name)){p.on=true;sfx("seal")}});
     firstPoll=false;
-    if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0)sfx("seal")}
+    if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0)flyEnvelope();if(S.phase==="question"&&Object.keys(answers).length>n0)sfx("seal")}
     if(S.phase==="lobby"&&before!==phones.join("|"))render();
     if(S.phase==="question")showSealed();
     if(S.phase==="reveal")lateAnswers();
@@ -736,7 +737,38 @@ S=saved()||freshState();
 if(S.phase==="question")S.locked=true;
 if(S.phase==="ready")S.phase="roundcard";
 render();
-setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}},250);
+setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
+
+/* ---------- floating secrets: envelopes, wax seals, keys, quills, magnifiers, padlocks, scrolls ---------- */
+let lastArena="";
+function arena(){
+  if(typeof Ambient==="undefined")return;
+  const ph=S.phase,k=`${ph}:${S.qi}:${S.locked}`;
+  const m=ph==="lobby"||ph==="roundcard"||ph==="final"||ph==="ready"?["full",{theme:"ds",max:8,every:[900,1800]}]
+    :ph==="question"||ph==="board"?["edges",{theme:"ds",max:6,every:[1100,2000]}]:["off"];
+  Ambient.set(...m);
+  if(k!==lastArena){ if(ph==="question"&&!S.locked&&!lastArena.startsWith("question:"+S.qi))sweep(); lastArena=k; }
+}
+// a big magnifying glass sweeps across the secret file as it appears
+function sweep(){
+  if(calm)return;
+  const el=document.createElement("div");el.innerHTML=Ambient.ART.magnifier;
+  el.style.cssText="position:fixed;z-index:6;pointer-events:none;width:clamp(120px,14vw,200px);left:0;top:30vh;filter:drop-shadow(0 10px 20px rgba(0,0,0,.5))";
+  document.body.appendChild(el);
+  el.animate([{transform:"translate(-25vw,0) rotate(-15deg)"},{transform:"translate(30vw,8vh) rotate(10deg)"},{transform:"translate(60vw,-4vh) rotate(-8deg)"},{transform:"translate(110vw,6vh) rotate(12deg)"}],
+    {duration:3200,easing:"ease-in-out"}).onfinish=()=>el.remove();
+}
+// a sealed guess just came in: an envelope flies into the row
+function flyEnvelope(){
+  if(calm)return;
+  const row=document.querySelector(".envs");if(!row)return;
+  const r=row.getBoundingClientRect(),el=document.createElement("div");el.innerHTML=Ambient.ART.envelope;
+  el.style.cssText="position:fixed;z-index:6;pointer-events:none;width:70px;left:0;top:0";
+  document.body.appendChild(el);
+  const fromX=Math.random()<.5?-80:innerWidth+10,toX=r.left+r.width/2-35,toY=r.top;
+  el.animate([{transform:`translate(${fromX}px,${innerHeight*.9}px) rotate(-30deg) scale(.6)`},{transform:`translate(${(fromX+toX)/2}px,${toY-160}px) rotate(15deg) scale(1.2)`},
+    {transform:`translate(${toX}px,${toY}px) rotate(0) scale(.8)`,opacity:1},{transform:`translate(${toX}px,${toY+10}px) scale(.4)`,opacity:0}],{duration:1300,easing:"ease-in-out"}).onfinish=()=>el.remove();
+}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){pollKey="";maybePoll()}});
 
 /* ---------- host menu: a faint ⚙ in the corner, easy to miss on purpose ---------- */

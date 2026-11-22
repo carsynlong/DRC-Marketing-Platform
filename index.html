@@ -178,7 +178,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
-const HOST="Carsyn"; // runs the game, so never plays (her faces are still in it)
+const HOST="Carsyn"; // runs the game: knows every face, so instead of guessing she predicts (🔮) and plays the mini-games
 const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
 const groupOf=n=>GIRLS.has(n)?"girls":"boys";
 const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
@@ -223,7 +223,7 @@ Q.forEach(x=>{[x.q,x.r].forEach(id=>{const i=new Image();i.src=src(id)})});
 let S, raf=0;
 function freshState(){
   return {phase:"lobby",secs:30,sound:true,mode:"type",typed:{},
-    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0})),
+    players:NAMES.map(n=>({name:n,on:true,score:0,streak:0,delta:0})),
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked) S.locked=true; render(); }
@@ -383,12 +383,23 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 /* ================= GAME ================= */
 /* 🎤 walk-out introductions before the first question (showtime.js) */
 function showIntro(){
-  const who=active().map(p=>p.name).filter(n=>n!==HOST);
+  const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
+  if(!window.Rules)return walk();
+  // 📋 how to play, read out loud, then Ready starts the walk-outs
+  Rules.run({theme:"tribute",title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
+    ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
+    ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
+    ["⏱️","You have 30 seconds before the cannon fires."],
+    ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
+    ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
+    ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
+    ["🍗","The last round, The Feast, is worth triple points."],
+    ["🎉","Tap the emojis on your phone to send them up the TV. Highest score wins!"]]});
 }
 function newGame(){
-  Sync.reset();Party.reset();S.mode="type";S.players.forEach(p=>{if(p.name===HOST)p.on=false});
+  Sync.reset();Party.reset();S.mode="type";
   // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
   S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
@@ -402,7 +413,7 @@ function roundCardOrQuestion(){
 let readyT=0;
 function beginQuestion(){S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
-function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();playSong("count");render();
+function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const giftTag=()=>S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
@@ -458,6 +469,9 @@ function score(){
     else{p.delta=0;p.streak=0}
   });
   Party.scored();
+  // the host (🔮 Gamemaker) predicted how many would get it right: exact +500, off by one +200
+  const h=S.players.find(p=>p.name===HOST),pick=Sync.hostPick();
+  if(h&&h.on&&pick!=null){const n=S.correct.length,d=Math.abs(pick-n);h.delta=d===0?500:d===1?200:0;h.score+=h.delta;S.hostPick={pick,n}}else S.hostPick=null;
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
   if(S.phase==="final"&&Party.tie())return;   // tied at the top: showdown first
@@ -478,7 +492,7 @@ function render(){
   if(S.phase==="board"||S.phase==="final")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w)));
 }
 const active=()=>S.players.filter(p=>p.on);
-const answering=()=>S.tb?active().filter(p=>S.tb.includes(p.name)):active(); // the showdown limits who answers
+const answering=()=>(S.tb?active().filter(p=>S.tb.includes(p.name)):active()).filter(p=>p.name!==HOST); // the host never guesses faces; a showdown limits who answers
 const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${S.sound}">${S.sound?"🔊 Music on":"🔇 Music off"}</button>`;
 
 function lobbyView(){
@@ -490,7 +504,7 @@ function lobbyView(){
     ${Sync.joinCard()}
     ${Sync.roster()}
     <div class="eyebrow">Who's playing? Tap to sit someone out</div>
-    <div class="chips">${S.players.map((p,i)=>p.name===HOST?"":`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
+    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
     <div class="settings"><span class="tiny">Seconds per face</span>
       <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30,45].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
       ${sndBtn()}</div>
@@ -615,7 +629,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 <script>
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV,
-  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().filter(p=>p.name!==HOST).map(p=>({name:p.name,score:p.score}))});
+  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 
 </body></html>

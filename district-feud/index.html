@@ -337,6 +337,7 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 <div class="applause" id="applause" aria-hidden="true">APPLAUSE</div>
 
 <script src="/qrcode.js"></script>
+<script src="/showtime.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 
@@ -562,7 +563,16 @@ function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
   S.k=0;S.results=[];S.tbNext=0;S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
-  startIntro();
+  if(!window.Rules)return startIntro();
+  // 📋 how to play, read out loud, then Ready starts the walk-outs
+  Rules.run({theme:"feud",title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
+    ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
+    ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone.`],
+    ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
+    ["🏆","If you're the number one answer, your votes go into the prize race too."],
+    ["⚡","Ties go to a secret face-off vote."],
+    ["💰","The final question is double points. Most points wins the mystery package!"],
+    ["🎉","Tap the emojis on your phone anytime to send them up the TV."]]});
 }
 /* 🎤 Meet the contestants: everyone here gets a spotlight walk-out */
 function announce(t){try{if(!S.sound||!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.05;u.pitch=.9;u.volume=1;speechSynthesis.speak(u)}catch(e){}}

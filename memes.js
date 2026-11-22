@@ -5,7 +5,7 @@
    - Each new game shuffles its pile, so the order changes every time you play.
    To add memes: drop more pictures in memes/ named m17.jpg, m18.jpg, ... and raise COUNT below. */
 const Memes = (() => {
-  const COUNT = 16;
+  const COUNT = 19;
   const GAMES = ["tribute", "secrets", "feud"];
   const file = i => `/memes/m${String(i).padStart(2, "0")}.jpg`;
   // deal 1,2,3 → tribute, secrets, feud; 4,5,6 → tribute, secrets, feud; ...

@@ -582,7 +582,7 @@ function render(){
     ty.closest(".pstep").scrollIntoView({block:"center",behavior:calm?"auto":"smooth"})}
   const s=meScore();if(s)shownScore=s.score;
   // floating secrets while you wait (never over the name list or the guess box)
-  const busy=document.querySelector("#g,[data-name],#secret,[data-vote]")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
+  const busy=document.querySelector("#g,[data-name],#secret,[data-vote],#app figure")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
   if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
   else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:3,every:[2000,3400]});
 }

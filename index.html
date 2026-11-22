@@ -307,7 +307,16 @@ function mkArena(){
     for(let k=0;k<4;k++)ev.push([b+k,"hat",0,.5,.4])});
   return {bpm:96,len:32,ev};
 }
-const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),arena:mkArena()};
+function mkWish(){ // "We Wish You a Merry Christmas" (traditional English carol), 3/4, scoreboard
+  const mel=[[0,2],[67,1], [72,1],[72,.5],[74,.5],[72,.5],[71,.5], [69,1],[69,1],[69,1], [74,1],[74,.5],[76,.5],[74,.5],[72,.5], [71,1],[67,1],[67,1],
+    [76,1],[76,.5],[77,.5],[76,.5],[74,.5], [72,1],[69,1],[67,.5],[67,.5], [69,1],[74,1],[71,1], [72,3]];
+  const ev=seq(mel,"lead").map(e=>(e[2]+=12,e));
+  const roots=[43,36,41,38,43,40,41,43,36];
+  roots.forEach((r,i)=>{const b=i*3;ev.push([b,"bass",r,1,1],[b+1,"bass",r+7,1,.7],[b+2,"bass",r+7,1,.7],[b,"kick",0,1,.7]);
+    for(let k=0;k<6;k++)ev.push([b+k/2,"sleigh",0,.5,k%2?.5:.9])});
+  return {bpm:150,len:27,ev};
+}
+const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkWish(),arena:mkArena()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
@@ -442,7 +451,7 @@ function score(){
   });
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else{stopSong();sfx("scoreroll")}
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("board");
   render();
 }
 function next(){S.qi++;roundCardOrQuestion();}
@@ -575,7 +584,7 @@ function wire(){
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:null,final:"lobby"}[S.phase];m&&playSong(m)}
+  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 document.addEventListener("keydown",e=>{

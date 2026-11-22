@@ -14,6 +14,7 @@
      theme:    "tribute" | "secrets"     colors, font and lines that match the game
      sound:    () => true/false          the game's music/sound switch
      onDone:   () => {}                  called once, after the last walk-out or when skipped
+     hypeFor:  name => line or null      optional: a special line for someone (e.g. the host)
    })
    Space, Enter or the Skip button ends it early. While it runs, it sits on top of the game's lobby. */
 window.Walkout = (() => {
@@ -129,7 +130,7 @@ window.Walkout = (() => {
       root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div>'}<div class="wo-beam"></div>
         <div class="wo-in"><div class="wo-tag">${T.tag}</div>
         <img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">
-        <div class="wo-from">From District ${dn}…</div><div class="wo-name">${esc(n)}</div><div class="wo-hype">${esc(hype[i % hype.length])}</div>
+        <div class="wo-from">From District ${dn}…</div><div class="wo-name">${esc(n)}</div><div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div>
         <div class="wo-dots">${names.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
         <button class="wo-skip" type="button">Skip intros</button><div class="wo-hint">Space: skip</div></div>`;
       root.querySelector(".wo-skip").onclick = end;

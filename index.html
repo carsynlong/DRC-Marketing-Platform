@@ -383,9 +383,9 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 /* ================= GAME ================= */
 /* 🎤 walk-out introductions before the first question (showtime.js) */
 function showIntro(){
-  const who=active().map(p=>p.name).filter(n=>n!==HOST);
+  const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   Rules.run({theme:"tribute",title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
@@ -393,6 +393,7 @@ function showIntro(){
     ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
     ["⏱️","You have 30 seconds before the cannon fires."],
     ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
+    ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
     ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
     ["🍗","The last round, The Feast, is worth triple points."],
     ["🎉","Tap the emojis on your phone to send them up the TV. Highest score wins!"]]});
@@ -628,7 +629,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 <script>
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV,
-  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().filter(p=>p.name!==HOST).map(p=>({name:p.name,score:p.score}))});
+  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 
 </body></html>

@@ -585,9 +585,9 @@ function render(){
 function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function lobby(){
   return `<section class="lobby">${logo()}
+    ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
     <div class="prize">🎁 <b>Every vote counts.</b> Most votes at the end of the show wins the mystery package.</div>
-    ${joinCard()}
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
@@ -694,7 +694,7 @@ function wire(){
    Scan the QR code, tap your name. Phones guess the #1 answer and vote in secret during face-offs.
    The TV publishes only what phones need: never the answer before the reveal, never anyone's face-off vote. */
 const G="df";
-let lastSeq=-1,phones=[],answers={},answersQi=-1,apiOk=false,firstPoll=true,lastPushed="",pushing=false,polling=false,lastPoll=0,gid=Date.now()%1e7;
+let pollFails=0,lastSeq=-1,phones=[],answers={},answersQi=-1,apiOk=false,firstPoll=true,lastPushed="",pushing=false,polling=false,lastPoll=0,gid=Date.now()%1e7;
 const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:G,...body})});
 const hasPhone=n=>phones.includes(n);
 function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult"].includes(p)&&S.tie)return 50+S.tie.qn;if(["question","suspense","reveal"].includes(p))return S.k;return null}
@@ -732,7 +732,8 @@ async function poll(){
     }
     if(S.phase==="lobby"&&(before!==phones.join("|")||!wasOk))render();
     if(!wasOk)push();
-  }catch(e){}
+    pollFails=0;
+  }catch(e){pollFails++;if(S.phase==="lobby"&&pollFails===3)render()}
   polling=false;
 }
 /* a tap on a phone sends a little burst of emojis up the TV with the sender's name */
@@ -765,13 +766,14 @@ function calledIt(d=1.2){
   return `<div class="called"><b class="late" style="--d:${d}s">🎯 Called it:</b>${right.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`;
 }
 const joinUrl=()=>`${location.origin}/district-feud/play`;
+const onWebsite=()=>/^https?:$/.test(location.protocol)&&!/claude|anthropic/.test(location.hostname);
 function joinCard(){
-  if(!apiOk)return "";
+  if(!apiOk&&!onWebsite())return "";
   let qr="";try{const q=qrcode(0,"M");q.addData(joinUrl());q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
   return `<div class="join"><div class="qr" aria-label="QR code for ${esc(joinUrl())}">${qr||"📱"}</div>
     <div><div class="eyebrow">Join on your phone</div><div class="jurl">${esc(joinUrl().replace(/^https?:\/\//,""))}</div>
     <p>Scan the code and tap your name. Guess the #1 answer on your phone, vote in secret during face-offs, and tap emojis to send them up the TV!</p>
-    <div class="jcount"><b>${phones.length}</b> of ${NAMES.length} signed in</div>
+    <div class="jcount">${apiOk?`<b>${phones.length}</b> of ${NAMES.length} signed in`:pollFails>=3?"⚠️ Phones can't connect right now. Reload this page.":"Connecting to phones…"}</div>
     ${phones.length?'<button class="linkbtn" id="clearphones">Clear phone sign-ins</button>':""}</div></div>`;
 }
 setInterval(()=>{push();if(document.hidden)return;

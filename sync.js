@@ -152,6 +152,16 @@ const Sync = (() => {
     phones = []; render();
   });
 
+  /* ---- someone taps a colored bar on the TV: point them to their phone ---- */
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".ans") || S.phase !== "question") return;
+    let t = document.getElementById("tvhint");
+    if (!t) { t = document.createElement("div"); t.id = "tvhint"; document.body.appendChild(t);
+      t.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9;background:#b8322a;color:#fff;font-weight:800;padding:14px 22px;border-radius:16px;box-shadow:0 0 0 3px #e8b04b,0 10px 30px rgba(0,0,0,.5);text-align:center;max-width:min(92vw,560px)"; }
+    t.innerHTML = `📱 This is the TV screen. Answer on your phone at<br><span style="color:#ffd36b">${esc(joinUrl().replace(/^https?:\/\//, ""))}</span>`;
+    t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 4000);
+  });
+
   /* ---- new game: wipe last game's answers ---- */
   function reset() {
     S.gid = Date.now(); answers = {}; answersQi = -1; counted = null;

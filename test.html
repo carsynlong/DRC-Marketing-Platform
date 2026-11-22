@@ -32,7 +32,7 @@ html,body{margin:0;height:100%;background:var(--night);color:var(--ink);font-fam
   <div class="tv" id="tv"><span class="label">📺 TV</span><iframe id="tvf" src="/" title="TV screen" allow="autoplay"></iframe></div>
   <div class="host">
     <div class="what" id="what"><b>Loading…</b></div>
-    <button class="next ghost" id="setup" hidden>Setup</button>
+    <button class="next ghost" id="setup" hidden>↺ Restart</button>
     <button class="next" id="next">Next ▶</button>
   </div>
   <div class="me"><iframe id="mef" src="/play" title="Your phone"></iframe></div>
@@ -87,8 +87,8 @@ document.getElementById("next").onclick=()=>{
   w.primary();
 };
 document.getElementById("setup").onclick=()=>{
-  const w=tv();if(!confirm("Stop this game and go back to setup?"))return;
-  w.eval('clearInterval(readyT);S.phase="lobby";stopSong();render()');
+  const w=tv();if(!confirm("Restart from the beginning? Scores are cleared."))return;
+  w.eval("Sync.restart(false)");
 };
 </script>
 </body>

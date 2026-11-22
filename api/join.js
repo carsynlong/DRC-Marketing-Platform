@@ -1,5 +1,5 @@
 // A phone claims a name, or lets go of it ("Not you?").
-// POST /api/join { pid, name }      -> { me } or 409 if someone else has it
+// POST /api/join { pid, name }      -> { me } or 409 if someone else's phone is still using it
 // POST /api/join { pid, leave: true }
 import { redis, hash, readGame, reply, text } from "../lib/redis.js";
 
@@ -23,7 +23,12 @@ export default async function handler(req, res) {
 
   // HSETNX only writes if nobody has this name yet, so two phones can't both win it.
   const won = await redis.hsetnx("players", name, pid);
-  if (!won) return reply(res, 409, { error: "taken" });
+  if (!won) {
+    // Rejoin: the name's old phone has been quiet for 30+ seconds (dead battery, a different browser...)
+    if (await redis.get(`seen:${name}`)) return reply(res, 409, { error: "taken" });
+    await redis.hset("players", { [name]: pid });
+  }
+  await redis.set(`seen:${name}`, "1", { ex: 30 });
 
   // One name per phone: let go of any other name this phone held.
   const old = mine.filter(n => n !== name);

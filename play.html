@@ -325,9 +325,10 @@ function view(){
   if(g===undefined)return ["load",msg("🎄","Loading…")];
   if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>Ask the host to open the game on the TV, then this page will update.</p>")];
   if(!D.me){
-    const taken=new Set(D.taken||[]);
-    return ["pick:"+[...taken].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Tap your name.</p></section>
-      <div class="pick">${g.names.map((n,i)=>`<button style="--i:${i}" data-name="${esc(n)}" ${taken.has(n)?"disabled":""}>${esc(n)}${taken.has(n)?"<small>taken</small>":""}</button>`).join("")}</div>`];
+    const taken=new Set(D.taken||[]), away=new Set(D.away||[]);
+    return ["pick:"+[...taken].join("|")+"/"+[...away].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Tap your name.</p></section>
+      <div class="pick">${g.names.map((n,i)=>{const t=taken.has(n)&&!away.has(n),back=away.has(n);
+        return `<button style="--i:${i}" data-name="${esc(n)}" ${t?"disabled":""}>${esc(n)}${t?"<small>taken</small>":back?"<small>tap to rejoin</small>":""}</button>`}).join("")}</div>`];
   }
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
   const notYou=`<button class="switch" id="leave">🔄 Not ${esc(D.me)}? Switch name</button>`;

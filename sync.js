@@ -179,6 +179,37 @@ const Sync = (() => {
     t.hidden = false; clearTimeout(t._h); t._h = setTimeout(() => t.hidden = true, 4000);
   });
 
+  /* ---- host menu: a faint ⚙ in the corner, easy to miss on purpose ---- */
+  (function hostMenu() {
+    const b = document.createElement("button");
+    b.textContent = "⚙"; b.title = "Host menu"; b.setAttribute("aria-label", "Host menu");
+    b.style.cssText = "position:fixed;left:6px;bottom:6px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:#fbf6ea;opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
+    b.onmouseenter = () => b.style.opacity = ".9"; b.onmouseleave = () => b.style.opacity = ".18";
+    const m = document.createElement("div"); m.hidden = true;
+    m.style.cssText = "position:fixed;left:8px;bottom:38px;z-index:21;background:#16302a;border-radius:12px;padding:8px;display:grid;gap:6px;box-shadow:0 0 0 2px #e8b04b,0 10px 30px rgba(0,0,0,.5);font:600 14px Outfit,system-ui,sans-serif";
+    const item = (label, fn) => { const x = document.createElement("button"); x.textContent = label;
+      x.style.cssText = "background:transparent;color:#fbf6ea;border:0;text-align:left;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit";
+      x.onmouseenter = () => x.style.background = "rgba(255,255,255,.08)"; x.onmouseleave = () => x.style.background = "transparent";
+      x.onclick = () => { m.hidden = true; fn(); }; m.appendChild(x); };
+    item("↺ Restart from the beginning", restart);
+    item("📱 Clear phone names", async () => { if (!confirm("Clear every phone's name? Everyone will need to tap their name again.")) return;
+      try { await post({ action: "clearPlayers" }); } catch (e) {} phones = []; render(); });
+    item("✕ Close", () => {});
+    b.onclick = e => { e.stopPropagation(); m.hidden = !m.hidden; };
+    document.addEventListener("click", e => { if (!m.contains(e.target) && e.target !== b) m.hidden = true; });
+    const add = () => { document.body.appendChild(b); document.body.appendChild(m); };
+    document.body ? add() : addEventListener("DOMContentLoaded", add);
+  })();
+  // Back to the lobby with a clean slate. Phones keep their names and follow along.
+  function restart(ask = true) {
+    if (ask && !confirm("Restart from the beginning? This ends the current game and clears the scores.")) return;
+    try { clearInterval(readyT); } catch (e) {}
+    try { stopSong(); } catch (e) {}
+    S.players.forEach(p => { p.score = 0; p.streak = 0; p.delta = 0; p.move = 0; });
+    Object.assign(S, { phase: "lobby", qi: 0, rounds: [], locked: false, correct: [], typed: {}, elapsed: 0, fallen: [] });
+    reset(); render();
+  }
+
   /* ---- new game: wipe last game's answers ---- */
   function reset() {
     S.gid = Date.now(); answers = {}; answersQi = -1; counted = null;
@@ -204,5 +235,5 @@ const Sync = (() => {
   }, 250);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && S) { pollKey = ""; maybePoll(); } });
 
-  return { hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
+  return { restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
 })();

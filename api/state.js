@@ -1,6 +1,6 @@
 // Phones poll this about every 1.5 seconds.
 // GET /api/state?pid=<phone id>&name=<name this phone thinks it has>
-// -> { game, me, taken, myAnswer }
+// -> { game, me, taken, away, myAnswer }   away: taken names whose phone has gone quiet (they can rejoin)
 import { redis, hash, readGame, reply, text } from "../lib/redis.js";
 
 export default async function handler(req, res) {
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const game = await readGame();
   if (!game) return reply(res, 200, { game: null });
 
-  let me = null, taken = null, myAnswer = null;
+  let me = null, taken = null, away = null, myAnswer = null;
   // Cheap path: the phone already knows its name, just confirm it.
   if (pid && name && (await redis.hget("players", name)) === pid) me = name;
   if (!me) {
@@ -17,9 +17,15 @@ export default async function handler(req, res) {
     const all = await hash("players");
     taken = Object.keys(all);
     me = taken.find(n => all[n] === pid) || null;
+    if (!me && taken.length) {
+      const seen = await redis.mget(...taken.map(n => `seen:${n}`));
+      away = taken.filter((n, i) => !seen[i]);
+    }
   }
+  // "I'm still here": a name whose phone stops checking in for 30 seconds can be picked up again (rejoin).
+  if (me) await redis.set(`seen:${me}`, "1", { ex: 30 });
   if (me && (game.phase === "question" || game.phase === "reveal")) {
     myAnswer = await redis.hget(`answers:${game.qi}`, me);
   }
-  reply(res, 200, { game, me, taken, myAnswer });
+  reply(res, 200, { game, me, taken, away, myAnswer });
 }

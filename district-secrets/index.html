@@ -1,0 +1,534 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta charset="utf-8">
+<title>District Secrets</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<style>
+/* One TV-sized stage: lights + title bar, photo window, four answer tiles, host controls. Snow falls behind everything. */
+:root{
+  --night:#0d1f18; --night-2:#16302a; --ink:#fbf6ea; --muted:#bccabd;
+  --gold:#e8b04b; --gold-d:#9a6c1c; --red:#b8322a; --red-d:#6e1712;
+  --a1:#c8412f; --a2:#2f6fb3; --a3:#d79a1f; --a4:#3e8a52; --good:#6fd38a;
+  --line:rgba(251,246,234,.16);
+  --display:"Rye","Georgia",serif; --body:"Outfit",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+body{background:var(--night);color:var(--ink);font-family:var(--body);font-size:16px;overflow-x:hidden;
+  background-image:radial-gradient(ellipse at 50% -20%,rgba(184,50,42,.45),transparent 55%),radial-gradient(ellipse at 50% 120%,rgba(232,176,75,.16),transparent 60%),
+  repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 2px,transparent 2px 90px);}
+#snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+.lights{position:fixed;top:0;left:0;right:0;height:34px;z-index:2;pointer-events:none;display:flex;justify-content:space-around;
+  background:radial-gradient(ellipse 60px 18px at 50% -6px,transparent 70%,rgba(0,0,0,0) 71%);}
+.lights::before{content:"";position:absolute;left:0;right:0;top:6px;height:2px;background:#20382d}
+.lights i{position:relative;width:11px;height:17px;margin-top:8px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;animation:tw 1.6s infinite alternate}
+.lights i::before{content:"";position:absolute;left:3px;top:-5px;width:5px;height:5px;background:#33473d;border-radius:1px}
+.lights i:nth-child(4n+1){background:#ff5a4e;box-shadow:0 0 12px #ff5a4e}
+.lights i:nth-child(4n+2){background:#ffd36b;box-shadow:0 0 12px #ffd36b;animation-delay:.4s}
+.lights i:nth-child(4n+3){background:#6fe38e;box-shadow:0 0 12px #6fe38e;animation-delay:.8s}
+.lights i:nth-child(4n){background:#6fb6ff;box-shadow:0 0 12px #6fb6ff;animation-delay:1.2s}
+@keyframes tw{to{opacity:.35;box-shadow:none}}
+.app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;gap:14px;max-width:1280px;margin:0 auto;box-sizing:border-box;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:44px 20px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.01em}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn{background:var(--gold);color:#2a1c05;font-weight:800;padding:.8em 1.4em;border-radius:999px;font-size:1.05rem;box-shadow:0 4px 0 var(--gold-d)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--gold-d)}
+.btn.red{background:var(--red);color:var(--ink);box-shadow:0 4px 0 var(--red-d)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--line)}
+.btn:disabled{opacity:.4;cursor:default}
+.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:.78rem;color:var(--muted);font-weight:600}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tiny{font-size:.85rem;color:var(--muted)}
+.emblem{width:clamp(110px,16vw,170px);height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+
+/* Lobby + interstitials */
+.lobby{display:grid;gap:20px;text-align:center;justify-items:center;padding-block:1vh}
+.lobby h1{font-size:clamp(2.6rem,8vw,5.6rem);color:var(--gold);line-height:1;text-shadow:0 3px 0 var(--red-d),0 0 30px rgba(232,176,75,.35)}
+.lobby p{max-width:62ch;margin:0;color:var(--muted);line-height:1.5}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:900px}
+.chip{padding:.55em 1em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:600;display:inline-flex;gap:.5em;align-items:center;background:rgba(13,31,24,.6)}
+.chip .d{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--night-2);box-shadow:inset 0 0 0 2px var(--gold)}
+.chip[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.chip:disabled{opacity:.3;cursor:not-allowed;text-decoration:none}
+.settings{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}
+.seg button{padding:.45em .9em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:600;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--night)}
+.round-card{display:grid;gap:14px;justify-items:center;text-align:center;padding-block:6vh;animation:pop .7s cubic-bezier(.2,1.4,.4,1)}
+.round-card .num{font-family:var(--display);font-size:clamp(1.4rem,4vw,2.4rem);color:var(--red);background:var(--ink);padding:.15em .8em;border-radius:8px;transform:rotate(-3deg)}
+.round-card h1{font-size:clamp(2.6rem,9vw,6rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+
+/* Question */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qnum{font-family:var(--display);font-size:clamp(1.2rem,3vw,1.8rem);color:var(--gold)}
+.timer{position:relative;width:70px;height:70px;flex:none}
+.timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer .n{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:1.5rem;font-variant-numeric:tabular-nums}
+.timer.hurry{animation:shake .5s infinite}
+@keyframes shake{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+.stage{position:relative;border-radius:18px;overflow:hidden;background:#07120d;aspect-ratio:16/9;max-height:50vh;width:100%;margin-inline:auto;
+  box-shadow:0 0 0 4px var(--gold),0 0 0 9px var(--red),0 14px 40px rgba(0,0,0,.5)}
+.stage .blur{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) brightness(.4)}
+.stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;will-change:transform}
+.secret{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:14px;padding:4% 8%;text-align:center;
+  background:radial-gradient(ellipse at 50% 40%,#2a4a3f,#0d1f18 75%)}
+.secret p{margin:0;font-family:var(--display);font-size:clamp(1.6rem,4.4vw,3.6rem);line-height:1.15;color:var(--ink);text-wrap:balance;animation:pop .7s cubic-bezier(.2,1.4,.4,1)}
+.secret .seal{font-size:clamp(2.4rem,5vw,4rem);animation:bob 1.2s ease-in-out infinite alternate}
+.secret .who{color:var(--gold);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(.8rem,1.6vw,1rem)}
+.stage .said{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:rgba(13,31,24,.88);padding:.4em 1em;border-radius:12px;font-weight:600;font-size:clamp(.9rem,2vw,1.25rem);max-width:90%;text-align:center}
+.stage img.rev{animation:revpop .8s cubic-bezier(.2,1.3,.4,1)}
+@keyframes revpop{from{transform:scale(.4) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+.stage .tag{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(13,31,24,.9);padding:.5em 1.2em;border-radius:999px;font-family:var(--display);font-size:clamp(1.1rem,3vw,2rem);white-space:nowrap;box-shadow:0 0 0 3px var(--gold);animation:pop .6s .25s both cubic-bezier(.2,1.4,.4,1)}
+.stage .tag small{font-family:var(--body);font-size:.6em;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-right:.6em;font-weight:800}
+.stage .locked{position:absolute;top:14px;right:14px;background:var(--red);font-weight:800;padding:.35em .9em;border-radius:999px;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem}
+.stage .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.stage .flash.go{animation:flash .5s}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+.phoneprompt{text-align:center;font-family:var(--display);font-size:clamp(1.3rem,3.4vw,2.4rem);color:var(--ink);background:var(--night-2);border-radius:16px;padding:.7em 1em;box-shadow:0 0 0 2px var(--gold)}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.typed{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.typed label{display:grid;gap:4px;background:var(--night-2);border-radius:12px;padding:8px 10px;box-shadow:0 0 0 1px var(--line);font-weight:800;font-size:.9rem;position:relative}
+.typed input{font:inherit;font-weight:600;font-size:1.1rem;background:rgba(0,0,0,.3);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:.35em .5em;min-width:0}
+.typed input:focus{outline:none;border-color:var(--gold)}
+.typed input:disabled{opacity:.85}
+.typed label.ok{box-shadow:0 0 0 2px var(--good)}.typed label.no{opacity:.55}
+.typed .mark{position:absolute;top:6px;right:10px;font-size:1rem}
+.typed label.own{opacity:.35}
+.ans{display:flex;align-items:center;gap:14px;padding:clamp(10px,2vh,18px) 18px;border-radius:12px;font-weight:800;font-size:clamp(1.1rem,2.6vw,1.8rem);text-align:left;color:#fff;box-shadow:inset 0 -5px 0 rgba(0,0,0,.22);transition:opacity .4s,transform .4s;min-width:0}
+.ans span{min-width:0;overflow-wrap:anywhere}
+.ans svg{width:1.4em;height:1.4em;flex:none}
+.ans.k0{background:var(--a1)}.ans.k1{background:var(--a2)}.ans.k2{background:var(--a3)}.ans.k3{background:var(--a4)}
+.ans.dim{opacity:.2}
+.ans.right{transform:scale(1.03);box-shadow:inset 0 -5px 0 rgba(0,0,0,.22),0 0 0 4px var(--ink),0 0 24px rgba(255,255,255,.4)}
+.ans .ck{margin-left:auto;font-size:1.3em}
+
+/* Scoring + scoreboard */
+.panel{background:var(--night-2);border-radius:16px;padding:16px;display:grid;gap:12px;box-shadow:0 0 0 1px var(--line)}
+.board{display:grid;gap:8px;width:100%;max-width:900px;margin-inline:auto}
+.row{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;background:var(--night-2);position:relative;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+.row .fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,rgba(184,50,42,.35),rgba(232,176,75,.25));transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.row>*{position:relative}
+.row .rk{font-family:var(--display);color:var(--gold);font-size:1.3rem;text-align:center}
+.row .nm{font-weight:800;font-size:1.2rem;overflow-wrap:anywhere}
+.row .pts{font-weight:800;font-variant-numeric:tabular-nums;font-size:1.2rem;text-align:right}
+.row .delta{display:block;font-size:.8rem;color:var(--good);font-weight:600}
+.row .streak{font-size:.8rem;color:var(--gold);font-weight:600;margin-left:.5em}
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:10px;max-width:760px;width:100%;margin:0 auto}
+.pod{display:grid;gap:8px;justify-items:center;text-align:center}
+.pod .blk{width:100%;border-radius:12px 12px 0 0;display:grid;place-items:start center;padding-top:10px;font-family:var(--display);font-size:2rem;color:#2a1c05}
+.pod.p1 .blk{height:180px;background:var(--gold)}.pod.p2 .blk{height:130px;background:#d5dbd2}.pod.p3 .blk{height:95px;background:#c98a5a}
+.pod .nm{font-weight:800;font-size:clamp(1rem,2.6vw,1.5rem);overflow-wrap:anywhere}
+.pod .pts{color:var(--muted);font-variant-numeric:tabular-nums}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:5}
+.av{width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--gold);flex:none}
+.row{grid-template-columns:2.2em 34px minmax(0,1fr) auto!important;padding:6px 14px!important;text-align:left}
+.row .av{width:34px;height:34px}.board{gap:6px!important}
+.row .mv{font-size:.8rem;font-weight:800;margin-left:.5em}.mv.up{color:var(--good)}.mv.dn{color:#ff8a7a}
+.pod .av{width:clamp(64px,10vw,110px);height:clamp(64px,10vw,110px);box-shadow:0 0 0 4px var(--gold),0 8px 20px rgba(0,0,0,.5)}
+.pod.p1 .av{width:clamp(84px,13vw,140px);height:clamp(84px,13vw,140px)}
+.pod.p1 .crown{font-size:2.2rem;margin-bottom:-14px;animation:bob 1.2s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-6px) rotate(6deg)}}
+.ready{display:grid;place-items:center;gap:10px;text-align:center;min-height:70vh}
+.ready .big{font-family:var(--display);font-size:clamp(7rem,26vw,16rem);color:var(--gold);line-height:1;text-shadow:0 6px 0 var(--red-d),0 0 60px rgba(232,176,75,.5);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+.gift{display:inline-block;background:linear-gradient(90deg,var(--red),#e0453a);color:#fff;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:.45em 1em;border-radius:999px;box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(232,176,75,.6);animation:bob 1s ease-in-out infinite alternate}
+.quip{font-family:var(--display);color:var(--ink);font-size:clamp(1rem,2.4vw,1.4rem);text-align:center;opacity:.9}
+.ctl{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;align-items:center}
+.ctl .hint{margin-right:auto}
+@media (max-width:620px){.answers{grid-template-columns:1fr}.stage{aspect-ratio:4/3}.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<canvas id="snow" aria-hidden="true"></canvas>
+<div class="lights" aria-hidden="true">
+  <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+</div>
+<div class="app" id="app"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script>
+/* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
+const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
+const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
+const DOUBLE=new Set([7]); // the final secret: sponsor gift
+const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
+const Q=[ /* the real fun facts the family sent in; edit wording here */
+ {f:"I have a gorilla statue in my closet.",a:"Dash"},
+ {f:"I flunked band one year.",a:"Grandad"},
+ {f:"I am obsessed with documentaries.",a:"Jessie"},
+ {f:"I hate burritos. And tomatoes.",a:"Natalie"},
+ {f:"I'm scared of heights, but I want my pilot's license. I love helicopters.",a:"Jonny"},
+ {f:"I love to cook.",a:"Kamdon"},
+ {f:"I almost got kicked out of a concert for being too loud.",a:"Carsyn"},
+ {f:"I named my dog after a neighbor. Then the neighbor moved away.",a:"QUEEN MOTHER"},
+];
+const ROUNDS=[{at:0,num:"Open the vault",name:"District Secrets",sub:"8 secrets. Every single one is true."}];
+const SHAPES=[
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z" fill="#fff"/></svg>',
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 22 12 12 22 2 12z" fill="#fff"/></svg>',
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#fff"/></svg>',
+ '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="#fff"/></svg>'];
+/* Original emblem: gold ring wrapped in holly, an arrow through it, Santa hat on top */
+const EMBLEM=`<svg class="emblem" viewBox="0 0 200 200" role="img" aria-label="Christmas Games emblem">
+ <circle cx="100" cy="112" r="62" fill="none" stroke="#e8b04b" stroke-width="10"/>
+ <circle cx="100" cy="112" r="50" fill="none" stroke="#9a6c1c" stroke-width="2"/>
+ <path d="M30 160 170 64" stroke="#e8b04b" stroke-width="6" stroke-linecap="round"/>
+ <path d="M170 64l-18 2 8 10z" fill="#e8b04b"/><path d="M30 160l10-3-3-9-9 4zm6 6 10-3-3-9" fill="#b8322a"/>
+ <g fill="#3e8a52"><path d="M58 162c8-10 22-12 30-4-10 2-14 10-30 4z"/><path d="M142 162c-8-10-22-12-30-4 10 2 14 10 30 4z"/></g>
+ <g fill="#ff5a4e"><circle cx="94" cy="160" r="6"/><circle cx="106" cy="160" r="6"/><circle cx="100" cy="151" r="6"/></g>
+ <path d="M58 62c10-32 52-48 86-30 10 6 16 16 18 26l-12-2c-4-6-10-10-16-10z" fill="#b8322a"/>
+ <rect x="52" y="54" width="96" height="18" rx="9" fill="#fbf6ea"/>
+ <circle cx="166" cy="60" r="11" fill="#fbf6ea"/>
+</svg>`;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const src=id=>`img/${id}.jpg`;
+const RV=n=>`img/r${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
+Q.forEach(x=>{const i=new Image();i.src=RV(x.a)});
+
+let S, raf=0;
+function freshState(){
+  return {phase:"lobby",secs:30,sound:true,mode:"type",typed:{},
+    players:NAMES.map(n=>({name:n,on:n!=="Carsyn",score:0,streak:0,delta:0})),
+    rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
+}
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked) S.locked=true; render(); }
+
+/* ================= MUSIC: original game-show loops over public-domain carols ================= */
+let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
+function ensureAudio(){
+  try{
+    if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();
+      master=AC.createGain();master.gain.value=.8;master.connect(AC.destination);
+      musicBus=AC.createGain();musicBus.gain.value=.55;musicBus.connect(master);
+      sfxBus=AC.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);
+      noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
+    if(AC.state==="suspended")AC.resume();
+    return true;
+  }catch(e){return false}
+}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function env(g,t,a,peak,dec,end){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+dec);}
+function osc(type,f,t,dur,vol,dest,cut){
+  const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;
+  let n=o; if(cut){const fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=cut;o.connect(fl);n=fl}
+  n.connect(g);g.connect(dest);env(g,t,.006,vol,dur);o.start(t);o.stop(t+dur+.05);
+}
+function noise(t,dur,vol,dest,type,freq,q){
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf;
+  f.type=type;f.frequency.value=freq;if(q)f.Q.value=q;s.connect(f);f.connect(g);g.connect(dest);env(g,t,.003,vol,dur);s.start(t,Math.random()*.5);s.stop(t+dur+.05);
+}
+const INST={
+  lead:(t,m,d,v)=>{osc("square",hz(m),t,d*.9,v*.16,musicBus,2600);osc("triangle",hz(m+12),t,d*.6,v*.05,musicBus)},
+  bell:(t,m,d,v)=>{osc("sine",hz(m),t,1.1,v*.28,musicBus);osc("sine",hz(m)*2.76,t,.35,v*.07,musicBus);osc("triangle",hz(m+12),t,.5,v*.08,musicBus)},
+  bass:(t,m,d,v)=>osc("triangle",hz(m),t,d*.9,v*.45,musicBus,900),
+  sleigh:(t,m,d,v)=>{noise(t,.09,v*.14,musicBus,"bandpass",9500,1.2);noise(t+.025,.07,v*.08,musicBus,"bandpass",7000,1.5)},
+  hat:(t,m,d,v)=>noise(t,.035,v*.09,musicBus,"highpass",8000),
+  kick:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(150,t);o.frequency.exponentialRampToValueAtTime(42,t+.12);
+    o.connect(g);g.connect(musicBus);env(g,t,.003,v*.7,.22);o.start(t);o.stop(t+.3)},
+  snare:(t,m,d,v)=>noise(t,.12,v*.16,musicBus,"bandpass",2200,.8),
+};
+/* build a song from a melody list [midi, beats] plus a per-bar bass/drum pattern */
+function seq(mel,inst){let b=0;const ev=[];mel.forEach(([m,d])=>{if(m)ev.push([b,inst,m,d,1]);b+=d});return ev}
+function mkJingle(){ // "Jingle Bells" chorus (1857), in C
+  const L1=[[64,1],[64,1],[64,2],[64,1],[64,1],[64,2],[64,1],[67,1],[60,1.5],[62,.5],[64,4]];
+  const L2=[[65,1],[65,1],[65,1.5],[65,.5],[65,1],[64,1],[64,1],[64,.5],[64,.5],[64,1],[62,1],[62,1],[64,1],[62,2],[67,2]];
+  const L4=[[65,1],[65,1],[65,1.5],[65,.5],[65,1],[64,1],[64,1],[64,.5],[64,.5],[67,1],[67,1],[65,1],[62,1],[60,4]];
+  const ev=seq([...L1,...L2,...L1,...L4],"lead").map(e=>(e[2]+=12,e));
+  const roots=[36,36,36,36,41,36,38,43,36,36,36,36,41,36,43,36];
+  roots.forEach((r,i)=>{const b=i*4;ev.push([b,"bass",r,1,1],[b+1,"bass",r+7,1,.8],[b+2,"bass",r,1,1],[b+3,"bass",r+7,1,.8],[b,"kick",0,1,1],[b+2,"kick",0,1,.8],[b+1,"snare",0,1,.8],[b+3,"snare",0,1,.8]);
+    for(let k=0;k<8;k++)ev.push([b+k/2,"sleigh",0,.5,k%2?.6:1])});
+  return {bpm:150,len:64,ev};
+}
+function mkCarol(){ // "Carol of the Bells" ostinato (Leontovych, 1916), tense countdown loop in 3/4
+  const ev=[];const bass=[43,43,41,41,39,39,38,38];const counter=[0,0,0,0,79,77,74,74];
+  for(let bar=0;bar<8;bar++){const b=bar*3;
+    ev.push([b,"bell",70,1,1],[b+1,"bell",69,.5,.8],[b+1.5,"bell",70,.5,.8],[b+2,"bell",67,1,.9]);
+    ev.push([b,"bass",bass[bar],3,1],[b,"kick",0,1,1],[b+1.5,"kick",0,1,.5],[b+2,"snare",0,1,.6]);
+    if(counter[bar])ev.push([b,"lead",counter[bar],3,.7]);
+    for(let k=0;k<6;k++)ev.push([b+k/2,"hat",0,.5,k%2?.5:.9]);}
+  return {bpm:200,len:24,ev};
+}
+function mkDeck(){ // "Deck the Halls" (traditional Welsh), scoreboard strut
+  const A=[[67,1.5],[65,.5],[64,1],[62,1],[60,1],[62,1],[64,1],[60,1],[62,.5],[64,.5],[65,.5],[62,.5],[64,1.5],[62,.5],[60,1],[59,1],[60,2],[0,2]];
+  const ev=seq(A,"lead").map(e=>(e[2]+=12,e));
+  [36,43,36,43,36,43,36,36,36].forEach((r,i)=>{const b=i*2;ev.push([b,"bass",r,1,1],[b+1,"bass",r+12,1,.6],[b,"kick",0,1,.9],[b+1,"snare",0,1,.6]);
+    for(let k=0;k<4;k++)ev.push([b+k/2,"sleigh",0,.5,k%2?.5:.8])});
+  return {bpm:128,len:18,ev};
+}
+const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck()};
+function playSong(name){
+  if(song===SONGS[name])return;
+  stopSong(); if(!S.sound||!ensureAudio())return;
+  song=SONGS[name];tempoMul=1;step=0;nextT=AC.currentTime+.08;
+  const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=nextT,i=0;
+  timerId=setInterval(()=>{
+    const spb=60/(song.bpm*tempoMul);
+    while(true){
+      const e=evs[i];const t=loopStart+e[0]*spb;
+      if(t>AC.currentTime+.15)break;
+      if(t>=AC.currentTime-.02)INST[e[1]](t,e[2],e[3]*spb,e[4]);
+      i++; if(i>=evs.length){i=0;loopStart+=song.len*spb}
+    }
+  },25);
+}
+function stopSong(){clearInterval(timerId);timerId=0;song=null}
+function sfx(kind){
+  if(!S.sound||!ensureAudio())return;const t=AC.currentTime+.01;
+  if(kind==="tick")osc("square",1320,t,.06,.08,sfxBus);
+  if(kind==="tock")osc("square",880,t,.06,.08,sfxBus);
+  if(kind==="tap")osc("triangle",1040,t,.08,.12,sfxBus);
+  if(kind==="untap")osc("triangle",520,t,.08,.1,sfxBus);
+  if(kind==="cannon"){ // the arena cannon: time is up
+    noise(t,2.4,.9,sfxBus,"lowpass",380);const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(90,t);o.frequency.exponentialRampToValueAtTime(26,t+1.1);
+    o.connect(g);g.connect(sfxBus);env(g,t,.004,.9,1.6);o.start(t);o.stop(t+1.8);}
+  if(kind==="reveal"){[72,76,79,84].forEach((m,k)=>{osc("square",hz(m),t+k*.08,.25,.09,sfxBus,3500);osc("sine",hz(m+12),t+k*.08,.6,.06,sfxBus)});
+    for(let k=0;k<10;k++)noise(t+.3+k*.05,.08,.1,sfxBus,"bandpass",9000,1.3);}
+  if(kind==="fanfare"){[[60,0],[64,.15],[67,.3],[72,.45],[67,.75],[72,.9]].forEach(([m,d],k)=>{const dur=k===5?1.6:.3;
+    osc("square",hz(m+12),t+d,dur,.1,sfxBus,3000);osc("triangle",hz(m),t+d,dur,.1,sfxBus)});
+    [48,55,60].forEach(m=>osc("triangle",hz(m),t+.9,1.6,.12,sfxBus));for(let k=0;k<16;k++)noise(t+.9+k*.06,.08,.1,sfxBus,"bandpass",9000,1.3);}
+  if(kind==="drum"){INST.kick(t,0,0,1.2);noise(t,.18,.35,sfxBus,"bandpass",1800,.7);osc("triangle",hz(43),t,.4,.3,sfxBus)}
+  if(kind==="go"){[79,84,88].forEach((m,k)=>osc("sine",hz(m),t+k*.05,.9,.15,sfxBus));for(let k=0;k<8;k++)noise(t+k*.04,.08,.12,sfxBus,"bandpass",9000,1.3)}
+  if(kind==="gong"){osc("sine",hz(45),t,2.5,.4,sfxBus);osc("sine",hz(57),t,2,.15,sfxBus);noise(t,.6,.2,sfxBus,"bandpass",600,2)}
+}
+
+/* ================= SNOW ================= */
+(function snow(){
+  const c=$("#snow"),x=c.getContext("2d");let W,H,f=[];
+  const size=()=>{W=c.width=innerWidth;H=c.height=innerHeight;f=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2.4+.6,s:Math.random()*.6+.3,w:Math.random()*6.28}))};
+  size();addEventListener("resize",size);
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  (function loop(){x.clearRect(0,0,W,H);x.fillStyle="rgba(255,255,255,.8)";
+    for(const p of f){p.y+=p.s;p.w+=.01;p.x+=Math.sin(p.w)*.35;if(p.y>H){p.y=-4;p.x=Math.random()*W}x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fill()}
+    requestAnimationFrame(loop)})();
+})();
+
+/* ================= CONFETTI ================= */
+const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
+  const size=()=>{c.width=innerWidth;c.height=innerHeight};size();addEventListener("resize",size);
+  const cols=["#ff5a4e","#e8b04b","#6fe38e","#fbf6ea","#6fb6ff"];
+  function loop(){x.clearRect(0,0,c.width,c.height);P=P.filter(p=>p.y<c.height+30&&p.life-->0);
+    for(const p of P){p.vy+=.18;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;
+      if(p.star){x.font="18px serif";x.fillText("❄",-8,8)}else x.fillRect(-5,-3,10,6);x.restore()}
+    if(P.length)requestAnimationFrame(loop);else on=false}
+  return n=>{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;for(let i=0;i<n;i++){const side=i%2;
+    P.push({x:side?c.width*.1:c.width*.9,y:c.height*.75,vx:(side?1:-1)*(4+Math.random()*9),vy:-(10+Math.random()*12),r:Math.random()*6,vr:(Math.random()-.5)*.3,c:cols[i%5],star:Math.random()<.2,life:400})}
+    if(!on){on=true;requestAnimationFrame(loop)}}})();
+function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
+/* ================= GAME ================= */
+function newGame(){
+  S.rounds=Q.map((x,qi)=>{const others=shuffle(NAMES.filter(n=>n!==x.a)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
+  S.qi=0; roundCardOrQuestion();
+}
+function roundCardOrQuestion(){
+  const rc=ROUNDS.find(r=>r.at===S.qi);
+  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();return}
+  beginQuestion();
+}
+let readyT=0;
+function beginQuestion(){S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
+  readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
+function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};playSong("count");render();
+  if(S.mode==="type")document.querySelector(".typed input:not(:disabled)")?.focus();}
+const giftTag=()=>DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
+/* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
+const ALIASES={"Jonny":["jonny","johnny","jony","jon","jt","jtjt"],"QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana"],
+  "Grandad":["grandad","granddad","grandpa","grampa","papa","don","donjackson"],"Elisha":["elisha","mom","momma","mama"],"Jessie":["jessie","jessi","jess","jessica"]};
+const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
+function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
+  for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
+function matches(typed,answer){const t=norm(typed);if(!t)return false;
+  return (ALIASES[answer]||[norm(answer)]).concat(norm(answer)).some(a=>a===t||(a.length>=4&&lev(a,t)<=1))}
+const cur=()=>Q[S.rounds[S.qi].qi];
+
+function setZoom(p){
+  const im=$(".stage img.q");if(!im)return;const z=cur().zoom||{fx:.5,fy:.5,z:1.14,cap:1};
+  const s=Math.pow(z.z,1-Math.min(1,p)*z.cap);
+  im.style.transformOrigin=`${z.fx*100}% ${z.fy*100}%`;im.style.transform=`scale(${s})`;
+}
+function tick(last){
+  cancelAnimationFrame(raf);
+  const loop=now=>{
+    if(S.phase!=="question"||S.locked)return;
+    const dt=(now-last)/1000;last=now;
+    const before=Math.ceil(S.secs-S.elapsed);
+    S.elapsed=Math.min(S.secs,S.elapsed+dt);
+    const left=Math.ceil(S.secs-S.elapsed);
+    if(left!==before&&left<=5&&left>0){sfx(left===1?"tick":"tock");tempoMul=1.18;$(".timer")?.classList.add("hurry")}
+    drawTimer();setZoom(S.elapsed/S.secs);
+    if(S.elapsed>=S.secs){lock();return}
+    raf=requestAnimationFrame(loop);
+  };
+  raf=requestAnimationFrame(loop);
+}
+function drawTimer(){
+  const left=Math.max(0,Math.ceil(S.secs-S.elapsed));const n=$(".timer .n"),c=$(".timer .arc");if(!n)return;
+  n.textContent=left;const frac=1-S.elapsed/S.secs;
+  c.setAttribute("stroke-dasharray",`${(frac*176).toFixed(1)} 176`);c.setAttribute("stroke",left<=5?"var(--a1)":"var(--gold)");
+}
+function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
+function reveal(){
+  if(S.mode==="type")S.correct=active().filter(p=>p.name!==cur().a&&matches(S.typed[p.name],cur().a)).map(p=>p.name);
+  S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
+function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
+function score(){
+  const name=cur().a,mult=DOUBLE.has(S.qi)?2:1,before=rankMap();
+  S.players.forEach(p=>{
+    if(!p.on){p.delta=0;return}
+    if(p.name!==name&&S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
+    else{p.delta=0;if(p.name!==name)p.streak=0}
+  });
+  const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
+  S.phase=S.qi===S.rounds.length-1?"final":"board";
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("board");
+  render();
+}
+function next(){S.qi++;roundCardOrQuestion();}
+
+/* ---------- views ---------- */
+function render(){
+  cancelAnimationFrame(raf);
+  const app=$("#app");
+  app.innerHTML=S.phase==="lobby"?lobbyView():S.phase==="ready"?readyView():S.phase==="roundcard"?roundView():(S.phase==="question"||S.phase==="reveal")?questionView():S.phase==="board"?boardView():finalView();
+  wire();
+  if(S.phase==="question"){setZoom(S.elapsed/S.secs);drawTimer();if(!S.locked)tick(performance.now())}
+  if(S.phase==="reveal")requestAnimationFrame(()=>$(".flash")?.classList.add("go"));
+  if(S.phase==="board"||S.phase==="final")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w)));
+}
+const active=()=>S.players.filter(p=>p.on);
+const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${S.sound}">${S.sound?"🔊 Music on":"🔇 Music off"}</button>`;
+
+function lobbyView(){
+  return `<section class="lobby">
+    ${EMBLEM}
+    <div class="eyebrow">The 2026 Christmas Games · Game 6</div>
+    <h1>District Secrets</h1>
+    <p>A real fun fact from someone in this room appears on the screen. Figure out whose secret it is before the cannon fires. ${S.mode==="type"?"Pass the laptop around (or shout it to your host) and type your guess in your box before the cannon fires. The game checks spelling for you, and nicknames count.":"Type your guess on your own phone before the cannon fires, then everyone flips their phone around at the reveal. Your host taps everyone who got it right. Spelling doesn't count, but the name has to be right."} Each right answer is worth 1,000 points, plus 100 for every answer in a row. No points for your own secret, so keep a straight face.</p>
+    <div class="eyebrow">Who's playing? Tap to sit someone out</div>
+    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}</button>`).join("")}</div>
+    <div class="settings"><span class="tiny">How to answer</span>
+      <div class="seg" role="group" aria-label="How to answer"><button data-mode="choice" aria-pressed="${S.mode!=="type"}">📱 On their phones</button> <button data-mode="type" aria-pressed="${S.mode==="type"}">⌨️ Typed on the laptop</button></div></div>
+    <div class="settings"><span class="tiny">Seconds per secret</span>
+      <div class="seg" role="group" aria-label="Seconds per secret">${[15,20,30].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
+      ${sndBtn()}</div>
+    <div class="settings"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
+    <div class="tiny">${active().length} tributes playing · ${Q.length} secrets · press Space to move on</div>
+  </section>`;
+}
+function readyView(){
+  return `<section class="ready"><div class="eyebrow">Secret ${S.qi+1} of ${S.rounds.length}</div>${giftTag()}<div class="big">${S.count}</div><div class="quip">Tributes, eyes on the screen.</div></section>`;
+}
+function roundView(){
+  const r=ROUNDS.find(r=>r.at===S.qi);
+  return `<section class="round-card">${EMBLEM}<div class="num">${r.num}</div><h1>${r.name}</h1><p class="tiny" style="font-size:1.1rem">${r.sub}</p>
+    <div class="ctl" style="justify-content:center"><button class="btn" id="begin">May the odds be ever in your favor</button></div>
+    <div class="tiny">Space: start the round</div></section>`;
+}
+function questionView(){
+  const r=S.rounds[S.qi],x=cur(),rev=S.phase==="reveal";
+  const rn=ROUNDS[0];
+  const ans=r.choices.map((n,k)=>{const right=n===x.a;
+    return `<div class="ans k${k} ${rev?(right?"right":"dim"):""}">${SHAPES[k]}<span>${esc(n)}</span>${rev&&right?'<span class="ck" aria-label="Correct">✓</span>':""}</div>`}).join("");
+  const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Tap everyone who said ${esc(x.a)}</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
+    <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=p.name===x.a;
+      return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own secret\"":""}>${esc(p.name)}${own?' <span class="d">their secret</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
+  const img=RV(x.a);
+  return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">Secret ${S.qi+1} of ${S.rounds.length}</div></div>${giftTag()}
+    ${rev?sndBtn():`<div class="timer" aria-label="Seconds left"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="6"/><circle class="arc" cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="176 176"/></svg><div class="n">${S.secs}</div></div>`}</div>
+  <div class="stage">${rev?`<div class="blur" style="background-image:url('${img}')"></div>
+    <img class="rev" src="${img}" alt="${esc(x.a)}"><div class="said">“${esc(x.f)}”</div>`:`<div class="secret"><div class="seal">🤫</div><p>“${esc(x.f)}”</p><div class="who">Whose secret is it?</div></div>`}
+    ${rev?`<div class="tag"><small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked" style="font-size:clamp(1rem,2.4vw,1.6rem)">💥 Time! 📱 PHONES UP!</div>'):""}</div>
+  ${S.mode==="type"?typedView(x,rev):(rev?scoring:`<div class="phoneprompt">${S.locked?"📱 Phones up! Show the host your answer.":"📱 Type your guess on your phone. No peeking at your neighbor!"}</div>`)}
+  <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":"Space: lock answers"}</span>
+    ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
+}
+function typedView(x,rev){
+  const boxes=active().map(p=>{const own=p.name===x.a,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
+    const cls=rev?(own?"own":ok?"ok":"no"):"";
+    return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
+      ${rev?`<span class="mark">${own?"their secret":ok?"✅":"❌"}</span>`:""}
+      <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":"Who is it?"}" autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
+  return `${rev?`<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>`:
+    `<div class="eyebrow">${S.locked?"Answers locked":"Type your guess. Enter jumps to the next box."}</div>`}
+  <div class="typed">${boxes}</div>`;
+}
+function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
+function boardRows(){
+  const r=ranked(),max=Math.max(1,...r.map(p=>p.score));let rank=0,prev=null;
+  return r.map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}
+    return `<div class="row"><div class="fill" data-w="${(p.score/max*100).toFixed(1)}%"></div><div class="rk">${rank}</div><img class="av" src="${AV(p.name)}" alt="">
+      <div class="nm">${esc(p.name)}${p.move>0?`<span class="mv up">▲${p.move}</span>`:p.move<0?`<span class="mv dn">▼${-p.move}</span>`:""}${p.streak>1?`<span class="streak">🔥 ${p.streak} in a row</span>`:""}</div>
+      <div class="pts">${p.score.toLocaleString()}${p.delta?`<span class="delta">+${p.delta.toLocaleString()}</span>`:""}</div></div>`}).join("");
+}
+function quip(){
+  const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta).length;
+  const lines=[`${lead} is the Capitol's favorite right now.`,`Sponsors are lining up for ${lead}.`,`Somebody send ${last} a parachute.`,
+    got===0?"Not one tribute got that. The Gamemakers are thrilled.":got>=r.length-1?"Everybody got that one. Too easy. The Gamemakers are taking notes.":`${got} tributes survived that secret.`,
+    hot?`${hot.name} is on fire. Literally, like Katniss.`:`Plenty of game left. Stay alive.`,`${last}, the odds are not currently in your favor.`];
+  return esc(lines[(S.qi*7+got)%lines.length]);
+}
+function boardView(){
+  const nextRound=ROUNDS.find(r=>r.at===S.qi+1);
+  return `<div class="top"><div><div class="eyebrow">After secret ${S.qi+1} of ${S.rounds.length}</div><h2 class="qnum">The Capitol Scoreboard</h2></div>${sndBtn()}</div>
+  <div class="quip">${quip()}</div>
+  <div class="board">${boardRows()}</div>
+  <div class="ctl"><span class="hint tiny">Space: ${nextRound?"on to "+nextRound.name:"next secret"}</span><button class="btn" id="next">${nextRound?"On to "+nextRound.name:"Next secret"}</button></div>`;
+}
+function finalView(){
+  const r=ranked(),top=r[0]?.score??0,tied=r.filter(p=>p.score===top&&top>0);
+  const pod=[r[1],r[0],r[2]].map((p,i)=>p?`<div class="pod p${[2,1,3][i]}">${i===1?'<div class="crown">👑</div>':""}<img class="av" src="${AV(p.name)}" alt=""><div class="nm">${esc(p.name)}</div><div class="pts">${p.score.toLocaleString()} pts</div><div class="blk">${[2,1,3][i]}</div></div>`:`<div></div>`).join("");
+  return `<section class="lobby" style="gap:16px">
+    <div class="eyebrow">The Capitol has spoken</div>
+    <h1 style="font-size:clamp(2rem,6vw,4rem)">${tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" wins! 🎄"}</h1>
+    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Run a sudden death round to pick who gets the mystery package.`:"Our victor claims a mystery package. Remember, no second package until everyone has one."}</p>
+    <div class="podium">${pod}</div>
+    <div class="board">${boardRows()}</div>
+    <div class="ctl" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="again">Play again</button></div>
+  </section>`;
+}
+
+/* ---------- controls ---------- */
+function primary(){
+  ensureAudio();
+  if(S.phase==="lobby")return active().length&&newGame();
+  if(S.phase==="roundcard")return beginQuestion();
+  if(S.phase==="ready")return (sfx("go"),startQuestion());
+  if(S.phase==="question")return S.locked?reveal():lock();
+  if(S.phase==="reveal")return score();
+  if(S.phase==="board")return next();
+}
+function wire(){
+  document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const p=S.players[+b.dataset.tog];p.on=!p.on;render()});
+  document.querySelectorAll("[data-secs]").forEach(b=>b.onclick=()=>{S.secs=+b.dataset.secs;render()});
+  document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;render()});
+  const ins=[...document.querySelectorAll("[data-type]")];
+  ins.forEach((inp,k)=>{inp.oninput=()=>{S.typed[inp.dataset.type]=inp.value};
+    inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();(ins[k+1]||inp).focus();if(!ins[k+1])inp.blur()}}});
+  document.querySelectorAll("label[data-ok]").forEach(l=>l.onclick=()=>{const n=l.dataset.ok,i=S.correct.indexOf(n);
+    i<0?S.correct.push(n):S.correct.splice(i,1);sfx(i<0?"tap":"untap");render()});
+  document.querySelectorAll("button[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);
+    i<0?S.correct.push(n):S.correct.splice(i,1);b.setAttribute("aria-pressed",i<0);sfx(i<0?"tap":"untap");$("#cnt").textContent=S.correct.length+" correct"});
+  const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
+  on("go",newGame);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
+  on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
+  on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
+  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
+    const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
+}
+document.addEventListener("keydown",e=>{
+  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.code!=="Space"&&e.key!=="Enter")return;
+  if(e.target.closest&&e.target.closest("button,input"))return;
+  e.preventDefault();primary();
+});
+window.claude?.hot?.snapshot?.(()=>S);
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+</body></html>

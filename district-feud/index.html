@@ -337,6 +337,7 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 <div class="applause" id="applause" aria-hidden="true">APPLAUSE</div>
 
 <script src="/qrcode.js"></script>
+<script src="/showtime.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 
@@ -562,7 +563,16 @@ function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
   S.k=0;S.results=[];S.tbNext=0;S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
-  startIntro();
+  if(!window.Rules)return startIntro();
+  // 📋 how to play, read out loud, then Ready starts the walk-outs
+  Rules.run({theme:"feud",title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
+    ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
+    ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone.`],
+    ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
+    ["🏆","If you're the number one answer, your votes go into the prize race too."],
+    ["⚡","Ties go to a secret face-off vote."],
+    ["💰","The final question is double points. Most points wins the mystery package!"],
+    ["🎉","Tap the emojis on your phone anytime to send them up the TV."]]});
 }
 /* 🎤 Meet the contestants: everyone here gets a spotlight walk-out */
 function announce(t){try{if(!S.sound||!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=1.05;u.pitch=.9;u.volume=1;speechSynthesis.speak(u)}catch(e){}}
@@ -887,6 +897,7 @@ function snapshot(){
   if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
   if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1});
   if(p==="intro"&&S.intro)g.spot=S.intro.who[S.intro.i]||null;
+  if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense"});
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q});

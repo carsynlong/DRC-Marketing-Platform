@@ -23,7 +23,8 @@ const Sync = (() => {
       playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
       tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
         results: S.mini.results, all: S.mini.all } : undefined,
-      feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)) };
+      feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
+      howto: window.Rules && Rules.active() ? "tribute" : undefined };   // How to play is on the TV: phones show it too (howto.js)
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
     if (inGame && ["reveal", "board", "final"].includes(S.phase)) { g.answer = Q[r.qi].a; g.correct = S.correct; }
     if (inGame) {

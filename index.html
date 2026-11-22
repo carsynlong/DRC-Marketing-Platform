@@ -151,14 +151,6 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .roster .p.in{opacity:1;filter:none}.roster .p.in img{box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(232,176,75,.7)}
 .roster .p.in small{color:var(--good)}
 .roster .p.new{animation:pop .7s cubic-bezier(.2,1.6,.4,1)}
-/* how to play: each step lights up while the announcer reads it */
-.rules{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:min(100%,1180px);text-align:left}
-.rule:first-child,.rule:last-child{grid-column:1/-1;justify-content:center;font-family:var(--display);color:var(--gold)}
-@media (max-width:820px){.rules{grid-template-columns:1fr}}
-.rule{display:flex;gap:12px;align-items:center;background:var(--night-2);border-radius:14px;padding:9px 14px;box-shadow:0 0 0 1px var(--line);font-size:clamp(.95rem,1.55vw,1.2rem);font-weight:600;
-  transition:background .3s,box-shadow .3s,transform .3s;animation:pop .5s both}
-.rule .re{font-size:1.6em;flex:none}
-.rule.on{background:#2a4a3f;box-shadow:0 0 0 3px var(--gold),0 0 24px rgba(232,176,75,.45);transform:scale(1.02)}
 .linkbtn{color:var(--gold);text-decoration:underline;font-size:inherit;padding:0}
 .phoneprompt .count{font-family:var(--body);font-weight:800;color:var(--gold);font-size:.75em;margin-left:.7em}
 /* who has locked in: names turn gold as they answer (never shows what they picked) */
@@ -389,43 +381,22 @@ const FX=(()=>{const c=$("#fx"),x=c.getContext("2d");let P=[],on=false;
     if(!on){on=true;requestAnimationFrame(loop)}}})();
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 /* ================= GAME ================= */
-/* 📜 how to play, read aloud by the announcer, before the walk-out introductions */
-const RULES=[
-  ["🎄","Welcome, tributes, to the 2026 Christmas Games: Who's That Tribute!"],
-  ["🔍","A face from this family appears on the TV, zoomed in way too close."],
-  ["📱","On your phone, type who you think it is before the cannon fires. Your guess is sealed: nobody sees it until the reveal."],
-  ["✅","Spelling slips and nicknames count. Each right answer is worth 1,000 points, plus a bonus for every answer in a row."],
-  ["🎁","Watch for sponsor gifts worth double points, and the final round, The Feast, where every face is worth triple."],
-  ["🏃","Between rounds there are mini-games: tap or shake your phone as fast as you can for bonus points."],
-  ["🔮","Carsyn is our Gamemaker. She knows every face, so she predicts how many of you will get each one right."],
-  ["🪂","While you wait, tap the floating care packages and send emojis to the TV."],
-  ["🏹","May the odds be ever in your favor!"],
-];
-function voice(){const vs=speechSynthesis.getVoices(),en=vs.filter(v=>/^en/i.test(v.lang));
-  return en.find(v=>/Google US English|Samantha|Daniel|Aaron|Microsoft (Guy|Aria|Jenny)/i.test(v.name))||en[0]||null}
-function readRules(){
-  try{
-    if(!S.sound||!window.speechSynthesis)return;
-    speechSynthesis.cancel();
-    RULES.forEach(([,t],i)=>{const u=new SpeechSynthesisUtterance(t.replace("1,000","one thousand"));const v=voice();if(v)u.voice=v;u.rate=1;u.pitch=.95;
-      u.onstart=()=>document.querySelectorAll(".rule").forEach((r,k)=>r.classList.toggle("on",k===i));
-      u.onend=()=>{if(i===RULES.length-1)document.querySelectorAll(".rule").forEach(r=>r.classList.remove("on"))};
-      speechSynthesis.speak(u)});
-  }catch(e){}
-}
-function showRules(){S.phase="rules";stopSong();render();setTimeout(readRules,400)}
-function rulesView(){
-  return `<section class="lobby" style="gap:14px"><div class="eyebrow">Before the Games begin</div><h1 style="font-size:clamp(2rem,5vw,3.6rem)">How to play</h1>
-    <div class="rules">${RULES.map(([e,t],i)=>`<div class="rule" style="animation-delay:${i*.08}s"><span class="re">${e}</span><span>${esc(t)}</span></div>`).join("")}</div>
-    <div class="settings"><button class="btn ghost" id="reread">🔊 Read it again</button><button class="btn" id="ready">Ready! ▶</button></div>
-    <div class="tiny">Space: ready · then the tributes walk out</div></section>`;
-}
 /* 🎤 walk-out introductions before the first question (showtime.js) */
 function showIntro(){
-  try{speechSynthesis.cancel()}catch(e){}
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
+  if(!window.Rules)return walk();
+  // 📋 how to play, read out loud, then Ready starts the walk-outs
+  Rules.run({theme:"tribute",title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
+    ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
+    ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
+    ["⏱️","You have 30 seconds before the cannon fires."],
+    ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
+    ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
+    ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
+    ["🍗","The last round, The Feast, is worth triple points."],
+    ["🎉","Tap the emojis on your phone to send them up the TV. Highest score wins!"]]});
 }
 function newGame(){
   Sync.reset();Party.reset();S.mode="type";
@@ -513,7 +484,7 @@ function next(){S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();}
 function render(){
   cancelAnimationFrame(raf);
   const app=$("#app");
-  app.innerHTML=S.phase==="lobby"?lobbyView():S.phase==="ready"?readyView():S.phase==="roundcard"?roundView():(S.phase==="question"||S.phase==="reveal")?questionView():S.phase==="board"?boardView():(S.phase==="mini"||S.phase==="tbcard")?Party.view():S.phase==="rules"?rulesView():finalView();
+  app.innerHTML=S.phase==="lobby"?lobbyView():S.phase==="ready"?readyView():S.phase==="roundcard"?roundView():(S.phase==="question"||S.phase==="reveal")?questionView():S.phase==="board"?boardView():(S.phase==="mini"||S.phase==="tbcard")?Party.view():finalView();
   wire();
   if(S.phase==="mini"||S.phase==="tbcard")Party.after();
   if(S.phase==="question"){setZoom(S.elapsed/S.secs);drawTimer();if(!S.locked)tick(performance.now())}
@@ -618,8 +589,7 @@ function finalView(){
 function primary(){
   ensureAudio();
   if(S.phase==="mini"||S.phase==="tbcard")return Party.primary();
-  if(S.phase==="lobby")return active().length&&showRules();
-  if(S.phase==="rules")return showIntro();
+  if(S.phase==="lobby")return active().length&&showIntro();
   if(S.phase==="roundcard")return beginQuestion();
   if(S.phase==="ready")return (sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?reveal():lock();
@@ -637,7 +607,7 @@ function wire(){
   document.querySelectorAll("button[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);
     i<0?S.correct.push(n):S.correct.splice(i,1);b.setAttribute("aria-pressed",i<0);sfx(i<0?"tap":"untap");$("#cnt").textContent=S.correct.length+" correct"});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",showRules);on("ready",showIntro);on("reread",readRules);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
+  on("go",showIntro);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
@@ -659,7 +629,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 <script>
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV,
-  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().filter(p=>p.name!==HOST).map(p=>({name:p.name,score:p.score}))});
+  rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 
 </body></html>

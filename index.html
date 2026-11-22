@@ -321,6 +321,7 @@ const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkWish(),arena:mkArena()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
+  if(name==="lobby"&&window.LobbyMusic){song=SONGS[name];LobbyMusic.start();return}   // Carsyn's lobby music (showtime.js)
   song=SONGS[name];tempoMul=1;step=0;nextT=AC.currentTime+.08;
   const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=nextT,i=0;
   timerId=setInterval(()=>{
@@ -333,7 +334,7 @@ function playSong(name){
     }
   },25);
 }
-function stopSong(){clearInterval(timerId);timerId=0;song=null}
+function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop()}
 function sfx(kind){
   if(!S.sound||!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")osc("square",1320,t,.06,.08,sfxBus);

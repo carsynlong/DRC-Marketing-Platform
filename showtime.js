@@ -412,3 +412,34 @@ window.Rules = (() => {
   }
   return { run, active: () => !!root, go };
 })();
+
+/* 🎵 Lobby music for all three games: Carsyn's recording (sfx/lobby.wav, cut from 0:06.55), looped with no gap.
+   Each game's playSong("lobby") calls LobbyMusic.start() instead of its own lobby tune; stopSong() calls LobbyMusic.stop(). */
+window.LobbyMusic = (() => {
+  let ac = null, buf = null, loading = null, src = null, gain = null, want = false;
+  function load() {
+    if (buf) return Promise.resolve(buf);
+    return loading = loading || fetch("/sfx/lobby.wav").then(r => r.arrayBuffer())
+      .then(a => new Promise((ok, no) => ac.decodeAudioData(a, ok, no))).then(b => (buf = b));
+  }
+  async function start() {
+    want = true;
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === "suspended") ac.resume();
+      await load();
+      if (!want || src) return;
+      gain = ac.createGain(); gain.gain.value = .0001; gain.connect(ac.destination); gain.gain.setTargetAtTime(.9, ac.currentTime, .15);
+      src = ac.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(gain); src.start();
+    } catch (e) { loading = null; }
+  }
+  function stop() {
+    want = false;
+    if (!src) return;
+    const s = src, g = gain; src = null; gain = null;
+    try { g.gain.setTargetAtTime(.0001, ac.currentTime, .12); } catch (e) {}
+    setTimeout(() => { try { s.stop(); g.disconnect(); } catch (e) {} }, 600);
+  }
+  function duck(v) { if (gain) gain.gain.setTargetAtTime(v, ac.currentTime, .1); }
+  return { start, stop, duck, playing: () => !!src };
+})();

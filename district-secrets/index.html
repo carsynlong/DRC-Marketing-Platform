@@ -331,7 +331,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-8";
+const BUILD="ds-build-2026-11-22-9";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -492,6 +492,7 @@ const SONGS={lobby:mkLounge(),count:mkSneak(),board:mkCaseClosed()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong();if(!musicOn||!ensureAudio())return;
+  if(name==="lobby"&&window.LobbyMusic){song=SONGS[name];LobbyMusic.start();return}   // Carsyn's lobby music (showtime.js)
   song=SONGS[name];tempoMul=1;
   const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=AC.currentTime+.08,i=0;
   timerId=setInterval(()=>{
@@ -504,15 +505,15 @@ function playSong(name){
     }
   },25);
 }
-function stopSong(){clearInterval(timerId);timerId=0;song=null}
+function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop()}
 /* 📣 Carsyn's own "the games" clip (sfx/the-games.m4a): when the game begins, on G, or by clicking "The 2026 Christmas Games".
    The music dips while it plays. */
 let gamesClip=null;
 function playGames(){
   if(!musicOn)return;
   try{gamesClip=gamesClip||new Audio("/sfx/the-games.m4a");gamesClip.currentTime=0;gamesClip.volume=1;
-    if(musicBus&&AC)musicBus.gain.setTargetAtTime(.12,AC.currentTime,.1);
-    gamesClip.onended=()=>{if(musicBus&&AC)musicBus.gain.setTargetAtTime(.5,AC.currentTime,.3)};
+    if(musicBus&&AC)musicBus.gain.setTargetAtTime(.12,AC.currentTime,.1);window.LobbyMusic&&LobbyMusic.duck(.15);
+    gamesClip.onended=()=>{if(musicBus&&AC)musicBus.gain.setTargetAtTime(.5,AC.currentTime,.3);window.LobbyMusic&&LobbyMusic.duck(.9)};
     gamesClip.play().catch(()=>{})}catch(e){}
 }
 function sfx(kind){

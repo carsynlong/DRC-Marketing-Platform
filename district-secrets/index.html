@@ -227,9 +227,16 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 @keyframes crown{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(-8px) rotate(8deg)}}
 
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9;background:var(--wax);color:#fff;font-weight:800;padding:12px 20px;border-radius:14px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);text-align:center;max-width:min(92vw,560px)}
-/* emoji reactions sent from phones float up the TV */
-.react{position:fixed;bottom:-70px;font-size:clamp(2.6rem,4.4vw,4rem);z-index:7;pointer-events:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:floatup 3.2s cubic-bezier(.3,.7,.4,1) forwards}
-@keyframes floatup{0%{transform:translate(0,0) scale(.6)}15%{transform:translate(calc(var(--dx)*.2),-12vh) scale(1.15)}100%{transform:translate(var(--dx),-86vh) rotate(var(--rot)) scale(.9);opacity:0}}
+/* emoji bursts sent from phones: a name tag pops up and a spray of little themed emojis flies out of it */
+.burst{position:fixed;z-index:7;pointer-events:none;width:0;height:0}
+.burst .tag{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;white-space:nowrap;
+  background:rgba(11,10,20,.88);border-radius:999px;padding:5px 14px 5px 5px;box-shadow:0 0 0 2px var(--gold),0 10px 24px rgba(0,0,0,.55);
+  font-weight:800;font-size:clamp(1rem,1.6vw,1.3rem);animation:tagpop 2.6s cubic-bezier(.2,1.4,.4,1) forwards}
+.burst .tag img{width:clamp(34px,3.2vw,44px);height:clamp(34px,3.2vw,44px);border-radius:50%;object-fit:cover}
+.burst .tag .e{font-size:1.5em;line-height:1}
+.burst i{position:absolute;left:0;top:0;font-style:normal;font-size:var(--s);line-height:1;transform:translate(-50%,-50%);animation:spray var(--t) cubic-bezier(.15,.7,.3,1) var(--d) forwards;opacity:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))}
+@keyframes tagpop{0%{transform:translate(-50%,-50%) scale(.2);opacity:0}12%{transform:translate(-50%,-50%) scale(1.12);opacity:1}22%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{transform:translate(-50%,-160%) scale(.95);opacity:0}}
+@keyframes spray{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}8%{opacity:1}75%{opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1.1);opacity:0}}
 /* Capitol leak: a hint that drops onto the file */
 .leak{display:inline-flex;align-items:center;gap:.6em;margin-top:12px;background:var(--parch-ink);color:var(--gold-hi);font-family:var(--type);font-size:clamp(1rem,2vw,1.4rem);padding:.45em 1em;border-radius:4px;transform:rotate(-1deg);animation:leakin .6s cubic-bezier(.2,1.5,.4,1) both;box-shadow:0 6px 14px rgba(0,0,0,.35)}
 .leak b{font-family:var(--deco);font-size:1.5em;color:#fff;letter-spacing:.1em}
@@ -500,7 +507,7 @@ async function poll(){
     if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0){flyEnvelope();sfx("seal")}
       // when each guess first showed up, for the speed bonus
       if(S.phase==="question"&&!S.locked){S.seenAt=S.seenAt||{};Object.keys(answers).forEach(n=>{if(S.seenAt[n]==null)S.seenAt[n]=S.elapsed})}}
-    if(d.react)floatReacts(d.react);
+    if(Array.isArray(d.react))floatReacts(d.react);
     if(S.phase==="lobby"&&before!==phones.join("|"))render();
     if(S.phase==="question")showSealed();
     if(S.phase==="reveal")lateAnswers();
@@ -522,19 +529,25 @@ function showSealed(){
   document.querySelectorAll(".envs .env").forEach((e,i)=>{const on=i<n;if(on!==e.classList.contains("in"))e.classList.toggle("in",on)});
   const t=$("#sealedtxt");if(t)t.innerHTML=sealedLine(n,tot);
 }
-/* emoji reactions: phones bump a counter per emoji; the TV floats up whatever is new */
-let reactSeen=null;
-function floatReacts(r){
-  if(!reactSeen){reactSeen={...r};return}       // first look after loading: don't replay old ones
-  let n=0;for(const e in r){const d=(+r[e]||0)-(+reactSeen[e]||0);
-    for(let i=0;i<Math.min(d,8)&&n<16;i++,n++)setTimeout(()=>floatOne(e),n*130+Math.random()*150)}
-  reactSeen={...r};
+/* emoji bursts: each tap on a phone pops up that person's name with a spray of little game-themed emojis */
+const SPRAY={"🤫":["🤫","🔒","🗝️","🤐"],"🔥":["🔥","🔥","✨","💥"],"🏹":["🏹","🎯","➶","✨"],"🎁":["🎁","🪂","🎀","✨"],
+  "🕵️":["🕵️","🔍","👀","❓"],"😱":["😱","💥","⚡","❗"],"😂":["😂","🤣","😆","💀"],"🎄":["🎄","❄️","⭐","🔔"]};
+let reactSeen=null;   // highest burst id already shown
+function floatReacts(list){
+  const items=list.map(x=>{try{return JSON.parse(x)}catch(e){return null}}).filter(Boolean).sort((a,b)=>a.id-b.id);
+  const top=items.length?items[items.length-1].id:0;
+  if(reactSeen==null||top<reactSeen){reactSeen=top;return}   // first look after loading (or a new game): don't replay old ones
+  items.filter(x=>x.id>reactSeen).slice(-12).forEach((x,i)=>setTimeout(()=>burst(x.name,x.e),i*170));
+  reactSeen=top;
 }
-function floatOne(e){
-  if(calm||document.hidden)return;sfx("pop");
-  const el=document.createElement("div");el.className="react";el.textContent=e;
-  el.style.left=(6+Math.random()*86)+"%";el.style.setProperty("--dx",(Math.random()*160-80)+"px");el.style.setProperty("--rot",(Math.random()*60-30)+"deg");
-  document.body.appendChild(el);setTimeout(()=>el.remove(),3400);
+function burst(name,e){
+  if(document.hidden||!NAMES.includes(name))return;sfx("pop");
+  const b=document.createElement("div");b.className="burst";
+  b.style.left=(10+Math.random()*80)+"%";b.style.top=(40+Math.random()*42)+"%";
+  const set=SPRAY[e]||[e],n=calm?0:9;let h=`<div class="tag"><img src="${AV(name)}" alt=""><span>${esc(name)}</span><span class="e">${e}</span></div>`;
+  for(let k=0;k<n;k++){const ang=-Math.PI/2+(k/(n-1)-.5)*2.4+(Math.random()-.5)*.3,dist=140+Math.random()*170;
+    h+=`<i style="--x:${(Math.cos(ang)*dist).toFixed(0)}px;--y:${(Math.sin(ang)*dist-40).toFixed(0)}px;--r:${(Math.random()*80-40).toFixed(0)}deg;--s:${(1.8+Math.random()*1.4).toFixed(2)}rem;--t:${(1.6+Math.random()*.8).toFixed(2)}s;--d:${(Math.random()*.25).toFixed(2)}s">${set[k%set.length]}</i>`}
+  b.innerHTML=h;document.body.appendChild(b);setTimeout(()=>b.remove(),3000);
 }
 const sealedLine=(n,tot)=>n>=tot&&tot?`🔏 All <b>${tot}</b> guesses sealed`:`<b>${n}</b> of ${tot} guesses sealed`;
 /* reveal: phone guesses decide who was right (the host can still fix a call) */
@@ -592,7 +605,7 @@ function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.lo
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 
 function newGame(){
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.note=""});reactSeen=null;
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
   post({action:"reset",total:Q.length}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
@@ -677,7 +690,7 @@ function lobbyView(){
       <h1 class="title">District Secrets</h1>
       <p class="tagline">Twelve tributes. ${Q.length} secrets. Every single one is true.</p>
       ${joinCard()}
-      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. Stuck? Wait for the <b>🕵️ Capitol leak</b>. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Tap the emojis on your phone to send them flying across the TV. The final secret counts double.</p>
+      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. Stuck? Wait for the <b>🕵️ Capitol leak</b>. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
     </div>
     <div class="roster">
       <div class="count" aria-label="${n} of ${on.length} signed in"><span class="n${bump?" bump":""}">${n}</span><span class="of">/ ${on.length}</span><span class="lbl">tributes signed in</span></div>

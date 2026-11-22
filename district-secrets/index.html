@@ -204,6 +204,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 /* ---------- scoreboard ---------- */
 .ledger{display:grid;gap:7px;width:100%;max-width:920px;margin-inline:auto}
 .row{display:grid;grid-template-columns:2.4em 40px minmax(0,1fr) auto;align-items:center;gap:12px;padding:7px 16px;border-radius:10px;background:rgba(27,19,40,.85);position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px var(--line);animation:rowin .5s both cubic-bezier(.2,1.3,.4,1);animation-delay:calc(var(--i)*60ms)}
+.row{text-align:left}
 .row .fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,rgba(163,24,43,.45),rgba(217,178,95,.22));transition:width 1s cubic-bezier(.2,.8,.2,1)}
 .row>*{position:relative}
 .row .rk{font-family:var(--deco);color:var(--gold-hi);font-size:1.3rem;text-align:center}
@@ -226,6 +227,32 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 @keyframes crown{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(-8px) rotate(8deg)}}
 
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9;background:var(--wax);color:#fff;font-weight:800;padding:12px 20px;border-radius:14px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);text-align:center;max-width:min(92vw,560px)}
+/* emoji reactions sent from phones float up the TV */
+.react{position:fixed;bottom:-70px;font-size:clamp(2.6rem,4.4vw,4rem);z-index:7;pointer-events:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));animation:floatup 3.2s cubic-bezier(.3,.7,.4,1) forwards}
+@keyframes floatup{0%{transform:translate(0,0) scale(.6)}15%{transform:translate(calc(var(--dx)*.2),-12vh) scale(1.15)}100%{transform:translate(var(--dx),-86vh) rotate(var(--rot)) scale(.9);opacity:0}}
+/* Capitol leak: a hint that drops onto the file */
+.leak{display:inline-flex;align-items:center;gap:.6em;margin-top:12px;background:var(--parch-ink);color:var(--gold-hi);font-family:var(--type);font-size:clamp(1rem,2vw,1.4rem);padding:.45em 1em;border-radius:4px;transform:rotate(-1deg);animation:leakin .6s cubic-bezier(.2,1.5,.4,1) both;box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.leak b{font-family:var(--deco);font-size:1.5em;color:#fff;letter-spacing:.1em}
+@keyframes leakin{0%{transform:translateX(-40px) rotate(-6deg);opacity:0;filter:blur(4px)}50%{filter:blur(0);opacity:1}70%{transform:translateX(6px) rotate(1deg)}100%{transform:rotate(-1deg)}}
+.file.glitch{animation:glitch .5s steps(2) 1}
+@keyframes glitch{20%{transform:rotate(-.6deg) translateX(-6px);filter:hue-rotate(40deg)}40%{transform:rotate(-.6deg) translateX(6px)}60%{transform:rotate(-.6deg) translateX(-3px);filter:none}}
+/* suspect board: who the room accused (never who accused them) */
+.suspects{display:grid;gap:8px;background:rgba(27,19,40,.75);border-radius:14px;padding:12px 16px;box-shadow:inset 0 0 0 1px var(--line);animation:pop .6s 1.3s both}
+.suspects h3{margin:0;font-family:var(--display);font-size:1.05rem;color:var(--muted);letter-spacing:.08em}
+.sus{display:grid;grid-template-columns:34px 7.5em minmax(0,1fr) 2.2em;align-items:center;gap:10px;font-weight:800}
+.sus img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.sus .bar{height:14px;border-radius:7px;background:var(--wax);width:0;transition:width 1s cubic-bezier(.2,.8,.2,1) 1.5s}
+.sus.real .bar{background:linear-gradient(90deg,var(--gold),var(--gold-hi))}.sus.real{color:var(--gold-hi)}
+.sus .c{text-align:right;font-variant-numeric:tabular-nums}
+.fooled{font-family:var(--type);font-size:clamp(1rem,1.8vw,1.25rem);color:var(--gold-hi);animation:pop .6s 1.6s both}
+/* end-of-game awards */
+.awards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;width:100%;max-width:900px;margin:0 auto}
+.award{display:grid;justify-items:center;gap:6px;background:var(--parch);color:var(--parch-ink);border-radius:6px;padding:14px 12px 16px;text-align:center;box-shadow:0 12px 26px rgba(0,0,0,.5),inset 0 0 40px rgba(120,80,30,.25);animation:deal .8s both cubic-bezier(.2,1.3,.4,1)}
+.award:nth-child(1){transform:rotate(-2deg)}.award:nth-child(2){transform:rotate(1.5deg)}.award:nth-child(3){transform:rotate(-1deg)}
+.award .ic{font-size:2rem}.award .t{font-family:var(--display);font-weight:900;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;color:var(--wax)}
+.award img{width:64px;height:64px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.award .nm{font-family:var(--type);font-size:1.25rem}.award .why{font-size:.85rem;color:#6b5233;font-weight:700}
+@keyframes deal{from{transform:translateY(60px) rotate(-12deg);opacity:0}}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -401,6 +428,8 @@ function sfx(kind){
     o.connect(g);g.connect(sfxBus);env(g,t,.004,.9,1.6);o.start(t);o.stop(t+1.8);setTimeout(()=>sfx("stamp"),380)}
   if(kind==="reveal"){noise(t,.25,.35,sfxBus,"bandpass",1400,1.5); // the seal cracks
     [64,67,71,76,79,83].forEach((m,k)=>osc("sine",hz(m+12),t+.25+k*.07,1.6,.07,sfxBus));[52,59,64].forEach(m=>osc("sawtooth",hz(m),t+.25,1.8,.035,sfxBus,1200,.2))}
+  if(kind==="pop"){osc("sine",hz(84+Math.random()*7|0),t,.15,.05,sfxBus)}
+  if(kind==="leak"){noise(t,.5,.25,sfxBus,"bandpass",1800,.6);[0,.14,.28].forEach((d,k)=>osc("square",hz(k===2?88:84),t+.5+d,.1,.06,sfxBus,3000))}
   if(kind==="go"){[76,83,88].forEach((m,k)=>osc("sine",hz(m),t+k*.06,1.1,.13,sfxBus))}
   if(kind==="gong"){osc("sine",hz(40),t,3,.35,sfxBus);osc("sine",hz(52),t,2.4,.14,sfxBus);osc("sine",hz(63.3),t,2,.06,sfxBus);noise(t,.6,.18,sfxBus,"bandpass",500,2)}
   if(kind==="fanfare"){ // original victor's fanfare
@@ -445,10 +474,12 @@ function snapshot(){
   const inGame=S.phase!=="lobby"&&S.qi<Q.length;
   const g={gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs};
-  if(inGame&&(S.phase==="question"||S.phase==="reveal")){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
+  if(inGame&&(S.phase==="question"||S.phase==="reveal")){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.leaked)g.leak=leakLetter()}
+  if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
+  if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
   if(inGame&&["reveal","board","final"].includes(S.phase)){g.answer=Q[S.qi].a;g.correct=S.correct}
   if(inGame){let rank=0,prev=null;
-    g.scores=ranked().map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}return {name:p.name,score:p.score,delta:p.delta,streak:p.streak,rank}})}
+    g.scores=ranked().map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}return {name:p.name,score:p.score,delta:p.delta,streak:p.streak,rank,note:p.note||""}})}
   return JSON.stringify(g);
 }
 async function push(){
@@ -460,13 +491,16 @@ async function poll(){
   if(polling)return;polling=true;lastPoll=Date.now();
   const qi=S.phase==="lobby"?null:S.qi;
   try{
-    const r=await fetch(API+(qi==null?"":`&qi=${qi}`),{cache:"no-store"});if(!r.ok)throw 0;
+    const r=await fetch(API+"&react=1"+(qi==null?"":`&qi=${qi}`),{cache:"no-store"});if(!r.ok)throw 0;
     const d=await r.json();apiOk=true;
     const had=phones,before=phones.join("|");phones=d.players.sort();
     // someone just signed in on a phone: they want to play
     if(S.phase==="lobby"&&!firstPoll)S.players.forEach(p=>{if(phones.includes(p.name)&&!had.includes(p.name)){p.on=true;sfx("seal")}});
     firstPoll=false;
-    if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0)flyEnvelope();if(S.phase==="question"&&Object.keys(answers).length>n0)sfx("seal")}
+    if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0){flyEnvelope();sfx("seal")}
+      // when each guess first showed up, for the speed bonus
+      if(S.phase==="question"&&!S.locked){S.seenAt=S.seenAt||{};Object.keys(answers).forEach(n=>{if(S.seenAt[n]==null)S.seenAt[n]=S.elapsed})}}
+    if(d.react)floatReacts(d.react);
     if(S.phase==="lobby"&&before!==phones.join("|"))render();
     if(S.phase==="question")showSealed();
     if(S.phase==="reveal")lateAnswers();
@@ -475,7 +509,7 @@ async function poll(){
 }
 function maybePoll(){
   if(document.hidden)return;
-  const key=`${S.phase}:${S.qi}:${S.locked}`,every=S.phase==="question"&&!S.locked?1000:S.phase==="lobby"?2000:0;
+  const key=`${S.phase}:${S.qi}:${S.locked}`,every=S.phase==="question"&&!S.locked?1000:1500;
   if(key!==pollKey){pollKey=key;if(every||S.phase==="question"||S.phase==="reveal")return poll()}
   if(every&&Date.now()-lastPoll>=every)poll();
 }
@@ -488,13 +522,44 @@ function showSealed(){
   document.querySelectorAll(".envs .env").forEach((e,i)=>{const on=i<n;if(on!==e.classList.contains("in"))e.classList.toggle("in",on)});
   const t=$("#sealedtxt");if(t)t.innerHTML=sealedLine(n,tot);
 }
+/* emoji reactions: phones bump a counter per emoji; the TV floats up whatever is new */
+let reactSeen=null;
+function floatReacts(r){
+  if(!reactSeen){reactSeen={...r};return}       // first look after loading: don't replay old ones
+  let n=0;for(const e in r){const d=(+r[e]||0)-(+reactSeen[e]||0);
+    for(let i=0;i<Math.min(d,8)&&n<16;i++,n++)setTimeout(()=>floatOne(e),n*130+Math.random()*150)}
+  reactSeen={...r};
+}
+function floatOne(e){
+  if(calm||document.hidden)return;sfx("pop");
+  const el=document.createElement("div");el.className="react";el.textContent=e;
+  el.style.left=(6+Math.random()*86)+"%";el.style.setProperty("--dx",(Math.random()*160-80)+"px");el.style.setProperty("--rot",(Math.random()*60-30)+"deg");
+  document.body.appendChild(el);setTimeout(()=>el.remove(),3400);
+}
 const sealedLine=(n,tot)=>n>=tot&&tot?`🔏 All <b>${tot}</b> guesses sealed`:`<b>${n}</b> of ${tot} guesses sealed`;
 /* reveal: phone guesses decide who was right (the host can still fix a call) */
 function fillAnswers(){
   const a=cur().a,got=current();
-  S.guesses={...got};
+  S.guesses={...got};S.seenAt=S.seenAt||{};Object.keys(got).forEach(n=>{if(S.seenAt[n]==null)S.seenAt[n]=S.elapsed});
   S.correct=guessers().filter(p=>matches(got[p.name],a)).map(p=>p.name);
   counted=new Set(Object.keys(got));
+}
+/* guessers who sealed a wrong guess: each one is a point for the secret's owner */
+const fooledList=()=>guessers().filter(p=>S.guesses?.[p.name]!=null&&!S.correct.includes(p.name));
+/* who the room accused this round (decoys included), most first */
+function accusations(){
+  const t={};Object.values(S.guesses||{}).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
+  return Object.entries(t).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+}
+const leakLetter=()=>{const a=cur().a;return a[0].toUpperCase()};
+function leakHTML(){const a=cur().a;return `<div class="leak">🕵️ Capitol leak: their name starts with <b>${esc(leakLetter())}</b></div>`}
+function awards(){
+  const ps=active(),best=k=>{const m=Math.max(0,...ps.map(p=>p[k]||0));return m>0?ps.filter(p=>(p[k]||0)===m):[]};
+  const out=[],add=(ic,t,k,why)=>{const w=best(k);if(w.length)out.push({ic,t,name:w.map(p=>p.name).join(" & "),av:w[0].name,why:why(w[0][k])})};
+  add("🔮","Mind Reader","right",n=>`cracked ${n} secret${n>1?"s":""}`);
+  add("🎭","Master of Disguise","fooled",n=>`fooled ${n} tribute${n>1?"s":""}`);
+  add("🕵️","Most Suspicious","accused",n=>`accused ${n} time${n>1?"s":""}`);
+  return out;
 }
 function lateAnswers(){
   if(!counted)return;const got=current(),a=cur().a;
@@ -517,7 +582,7 @@ const SAVE="ds-host-game";
 let S,raf=0,readyT=0,typeT=0,shownIn=[],shownCount=-1,hostOpen=false;
 function freshState(){
   return {phase:"lobby",secs:30,qi:0,elapsed:0,locked:false,correct:[],guesses:{},gid:0,
-    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0,move:0}))};
+    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,note:""}))};
 }
 function saved(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.players?.length===NAMES.length&&g.total===Q.length?g:null}catch(e){return null}}
 function save(){try{localStorage.setItem(SAVE,JSON.stringify({...S,total:Q.length}))}catch(e){}}
@@ -527,7 +592,7 @@ function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.lo
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 
 function newGame(){
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0});
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.note=""});reactSeen=null;
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
   post({action:"reset",total:Q.length}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
@@ -537,7 +602,7 @@ function beginQuestion(){
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}
     sfx("dial");const d=$(".dial");if(d)d.outerHTML=dialHTML(S.count)},900);
 }
-function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};hostOpen=false;S.typed=0;playSong("count");render()}
+function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};S.leaked=false;hostOpen=false;S.typed=0;playSong("count");render()}
 function tick(last){
   cancelAnimationFrame(raf);
   const loop=now=>{
@@ -548,6 +613,7 @@ function tick(last){
     const left=Math.ceil(S.secs-S.elapsed);
     if(left!==before&&left<=5&&left>0){sfx(left%2?"tick":"tock");tempoMul=1.25;$(".timer")?.classList.add("hurry")}
     drawTimer();
+    if(!S.leaked&&S.elapsed>=S.secs*2/3)leak();
     if(S.elapsed>=S.secs){lock();return}
     raf=requestAnimationFrame(loop);
   };
@@ -558,6 +624,10 @@ function drawTimer(){
   const n=$(".timer .n");if(n)n.textContent=left;
   const f=$(".fuse i"),b=$(".fuse b");if(f){f.style.width=(frac*100).toFixed(2)+"%";b.style.left=(frac*100).toFixed(2)+"%"}
 }
+function leak(){ // a third of the time left: the Capitol lets a hint slip
+  S.leaked=true;sfx("leak");const f=$(".file"),ask=$(".file .ask");
+  if(ask){ask.insertAdjacentHTML("beforebegin",leakHTML());f.classList.remove("glitch");void f.offsetWidth;f.classList.add("glitch")}
+}
 function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();poll()}
 async function reveal(){
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
@@ -566,11 +636,17 @@ async function reveal(){
 }
 function score(){
   const name=cur().a,mult=DOUBLE.has(S.qi)?2:1,before=rankMap();
+  const fooled=fooledList().length;
+  // speed bonus: up to 500 for sealing a right guess the moment the secret appears
+  const speed=n=>Math.round(500*Math.max(0,1-(S.seenAt?.[n]??S.secs)/S.secs)/10)*10*mult;
   S.players.forEach(p=>{
+    p.note="";
     if(!p.on){p.delta=0;return}
-    if(p.name!==name&&S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
-    else{p.delta=0;if(p.name!==name)p.streak=0}
+    if(p.name===name){p.delta=fooled*150*mult;p.score+=p.delta;p.fooled+=fooled;if(fooled)p.note=`🎭 Fooled ${fooled} · +${150*mult} each`;return}
+    if(S.correct.includes(p.name)){p.streak++;const sp=speed(p.name);p.delta=(1000+Math.min(p.streak-1,5)*100)*mult+sp;p.score+=p.delta;p.right++;if(sp)p.note=`⚡ Speed bonus +${sp}`}
+    else{p.delta=0;p.streak=0}
   });
+  accusations().forEach(([n,c])=>{const q=S.players.find(p=>p.name===n);if(q)q.accused+=c});
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===Q.length-1?"final":"board";
   if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),3200)}else playSong("board");
@@ -585,6 +661,7 @@ function render(){
   const v={lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,reveal:revealView,board:boardView,final:finalView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
+  if(S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".sus .bar").forEach(b=>b.style.width=b.dataset.w)));
   if(S.phase==="board"||S.phase==="final")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w)));
 }
 function lobbyView(){
@@ -600,7 +677,7 @@ function lobbyView(){
       <h1 class="title">District Secrets</h1>
       <p class="tagline">Twelve tributes. ${Q.length} secrets. Every single one is true.</p>
       ${joinCard()}
-      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Each right guess is worth <b>1,000 points</b>, plus 100 for every one in a row. The final secret counts double. If it's your own secret, keep a straight face. You can even type a decoy.</p>
+      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. Stuck? Wait for the <b>🕵️ Capitol leak</b>. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Tap the emojis on your phone to send them flying across the TV. The final secret counts double.</p>
     </div>
     <div class="roster">
       <div class="count" aria-label="${n} of ${on.length} signed in"><span class="n${bump?" bump":""}">${n}</span><span class="of">/ ${on.length}</span><span class="lbl">tributes signed in</span></div>
@@ -636,7 +713,7 @@ function questionView(){
     <div class="hdr"><span>FILE No. ${pad(S.qi+1)}</span><span>CAPITOL ARCHIVES · DISTRICT RECORDS</span></div>
     <div class="stamp ts">Top secret</div>
     <p class="fact" aria-label="${esc(x.f)}"></p>
-    <div class="ask">Whose secret is it?</div>
+    ${S.leaked?leakHTML():""}<div class="ask">Whose secret is it?</div>
     ${S.locked?'<div class="stamp sealed">Sealed</div>':""}
     <div class="fuse" aria-hidden="true"><i></i><b></b></div>
   </article>
@@ -664,12 +741,18 @@ function revealView(){
       <div class="dist">IT BELONGS TO…</div>
       <div class="who">${esc(x.a)}</div>
       <p class="said">“${esc(x.f)}”</p>
+      ${fooledList().length?`<div class="fooled">🎭 ${esc(x.a)} fooled ${fooledList().length} tribute${fooledList().length>1?"s":""}!</div>`:""}
       <div class="cracked"><h3>${line}</h3>
         ${right.length?`<div class="faces">${right.map((n,i)=>`<div class="face" style="animation-delay:${1.1+i*.12}s"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
+      ${suspectsHTML(x.a)}
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>{const own=p.name===x.a;
         return `<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled":""}>${esc(p.name)}<span>${own?"their secret":g[p.name]!=null?"guessed “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`}).join("")}</div></div>`:""}
     </div></section>
   <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`;
+}
+function suspectsHTML(real){
+  const acc=accusations().slice(0,5);if(!acc.length)return"";const max=acc[0][1];
+  return `<div class="suspects"><h3>WHO THE ROOM ACCUSED</h3>${acc.map(([n,c])=>`<div class="sus${n===real?" real":""}"><img src="${AV(n)}" alt=""><span>${esc(n)}${n===real?" ✓":""}</span><div><div class="bar" data-w="${(c/max*100).toFixed(0)}%"></div></div><span class="c">×${c}</span></div>`).join("")}</div>`;
 }
 function rows(){
   const r=ranked(),max=Math.max(1,...r.map(p=>p.score));let rank=0,prev=null;
@@ -682,7 +765,7 @@ function quip(){
   const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta).length;
   const lines=[`${lead} knows too much. The Capitol is concerned.`,`Sponsors are lining up for ${lead}.`,`Somebody send ${last} a parachute. And a hint.`,
     got===0?"Not one tribute cracked that. Secrets this good should be illegal.":`${got} tribute${got>1?"s":""} cracked that file.`,
-    hot?`${hot.name} is on fire. Nobody tell them anything.`:"Plenty of secrets left. Trust no one.",`${last}, the odds are not currently in your favor.`];
+    hot?`${hot.name} is on fire. Nobody tell them anything.`:r.find(p=>p.note.startsWith("🎭"))?`${r.find(p=>p.note.startsWith("🎭")).name} lied to all your faces. Beautifully.`:"Plenty of secrets left. Trust no one.",`${last}, the odds are not currently in your favor.`];
   return esc(lines[(S.qi*7+got)%lines.length]);
 }
 function boardView(){
@@ -699,6 +782,7 @@ function finalView(){
     <h1 style="font-size:clamp(2rem,6vw,4.4rem)">${tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" knows all! 🎄"}</h1>
     <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Sudden death: the host reads one more secret out loud.`:"Our victor claims a mystery package. Remember, no second package until everyone has one."}</p>
     <div class="podium">${pod}</div>
+    ${awards().length?`<div class="eyebrow" style="margin-top:8px">The Capitol's special honors</div><div class="awards">${awards().map((a,i)=>`<div class="award" style="animation-delay:${.6+i*.25}s"><div class="ic">${a.ic}</div><div class="t">${a.t}</div><img src="${AV(a.av)}" alt=""><div class="nm">${esc(a.name)}</div><div class="why">${a.why}</div></div>`).join("")}</div>`:""}
     <div class="ledger">${rows()}</div>
     <div class="ctl" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to the lobby</button><button class="btn" id="again">Play again</button></div></section>`;
 }

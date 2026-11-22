@@ -109,6 +109,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.15)}100%{transform:scale(1)}}
 @keyframes spinin{from{transform:scale(0) rotate(-200deg)}to{transform:none}}
 @keyframes shake{25%{transform:translateX(-10px) rotate(-4deg)}75%{transform:translateX(10px) rotate(4deg)}}
+/* emoji reactions: tap to send them flying across the TV */
+.reacts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:rgba(27,19,40,.85);border-radius:16px;padding:10px;box-shadow:inset 0 0 0 1px var(--line)}
+.reacts .lbl{grid-column:1/-1;text-align:center;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
+.reacts button{font-size:1.9rem;min-height:56px;border-radius:12px;background:rgba(255,255,255,.04);transition:transform .1s}
+.reacts button:active{transform:scale(.85);background:rgba(217,178,95,.2)}
+.fly{position:fixed;font-size:2.4rem;pointer-events:none;z-index:8;animation:fly2 1s ease-out forwards}
+@keyframes fly2{to{transform:translate(var(--dx),-55vh) scale(1.4) rotate(var(--rot));opacity:0}}
+.leak{background:var(--parch-ink);color:var(--gold-hi);font-family:var(--type);border-radius:4px;padding:.45em .8em;margin-top:10px;display:inline-block;animation:pop .5s both}
+.leak b{font-family:var(--deco);color:#fff;font-size:1.3em}
+.note{font-weight:800;color:var(--gold-hi)}
+.awards{display:grid;gap:8px;width:100%}
+.award{display:flex;align-items:center;gap:10px;background:var(--parch);color:var(--parch-ink);border-radius:6px;padding:8px 12px;text-align:left;font-weight:700;font-size:.95rem}
+.award.me{box-shadow:0 0 0 3px var(--gold),0 0 20px rgba(217,178,95,.5)}
+.award .ic{font-size:1.6rem}.award b{display:block;font-family:var(--display);color:var(--wax);font-size:.85rem;letter-spacing:.06em;text-transform:uppercase}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -164,6 +178,18 @@ async function join(name){
   }catch(e){toast("No connection. Try again.")}
   poll();
 }
+/* emoji reactions */
+const EMOJI=["😂","😱","🤫","🔥","🎄","🤯","👀","❤️"];
+let lastReact=0;
+async function react(e,btn){
+  const now=Date.now();if(now-lastReact<350)return;lastReact=now;
+  sfx("tap");buzz(10);
+  if(!calm){const r=btn.getBoundingClientRect(),el=document.createElement("div");el.className="fly";el.textContent=e;
+    el.style.left=r.left+r.width/2-18+"px";el.style.top=r.top+"px";el.style.setProperty("--dx",(Math.random()*80-40)+"px");el.style.setProperty("--rot",(Math.random()*50-25)+"deg");
+    document.body.appendChild(el);setTimeout(()=>el.remove(),1000)}
+  try{await post("/api/react",{name:myName,e})}catch(err){}
+}
+const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to send to the TV</div>${EMOJI.map(e=>`<button data-react="${e}" aria-label="Send ${e}">${e}</button>`).join("")}</div>`;
 async function leave(){try{await post("/api/join",{leave:true})}catch(e){}myName=null;store.set("ds-name",null);poll()}
 async function send(text){
   const g=D.game;text=String(text||"").trim();if(!text||!g)return;
@@ -235,7 +261,7 @@ function header(){
 }
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
-const fileCard=g=>`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${esc(g.fact||"")}”</p></div>`;
+const fileCard=g=>`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${esc(g.fact||"")}”</p>${g.leak?`<div class="leak">🕵️ Leak: starts with <b>${esc(g.leak)}</b></div>`:""}</div>`;
 
 function view(){
   const g=D.game;
@@ -252,7 +278,7 @@ function view(){
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
     return [key+"in",`<section class="msg"><div class="eyebrow">Signed in</div>
       <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
-      <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p></section>${soundBtn()}${notYou}`,"welcome"];
+      <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p></section>${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
   if(g.phase==="roundcard")return [key,header()+msg("🗝️","The vault opens","<p>Eyes on the TV. You'll type your guesses here.</p>")+soundBtn()];
@@ -262,9 +288,9 @@ function view(){
   if(g.phase==="question"){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
     if(mine)return [key+"sealed:"+mine,header()+`<section class="msg">${ENV}<h1>Sealed!</h1>
-      <p class="said">${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b></p><p>Only you can see this. Eyes on the TV for the reveal.</p></section>`,"seal"];
+      <p class="said">${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b></p><p>Only you can see this. Eyes on the TV for the reveal.</p></section>${reactBar()}`,"seal"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you sealed a guess. Get the next one!</p>","wrong"),"wrong"];
-    return [key+"ask"+mineSecret,header()+fileCard(g)+(mineSecret
+    return [key+"ask"+mineSecret+(g.leak||""),header()+fileCard(g)+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
@@ -272,21 +298,21 @@ function view(){
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer;
-    if(g.answer===D.me)return [key+"own",header()+msg("🤫","Your secret is out!",`<p>Everyone knows now, ${esc(D.me)}. No points for your own secret, but how many did you fool?</p>`,"right"),"right"];
+    if(g.answer===D.me)return [key+"own",header()+msg("🎭","Your secret is out!",g.fooled?`<p class="said">You fooled ${g.fooled} tribute${g.fooled>1?"s":""}!</p><p>That's 150 points each, coming up on the scoreboard.</p>`:`<p>Nobody was fooled, ${esc(D.me)}. They know you too well.</p>`,"right")+reactBar(),"right"];
     const right=(g.correct||[]).includes(D.me);
     return [key+right+mine,header()+(right
       ?msg("🗝️","You cracked it!",`<p class="said">It's ${esc(g.answer)}!</p>`,"right")
-      :msg("🔒","Not this time",`<p class="said">It's ${esc(g.answer)}.</p><p>${mine?`You guessed ${esc(mine)}.`:"You didn't seal a guess."}</p>`,"wrong")),right?"right":"wrong"];
+      :msg("🔒","Not this time",`<p class="said">It's ${esc(g.answer)}.</p><p>${mine?`You guessed ${esc(mine)}.`:"You didn't seal a guess."}</p>`,"wrong"))+reactBar(),right?"right":"wrong"];
   }
   if(g.phase==="board"){
     const got=s&&s.delta>0;
     return [key+(s?.score),header()+msg(got?"🎉":"🕯️",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:"No points",
-      `${s?.streak>=3?`<div class="onfire">🔥 You're on fire 🔥</div>`:""}${s?.streak>1?`<p class="said">${s.streak} in a row</p>`:""}<p>You're <b style="color:var(--ink)">#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")+soundBtn()];
+      `${s?.note?`<p class="note">${esc(s.note)}</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire 🔥</div>`:""}${s?.streak>1?`<p class="said">${s.streak} in a row</p>`:""}<p>You're <b style="color:var(--ink)">#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")+reactBar()+soundBtn()];
   }
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You know all!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>`,won?"win":"")+soundBtn(),won?"win":""];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }
@@ -298,10 +324,13 @@ function render(){
   const key=k+(offline>2?"off":"");
   if(key===lastKey)return;   // nothing changed: leave the screen alone (keeps your typing)
   lastKey=key;
+  const typing=$("#g")?.value,focused=document.activeElement?.id==="g";   // keep a half-typed guess when the screen redraws
   $("#app").innerHTML=(offline>2?`<div class="offline">Reconnecting…</div>`:"")+html;
+  const gi=$("#g");if(gi&&typing){gi.value=typing;if(focused)gi.focus()}
   document.querySelectorAll("[data-name]").forEach(b=>b.onclick=()=>join(b.dataset.name));
   const f=$("#guess");if(f)f.onsubmit=e=>{e.preventDefault();const i=$("#g");if(!i.value.trim()){i.focus();return}i.blur();send(i.value)};
   const l=$("#leave");if(l)l.onclick=leave;
+  document.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>react(b.dataset.react,b));
   const sb=$("#snd");if(sb)sb.onclick=()=>{sound=!sound;store.set("ds-sound",sound?"on":"off");lastKey="";render();sfx("tap")};
   countUp();effect(fx);
   const s=meScore();if(s)shownScore=s.score;

@@ -101,6 +101,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .typeit{animation:rise .5s cubic-bezier(.2,1.3,.4,1) both}
 .me .pts.bump{animation:bump .7s}
 .gift{animation:bump 1s ease-in-out infinite alternate}
+.tip{min-height:2.6em;text-align:center;color:var(--gold);font-weight:800;font-size:.95rem;max-width:30ch;margin:0 auto;transition:opacity .4s}
+.tiphint{text-align:center;color:var(--muted);font-size:.8rem;margin:0}
 .switch{display:block;margin:4px auto 0;background:transparent;color:var(--ink);font-weight:800;font-size:1rem;padding:.75em 1.3em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);min-height:52px;animation:rise .5s .4s both}
 .switch:active{background:var(--night-2)}
 @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
@@ -164,6 +166,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 <div class="toast" id="toast" hidden></div>
 
 <script src="phone-fx.js"></script>
+<script src="ambient.js"></script>
 <script>
 const SHAPES=[
  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 22 20H2z" fill="#fff"/></svg>',
@@ -270,6 +273,14 @@ function countUp(){
     (function step(t){const k=Math.min(1,(t-t0)/d),e=1-Math.pow(1-k,3);el.textContent=Math.round(a+(b-a)*e).toLocaleString();if(k<1)requestAnimationFrame(step)})(t0);
   });
 }
+/* arena tips that rotate while you wait */
+const TIPS=["Sponsors love a confident tribute.","Never eat berries you can't name.","Tracker jackers hate being swatted. Swat them anyway.",
+  "Find water first. Then find the cocoa.","The President is watching. Smile.","Camouflage tip: wear the ugly sweater.",
+  "A care package could be bread. Or burn cream. Or socks.","Stay out of the bushes. Something buzzes in there.",
+  "Allies are good. Allies who share cookies are better.","The bird knows things. Listen to the bird.","Keep your eyes on the TV and your hands off the berries.",
+  "Every face you know is a step closer to victory.","Hold your phone like it's your last arrow."];
+let tipT=0,tipI=Math.random()*TIPS.length|0;
+function startTips(){clearInterval(tipT);const el=$("#tip");if(!el)return;const show=()=>{el.style.opacity=0;setTimeout(()=>{el.textContent="💡 "+TIPS[tipI++%TIPS.length];el.style.opacity=1},350)};show();tipT=setInterval(show,4500)}
 function effect(fx){
   const SND={reap:"reap",gong:"gong",gift:"gift",whistle:"whistle",lock:"lock",cannon:"cannon",right:"right",own:"right",wrong:"wrong",points:"points",fire:"fire",win:"win",final:"gong"};
   if(SND[fx])PFX.sfx(SND[fx]);
@@ -309,7 +320,7 @@ function view(){
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
   const notYou=`<button class="switch" id="leave">🔄 Not ${esc(D.me)}? Switch name</button>`;
   if(g.phase==="lobby")return [key+playing, header()+(playing
-    ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div></div><p>You're in! Eyes on the TV. The Games begin soon.</p></section>`
+    ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div></div><p>You're in! Eyes on the TV. The Games begin soon.</p><p class="tiphint">🪂 While you wait: tap the care packages, swat the wasps, catch the bird!</p></section>`
     :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+soundBar()+notYou,playing?"reap":""];
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
 
@@ -324,8 +335,8 @@ function view(){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
     if(mine&&g.mode==="choice"&&g.choices.includes(mine))return [key+"done:"+mine,header()+`<div class="shot">${ART.arrow}${ART.target}</div><div class="locked-in"><span class="lk">🔒</span> Locked in!</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:0" class="tile k${k} ${n===mine?"sel":"dim"}" disabled aria-pressed="${n===mine}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>
-      <p class="muted" style="text-align:center;margin:0">Eyes on the TV for the reveal.</p>`,"lock"];
-    if(mine)return [key+"done:"+mine,header()+`<section class="msg"><div class="shot">${ART.arrow}${ART.target}</div><h1>Locked in!</h1><p class="said">You said <b>${esc(mine)}</b></p><p>Eyes on the TV for the reveal.</p></section>`,"lock"];
+      <p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages for sponsor gifts!</p>`,"lock"];
+    if(mine)return [key+"done:"+mine,header()+`<section class="msg"><div class="shot">${ART.arrow}${ART.target}</div><h1>Locked in!</h1><p class="said">You said <b>${esc(mine)}</b></p><p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages for sponsor gifts!</p></section>`,"lock"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you answered. Get the next one!</p>","late"),"cannon"];
     if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:${k}" class="tile k${k}" data-ans="${esc(n)}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>`,"whistle"];
@@ -369,6 +380,10 @@ function render(){
   const mb=$("#mus");if(mb)mb.onclick=()=>{PFX.toggle("music");lastKey="";render()};
   const ph=D.game?.phase;PFX.music(!D.me?null:ph==="lobby"?"jingle":ph==="board"||ph==="final"?"deck":null);
   countUp(); effect(fx);
+  const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name]");
+  if(!D.me||asking||!D.game){Ambient.set("off");if(asking)Ambient.clear()}
+  else Ambient.set("full",{tap:true,sound:k=>PFX.sfx(k),burst:()=>FX(30,"mid"),max:5,every:[1300,2400]});
+  startTips();
   const s=meScore(); if(s) shownScore=s.score;
 }
 poll();

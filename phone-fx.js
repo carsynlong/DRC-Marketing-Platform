@@ -58,6 +58,11 @@ const PFX = (() => {
     // a sponsor parachute drifting down
     gift: t => { noise(t, .9, .2, sfxBus, "bandpass", 1200, .5); bells(t + .2, 14, .09); osc("sine", hz(88), t + .9, .8, .12, sfxBus); },
     points: t => { for (let k = 0; k < 8; k++) osc("triangle", hz(84 + (k % 4) * 2), t + k * .06, .08, .08, sfxBus); },
+    // a tracker jacker getting swatted
+    buzz: t => { const o = AC.createOscillator(), g = AC.createGain(), lfo = AC.createOscillator(), lg = AC.createGain();
+      o.type = "sawtooth"; o.frequency.value = 190; lfo.frequency.value = 38; lg.gain.value = 60; lfo.connect(lg); lg.connect(o.frequency);
+      o.connect(g); g.connect(sfxBus); env(g, t, .01, .12, .45); o.start(t); lfo.start(t); o.stop(t + .5); lfo.stop(t + .5);
+      noise(t + .42, .12, .4, sfxBus, "lowpass", 600); },
     gong: t => { osc("sine", hz(45), t, 2.2, .35, sfxBus); osc("sine", hz(57), t, 1.8, .14, sfxBus); noise(t, .5, .18, sfxBus, "bandpass", 600, 2); },
     fire: t => { noise(t, .9, .3, sfxBus, "bandpass", 700, .6); noise(t + .1, .6, .2, sfxBus, "highpass", 4000); },
     win: t => { [[60, 0], [64, .15], [67, .3], [72, .45], [67, .75], [72, .9]].forEach(([m, d], k) => { const l = k === 5 ? 1.6 : .3;

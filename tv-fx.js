@@ -30,6 +30,8 @@
   @keyframes fxflick{from{filter:brightness(1)}to{filter:brightness(1.15) saturate(1.25)}}
   .roster .p.new img{animation:fxignite 1.2s ease-out}
   @keyframes fxignite{0%{box-shadow:0 0 0 3px #ff7a1a,0 0 0 0 rgba(255,110,20,.9)}60%{box-shadow:0 0 0 3px #ffb300,0 0 0 22px rgba(255,110,20,0)}100%{box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(232,176,75,.7)}}
+  .fx-rose{display:inline-block;margin-left:.4em;animation:fxrose 2s ease-in-out infinite alternate}
+  @keyframes fxrose{from{transform:rotate(-12deg)}to{transform:rotate(12deg) scale(1.15)}}
   .round-card .emblem{animation:fxflyin 1.1s cubic-bezier(.2,1.3,.4,1) both}
   @keyframes fxflyin{from{transform:translate(-60vw,-20vh) rotate(-30deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
   @media (prefers-reduced-motion:reduce){.fx-layer,.fx-flash{display:none}*{animation:none!important}}
@@ -79,7 +81,13 @@
   }
 
   function blaze() {
-    document.querySelectorAll(".row").forEach(r => {
+    // last place gets a rose from the President
+    const rows = [...document.querySelectorAll(".board .row")], last = rows[rows.length - 1];
+    if (rows.length > 2 && last && !last.querySelector(".fx-rose")) {
+      rows.forEach(r => r.querySelector(".fx-rose")?.remove());
+      last.querySelector(".nm")?.insertAdjacentHTML("beforeend", ' <span class="fx-rose" title="A rose from the President">🌹</span>');
+    }
+    rows.forEach(r => {
       const m = r.querySelector(".streak")?.textContent.match(/(\d+) in a row/);
       r.classList.toggle("fx-blaze", !!m && +m[1] >= 3);
     });
@@ -98,6 +106,11 @@
     }
     if (now.phase === "question" && now.locked && !prev.locked && prev.phase === "question" && prev.qi === now.qi) cannon();
     if (now.phase === "board" || now.phase === "final") blaze();
+    // floating things: plenty in the lobby and between faces; only along the edges while a face is up
+    const amb = now.phase === "lobby" || now.phase === "roundcard" || now.phase === "final" ? ["full", { max: 8, every: [900, 1800] }]
+      : now.phase === "question" && !now.locked ? ["edges", { max: 6, every: [1000, 1900] }]
+      : now.phase === "board" ? ["edges", { max: 5, every: [1300, 2300] }] : ["off"];
+    if (typeof Ambient !== "undefined") Ambient.set(...amb);
     prev = now;
   }, 100);
 })();

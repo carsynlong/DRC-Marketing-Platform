@@ -282,7 +282,25 @@ function mkDeck(){ // "Deck the Halls" (traditional Welsh), scoreboard strut
     for(let k=0;k<4;k++)ev.push([b+k/2,"sleigh",0,.5,k%2?.5:.8])});
   return {bpm:128,len:18,ev};
 }
-const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck()};
+/* An original arena theme (written for this game): war drums, low brass, a heroic minor-key horn line. */
+INST.horn=(t,m,d,v)=>{const o=AC.createOscillator(),o2=AC.createOscillator(),f=AC.createBiquadFilter(),g=AC.createGain();
+  o.type="sawtooth";o2.type="sawtooth";o.frequency.value=hz(m);o2.frequency.value=hz(m)*1.004;f.type="lowpass";f.frequency.setValueAtTime(500,t);f.frequency.linearRampToValueAtTime(1700,t+.12);
+  o.connect(f);o2.connect(f);f.connect(g);g.connect(musicBus);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v*.11,t+.08);g.gain.setValueAtTime(v*.11,t+d*.85);g.gain.exponentialRampToValueAtTime(.0001,t+d+.15);
+  o.start(t);o2.start(t);o.stop(t+d+.2);o2.stop(t+d+.2)};
+INST.pad=(t,m,d,v)=>{osc("triangle",hz(m),t,d*.98,v*.07,musicBus,1200)};
+INST.taiko=(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(m||110,t);o.frequency.exponentialRampToValueAtTime(42,t+.35);
+  o.connect(g);g.connect(musicBus);env(g,t,.003,v*.9,.6);o.start(t);o.stop(t+.7);noise(t,.08,v*.25,musicBus,"lowpass",900)};
+function mkArena(){
+  const ev=[],mel=[[62,2],[65,1],[69,1],[70,3],[69,.5],[67,.5],[65,2],[69,2],[67,4],[62,2],[65,1],[69,1],[74,3],[72,.5],[70,.5],[70,2],[67,2],[69,4]];
+  seq(mel,"horn").forEach(e=>ev.push(e));
+  const chords=[[50,53,57],[46,50,53],[53,57,60],[48,52,55],[50,53,57],[46,50,53],[43,46,50],[45,49,52]], roots=[38,34,41,36,38,34,31,33];
+  chords.forEach((c,i)=>{const b=i*4;c.forEach(m=>ev.push([b,"pad",m,4,1]));ev.push([b,"bass",roots[i],2,1],[b+2,"bass",roots[i],2,.8]);
+    [[0,1,120],[1.5,.7,90],[2,1,120],[2.75,.6,90],[3,.9,100],[3.5,.6,80]].forEach(([o,v,f])=>ev.push([b+o,"taiko",f,1,v]));
+    if(i%4===3)for(let k=0;k<8;k++)ev.push([b+2+k*.25,"snare",0,.25,.35+k*.06]);
+    for(let k=0;k<4;k++)ev.push([b+k,"hat",0,.5,.4])});
+  return {bpm:96,len:32,ev};
+}
+const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),arena:mkArena()};
 function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
@@ -350,7 +368,7 @@ function newGame(){
 }
 function roundCardOrQuestion(){
   const rc=ROUNDS.find(r=>r.at===S.qi);
-  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();return}
+  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
   beginQuestion();
 }
 let readyT=0;
@@ -442,7 +460,7 @@ function lobbyView(){
     <div class="settings"><span class="tiny">Seconds per face</span>
       <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
       ${sndBtn()}</div>
-    <div class="settings"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
+    <div class="settings"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in 2 rounds · press Space to move on</div>
   </section>`;
 }
@@ -543,7 +561,8 @@ function wire(){
   on("go",newGame);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
+  on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
+  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 document.addEventListener("keydown",e=>{
@@ -555,6 +574,7 @@ document.addEventListener("keydown",e=>{
 window.claude?.hot?.snapshot?.(()=>S);
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? Sync.saved());
 </script>
+<script src="ambient.js"></script>
 <script src="tv-fx.js"></script>
 
 </body></html>

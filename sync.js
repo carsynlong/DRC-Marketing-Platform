@@ -222,6 +222,7 @@ const Sync = (() => {
       const g = JSON.parse(localStorage.getItem(SAVE)) || {};
       // A game saved before faces were added or removed would replay the old list: start fresh instead.
       if (g.rounds?.length && g.rounds.length !== Q.length) return {};
+      if (g.phase) g.mode = "type"; // the game is typed-only now
       return g;
     } catch (e) { return {}; }
   }

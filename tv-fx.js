@@ -21,8 +21,8 @@
   .fx-chute{position:absolute;left:50%;top:0;width:clamp(140px,16vw,220px);margin-left:calc(clamp(140px,16vw,220px)/-2);animation:fxdrift 3s ease-in-out both,fxsway 1.8s 3s ease-in-out infinite alternate}
   @keyframes fxdrift{from{transform:translateY(-110%) rotate(-14deg)}to{transform:translateY(18vh) rotate(0)}}
   @keyframes fxsway{from{transform:translateY(18vh) rotate(-6deg)}to{transform:translateY(18vh) rotate(6deg)}}
-  .fx-bird{position:absolute;top:12vh;left:-20vw;width:clamp(90px,11vw,150px);animation:fxswoop 2.6s cubic-bezier(.45,.05,.4,1) both}
-  @keyframes fxswoop{0%{transform:translate(0,0) rotate(8deg)}50%{transform:translate(65vw,8vh) rotate(-6deg)}100%{transform:translate(135vw,-14vh) rotate(-18deg)}}
+  .fx-bird{position:absolute;top:1vh;left:-20vw;width:clamp(70px,8vw,110px);animation:fxswoop 2.6s cubic-bezier(.45,.05,.4,1) both}
+  @keyframes fxswoop{0%{transform:translate(0,4vh) rotate(8deg)}50%{transform:translate(65vw,0) rotate(-6deg)}100%{transform:translate(135vw,-6vh) rotate(-18deg)}}
   .fx-beam{position:absolute;top:-10vh;width:22vw;height:130vh;background:linear-gradient(rgba(255,241,200,.38),rgba(255,241,200,0) 80%);transform-origin:50% 0;filter:blur(6px);animation:fxsweep 2.2s ease-in-out both}
   @keyframes fxsweep{0%{opacity:0;transform:rotate(var(--a))}20%{opacity:1}100%{opacity:0;transform:rotate(calc(var(--a) * -1))}}
   .row.fx-blaze{box-shadow:0 0 0 2px #ff7a1a,0 0 26px rgba(255,90,20,.65)!important;animation:fxflick .22s infinite alternate}

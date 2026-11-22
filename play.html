@@ -395,7 +395,7 @@ function render(){
   countUp(); effect(fx);
   const asking=document.querySelector("[data-ans]:not(:disabled),#typeit,[data-name]");
   if(!D.me||asking||!D.game){Ambient.set("off");if(asking)Ambient.clear()}
-  else Ambient.set("full",{tap:true,sound:k=>PFX.sfx(k),burst:()=>FX(30,"mid"),coin:addCoin,max:5,every:[1300,2400]});
+  else Ambient.set("full",{tap:true,sound:k=>PFX.sfx(k),burst:()=>FX(30,"mid"),coin:addCoin,max:3,every:[2000,3400]});
   startTips();
   const s=meScore(); if(s) shownScore=s.score;
 }

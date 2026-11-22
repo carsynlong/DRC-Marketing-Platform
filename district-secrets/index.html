@@ -841,8 +841,8 @@ let lastArena="";
 function arena(){
   if(typeof Ambient==="undefined")return;
   const ph=S.phase,k=`${ph}:${S.qi}:${S.locked}`;
-  const m=ph==="lobby"||ph==="roundcard"||ph==="final"||ph==="ready"?["full",{theme:"ds",max:8,every:[900,1800]}]
-    :ph==="question"||ph==="board"?["edges",{theme:"ds",max:6,every:[1100,2000]}]:["off"];
+  const m=ph==="lobby"||ph==="roundcard"||ph==="final"||ph==="ready"?["full",{theme:"ds",max:5,every:[1500,2800]}]
+    :ph==="question"||ph==="board"?["edges",{theme:"ds",max:3,every:[2000,3400]}]:["off"];
   Ambient.set(...m);
   if(k!==lastArena){ if(ph==="question"&&!S.locked&&!lastArena.startsWith("question:"+S.qi))sweep(); lastArena=k; }
 }

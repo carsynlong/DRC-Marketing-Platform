@@ -312,6 +312,22 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 @keyframes eq{from{height:4px}to{height:18px}}
 @media (max-width:860px){.steps{grid-template-columns:1fr}}
 @media (max-width:860px){.story{grid-template-columns:1fr}}
+/* ---------- the last 10 seconds: a giant red number, the screen glowing red; then TIME'S UP ---------- */
+#redzone{position:fixed;inset:0;z-index:7;pointer-events:none;display:grid;place-items:center;
+  background:radial-gradient(ellipse at 50% 50%,rgba(200,20,30,calc(var(--heat,0)*.18)) 0,rgba(200,10,20,calc(.25 + var(--heat,0)*.55)) 100%);
+  box-shadow:inset 0 0 calc(60px + var(--heat,0)*180px) rgba(255,30,30,calc(.4 + var(--heat,0)*.5));transition:background .6s,box-shadow .6s;animation:throb 1s ease-in-out infinite}
+#redzone .n{font-family:var(--deco);font-size:clamp(9rem,30vw,22rem);line-height:1;color:#fff;opacity:.92;
+  text-shadow:0 0 30px #ff2a2a,0 0 80px #ff2a2a,0 8px 0 #5e0a17;animation:boom10 .9s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes throb{50%{filter:brightness(1.25)}}
+@keyframes boom10{0%{transform:scale(2.6);opacity:0}25%{transform:scale(.92);opacity:.95}45%{transform:scale(1.05)}100%{transform:scale(1);opacity:.55}}
+#timesup{position:fixed;inset:0;z-index:9;pointer-events:none;display:grid;place-items:center;background:rgba(180,0,10,.55);animation:tuout 2.2s ease-in forwards}
+#timesup div{font-family:var(--deco);font-weight:900;font-size:clamp(4rem,13vw,10rem);color:#fff;text-align:center;line-height:.95;
+  text-shadow:0 0 40px #ff2a2a,0 10px 0 #5e0a17;animation:slamtu .55s cubic-bezier(.3,1.7,.5,1) both}
+#timesup small{display:block;font-family:var(--display);font-size:.28em;letter-spacing:.2em;margin-top:.4em}
+@keyframes slamtu{from{transform:scale(3.5) rotate(-8deg);opacity:0}to{transform:rotate(-3deg);opacity:1}}
+@keyframes tuout{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+body.shake .app{animation:quake .5s}
+@keyframes quake{20%{transform:translate(-14px,6px)}40%{transform:translate(12px,-8px)}60%{transform:translate(-8px,4px)}80%{transform:translate(6px,-2px)}}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -331,7 +347,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-11";
+const BUILD="ds-build-2026-11-22-12";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -514,6 +530,10 @@ function sfx(kind){
   if(kind==="click")noise(t,.02,.25,sfxBus,"bandpass",5000,8);
   if(kind==="dial"){for(let k=0;k<6;k++)noise(t+k*.06,.02,.25,sfxBus,"bandpass",4200+k*150,8);INST.taiko(t+.38,0,0,1.1)}
   if(kind==="stamp"){INST.taiko(t,0,0,1.4);noise(t,.15,.5,sfxBus,"lowpass",600)}
+  if(kind==="buzzer"){[110,116.5,220].forEach((f,k)=>osc(k===2?"square":"sawtooth",f,t,1.3,k===2?.05:.12,sfxBus,1800,.01));noise(t,1.2,.06,sfxBus,"bandpass",900,1)}
+  if(kind==="bigtick"){const left=arguments[1]||5,hot=(10-left)/9;
+    noise(t,.05,.45+hot*.3,sfxBus,"bandpass",left%2?3800:2600,5);osc("sine",hz(left<=3?84:79),t,.18,.06+hot*.08,sfxBus);
+    INST.heart(t+.02,0,0,.6+hot*.6);if(left<=3)INST.heart(t+.5,0,0,.9)}
   if(kind==="cannon"){noise(t,2.4,.9,sfxBus,"lowpass",360);const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(85,t);o.frequency.exponentialRampToValueAtTime(24,t+1.1);
     o.connect(g);g.connect(sfxBus);env(g,t,.004,.9,1.6);o.start(t);o.stop(t+1.8);setTimeout(()=>sfx("stamp"),380)}
   if(kind==="reveal"){noise(t,.25,.35,sfxBus,"bandpass",1400,1.5); // the seal cracks
@@ -569,6 +589,7 @@ function snapshot(){
     howto:window.Rules&&Rules.active()?"secrets":undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
   if(S.phase==="interro")g.hot=S.hot;
+  if(S.phase==="question"&&!S.locked){const left=Math.ceil(S.secs-S.elapsed);if(left<=10)g.left=left}
   if(S.phase==="howto")g.howI=howI;   // which rule the TV is reading, so phones show the same one
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
   if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
@@ -781,7 +802,7 @@ function tick(last){
     const before=Math.ceil(S.secs-S.elapsed);
     S.elapsed=Math.min(S.secs,S.elapsed+dt);
     const left=Math.ceil(S.secs-S.elapsed);
-    if(left!==before&&left<=5&&left>0){sfx(left%2?"tick":"tock");tempoMul=1.25;$(".timer")?.classList.add("hurry")}
+    if(left!==before&&left<=10&&left>0)redzone(left);
     drawTimer();
     if(S.elapsed>=S.secs){lock();return}
     raf=requestAnimationFrame(loop);
@@ -793,7 +814,21 @@ function drawTimer(){
   const n=$(".timer .n");if(n)n.textContent=left;
   const f=$(".fuse i"),b=$(".fuse b");if(f){f.style.width=(frac*100).toFixed(2)+"%";b.style.left=(frac*100).toFixed(2)+"%"}
 }
-function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();poll()}
+/* the last 10 seconds: giant red number, red edges getting hotter, a loud tick and a quickening heartbeat */
+function redzone(left){
+  let z=$("#redzone");if(!z){z=document.createElement("div");z.id="redzone";z.setAttribute("aria-hidden","true");document.body.appendChild(z)}
+  z.style.setProperty("--heat",((10-left)/9).toFixed(2));z.innerHTML=`<div class="n">${left}</div>`;
+  sfx("bigtick",left);if(left<=5){tempoMul=1.3;$(".timer")?.classList.add("hurry")}else tempoMul=1.12;
+}
+function clearRedzone(){$("#redzone")?.remove()}
+/* time's up: buzzer, cannon, a big TIME'S UP slammed on the screen, the announcer, then the SEALED stamp */
+function timesUp(){
+  clearRedzone();if(calm)return;
+  const t=document.createElement("div");t.id="timesup";t.innerHTML=`<div>⏰ TIME'S UP!<small>GUESSES ARE SEALED</small></div>`;document.body.appendChild(t);setTimeout(()=>t.remove(),2300);
+  document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake");
+  try{if(musicOn&&window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance("Time's up! Guesses are sealed.");u.rate=1.05;u.pitch=.9;setTimeout(()=>speechSynthesis.speak(u),900)}}catch(e){}
+}
+function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("buzzer");setTimeout(()=>sfx("cannon"),350);timesUp();render();poll()}
 /* after the guesses lock: the Interrogation (if it's on and anyone was accused), then the reveal */
 async function afterLock(){
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
@@ -863,6 +898,7 @@ const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${musicOn}">$
 function render(){
   cancelAnimationFrame(raf);clearInterval(typeT);clearInterval(clockT);
   if(S.phase!=="interro"){clearInterval(drumT);drumT=0}
+  if(S.phase!=="question"||S.locked)clearRedzone();
   const v={howto:howView,lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
   if(S.phase==="interro"){startClock(".interro .clock",15,S.hotAt||Date.now(),()=>{clearInterval(drumT);drumT=0;sfx("stamp")});

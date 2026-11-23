@@ -162,7 +162,10 @@ const openBtn=(url,label,cls="")=>`<a class="btn bigbtn ${cls}" href="${url}" ta
 /* ---------- slide builders ---------- */
 function gameTitle(k){
   const g=GAMES[k];
-  return {id:"game-"+k,music:null,enter(){XM.sfx("gong");setTimeout(()=>XM.sfx("stinger"),500);setTimeout(()=>XM.confetti(90),900)},
+  return {id:"game-"+k,music:null,enter(el){XM.sfx("gong");setTimeout(()=>XM.sfx("stinger"),500);setTimeout(()=>XM.confetti(90),900);
+      // excited announcer: "Game three! ... Mitten Mayhem!"
+      announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;
+      setTimeout(()=>ok()&&announcer.say(`Game ${NUM[g.n]}!`,()=>setTimeout(()=>ok()&&announcer.say(`${g.name.replace("?","")}!`,null,{pitch:1.35,rate:1.12,female:true}),200),{pitch:1.3,rate:1.1,female:true,fallback:700}),900)},
     html:()=>`<div class="burst" style="--gc:${g.color}"></div><div class="vign"></div>${tbBtn(k)}
     <div style="position:relative;display:grid;justify-items:center;gap:34px">
       <span class="pill drop" ${d(.1)}>GAME ${g.n}</span>
@@ -340,7 +343,7 @@ const SLIDES=[
  // GAME 1
  gameTitle("cookie"),
  howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Winners go back on the wheel until one cookie champion is left. They win a major award."),
- wheelSlide("cookie"),videoSlide("cookie"),tieSlide("cookie"),
+ wheelSlide("cookie"),tieSlide("cookie"),
  // GAME 2
  gameTitle("tribute"),
  // GAME 3
@@ -358,13 +361,12 @@ const SLIDES=[
  // GAME 5
  gameTitle("scoop"),
  howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Winners go back on the wheel until one scoop champion is left. They win a major award."),
- wheelSlide("scoop"),videoSlide("scoop"),tieSlide("scoop"),
+ wheelSlide("scoop"),tieSlide("scoop"),
  // GAME 6
  gameTitle("secrets"),
  // GAME 7
  gameTitle("lrc"),
  howTo("lrc",["Everyone starts with 3 chips","Roll one die for each chip you have (up to 3)","L passes a chip left, R passes right, C sends it to the Capitol","Dots? Lucky you. Keep that chip"],"Last tribute holding chips wins the Capitol's pot and a major award."),
- videoSlide("lrc"),
  orderSlide("lrc","Shuffle to see who rolls first. Play goes in this order."),
  tieSlide("lrc"),
  // GAME 8

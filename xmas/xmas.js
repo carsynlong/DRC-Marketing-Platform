@@ -317,7 +317,7 @@ XM.tiebreaker=function(opts={}){
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
 };
-function closeTB(){clearT();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
+function closeTB(){clearT();XM.hush();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
 XM.closeTiebreaker=closeTB;
 const tied=()=>XM.NAMES.filter(n=>T.picked.has(n));
 const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">DISTRICT ${t.d}</span></button>`};
@@ -403,15 +403,15 @@ function toggleOut(n){
 /* --- tools --- */
 const fmt=ms=>{const s=ms/1000;return s<60?s.toFixed(1):Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")};
 const TOOLS={
-  stopwatch:{html:()=>`<div class="clock" id="tb-clock">0.0</div><div class="row"><button class="btn red" id="tb-start" style="font-size:1.3rem">3, 2, 1, GO!</button><button class="btn ghost" id="tb-stop">Stop</button></div>`,
+  stopwatch:{html:()=>`<div class="clock" id="tb-clock">0.0</div><div class="row"><button class="btn red" id="tb-start" style="font-size:1.3rem">5, 4, 3, 2, 1, GO!</button><button class="btn ghost" id="tb-stop">Stop</button></div>`,
     wire(el){stopwatchWire(el,true)}},
-  elim:{html:()=>`<div class="clock" id="tb-clock">0.0</div><div class="row"><button class="btn red" id="tb-start" style="font-size:1.3rem">3, 2, 1, GO!</button><button class="btn ghost" id="tb-stop">Stop</button></div>
+  elim:{html:()=>`<div class="clock" id="tb-clock">0.0</div><div class="row"><button class="btn red" id="tb-start" style="font-size:1.3rem">5, 4, 3, 2, 1, GO!</button><button class="btn ghost" id="tb-stop">Stop</button></div>
     <div class="tiny" style="font-size:1rem">Tap a tribute below when they're out. Last one standing wins.</div>`,
     wire(el){stopwatchWire(el,true)}},
   timer:{html:t=>`<div class="clock" id="tb-clock">${t.secs}</div><button class="btn red" id="tb-start" style="font-size:1.3rem">Blindfolds on? GO!</button>`,
-    wire(el,t){const b=el.querySelector("#tb-start");b.onclick=()=>{b.disabled=true;countIn(()=>{let left=t.secs;const c=el.querySelector("#tb-clock");XM.playSong("count");
-      tbTimer=setInterval(()=>{left--;c.textContent=left;if(left<=3&&left>0){XM.sfx("tock");c.classList.add("hot")}
-        if(left<=0){clearInterval(tbTimer);XM.stopSong();XM.sfx("cannon");c.textContent="TIME!";c.classList.remove("hot");b.disabled=false;b.textContent="Run it again"}},1000)},el)}}},
+    wire(el,t){const b=el.querySelector("#tb-start");b.onclick=()=>{b.disabled=true;countIn(()=>{let left=t.secs;const c=el.querySelector("#tb-clock");XM.playSong("battle");c.textContent=left;
+      tbTimer=setInterval(()=>{left--;c.textContent=left;if(left<=5&&left>0){XM.sfx("tock");c.classList.add("hot");pulse(c);XM.say(WORDS[left],null,{pitch:.1,rate:1,interrupt:true})}
+        if(left<=0){clearInterval(tbTimer);XM.stopSong();XM.sfx("cannon");XM.say("Time!",null,{pitch:.05,rate:.8,interrupt:true});c.textContent="TIME!";c.classList.remove("hot");b.disabled=false;b.textContent="Run it again"}},1000)},el)}}},
   dice:{html:()=>`<div class="dice" id="tb-dice"></div><div class="row"><button class="btn red" id="tb-roll" style="font-size:1.3rem">🎲 Roll!</button></div><div class="tiny" style="font-size:1rem">Using real dice? Skip this and just tap who won below.</div>`,
     wire(el){const s=T.state;s.in=tied();s.vals={};drawDice(el);el.querySelector("#tb-roll").onclick=()=>rollDice(el)}},
   closest:{html:()=>`<div class="secret" id="tb-secret">🔒 ?</div><div class="tiny" style="font-size:1.05rem">The Capitol has secretly chosen a number from 1 to 75.</div>
@@ -426,11 +426,17 @@ const TOOLS={
         const v=s.toss[n][i];b.className=v===1?"hit":v===2?"miss":"";b.textContent=v===1?"✅":v===2?"❌":String(i+1);XM.sfx(v===1?"pop":"untap");
         card.querySelector("[data-score]").textContent=s.toss[n].filter(x=>x===1).length;tossCheck(el)})})}},
 };
-function countIn(fn,el){const c=el.querySelector("#tb-clock");let k=3;c.textContent=k;XM.sfx("tock");
-  tbTimer=setInterval(()=>{k--;if(k>0){c.textContent=k;XM.sfx("tock")}else{clearInterval(tbTimer);c.textContent="GO!";XM.sfx("go");setTimeout(fn,500)}},800)}
+const WORDS=["zero","one","two","three","four","five"];
+const pulse=c=>c.animate&&c.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350,easing:"cubic-bezier(.2,1.4,.4,1)"});
+// Spoken 5, 4, 3, 2, 1 ... BOOM ... GO!
+function countIn(fn,el){const c=el.querySelector("#tb-clock");let k=5;c.textContent=k;c.classList.add("hot");pulse(c);XM.sfx("drum");XM.say("Five",null,{pitch:.1,rate:1,interrupt:true});
+  tbTimer=setInterval(()=>{k--;if(k>0){c.textContent=k;pulse(c);XM.sfx(k===1?"thud":"drum");XM.say(WORDS[k],null,{pitch:.1,rate:1,interrupt:true})}
+    else{clearInterval(tbTimer);c.classList.remove("hot");c.textContent="GO!";pulse(c);XM.sfx("boom");XM.sfx("go");XM.say("Go!",null,{pitch:.3,rate:1,interrupt:true});
+      const o=document.getElementById("xm-tb");if(o&&o.animate)o.animate([{transform:"translate(-14px,6px)"},{transform:"translate(12px,-6px)"},{transform:"none"}],{duration:350});
+      setTimeout(fn,700)}},1000)}
 function stopwatchWire(el,withCount){
   const b=el.querySelector("#tb-start"),st=el.querySelector("#tb-stop"),c=el.querySelector("#tb-clock");
-  b.onclick=()=>{b.disabled=true;countIn(()=>{const t0=performance.now();if(!XM.TB[T.tb].song)XM.playSong("count");
+  b.onclick=()=>{b.disabled=true;countIn(()=>{const t0=performance.now();if(!XM.TB[T.tb].song)XM.playSong("battle");
     const tick=()=>{c.textContent=fmt(performance.now()-t0);T.raf=requestAnimationFrame(tick)};tick()},el)};
   st.onclick=()=>{clearT();if(!XM.TB[T.tb].song)XM.stopSong();XM.sfx("drum");b.disabled=false;b.textContent="Restart"};
 }

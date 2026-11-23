@@ -575,13 +575,19 @@ const QUESTIONS=[
   {jab:"{n} gets a standing ovation in the Capitol. 👏",q:"Who would be the Capitol's favorite?",                top:[["Carsyn",3],["Tinsley",3]]},
 ];
 /* Face-off questions: everyone votes in secret except the tied tributes. Up to 3 per tie, then a lucky spin. */
-const TIEBREAKERS=[
-  "Who would win a snowball fight against the Careers?",
-  "Who would survive the longest in a District 12 blizzard?",
-  "Who would the Capitol pick to light the Christmas tree?",
-  "Who would Santa sponsor in the arena?",
-  "Who would survive the arena with only a candy cane and a roll of wrapping paper?",
-  "Who would risk it all for the last Christmas cookie?",
+const TIEBREAKERS=[   // quick, funny calls: there are only 10 seconds to vote (shuffled each game)
+  "Who would give away their hiding spot by singing Mariah Carey in the arena?",
+  "Who would trade their bow and arrows for one more Christmas cookie?",
+  "Who would re-gift their sponsor's present to someone else?",
+  "Who would cry first during a Hallmark Christmas movie?",
+  "Who would take a nap in the middle of the Hunger Games?",
+  "Who would get caught peeking at presents in the Capitol vault?",
+  "Who would win the Games by talking everyone else to sleep?",
+  "Who would form an alliance with the Grinch?",
+  "Who would be the first to set their tribute outfit on fire by accident?",
+  "Who would build a gingerbread house instead of a shelter?",
+  "Who would complain the most about the arena having no Wi-Fi?",
+  "Who would hide snacks in their tribute uniform?",
 ];
 const TB_PER_TIE=3;
 
@@ -611,7 +617,7 @@ const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan 
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
-  S.k=0;S.results=[];S.tbNext=0;S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
+  S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
   if(!window.Rules)return startIntro();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
@@ -721,7 +727,7 @@ function leaderCheck(){
 }
 function startTie(){const q=cur();S.tie={names:q.top.map(t=>t[0]),round:0,q:null,votes:{},voted:[]};nextTiebreaker();}
 function nextTiebreaker(){
-  clearTimers();const T=S.tie;T.round++;T.q=TIEBREAKERS[S.tbNext%TIEBREAKERS.length];S.tbNext++;
+  clearTimers();const T=S.tie;T.round++;T.q=(S.tbq||TIEBREAKERS)[S.tbNext%TIEBREAKERS.length];S.tbNext++;
   T.votes=Object.fromEntries(T.names.map(n=>[n,0]));T.voted=[];T.voter=null;T.lead=null;T.qn=S.tbNext;T.enter=true;T.ends=Date.now()+FACEOFF_SECS*1000;
   S.phase="tb";playSong("faceoff");sfx("whoosh");render();
 }

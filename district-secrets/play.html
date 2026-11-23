@@ -496,7 +496,10 @@ function view(){
       <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
       <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p></section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
-  if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
+  if(!playing){   // the host (and anyone sitting out) still gets the same meme as everyone else
+    const meme=["question","interro","reveal","story"].includes(g.phase)?Memes.html("secrets",g.gid,g.qi):"";
+    return [key+"out",header()+msg("📺","Watch the TV",(isHost()?"<p>You're the host. Tap <b>🔑 Host tools</b> any time.</p>":"<p>You're sitting out this game. Cheer loudly.</p>")+meme)+notYou];
+  }
   if(g.phase==="howto"){
     // same order as the TV's rules, so the card that lights up here is the one being read out loud there
     const st=phoneRules(g.opts||{}),cur=g.howI==null?-1:g.howI,all=cur>=st.length;

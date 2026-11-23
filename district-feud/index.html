@@ -309,6 +309,11 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
   box-shadow:0 0 0 3px var(--gold),0 10px 24px rgba(0,0,0,.4);animation:bubblein .5s 2s cubic-bezier(.2,1.8,.4,1) both}
 .bubble::before{content:"";position:absolute;left:50%;top:-14px;margin-left:-12px;border:12px solid transparent;border-bottom-color:#fff;border-top:0}
 @keyframes bubblein{from{transform:scale(0) rotate(-8deg);opacity:0}}
+.resume{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;background:linear-gradient(180deg,#fff,#dbe5ff);color:var(--navy);border-radius:16px;
+  padding:12px 16px;box-shadow:0 0 0 4px var(--red),0 8px 0 var(--red-d);animation:pop .5s .3s cubic-bezier(.2,1.5,.4,1) both;max-width:860px}
+.resume b{display:block;font-family:var(--display);font-weight:400;font-size:1.25rem;color:var(--red)}
+.resume span{font-weight:700}
+.resume .btn.ghost{color:var(--navy);box-shadow:inset 0 0 0 2px var(--navy)}
 /* 💰 double points */
 .dbl{font-family:var(--display);font-size:clamp(3rem,11vw,8rem);line-height:.95;color:var(--gold);text-shadow:0 6px 0 var(--red),0 10px 0 var(--red-d),0 0 60px rgba(255,201,46,.85);
   animation:dblin .8s cubic-bezier(.2,1.6,.4,1) both,pulse .45s .8s ease-in-out infinite alternate}
@@ -703,7 +708,21 @@ function goQuestion(){
   if(isFinal()&&S.phase!=="double"){S.phase="double";stopSong();sfx("siren");later(()=>{sfx("fanfare");fireworks(3)},900);render();later(()=>S.phase==="double"&&showQuestion(),5200);return}
   showQuestion();
 }
-function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;playSong("think");render();}
+/* ⏯ RESUME: the TV saves the game at the start of every question, so an accidental refresh doesn't wipe it.
+   Resuming replays the interrupted question from the start, so nothing is counted twice. */
+const SAVE="df-save";
+function saveGame(phase){try{localStorage.setItem(SAVE,JSON.stringify({t:Date.now(),phase,order:S.order,k:S.k,tally:S.tally,results:S.results,streak:S.streak,
+  leader:S.leader,tbNext:S.tbNext,tbq:S.tbq,present:S.present,gid,halfDone:S.halfDone,fan:S.fan}))}catch(e){}}
+function savedGame(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.order&&g.order.length&&Date.now()-g.t<12*3600e3?g:null}catch(e){return null}}
+function forgetGame(){try{localStorage.removeItem(SAVE)}catch(e){}}
+function resumeGame(){
+  const g=savedGame();if(!g)return;clearTimers();
+  Object.assign(S,{order:g.order,k:g.k,tally:g.tally||{},results:g.results||[],streak:g.streak||{},leader:g.leader||null,tbNext:g.tbNext||0,tbq:g.tbq,
+    present:{...S.present,...(g.present||{})},halfDone:!!g.halfDone,fan:g.fan,bump:{},pkg:null,earn:{},tie:null,slow:[]});
+  gid=g.gid||gid;answers={};answersQi=-1;sfx("fanfare");
+  if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
+}
+function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
 setInterval(()=>{
   const fo=S.tie&&S.tie.ends&&["tb","ballot","cast"].includes(S.phase);
@@ -808,7 +827,7 @@ function fate(){
 }
 function nextQuestion(){
   clearTimers();S.k++;
-  if(S.k>=S.order.length){S.phase="end";stopSong();sfx("fanfare");confetti(160,true);fireworks(4);later(()=>S.phase==="end"&&playSong("joy"),2200);render();return}
+  if(S.k>=S.order.length){saveGame("end");S.phase="end";stopSong();sfx("fanfare");confetti(160,true);fireworks(4);later(()=>S.phase==="end"&&playSong("joy"),2200);render();return}
   /* 📊 halftime standings */
   if(!S.halfDone&&S.order.length>=7&&S.k===HALFTIME_AFTER){S.halfDone=true;S.phase="half";stopSong();sfx("fanfare");later(()=>playSong("half"),1200);confetti(80);render();return}
   goQuestion();
@@ -915,8 +934,14 @@ function checkinLine(){
   const here=NAMES.filter(n=>S.present[n]),inn=here.filter(hasPhone),wait=here.filter(n=>!hasPhone(n)),all=here.length&&!wait.length;
   return `<div class="checkin ${all?"all":""}">📱 <b>${inn.length}</b> of ${here.length} checked in${all?" 🎉":""}${!all&&wait.length&&wait.length<=5?`<small>Waiting on ${wait.map(esc).join(", ")}</small>`:""}</div>`;
 }
+function resumeCard(){
+  const g=savedGame();if(!g)return "";
+  const where=g.phase==="end"?"the prize round":`question ${g.k+1} of ${g.order.length}`,lead=Object.entries(g.tally||{}).sort((a,b)=>b[1]-a[1])[0];
+  return `<div class="resume"><div><b>⏯ A game is in progress</b><span>Pick up at ${where}${lead?` · ${esc(lead[0])} leads with ${lead[1]}`:""}</span></div>
+    <button class="btn red" id="resume">▶ Resume</button><button class="btn ghost" id="fresh">Start fresh</button></div>`;
+}
 function lobby(){
-  return `<section class="lobby">${logo()}
+  return `<section class="lobby">${logo()}${resumeCard()}
     ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
     <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the major award!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
@@ -1038,6 +1063,7 @@ function wire(){
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{const n=b.dataset.here;S.present[n]=!S.present[n];render()});
   document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>openBallot(b.dataset.vote));
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>castVote(b.dataset.pick));
+  on("resume",resumeGame);on("fresh",()=>{if(confirm("Start fresh? The game in progress will be lost."))forgetGame();render()});
   on("skipintro",finishIntro);on("fango",goQuestion);on("dblgo",showQuestion);on("half2",goQuestion);
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
   on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",prizeFaceoff);

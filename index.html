@@ -630,7 +630,7 @@ function wire(){
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
+  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 document.addEventListener("keydown",e=>{
@@ -649,6 +649,11 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV,
   rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
+/* ⏭️ test button: jump to the last face and score it, which goes to the final board and its music */
+window.MusicPill&&MusicPill.add({on:()=>S.sound,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
+window.SkipEnd&&SkipEnd.add(()=>{cancelAnimationFrame(raf);FireTimer.stop();stopSong();
+  if(!S.rounds||!S.rounds.length)newGame();
+  S.qi=S.rounds.length-1;S.phase="reveal";S.correct=[];S.locked=true;S.typed=Object.fromEntries(S.players.map(p=>[p.name,"skip"]));score()});   // counts everyone as answered: no "too slow" penalty
 </script>
 
 <script>

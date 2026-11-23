@@ -201,10 +201,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .rc i{font-style:normal;font-family:var(--display);color:var(--gold)}
 
 /* back-to-setup button, always in the corner during a game */
-.home{position:fixed;top:30px;left:max(12px,env(safe-area-inset-left,0px));z-index:6;display:inline-flex;align-items:center;gap:.4em;font-weight:800;font-size:.95rem;
-  padding:.45em .9em;border-radius:10px;background:rgba(6,11,38,.75);color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3)}
-.home:hover{box-shadow:inset 0 0 0 2px var(--gold)}
-@media (max-width:700px){.home span{display:none}.home{padding:.45em .7em}}
+.home{position:fixed;left:6px;top:6px;z-index:40;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:#fff;opacity:.18;font-size:15px;
+  line-height:26px;text-align:center;padding:0;cursor:pointer;transition:opacity .2s}   /* a faint ⚙ in the corner, easy to miss on purpose (like Who's That Tribute) */
+.home:hover,.home:focus-visible{opacity:.9}
+.home span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 /* ===== show-time animations ===== */
 #deco{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 #deco i{position:absolute;bottom:-70px;font-style:normal;opacity:.32;font-size:var(--s);animation:floatup var(--t) linear var(--dl) infinite;filter:drop-shadow(0 0 8px rgba(255,201,46,.35))}
@@ -860,7 +860,7 @@ function pkgFate(){
 }
 
 /* the gift box shakes, the lid flies off, the winner pops out */
-function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:15
+function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
 /* ---------- views ---------- */
@@ -888,7 +888,7 @@ function raceBar(){
 }
 function render(){
   const v={fanfav:fanView,intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
-  const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup">↩ <span>Back to setup</span></button>`;
+  const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup" title="Back to setup">⚙<span>Back to setup</span></button>`;
   document.body.classList.toggle("focus",["suspense","tbsuspense"].includes(S.phase));
   if(window.Hurry&&!["question","tb"].includes(S.phase))Hurry.hide();
   $("#app").innerHTML=v()+home;S.bump={};wire();countUps();
@@ -1076,7 +1076,7 @@ function wire(){
   on("home",()=>{if(confirm("Stop this game and go back to setup? The prize race goes back to zero."))goSetup()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("clearphones",async()=>{if(!confirm("Clear every phone's name? Everyone will need to scan and tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m=musicFor();m&&playSong(m)}
+  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m=musicFor();m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 /* ================= PHONES =================
@@ -1192,6 +1192,12 @@ document.addEventListener("keydown",e=>{
   e.preventDefault();primary();
 });
 render();
+/* ⏭️ test button: straight to the final board, then the major award (Carsyn's champions song) */
+window.MusicPill&&MusicPill.add({on:()=>S.sound,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
+window.SkipEnd&&SkipEnd.add(()=>{clearTimers();stopSong();S.tie=null;
+  if(!Object.keys(S.tally||{}).length){const who=NAMES.filter(n=>S.present[n]).slice(0,4);S.tally=Object.fromEntries(who.map((n,i)=>[n,8-i*2]))}
+  if(!S.order||!S.order.length)S.order=[0];S.results=S.results||[];S.k=S.order.length-1;nextQuestion();
+  later(()=>S.phase==="end"&&packageReveal(),2500)});
 </script>
 <script>
 /* 🎵 lobby music as soon as the page opens. Browsers hold sound back until the first click or key press,

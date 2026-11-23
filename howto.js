@@ -194,7 +194,7 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     if (window.HOWTO_OWN_BUTTON) return;   // District Secrets has its own How to play button (with every twist that's on)
     let b = document.getElementById("rulesbtn");
     if (!show) { if (b) b.remove(); return; }
-    if (b) return;
+    if (b) return lift(b);
     b = document.createElement("button"); b.id = "rulesbtn"; b.type = "button"; b.textContent = "❓"; b.setAttribute("aria-label", "How to play");
     b.style.cssText = "position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:2147482400;width:40px;height:40px;border-radius:50%;border:0;" +
       "background:rgba(0,0,0,.55);color:#fff;font-size:20px;box-shadow:0 0 0 2px rgba(255,255,255,.35);cursor:pointer;padding:0";
@@ -204,7 +204,16 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
       manual = true; folded = false; root = document.createElement("div"); root.id = "howto"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "How to play");
       document.body.appendChild(root); key = "manual"; draw((lastG && lastG.howto) || pageKind(), lastG || {});
     };
-    document.body.appendChild(b);
+    document.body.appendChild(b); lift(b);
+  }
+  // sit just above anything pinned to the bottom of the screen (like Feud's emoji bar), never on top of it
+  function lift(b) {
+    try {
+      b.style.visibility = "hidden";
+      let el = document.elementFromPoint(24, innerHeight - 6), up = 0;
+      while (el && el !== document.body) { const cs = getComputedStyle(el); if (cs.position === "fixed" || cs.position === "sticky") { up = Math.max(0, innerHeight - el.getBoundingClientRect().top); break; } el = el.parentElement; }
+      b.style.bottom = up ? `${up + 8}px` : "max(10px,env(safe-area-inset-bottom))";
+    } catch (e) {} finally { b.style.visibility = ""; }
   }
   function sync(g, o) {
     lastG = g || lastG; rulesButton(!!(o && o.me && g));

@@ -1525,7 +1525,7 @@ function wire(){
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
-  on("snd",()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
+  on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)});
   on("clearphones",async()=>{if(!confirm("Clear every phone sign-in? Everyone will need to tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
 }
@@ -1609,16 +1609,11 @@ setInterval(async()=>{
   b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};
   document.addEventListener("click",e=>{if(!m.contains(e.target)&&e.target!==b)show(false)});
   document.body.appendChild(b);document.body.appendChild(m);
-  // ⏭ a tiny, faint skip-to-the-end button just under the ⚙ (for checking the winners' song)
-  const k=document.createElement("button");k.textContent="⏭";k.title="Skip to the winners";k.setAttribute("aria-label","Skip to the winners");
-  k.style.cssText="position:fixed;left:8px;top:80px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--ink);opacity:.14;font-size:13px;cursor:pointer;padding:0;transition:opacity .2s";
-  k.onmouseenter=()=>k.style.opacity=".9";k.onmouseleave=()=>k.style.opacity=".14";k.onclick=e=>{e.stopPropagation();skipToEnd()};
-  document.body.appendChild(k);
 })();
 // ⏭ jump straight to the winners screen (fanfare, confetti, the winners' song). Scores stay as they are.
-function skipToEnd(){
+function skipToEnd(asked){
   if(S.phase==="final"){stopSong();playSong("winner");return}
-  if(!confirm("Skip to the winners screen? The game ends here with the scores as they are. (Good for testing the music.)"))return;
+  if(!asked&&!confirm("Skip to the winners screen? The game ends here with the scores as they are. (Good for testing the music.)"))return;
   ensureAudio();clearInterval(readyT);clearInterval(clockT);clearRedzone?.();stopReading?.();
   if(S.qi==null||S.qi<0)S.qi=0;S.locked=true;S.duel=null;
   S.phase="final";stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("winner"),300);render();
@@ -1648,6 +1643,9 @@ function restartGame(ask=true){
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
   rows:()=>["lobby","howto","board","final","interro","story","showdown","likely","lightcard","ttlcard"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
+/* ⏭️ test button (showtime.js): straight to the winners screen and its song */
+window.MusicPill&&MusicPill.add({on:()=>musicOn,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
+window.SkipEnd&&SkipEnd.add(()=>skipToEnd(true));
 </script>
 <script>
 /* 🎵 lobby music as soon as the page opens. Browsers hold sound back until the first click or key press,

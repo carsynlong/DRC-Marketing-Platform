@@ -651,3 +651,46 @@ window.Track = (() => {
   ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (want && ac && ac.state === "suspended") ac.resume(); if (want && !src) play(want); }, true));
   return { preload, play, stop, playing: () => !!src };
 })();
+
+/* ⏭️ A tiny, faint "skip to end" button in the bottom-left corner of the TV, so Carsyn can test the end music.
+   SkipEnd.add(fn): fn jumps the game to its ending. Asks first, since it ends the game in progress. */
+window.SkipEnd = { add(fn) {
+  const b = document.createElement("button");
+  b.textContent = "⏭ skip to end"; b.title = "Test: jump to the end of the game";
+  b.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:99999;font:10px system-ui,sans-serif;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:rgba(255,255,255,.55);opacity:.35;cursor:pointer";
+  b.onmouseenter = () => b.style.opacity = "1"; b.onmouseleave = () => b.style.opacity = ".35";
+  b.onclick = e => { e.stopPropagation(); b.blur(); if (confirm("Skip to the end of the game? (for testing the end music)")) try { fn(); } catch (err) { console.error(err); } };
+  (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => document.body.appendChild(b));
+} };
+
+/* 🔊 Music on/off pinned to the top-left of the TV, so it's one quick click instead of scrolling to the bottom.
+   Hides itself whenever the screen already shows its own Music button near the top. */
+window.MusicPill = { add({ on, toggle }) {
+  const b = document.createElement("button"); b.type = "button"; b.id = "musicpill";
+  b.style.cssText = "position:fixed;left:14px;top:14px;z-index:99998;font:800 15px/1 system-ui,-apple-system,'Segoe UI',sans-serif;padding:9px 14px;border-radius:999px;border:0;cursor:pointer;" +
+    "color:#fff;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 2px rgba(255,255,255,.4),0 4px 14px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)";
+  const paint = () => {
+    let state = false; try { state = !!on(); } catch (e) {}
+    b.textContent = state ? "🔊 Music on" : "🔇 Music off"; b.setAttribute("aria-pressed", state);
+    const own = document.getElementById("snd"), r = own && own.getBoundingClientRect();
+    b.hidden = !!(r && r.width && r.top >= 0 && r.bottom <= innerHeight * .3);
+    if (!b.hidden) place();
+  };
+  // top-left corner; if another button is already there (like "Back to setup"), slide down just below it
+  const blocker = () => {
+    const r = b.getBoundingClientRect(); b.style.visibility = "hidden";
+    try {
+      for (const [x, y] of [[r.left + 4, r.top + 4], [r.right - 4, r.top + 4], [r.left + 4, r.bottom - 4], [r.right - 4, r.bottom - 4], [(r.left + r.right) / 2, (r.top + r.bottom) / 2]]) {
+        const el = document.elementFromPoint(x, y), hit = el && el.closest && el.closest("button,a,input,select,[role=button]");
+        if (hit) return hit;
+      }
+      return null;
+    } finally { b.style.visibility = ""; }
+  };
+  function place() {
+    b.style.left = "14px"; b.style.top = "14px";
+    for (let n = 0; n < 4; n++) { const hit = blocker(); if (!hit) return; b.style.top = Math.round(hit.getBoundingClientRect().bottom + 8) + "px"; }
+  }
+  b.onclick = e => { e.stopPropagation(); try { toggle(); } catch (err) { console.error(err); } b.blur(); paint(); };
+  (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => { document.body.appendChild(b); paint(); setInterval(paint, 400); });
+} };

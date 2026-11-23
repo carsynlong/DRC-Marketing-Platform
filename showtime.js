@@ -319,6 +319,7 @@ body.has-ticker{padding-bottom:52px}
      sound:   () => true/false       read out loud only when the game's sound is on
      onReady: () => {}               the host clicked Ready (or pressed Space)
      onBack:  () => {}               optional: the host clicked Back to setup (or pressed Esc); nothing starts
+     photo:   name => url            optional: show each checked-in player's photo, lighting up when they tap Got it
    }) */
 window.Rules = (() => {
   const THEMES = {
@@ -344,9 +345,16 @@ window.Rules = (() => {
 #rules .ru-again{background:rgba(255,255,255,.08);color:var(--ru-ink);box-shadow:inset 0 0 0 2px rgba(255,255,255,.3)}
 #rules button:focus-visible{outline:3px solid var(--ru-accent);outline-offset:3px}
 #rules .ru-hint{font-size:.85rem;opacity:.65}
-#rules .ru-ready{font-weight:800;font-size:clamp(1.1rem,2.2vw,1.5rem);color:var(--ru-accent)}
+#rules .ru-ready{font-weight:800;font-size:clamp(1rem,2vw,1.35rem);color:var(--ru-accent)}
 #rules .ru-ready b{font-family:var(--ru-font);font-weight:400;font-size:1.5em;margin-right:.15em}
 #rules .ru-ready.all{animation:ru-throb 1.1s ease-in-out infinite}
+#rules .ru-faces{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+#rules .ru-face{position:relative;display:grid;justify-items:center;gap:3px;font-size:.72rem;font-weight:800;text-transform:uppercase;color:var(--ru-ink);opacity:.4;filter:grayscale(.9);transition:opacity .3s,filter .3s}
+#rules .ru-face img{width:clamp(30px,3.2vw,42px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+#rules .ru-face.on{opacity:1;filter:none}
+#rules .ru-face.on img{box-shadow:0 0 0 3px var(--ru-accent),0 0 16px color-mix(in srgb,var(--ru-accent) 60%,transparent)}
+#rules .ru-face.on::before{content:"✓";position:absolute;top:-4px;right:-4px;z-index:1;width:18px;height:18px;border-radius:50%;background:#19a35a;color:#fff;display:grid;place-items:center;font-size:.7rem;box-shadow:0 0 0 2px #fff}
+#rules .ru-face.pop{animation:ru-pop .5s cubic-bezier(.2,1.8,.4,1)}
 #rules .ru-ready small{display:block;font-weight:600;font-size:.7em;color:var(--ru-ink);opacity:.7;margin-top:2px}
 @keyframes ru-pop{from{transform:scale(.5);opacity:0}}
 @keyframes ru-throb{50%{transform:scale(1.06)}}
@@ -414,12 +422,12 @@ window.Rules = (() => {
     root.querySelector(".ru-again").onclick = () => read(title, steps);
     window.addEventListener("keydown", onKey, true);
     read(title, steps);
-    watchReady(o.theme);
+    watchReady(o.theme, o.photo);
   }
   // how many phones tapped "Got it!" (shown under the buttons)
   let readyT = 0;
-  function watchReady(theme) {
-    clearInterval(readyT);
+  function watchReady(theme, photo) {
+    clearInterval(readyT); let shown = new Set();
     const g = { secrets: "ds", feud: "df" }[theme] || "", word = theme === "tribute" ? "tributes" : "players";
     const post = body => fetch("/api/host", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ g, ...body }) });
     post({ action: "readyReset" }).catch(() => {});
@@ -433,6 +441,9 @@ window.Rules = (() => {
         el.classList.toggle("all", !!all);
         el.innerHTML = !players.length ? "" : all ? `✅ All <b>${players.length}</b> ${word} are ready!`
           : `✅ <b>${ready.length}</b> of ${players.length} ${word} ready${waiting.length <= 4 ? `<small>Waiting on ${waiting.map(esc).join(", ")}</small>` : ""}`;
+        // everyone checked in on a phone, lighting up as they tap Got it
+        if (photo && players.length) el.innerHTML += `<div class="ru-faces">${players.map(n => `<div class="ru-face ${ready.includes(n) ? "on" : ""} ${ready.includes(n) && !shown.has(n) ? "pop" : ""}" title="${esc(n)}"><img src="${esc(photo(n))}" alt="${esc(n)}"></div>`).join("")}</div>`;
+        shown = new Set(ready);
       } catch (e) {}
     };
     setTimeout(show, 600); readyT = setInterval(show, 1500);

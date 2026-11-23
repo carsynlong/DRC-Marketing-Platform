@@ -393,7 +393,7 @@ function showIntro(){
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
-  Rules.run({theme:"tribute",title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
+  Rules.run({theme:"tribute",photo:AV,title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
     ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
     ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
     ["⏱️","You have 30 seconds before the cannon fires. No answer in time? You lose 250 points!"],

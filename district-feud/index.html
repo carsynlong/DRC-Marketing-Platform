@@ -84,6 +84,14 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .chip[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--gold)}
 .chip[aria-pressed="false"]{opacity:.4;text-decoration:line-through}
 .chip.done{opacity:.45}
+.chip.in{background:linear-gradient(180deg,#22b863,#0d6b37);box-shadow:inset 0 0 0 3px #7dff9e}
+.chip .who{display:grid;text-align:left;line-height:1.05}
+.chip .st{font-size:.6rem;letter-spacing:.08em;opacity:.85;font-weight:800}
+.chip.in .st{color:#d9ffe6}
+.checkin{font-family:var(--display);font-size:clamp(1.05rem,2vw,1.4rem);color:#fff}
+.checkin b{color:#7dff9e;font-weight:400;font-size:1.3em}
+.checkin small{display:block;font-family:var(--body);font-weight:700;font-size:.62em;color:var(--muted);margin-top:2px}
+.checkin.all b{color:var(--gold)}
 .chip:disabled{cursor:default}
 .qlist{display:grid;gap:6px;width:100%;max-width:780px;text-align:left}
 .qlist label{display:flex;gap:12px;align-items:center;border-radius:10px;padding:.55em .9em;cursor:pointer;font-weight:700;font-size:1.1rem;
@@ -608,7 +616,7 @@ function startGame(){
   if(!window.Rules)return startIntro();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
-  Rules.run({theme:"feud",title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
+  Rules.run({theme:"feud",photo:AV,title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
     ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
     ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone.`],
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
@@ -843,13 +851,20 @@ function halfView(){
     ${rows.length?barRows(rows,n=>(S.streak||{})[n]>=FIRE_AT?"fire":""):'<p class="sub">No points yet!</p>'}
     <div class="ctl">${sndBtn()}<button class="btn red" id="half2">▶ Start the second half</button></div><div class="hint">Space: second half</div></section>`;
 }
+/* who has checked in on a phone (and who we're still waiting on) */
+function checkinLine(){
+  if(!apiOk)return "";
+  const here=NAMES.filter(n=>S.present[n]),inn=here.filter(hasPhone),wait=here.filter(n=>!hasPhone(n)),all=here.length&&!wait.length;
+  return `<div class="checkin ${all?"all":""}">📱 <b>${inn.length}</b> of ${here.length} checked in${all?" 🎉":""}${!all&&wait.length&&wait.length<=5?`<small>Waiting on ${wait.map(esc).join(", ")}</small>`:""}</div>`;
+}
 function lobby(){
   return `<section class="lobby">${logo()}
     ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
     <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the major award!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
-    <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
+    ${checkinLine()}
+    <div class="chips">${NAMES.map(n=>{const ph=apiOk&&hasPhone(n);return `<button class="chip ${ph?"in":""}" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt=""><span class="who">${esc(n)}${apiOk&&S.present[n]?`<span class="st">${ph?"✓ Checked in":"Waiting…"}</span>`:""}</span></button>`}).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
     <div class="hint">Space moves the show along · M turns music on or off · <span style="opacity:.7">version QR-3</span></div></section>`;
 }

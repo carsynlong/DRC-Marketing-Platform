@@ -10,7 +10,8 @@
 //   POST { op: "story",  pid, name, qi, accept }  the secret's owner accepts (true) or declines (false) story time
 //   POST { op: "frame",  pid, name, qi, target }  🎯 the secret's owner frames someone (while guessing is open)
 //   POST { op: "fifth",  pid, name, qi }          🤐 the person in the hot seat pleads the Fifth (once per game)
-//   POST { op: "duel",   pid, name, round, guess } ⚔️ a finalist's answer in the Final Showdown (first right answer wins)
+//   POST { op: "duel",   pid, name, round }       ⚔️ Quick Draw: a finalist taps (before DRAW = too soon)
+//   POST { op: "draw", round }                    ⚔️ the TV says DRAW: the server stamps the moment
 // Host phone (needs the key the TV shows in its host menu). Anonymous: the host sees the text, never who wrote it.
 //   GET  ?op=review&k=KEY                         every written secret: { id, text, status }
 //   POST { op: "approve", k, id, ok }             approve (true) or skip (false) one
@@ -98,10 +99,18 @@ export default async function handler(req, res) {
       if (!(await redis.hsetnx(P + "fifthused", q.name, String(q.qi)))) return reply(res, 409, { error: "You already pleaded the Fifth this game" });
       await redis.set(`${P}fifth:${q.qi}`, q.name);
     } else {
-      const d = game.duel || {}, guess = text(q.guess, 40);
-      if (game.phase !== "showdown" || !d.open || d.round !== q.round || ![d.a, d.b].includes(q.name) || !guess) return reply(res, 409, { error: "Not now" });
-      await redis.hsetnx(`${P}duel:${q.round}`, q.name, JSON.stringify({ g: guess, t: Date.now() }));   // first answer counts, stamped by the server
+      const d = game.duel || {};
+      if (game.phase !== "showdown" || d.round !== q.round || ![d.a, d.b].includes(q.name)) return reply(res, 409, { error: "Not now" });
+      const at = await redis.get(`${P}duelat:${q.round}`), now = Date.now();
+      // both times come from this server, so neither phone has an edge; a tap before DRAW is too soon
+      await redis.hsetnx(`${P}duel:${q.round}`, q.name, JSON.stringify(at ? { t: now - Number(at) } : { early: true }));
     }
+    return reply(res, 200, { ok: true });
+  }
+  if (op === "draw") {
+    const r = Number.parseInt(q.round, 10);
+    if (!Number.isInteger(r)) return reply(res, 400, { error: "Bad round" });
+    await redis.set(`${P}duelat:${r}`, String(Date.now()), { nx: true });
     return reply(res, 200, { ok: true });
   }
   if (op === "story") {
@@ -151,7 +160,7 @@ export default async function handler(req, res) {
   }
   if (op === "reset") {
     const total = Math.min(Math.max(Number(q.total) || 0, 1), 100);
-    await redis.del(...Array.from({ length: total }, (_, i) => [`${P}bets:${i}`, `${P}story:${i}`, `${P}switch:${i}`, `${P}storyans:${i}`, `${P}frame:${i}`, `${P}fifth:${i}`, `${P}duel:${i}`]).flat(), P + "fifthused");
+    await redis.del(...Array.from({ length: total }, (_, i) => [`${P}bets:${i}`, `${P}story:${i}`, `${P}switch:${i}`, `${P}storyans:${i}`, `${P}frame:${i}`, `${P}fifth:${i}`, `${P}duel:${i}`, `${P}duelat:${i}`]).flat(), P + "fifthused");
     return reply(res, 200, { ok: true });
   }
   reply(res, 400, { error: "Unknown op" });

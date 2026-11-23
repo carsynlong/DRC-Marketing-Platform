@@ -719,7 +719,7 @@ function resumeGame(){
   const g=savedGame();if(!g)return;clearTimers();
   Object.assign(S,{order:g.order,k:g.k,tally:g.tally||{},results:g.results||[],streak:g.streak||{},leader:g.leader||null,tbNext:g.tbNext||0,tbq:g.tbq,
     present:{...S.present,...(g.present||{})},halfDone:!!g.halfDone,fan:g.fan,bump:{},pkg:null,earn:{},tie:null,slow:[]});
-  gid=g.gid||gid;answers={};answersQi=-1;sfx("fanfare");
+  gid=g.gid||gid;answers={};answersQi=-1;S.preAns=true;sfx("fanfare");
   if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
 }
 function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
@@ -730,7 +730,7 @@ setInterval(()=>{
   const ends=fo?S.tie.ends:S.ends,total=(fo?FACEOFF_SECS:TIMER_SECS)*1000;
   const ms=ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000)),el=$("#tsec");
   if(el&&el.textContent!==String(sec)){el.textContent=sec;$("#timer").classList.toggle("low",sec<=10);if(sec<=10&&sec>0)sfx("tick")}
-  if(window.Hurry){const show=sec<=10&&ms>0&&S.phase!=="ballot"&&S.phase!=="cast";if(show){Hurry.show(sec,S.sound);tempoMul=fo?1.15:1.3}else Hurry.hide()}
+  if(window.Hurry){const show=sec<=(fo?5:10)&&ms>0&&S.phase!=="ballot"&&S.phase!=="cast";if(show){Hurry.show(sec,S.sound);tempoMul=fo?1.15:1.3}else Hurry.hide()}
   const r=$("#tring");if(r)r.style.strokeDashoffset=(213.6*(1-Math.max(0,ms)/total)).toFixed(1);
   if(ms>0)return;
   if(!fo){S.ends=0;sfx("buzz");surveySays();return}
@@ -893,7 +893,7 @@ function render(){
   if(window.Hurry&&!["question","tb"].includes(S.phase))Hurry.hide();
   $("#app").innerHTML=v()+home;S.bump={};wire();countUps();
 }
-function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
+function goSetup(){clearTimers();stopSong();forgetGame();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
   const letters=[...n].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
@@ -1015,8 +1015,8 @@ function tbresult(){
     <p class="sub">${r.fate?`The lucky spin picked <b>${esc(r.name)}</b>!`:`<b>${esc(r.name)}</b> wins the face-off, ${T.names.map(n=>T.votes[n]).sort((a,b)=>b-a).join(" to ")}!`}</p>
     ${cur().jab?`<div class="jab late" style="--d:1.2s">${esc(cur().jab.replace("{n}",r.name))}</div>`:""}${slowLine(1.6)}
     <div class="ctl">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
-  const more=voters().length>0;   // keep asking face-off questions until someone wins
-  return `<section class="center">${podiums(T.lead,sc)}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>
+  const more=voters().length>0&&T.round<TB_PER_TIE;   // up to 3 face-off questions, then a lucky spin
+  return `<section class="center">${podiums(T.lead,sc)}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>${slowLine(.8)}
     <p class="sub late" style="--d:1s">${more?`On to another face-off question${T.prize?" for the major award":""}.`:"Nobody's left to vote. Time for a lucky spin!"}</p>
     <div class="ctl late" style="--d:1s"><button class="btn red" id="${more?"again":"fate"}">${more?"⚡ Next face-off":"🎰 Lucky spin"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
 }
@@ -1039,7 +1039,7 @@ function pkgView(){
     <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">⚡ Sudden-death face-off</button></div><div class="hint">Space: continue</div>${b}</section>`;
   const list=board("Final totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Votes + correct guesses","compact one");
   return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🏆 Major award winner</h1>
-    <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":P.faceoff?"Won the sudden-death face-off":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"vote")}</div>
+    <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":P.faceoff?"Won the sudden-death face-off":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"point")}</div>
     <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
 }
 function pkgFateView(){return spinView("🎰 Lucky spin for the prize",S.pkg.lead[0]);}
@@ -1056,7 +1056,7 @@ function primary(){
   if(p==="question")return surveySays();
   if(p==="reveal")return isTie(cur())?startTie():nextQuestion();
   if(p==="tb"&&S.tie.voted.length&&S.tie.voted.length>=voters().length)return countVotes();
-  if(p==="tbresult")return S.tie.lead.length===1?nextQuestion():(voters().length?nextTiebreaker():fate());
+  if(p==="tbresult")return S.tie.lead.length===1?nextQuestion():(voters().length&&S.tie.round<TB_PER_TIE?nextTiebreaker():fate());
   if(p==="end")return packageReveal();
   if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return prizeFaceoff();
 }
@@ -1099,7 +1099,7 @@ function snapshot(){
   if(p==="fanfav")g.fan=S.fan;
   if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
-  if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p==="tbsuspense"?0:S.tie.ends||0});
+  if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p==="tbsuspense"?0:S.tie.ends||0,hostPlays:!S.tie.names.includes(HOST)});   // the host votes in face-offs too, so she gets the hurry warning
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:S.tie.prize?"The major award":cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
   if(["end","pkg","pkgfate"].includes(p)){g.phase="final";if(p==="pkg"&&S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
   return JSON.stringify(g);
@@ -1123,7 +1123,7 @@ async function poll(){
     firstPoll=false;
     if(d.qi!=null&&d.qi===curQi()){
       const n0=Object.keys(phoneAnswers()).length;answers=d.answers||{};answersQi=d.qi;const n1=Object.keys(answers).length;
-      if(S.phase==="question"&&S.seen)Object.keys(answers).forEach(n=>{if(S.seen[n]==null)S.seen[n]=Date.now()}); // when each guess arrived (speed bonus)
+      if(S.phase==="question"&&S.seen){Object.keys(answers).forEach(n=>{if(S.seen[n]==null)S.seen[n]=S.preAns?Infinity:Date.now()});S.preAns=false}   // answers sent before a TV reload get no ⚡ // when each guess arrived (speed bonus)
       if(S.phase==="question"&&n1>n0){sfx("cash");const e=$("#lockgrid");if(e){e.outerHTML=lockGrid()}}
       if(S.phase==="tb")mergePhoneVotes();
     }

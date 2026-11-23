@@ -297,7 +297,7 @@ async function leave(){
 // typed a name but never tapped Lock it in? send it just before the cannon fires
 setInterval(()=>{const g=D.game,i=document.getElementById("guess");
   if(!g||g.phase!=="question"||!g.hurry||pending||D.myAnswer||!i||!i.value.trim())return;
-  if(Date.now()>g.hurry-900){i.blur();answer(i.value)}},250);
+  if(Date.now()>g.hurry-1600){i.blur();answer(i.value)}},250);
 async function answer(text){
   buzz(15);PFX.sfx("tap");
   const g=D.game;text=String(text||"").trim();

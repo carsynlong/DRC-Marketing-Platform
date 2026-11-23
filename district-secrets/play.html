@@ -509,7 +509,7 @@ async function leave(){try{await post("/api/join",{leave:true})}catch(e){}myName
 // typed a name but never tapped Seal? seal it just before time runs out
 setInterval(()=>{const g=D.game,i=document.getElementById("g");
   if(!g||g.phase!=="question"||!g.hurry||pending||D.myAnswer||!i||!i.value.trim())return;
-  if(Date.now()>g.hurry-900){i.blur();send(i.value)}},250);
+  if(Date.now()>g.hurry-1600){i.blur();send(i.value)}},250);
 async function send(text){
   const g=D.game;text=String(text||"").trim();if(!text||!g)return;
   pending={gid:g.gid,qi:g.qi,answer:text};render();

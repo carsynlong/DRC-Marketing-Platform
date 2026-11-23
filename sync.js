@@ -265,7 +265,7 @@ const Sync = (() => {
     try { stopSong(); } catch (e) {}
     try { window.Walkout && Walkout.cancel && Walkout.cancel(); } catch (e) {}
     try { window.Rules && Rules.active() ? Rules.go(true) : document.getElementById("rules")?.remove(); } catch (e) {}
-    try { window.FireTimer && FireTimer.stop(); } catch (e) {}
+    try { FireTimer.stop(); } catch (e) {}
     try { cancelAnimationFrame(raf); } catch (e) {}
     S.players.forEach(p => { p.score = 0; p.streak = 0; p.delta = 0; p.move = 0; });
     try { Extras.reset(); } catch (e) {}

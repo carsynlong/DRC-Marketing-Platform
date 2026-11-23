@@ -212,13 +212,15 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     };
     document.body.appendChild(b); lift(b);
   }
-  // sit just above anything pinned to the bottom of the screen (like Feud's emoji bar), never on top of it
+  // tuck into the label row of anything pinned to the bottom of the screen (like Feud's emoji bar)
   function lift(b) {
     try {
       b.style.visibility = "hidden";
       let el = document.elementFromPoint(24, innerHeight - 6), up = 0;
       while (el && el !== document.body) { const cs = getComputedStyle(el); if (cs.position === "fixed" || cs.position === "sticky") { up = Math.max(0, innerHeight - el.getBoundingClientRect().top); break; } el = el.parentElement; }
-      b.style.bottom = up ? `${up + 8}px` : "max(10px,env(safe-area-inset-bottom))";
+      // inside the bar's label row, left of the label (smaller there so it never covers an emoji)
+      b.style.bottom = up ? `${up - 29}px` : "max(10px,env(safe-area-inset-bottom))";
+      b.style.width = b.style.height = up ? "26px" : "40px"; b.style.fontSize = up ? "13px" : "20px";
     } catch (e) {} finally { b.style.visibility = ""; }
   }
   function sync(g, o) {

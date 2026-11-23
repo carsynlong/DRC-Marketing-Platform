@@ -222,7 +222,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-23-5";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-6";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -314,6 +314,7 @@ function hostDraw(){
 }
 /* the rules, short and grouped (matches the TV's order step for step) */
 function phoneRules(o){
+  const gmOn=(D.game?.playing||[]).includes(HOST_NAME);
   const r=[["The basics","🤫","A secret appears","A real secret from someone here pops up on the TV."],
     ["The basics","📱","You guess who","Type WHO it belongs to. Only you see your guess."],
     ["Points","⏰","Don't run out of time","No guess sealed before time's up = −200."],
@@ -324,6 +325,7 @@ function phoneRules(o){
   if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
   if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
+  if(gmOn)r.push(["Have fun","🔮","The Gamemaker",`${HOST_NAME} knows the secrets, so she predicts how many crack each one. Bonus round: she guesses too!`]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
   r.push(["Have fun","👑","Winning","Most points wins the major award. Last secret = double!"]);
   return r;
@@ -494,7 +496,7 @@ function view(){
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
     return [key+"in"+editing+declined+mySecret+!!g.opts?.bonus,`<section class="msg"><div class="eyebrow">Signed in</div>
       <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
-      <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p></section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
+      <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p>${D.me===HOST_NAME?`<p class="note">🔮 You're the Gamemaker: predict how many crack each secret, and guess in the bonus round!</p>`:""}</section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
   if(!playing){   // the host (and anyone sitting out) still gets the same meme as everyone else
     const meme=["question","interro","reveal","story"].includes(g.phase)?Memes.html("secrets",g.gid,g.qi):"";
@@ -515,6 +517,21 @@ function view(){
 
   if(g.phase==="bonuscard")return [key,header()+msg("📝","Bonus round!","<p>Fresh secrets, written tonight by people in this room. Eyes on the TV.</p>")+soundBtn()];
   const mineSecret=g.own&&g.own===ownTag(g.gid,g.qi,D.me);
+  // 🔮 the Gamemaker (Carsyn) knows the real secrets: she predicts how many will crack it. Bonus round: she guesses like everyone.
+  if(D.me===HOST_NAME&&!g.bonus&&!mineSecret&&["question","interro","reveal"].includes(g.phase)){
+    const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null),pick=/^🔮(\d+)$/.exec(mine||"")?.[1];
+    if(g.phase==="reveal"){const n=(g.correct||[]).filter(x=>x!==HOST_NAME).length,d=pick==null?null:Math.abs(+pick-n);
+      return [key+"gr"+pick,header()+msg(d===0?"🔮":d===1?"✨":"🎙️",d===0?"Perfect prediction!":d===1?"So close!":pick==null?"No prediction":"Not this time",
+        `<p class="said">${n} cracked it${pick!=null?` · you said ${pick}`:""}</p><p>${d===0?"+500 points":d===1?"+200 points":"Better luck on the next one!"}</p>`,d!=null&&d<2?"right":"")+reactBar(),d===0?"right":""];}
+    if(g.phase==="interro")return [key+"gi",header()+msg("🔮","The Interrogation","<p>You're the Gamemaker. Enjoy watching them squirm.</p>")+reactBar()];
+    if(pick!=null)return [key+"gp"+pick,header()+msg("🔮",`You predicted ${pick}`,"<p>Exactly right: +500. Off by one: +200. Eyes on the TV!</p>")+reactBar(),"seal"];
+    if(g.locked)return [key+"gl",header()+msg("💥","Time's up!","<p>No prediction this time.</p>")];
+    const n=Math.max(1,(g.playing||[]).length-1);
+    return [key+"ga",header()+fileCard(g)+`<section class="msg" style="flex:none;padding:4px 0 0"><div class="icon">🔮</div><h1 style="font-size:1.6rem">You're the Gamemaker</h1>
+      <p>You know this one! How many will crack it?</p><p style="font-size:.85rem">Exactly right: <b style="color:var(--good)">+500</b> · off by one: <b style="color:var(--good)">+200</b></p></section>
+      <div class="pick">${Array.from({length:n+1},(_,i)=>`<button data-pred="${i}">${i}<small>${i===0?"nobody":i===n?"everyone":"crack it"}</small></button>`).join("")}</div>`,"shh"];
+  }
+
   if(g.phase==="interro"){
     // 🔦 the Interrogation Room: keep your sealed guess or change it, while the room is open
     const hot=(g.hot||[]).includes(D.me),pic=n=>`img/r${pad(g.names.indexOf(n)+1)}.jpg`,mine=D.myAnswer,k=`${g.gid}:${g.qi}`;
@@ -629,6 +646,7 @@ function render(){
   const sy=$("#storyyes");if(sy)sy.onclick=()=>storyAnswer(true);
   const sn=$("#storyno");if(sn)sn.onclick=()=>storyAnswer(false);
   clearInterval(render.ac);if($("#askclock")&&D.game?.askLeft!=null){const end=Date.now()+D.game.askLeft*1000;render.ac=setInterval(()=>{const b=$("#askclock b");if(!b)return clearInterval(render.ac);b.textContent=Math.max(0,Math.ceil((end-Date.now())/1000))},200)}
+  document.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>{sfx("tap");buzz(15);send("🔮"+b.dataset.pred)});
   const cv=$("#changevote");if(cv)cv.onclick=()=>{sfx("tap");mySwitch.open=true;lastKey="";render();$("#sw")?.focus()};
   const kv=$("#keepvote");if(kv)kv.onclick=()=>{sfx("tap");buzz(15);toast("Kept. Your sealed guess stands.")};
   const sc=$("#swcancel");if(sc)sc.onclick=()=>{mySwitch.open=false;lastKey="";render()};

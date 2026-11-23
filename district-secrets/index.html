@@ -419,9 +419,10 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-5";
+const BUILD="ds-build-2026-11-23-6";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
-const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
+const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
+                                    // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
 const Q=[ /* the real fun facts the family sent in; edit wording here */
  {f:"I have a gorilla statue in my closet.",a:"Dash"},
  {f:"I flunked band one year.",a:"Grandad"},
@@ -754,7 +755,9 @@ const curX=()=>dsx.qi===S.qi?dsx:{bets:{},votes:{}};
 const bigBets=()=>Object.entries(curX().bets||{}).filter(([n,b])=>b!=="hunch"&&n!==cur().a).length;
 function showBets(){const el=$("#betcount");if(!el)return;const n=bigBets();el.textContent=n?`🎲 ${n} big bet${n>1?"s":""} on the table`:""}
 /* the guessers for this secret: everyone playing except the person it belongs to */
-const guessers=()=>active().filter(p=>p.name!==cur().a);
+const gmPredicts=()=>!cur()?.bonus&&cur()?.a!==HOST&&active().some(p=>p.name===HOST);   // the Gamemaker predicts on this secret
+const guessers=()=>active().filter(p=>p.name!==cur().a&&!(p.name===HOST&&gmPredicts()));
+const gmPick=()=>{const m=/^🔮(\d+)$/.exec((S.orig||current())[HOST]||"");return m?+m[1]:null};
 function sealedCount(){const got=current();return guessers().filter(p=>got[p.name]!=null).length}
 function showSealed(){
   const n=sealedCount(),tot=guessers().length;
@@ -831,7 +834,7 @@ let S,raf=0,readyT=0,typeT=0,shownIn=[],shownCount=-1,hostOpen=false;
 function freshState(){
   return {phase:"lobby",secs:30,qi:0,elapsed:0,locked:false,correct:[],guesses:{},gid:0,extra:[],bonusDone:false,bets:{},votes:{},
     opts:{interro:true,bets:true,story:true,bonus:true,decoys:true},
-    players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,story:0,note:""}))};
+    players:NAMES.map(n=>({name:n,on:true,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,story:0,note:""}))};
 }
 function saved(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.players?.length===NAMES.length&&g.total===BASE?g:null}catch(e){return null}}
 function save(){try{localStorage.setItem(SAVE,JSON.stringify({...S,total:BASE}))}catch(e){}}
@@ -853,6 +856,7 @@ function howSteps(){
   if(o.interro)st.push(["🔦","Then the <b>Interrogation Room</b>: the most accused defends themselves, and you can <b>change your vote</b>. Switch to the right person: <b>+250</b>. Switch away from it: <b>−500</b>.","Then, the Interrogation Room. Whoever is accused most defends themselves, and you can change your vote. Switch to the right person for two hundred and fifty bonus points. But switch away from the right answer, and you lose five hundred."]);
   if(o.story)st.push(["🎤","<b>Story time:</b> the owner can accept (<b>+300</b>) and tell the story behind their secret, or decline (<b>−200</b>). Rate the story on your phone.","Then it's story time. The owner can accept, for three hundred points, and tell the story behind their secret. Or decline, and lose two hundred. Everyone rates the story on their phone."]);
   if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
+  if(active().some(p=>p.name===HOST))st.push(["🔮",`<b>${HOST} is the Gamemaker.</b> She knows the secrets, so she predicts how many of you crack each one. In the bonus round, she guesses too!`,`${HOST} is the Gamemaker. She knows the secrets, so she predicts how many of you will crack each one. In the bonus round, she guesses too.`]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
   st.push(["👑","Most points wins the <b>major award</b>. The final secret counts <b>double</b>.","Most points wins the major award. The final secret counts double. And may the odds be ever in your favor."]);
   return st;
@@ -890,7 +894,7 @@ function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
   // District Secrets reads its own How to Play first (howTo, above: it also covers the extras), so Ready goes straight to the walk-outs
-  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",style:"lineup",sound:()=>musicOn,onDone:newGame});
+  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",style:"lineup",sound:()=>musicOn,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
 }
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
@@ -1016,6 +1020,10 @@ function score(){
   S.players.forEach(p=>{
     p.note="";
     if(!p.on){p.delta=0;return}
+    if(p.name===HOST&&gmPredicts()){   // 🔮 the Gamemaker's prediction: how many cracked it
+      const pick=gmPick(),n=S.correct.filter(x=>x!==HOST).length,d=pick==null?null:Math.abs(pick-n);
+      p.delta=d===0?500*mult:d===1?200*mult:0;p.score+=p.delta;
+      p.note=pick==null?"🔮 No prediction":d===0?`🔮 Perfect prediction: ${n} +${p.delta}`:d===1?`🔮 So close: said ${pick}, it was ${n} +${p.delta}`:`🔮 Said ${pick}, it was ${n}`;return}
     if(p.name===name){
       const st=storyVotes*100*mult,bw=cur().bonus?BONUS_WRITER:0;   // writing a bonus secret that got played is worth points too
       const sb=story==="on"?STORY_YES:0,sn=declined?Math.min(STORY_NO,p.score+fooled*150*mult+st+bw):0;   // took the stage, or declined it
@@ -1085,7 +1093,7 @@ function lobbyView(){
       ${status}
       <div class="ppl">${ps.map((p,i)=>{const ph=hasPhone(p.name);
         return `<button class="p${ph?" in":""}${ph&&fresh.includes(p.name)?" new":""}${p.on?"":" off"}" data-tog="${i}" aria-pressed="${p.on}" title="Tap to ${p.on?"sit them out":"add them back"}">
-          ${ph?'<span class="seal" aria-hidden="true">🔏</span>':""}<img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${!p.on?"sitting out":ph?"signed in":"waiting"}</small></button>`}).join("")}</div>
+          ${ph?'<span class="seal" aria-hidden="true">🔏</span>':""}<img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${!p.on?"sitting out":p.name===HOST?"🔮 gamemaker":ph?"signed in":"waiting"}</small></button>`}).join("")}</div>
       <div class="tiny" style="text-align:center">Host: tap someone to sit them out. No phone? They can whisper their guess to the host.</div>
       <div class="eyebrow" style="text-align:center">Extras · tap to switch on or off</div>
       <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
@@ -1189,12 +1197,18 @@ function revealView(){
       ${fooledList().length?`<div class="fooled">🎭 ${esc(x.a)} fooled ${fooledList().length} tribute${fooledList().length>1?"s":""}!</div>`:""}
       <div class="cracked"><h3>${line}</h3>
         ${right.length?`<div class="faces">${right.map((n,i)=>`<div class="face" style="animation-delay:${1.1+i*.12}s"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
-      ${switchHTML()}${betsHTML()}
+      ${gmHTML()}${switchHTML()}${betsHTML()}
       ${suspectsHTML(x.a)}
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>{const own=p.name===x.a;
         return `<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled":""}>${esc(p.name)}<span>${own?"their secret":g[p.name]!=null?"guessed “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`}).join("")}</div></div>`:""}
     </div></section>
   <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: ${S.opts?.story?"story time":"scores"}</span>${S.opts?.story?`<button class="btn" id="story">🎤 Story time</button>`:`<button class="btn" id="score">Show scores</button>`}</div>`;
+}
+/* 🔮 how the Gamemaker's prediction went */
+function gmHTML(){
+  if(!gmPredicts())return"";const pick=gmPick(),n=S.correct.filter(x=>x!==HOST).length;
+  if(pick==null)return `<div class="fooled">🔮 The Gamemaker didn't predict this one</div>`;
+  const d=Math.abs(pick-n);return `<div class="fooled">🔮 ${HOST} predicted ${pick} · ${n} cracked it${d===0?" · PERFECT! +500":d===1?" · so close! +200":""}</div>`;
 }
 /* 🃏 the reveal for a decoy: nobody said it */
 function fakeView(){
@@ -1209,7 +1223,7 @@ function fakeView(){
       <p class="said">“${esc(x.f)}” was a decoy. Nobody in this room said that.</p>
       <div class="cracked"><h3>🃏 ${line}</h3>
         ${right.length?`<div class="faces">${right.map((n,i)=>`<div class="face" style="animation-delay:${1.1+i*.12}s"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
-      ${switchHTML()}${betsHTML()}
+      ${gmHTML()}${switchHTML()}${betsHTML()}
       ${suspectsHTML(null).replace("WHO THE ROOM ACCUSED","WHO THE ROOM BLAMED (FOR NOTHING)")}
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>`<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}">${esc(p.name)}<span>${g[p.name]!=null?"said “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`).join("")}</div></div>`:""}
     </div></section>

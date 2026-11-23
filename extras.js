@@ -100,6 +100,15 @@ const Extras = (() => {
       if (st && !st.querySelector(".twtag")) st.insertAdjacentHTML("beforeend", `<div class="twtag">${TWISTS[tw()].icon} ${TWISTS[tw()].title}</div>`);
     }
     if (S.phase === "interview") wireInterview();
+    // 🎵 music on/off, top-right on the winner and interview screens
+    let mb = document.getElementById("winmusic");
+    if (S.phase === "final" || S.phase === "interview") {
+      if (!mb) { mb = document.createElement("button"); mb.id = "winmusic"; mb.className = "btn";
+        mb.style.cssText = "position:fixed;top:14px;right:14px;z-index:50;padding:.6em 1.1em;font-size:1.05rem";
+        mb.onclick = () => { try { ensureAudio(); } catch (e) {} if (song) { stopSong(); } else { S.sound = true; playSong("lobby"); } label(); };
+        document.body.appendChild(mb); }
+      label();
+    } else if (mb) mb.remove();
     const iv = document.getElementById("interview"); if (iv) iv.onclick = () => { try { ensureAudio(); } catch (e) {} startInterview(); };
   }
 
@@ -194,6 +203,8 @@ const Extras = (() => {
     if (b("ivagain")) b("ivagain").onclick = readQ;
     if (b("ivdone")) b("ivdone").onclick = () => { clearInterval(ivT); try { speechSynthesis.cancel(); } catch (e) {} S.phase = "final"; render(); };
   }
+  function label() { const mb = document.getElementById("winmusic"); if (mb) mb.textContent = song ? "🔇 Stop music" : "🎵 Play music"; }
+  setInterval(label, 700);
   function reset() { restore(); S.buys = {}; S.rosesShown = []; S.iv = null; S.hintShown = false; clearInterval(ivT); }
 
   return { zoomP, deal, card, start, restore, zoomStyle, tick, after, before, score, spy, loadBuys, startInterview, interviewView, nextQ, reset,

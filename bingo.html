@@ -68,7 +68,7 @@ const {esc,sfx,playSong,stopSong,ensureAudio}=XM;
 let CARDS=[];
 const LET="BINGO",LC=["#b8322a","#1f6b4a","#c8921f","#2f6fb3","#7a3fb0"];
 const letterOf=n=>Math.floor((n-1)/15);
-let S={mode:(m=>["line","corners","x","frame","blackout"].includes(m)?m:"line")(XM.store.get("xmas-bingo-mode","line")),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
+let S={mode:(m=>["line","corners","x","frame"].includes(m)?m:"line")(XM.store.get("xmas-bingo-mode","line")),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
 const save=()=>{XM.store.set("xmas-bingo-called",S.called);XM.store.set("xmas-bingo-gm",S.gm)};
 
 let lastTap={n:0,t:0};
@@ -95,7 +95,6 @@ const MODES={
   corners:{name:"Four Corners",desc:"All 4 corner squares",cells:[[0,0],[4,0],[0,4],[4,4]]},
   x:{name:"Big X",desc:"Both diagonals",cells:ALL.filter(([c,r])=>c===r||c===4-r)},
   frame:{name:"Picture Frame",desc:"The whole outside edge",cells:ALL.filter(([c,r])=>c===0||c===4||r===0||r===4)},
-  blackout:{name:"Blackout",desc:"Every square on the card",cells:ALL},
 };
 const hasSq=(card,c,r)=>(c===2&&r===2)||S.called.includes(card[c][r]);
 function lines(card){const m=MODES[S.mode]||MODES.line;if(!m.cells)return rowLines(card);return m.cells.every(([c,r])=>hasSq(card,c,r))?[m.cells]:[]}
@@ -114,7 +113,7 @@ function gmCheck(justCalled){
 function bigWin(who,sub=""){
   document.querySelectorAll(".bigwin").forEach(x=>x.remove());
   const o=document.createElement("div");o.className="bigwin";
-  o.innerHTML=`<div style="display:grid;gap:16px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(sub)}${sub?" · ":""}${esc(MODES[S.mode].name)}</div><h1>${S.mode==="blackout"?"BLACKOUT!":"BINGO!"}</h1>
+  o.innerHTML=`<div style="display:grid;gap:16px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(sub)}${sub?" · ":""}${esc(MODES[S.mode].name)}</div><h1>BINGO!</h1>
     <p style="font-family:var(--display);font-size:clamp(1.5rem,4vw,3rem);margin:0">${esc(who)} wins a major award!</p><p class="tiny" style="font-size:1.1rem">Every bingo wins a major award. Keep playing!</p>
     <button class="btn" style="font-size:1.2rem">Keep playing</button></div>`;
   document.body.appendChild(o);o.querySelector("button").onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};

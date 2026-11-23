@@ -55,6 +55,7 @@ window.HowTo = (() => {
           ["🔥", "3 in a row", "You're on fire: +1 more each time"],
           ["🏆", "You're the #1 answer", "Your votes count for you too!"]]],
         ["Bonuses", [["⚔️", "Ties", "Go to a secret face-off vote on your phone."],
+          ...(g.host ? [["🎯", `${g.host} plays Stump the Room`, "She knows the answers, so she bets on someone to miss. Call it anyway and you steal +1!"]] : []),
           ["💰", "Last question", "Counts ×2"],
           ["🎉", "Emojis", "Tap them to send them up the TV."]]],
       ],

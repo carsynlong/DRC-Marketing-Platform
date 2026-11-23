@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Matchup Wheel</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="/xmas/xmas.css">
+<style>
+.app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;gap:14px;max-width:1400px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:44px 20px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.emblem{width:clamp(110px,14vw,170px);height:auto;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+h1.title{font-size:clamp(2rem,5vw,3.6rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d);line-height:1;text-align:center}
+.seg{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.seg button{padding:.55em 1.1em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:800}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--night)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:1000px}
+.chip{display:flex;align-items:center;gap:8px;padding:.3em .9em .3em .3em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:700;background:rgba(13,31,24,.6)}
+.chip img{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.chip[aria-pressed="true"]{background:var(--night-2);box-shadow:inset 0 0 0 2px var(--gold)}
+.chip[aria-pressed="false"]{opacity:.45;text-decoration:line-through}
+.layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+.wheelbox{position:relative;display:grid;place-items:center}
+#wheel{width:min(100%,600px,72vh);aspect-ratio:1;display:block}
+.pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:22px solid transparent;border-right:22px solid transparent;border-top:44px solid var(--gold);filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));z-index:2}
+.hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(22%,130px);aspect-ratio:1;border-radius:50%;background:var(--night) url(/xmas/emblem.png) center/92% no-repeat;box-shadow:0 0 0 6px var(--gold)}
+.side{display:grid;gap:14px}
+.panel{background:var(--night-2);border-radius:18px;padding:16px;box-shadow:0 0 0 1px var(--line);display:grid;gap:12px}
+.now{text-align:center;display:grid;gap:10px;min-height:150px;align-content:center}
+.now .vs{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
+.now .p{display:grid;justify-items:center;gap:4px;animation:pop .5s cubic-bezier(.2,1.5,.4,1)}
+.now img{width:110px;height:110px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)}
+.now b{font-family:var(--display);font-weight:400;font-size:1.5rem;color:var(--gold)}
+.now .x{font-family:var(--display);font-size:2rem;color:var(--red)}
+.now .q{font-family:var(--display);font-size:3rem;color:var(--muted)}
+.match{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.match .who{display:flex;align-items:center;gap:8px;justify-content:center;padding:.45em .6em;border-radius:12px;background:rgba(0,0,0,.25);font-weight:800;text-align:center;box-shadow:inset 0 0 0 2px var(--line);overflow-wrap:anywhere}
+.match .who img{width:34px;height:34px;border-radius:50%;object-fit:cover;flex:none}
+.match .who[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--good);background:rgba(111,211,138,.15)}
+.match .who.lost{opacity:.35;text-decoration:line-through}
+.match .v{font-family:var(--display);color:var(--red)}
+.mrow{display:grid;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0;padding-bottom:0}
+.mrow .tools{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:.85rem;color:var(--muted);flex-wrap:wrap}
+.mini-btn{padding:.35em .8em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--gold);font-weight:800;font-size:.85rem}
+.timer{font-family:var(--display);font-size:clamp(5rem,16vw,11rem);color:var(--gold);line-height:1;text-shadow:0 5px 0 var(--red-d);font-variant-numeric:tabular-nums}
+.overlay{position:fixed;inset:0;z-index:30;background:rgba(6,16,12,.95);display:grid;place-items:center;text-align:center;padding:50px 20px 20px;overflow:auto}
+.overlay .inner{display:grid;gap:18px;justify-items:center}
+.champ img{width:min(46vw,300px);height:min(46vw,300px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 8px var(--gold),0 0 0 14px var(--red)}
+.crown{font-size:3.8rem;margin-bottom:-38px;position:relative;z-index:1;animation:crownDrop .9s .3s cubic-bezier(.2,1.5,.4,1) both,bob 1.1s 1.2s ease-in-out infinite alternate}
+.bye{font-size:.95rem;color:var(--gold);font-weight:700;text-align:center}
+/* big VS reveal */
+.vsov{position:fixed;inset:0;z-index:30;display:grid;place-items:center;overflow:hidden;background:radial-gradient(circle at 50% 50%,rgba(184,50,42,.55),rgba(6,16,12,.97) 65%)}
+.vsov .rays{position:absolute;inset:-50%;background:repeating-conic-gradient(rgba(232,176,75,.10) 0 8deg,transparent 8deg 16deg);animation:rays 30s linear infinite}
+@keyframes rays{to{transform:rotate(360deg)}}
+.vsov .row3{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(10px,3vw,50px);width:min(1500px,96vw)}
+.vsov .fighter{display:grid;justify-items:center;gap:14px}
+.vsov .fighter img{width:min(34vw,460px,52vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 20px var(--red),0 30px 70px rgba(0,0,0,.6)}
+.vsov .fighter b{font-family:var(--display);font-weight:400;font-size:clamp(2rem,5vw,4.6rem);color:var(--gold);text-shadow:0 5px 0 var(--red-d)}
+.vsov .fighter .dd{font-weight:800;letter-spacing:.2em;color:var(--muted)}
+.vsov .L{animation:inL .7s cubic-bezier(.2,1.3,.4,1) both}
+.vsov .R{animation:inR .7s .15s cubic-bezier(.2,1.3,.4,1) both}
+.vsov .VS{font-family:var(--display);font-size:clamp(4rem,11vw,10rem);color:#fff;text-shadow:0 6px 0 var(--red),0 0 40px rgba(255,90,78,.8);animation:slam .7s .7s cubic-bezier(.2,1.4,.4,1) both}
+.vsov .top{position:relative;margin-bottom:2vh;text-align:center}
+.vsov .ctl{position:relative;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:3vh;animation:popIn .5s 1.2s both}
+@keyframes inL{from{transform:translateX(-80vw) rotate(-30deg)}}
+@keyframes inR{from{transform:translateX(80vw) rotate(30deg)}}
+@keyframes crownDrop{from{transform:translateY(-60vh) rotate(-40deg)}}
+@keyframes bob{to{transform:translateY(-6px) rotate(4deg)}}
+@media (max-width:860px){.layout{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="lights"></div>
+<div class="app" id="app"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<script src="/xmas/xmas.js"></script>
+<script>
+/* Matchup Wheel: spin twice per 1 vs 1 face-off, free pass for an odd player out,
+   tap winners, winners go back on the wheel until one champion is left. */
+document.getElementById("lights").outerHTML=XM.lights(26);
+XM.snow(document.getElementById("snow"));
+const {esc,NAMES}=XM;
+const {playSong,stopSong,sfx,ensureAudio}=XM;
+const confetti=(n,big)=>XM.confetti(n,big);
+const AV=n=>XM.photo(n);
+const DIST=n=>XM.TRIBUTES.find(t=>t.name===n).d;
+const GAMES={
+  cookie:{name:"Smart Cookie Showdown",verb:"Cookie face-off",timer:60,rule:"Cookie on the forehead, no hands. First cookie in the mouth wins."},
+  scoop:{name:"Blind Snowball Scoop",verb:"Snowball scoop-off",timer:30,rule:"Blindfolds on, spoon in hand. Most snowballs in 30 seconds wins."},
+};
+const COLORS=["#b8322a","#e8b04b","#3e8a52","#2f6fb3","#c8412f","#d79a1f","#1f6b4a","#7a3fb0"];
+NAMES.forEach(n=>{const i=new Image();i.src=AV(n)});
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+
+let S={phase:"setup",game:(location.hash.slice(1) in GAMES)?location.hash.slice(1):"cookie",
+  present:XM.store.get("xmas-present",Object.fromEntries(NAMES.map(n=>[n,true]))),round:1,pool:[],matches:[],bye:null,pick:null,spinning:false,rot:0,last:null,champ:null};
+NAMES.forEach(n=>{if(S.present[n]===undefined)S.present[n]=true});
+const G=()=>GAMES[S.game];
+
+/* ---------- wheel ---------- */
+function drawWheel(){
+  const c=document.getElementById("wheel");if(!c)return;const x=c.getContext("2d"),W=c.width,R=W/2-14,n=S.pool.length;
+  x.clearRect(0,0,W,W);x.save();x.translate(W/2,W/2);
+  x.beginPath();x.arc(0,0,R+10,0,7);x.fillStyle="#e8b04b";x.fill();
+  if(!n){x.beginPath();x.arc(0,0,R,0,7);x.fillStyle="#16302a";x.fill();x.restore();return}
+  x.rotate(S.rot);const sl=2*Math.PI/n;
+  for(let i=0;i<n;i++){
+    x.beginPath();x.moveTo(0,0);x.arc(0,0,R,i*sl,(i+1)*sl);x.closePath();
+    x.fillStyle=n===1?COLORS[0]:COLORS[i%(n%COLORS.length===1?COLORS.length-1:COLORS.length)];x.fill();
+    x.strokeStyle="rgba(251,246,234,.6)";x.lineWidth=3;x.stroke();
+    x.save();x.rotate(i*sl+sl/2);x.textAlign="right";x.textBaseline="middle";
+    const name=S.pool[i];let fs=Math.min(46,Math.max(22,sl*R*.42));x.font=`800 ${fs}px Outfit, system-ui, sans-serif`;
+    while(x.measureText(name).width>R*.62&&fs>16){fs-=2;x.font=`800 ${fs}px Outfit, system-ui, sans-serif`}
+    x.fillStyle="#fff";x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=6;x.fillText(name,R-26,0);x.restore();
+  }
+  for(let i=0;i<n;i++){x.save();x.rotate(i*sl);x.beginPath();x.arc(R+3,0,6,0,7);x.fillStyle="#fbf6ea";x.fill();x.restore()}
+  x.restore();
+}
+const idxAtPointer=()=>{const n=S.pool.length,sl=2*Math.PI/n;let a=(-Math.PI/2-S.rot)%(2*Math.PI);if(a<0)a+=2*Math.PI;return Math.floor(a/sl)%n};
+function spin(){
+  if(S.spinning||S.phase!=="spin"||!S.pool.length)return;ensureAudio();
+  if(S.pool.length===1&&!S.pick)return;
+  S.spinning=true;render();
+  const start=S.rot,dist=2*Math.PI*(5+Math.random()*3)+Math.random()*2*Math.PI,dur=4200+Math.random()*900,t0=performance.now();
+  let lastIdx=idxAtPointer();playSong("count");
+  const ease=t=>1-Math.pow(1-t,4);
+  const step=now=>{const t=Math.min(1,(now-t0)/dur);S.rot=start+dist*ease(t);drawWheel();
+    const i=idxAtPointer();if(i!==lastIdx){lastIdx=i;sfx("tick")}
+    if(t<1)requestAnimationFrame(step);else land(S.pool[i])};
+  requestAnimationFrame(step);
+}
+function land(name){
+  stopSong();S.spinning=false;S.pool=S.pool.filter(n=>n!==name);
+  let showVs=null;
+  if(!S.pick){S.pick=name;S.last=null;sfx("reveal")}
+  else{S.matches.push({a:S.pick,b:name,win:null});S.last={a:S.pick,b:name};showVs=S.matches.length-1;S.pick=null}
+  if(!S.pick&&S.pool.length===1){S.bye=S.pool[0];S.pool=[]}
+  if(!S.pool.length&&!S.pick){S.phase="play"}
+  render();
+  if(showVs!==null)versus(showVs);else if(S.phase==="play")playSong("board");
+}
+
+/* ---------- the big "X vs Y" reveal ---------- */
+function versus(i){
+  const m=S.matches[i];document.getElementById("vsov")?.remove();
+  const ov=document.createElement("div");ov.className="vsov";ov.id="vsov";
+  const f=(n,cls)=>`<div class="fighter ${cls}"><img src="${AV(n)}" alt=""><b>${esc(n)}</b><span class="dd">DISTRICT ${DIST(n)}</span></div>`;
+  ov.innerHTML=`<div class="rays"></div><div style="position:relative;display:grid;justify-items:center">
+    <div class="top"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} · Round ${S.round} · Face-off ${i+1}</div></div>
+    <div class="row3">${f(m.a,"L")}<div class="VS">VS</div>${f(m.b,"R")}</div>
+    <div class="ctl"><button class="btn red" id="vs-timer" style="font-size:1.2rem">⏱ Start the ${G().timer}s timer</button>
+      <button class="btn" id="vs-close" style="font-size:1.2rem">${S.phase==="spin"?"🎡 Back to the wheel":"✅ All matched up"}</button></div></div>`;
+  document.body.appendChild(ov);
+  sfx("whoosh");setTimeout(()=>{sfx("cannon");confetti(140)},700);
+  const close=()=>{ov.remove();if(S.phase==="play")playSong("board")};
+  ov.querySelector("#vs-close").onclick=close;
+  ov.querySelector("#vs-timer").onclick=()=>{ov.remove();openTimer(i)};
+}
+
+/* ---------- flow ---------- */
+function start(){
+  const ps=NAMES.filter(n=>S.present[n]);if(ps.length<2)return;
+  S.round=1;newRound(shuffle(ps));
+}
+function newRound(names){
+  S.pool=names;S.matches=[];S.bye=null;S.pick=null;S.last=null;S.phase="spin";S.rot=Math.random()*6.28;sfx("gong");playSong("lobby");render();
+}
+function nextRound(){
+  const w=S.matches.map(m=>m.win).concat(S.bye?[S.bye]:[]);
+  if(w.length===1){S.champ=w[0];S.phase="champ";stopSong();sfx("fanfare");confetti(240,true);setTimeout(()=>S.phase==="champ"&&playSong("lobby"),2600);render();return}
+  S.round++;newRound(shuffle(w));
+}
+let tId=0;
+function openTimer(i){
+  const m=S.matches[i];let left=G().timer;
+  const ov=document.createElement("div");ov.className="overlay";ov.id="tov";
+  ov.innerHTML=`<div class="inner"><div class="eyebrow">${esc(G().verb)}</div>
+    <div style="display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap"><img src="${AV(m.a)}" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)">
+    <h2 style="font-size:clamp(1.6rem,4vw,2.8rem)">${esc(m.a)} <span style="color:var(--red)">vs</span> ${esc(m.b)}</h2><img src="${AV(m.b)}" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)"></div>
+    <div class="timer" id="tnum">${left}</div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="tgo">Go!</button><button class="btn ghost" id="tclose">Close</button></div></div>`;
+  document.body.appendChild(ov);
+  const close=()=>{clearInterval(tId);ov.remove();stopSong();playSong("board")};
+  ov.querySelector("#tclose").onclick=close;
+  ov.querySelector("#tgo").onclick=e=>{e.target.disabled=true;sfx("go");playSong("count");
+    tId=setInterval(()=>{left--;const el=document.getElementById("tnum");if(el)el.textContent=left;
+      if(left<=5&&left>0)sfx("tock");if(left<=0){clearInterval(tId);stopSong();sfx("cannon");if(el)el.textContent="Time!"}},1000)};
+}
+function tiebreak(names){
+  stopSong();XM.tiebreaker({game:S.game,tied:names||[],onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
+}
+
+/* ---------- views ---------- */
+const topBtns=()=>`<button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button><button class="btn ghost" id="tb">⚔️ Tiebreaker</button><button class="btn ghost" id="back">← Back to the show</button>`;
+function render(){
+  document.getElementById("app").innerHTML=S.phase==="setup"?setup():S.phase==="champ"?champ():arena();wire();drawWheel();
+}
+function setup(){
+  return `<div class="bar" style="justify-content:flex-end">${topBtns()}</div>
+  <section style="display:grid;gap:18px;justify-items:center;text-align:center"><img class="emblem" src="/xmas/emblem.png" alt="">
+    <div class="eyebrow">The 2026 Christmas Games</div><h1 class="title">The Matchup Wheel</h1>
+    <p class="tiny" style="max-width:56ch;font-size:1.05rem">Spin twice to pair up two tributes. Winners go back on the wheel for the next round until one champion is left standing.</p>
+    <div class="seg" role="group" aria-label="Which game">${Object.entries(GAMES).map(([k,g])=>`<button data-game="${k}" aria-pressed="${S.game===k}">${g.name}</button>`).join("")}</div>
+    <div class="eyebrow">Who's playing? Tap to sit someone out</div>
+    <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}</button>`).join("")}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn red" id="music">🔔 Play music</button><button class="btn" id="start" style="font-size:1.2rem">Load the wheel</button></div>
+  </section>`;
+}
+function arena(){
+  const g=G(),playing=S.phase==="play",done=S.matches.length&&S.matches.every(m=>m.win);
+  const remaining=S.matches.length?S.matches.filter(m=>!m.win).length:0;
+  const now=S.pick?`<div class="eyebrow">First tribute</div><div class="vs"><div class="p"><img src="${AV(S.pick)}" alt=""><b>${esc(S.pick)}</b></div><span class="x">vs</span><span class="q">?</span></div><div class="tiny">Spin again for their opponent</div>`
+    :S.last?`<div class="eyebrow">${esc(g.verb)}!</div><div class="vs"><div class="p"><img src="${AV(S.last.a)}" alt=""><b>${esc(S.last.a)}</b></div><span class="x">vs</span><div class="p"><img src="${AV(S.last.b)}" alt=""><b>${esc(S.last.b)}</b></div></div>`
+    :playing?`<div class="eyebrow">All matched up</div><b style="font-family:var(--display);font-size:1.6rem;color:var(--gold)">Let the face-offs begin!</b>`
+    :`<div class="eyebrow">Round ${S.round}</div><b style="font-family:var(--display);font-size:1.6rem;color:var(--gold)">Spin to pick a tribute</b>`;
+  return `<div class="bar"><div><div class="eyebrow">${esc(g.name)}</div><h1 class="title" style="text-align:left;font-size:clamp(1.6rem,3.6vw,2.6rem)">Round ${S.round}</h1></div><div style="display:flex;gap:8px;flex-wrap:wrap">${topBtns()}<button class="btn ghost" id="reset">Start over</button></div></div>
+  <div class="layout">
+    <div class="wheelbox"><div class="pointer" aria-hidden="true"></div><canvas id="wheel" width="1000" height="1000" role="img" aria-label="Wheel with ${S.pool.length} names"></canvas><div class="hub"></div></div>
+    <div class="side">
+      <div class="panel now" aria-live="polite">${now}</div>
+      ${S.phase==="spin"?`<button class="btn red" id="spin" style="font-size:1.4rem;padding:1em" ${S.spinning?"disabled":""}>${S.spinning?"Spinning…":"🎡 SPIN"}</button><div class="tiny" style="text-align:center">Space: spin · ${S.pool.length} left on the wheel</div>`:""}
+      ${S.matches.length||S.bye?`<div class="panel"><div class="eyebrow">Round ${S.round} matchups${playing?" · tap the winner":""}</div>
+        ${S.matches.map((m,i)=>`<div class="mrow"><div class="match">
+          <button class="who ${m.win&&m.win!==m.a?"lost":""}" data-win="${i}|a" aria-pressed="${m.win===m.a}" ${playing?"":"disabled"}><img src="${AV(m.a)}" alt="">${esc(m.a)}</button><span class="v">vs</span>
+          <button class="who ${m.win&&m.win!==m.b?"lost":""}" data-win="${i}|b" aria-pressed="${m.win===m.b}" ${playing?"":"disabled"}><img src="${AV(m.b)}" alt="">${esc(m.b)}</button></div>
+          <div class="tools"><span>${m.win?"🏆 "+esc(m.win)+" advances":playing?"Who won?":""}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="mini-btn" data-vs="${i}">🆚 Show</button>${playing?`<button class="mini-btn" data-timer="${i}">⏱ ${g.timer}s timer</button><button class="mini-btn" data-tie="${i}">⚔️ Tie?</button>`:""}</span></div></div>`).join("")}
+        ${S.bye?`<div class="bye">🍀 ${esc(S.bye)} gets a free pass to the next round</div>`:""}</div>`:""}
+      ${playing?`<button class="btn" id="nextr" ${done?"":"disabled"}>${done?(S.matches.length===1&&!S.bye?"👑 Crown the champion":"🎡 Winners back on the wheel"):`${remaining} matchup${remaining===1?"":"s"} left`}</button>`:""}
+      <div class="tiny" style="text-align:center">${esc(g.rule)}</div>
+    </div></div>`;
+}
+function champ(){
+  return `<div class="overlay" style="position:relative;background:none;min-height:85vh"><div class="inner champ"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} champion</div>
+    <div class="crown">👑</div><img src="${AV(S.champ)}" alt=""><h1 class="title" style="font-size:clamp(2.6rem,8vw,5rem)">${esc(S.champ)}</h1>
+    <p style="font-family:var(--display);font-size:clamp(1.5rem,3.4vw,2.6rem);margin:0">Go claim your major award!</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="save">🏆 Save as ${esc(G().name)} victor</button><button class="btn ghost" id="reset">Back to setup</button><button class="btn ghost" id="back">← Back to the show</button><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button></div></div></div>`;
+}
+
+/* ---------- controls ---------- */
+function backToShow(){if(window.opener&&!window.opener.closed){window.close()}location.href="/show"}
+function wire(){
+  const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
+  document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");render()});
+  document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{S.present[b.dataset.here]=!S.present[b.dataset.here];XM.store.set("xmas-present",S.present);sfx(S.present[b.dataset.here]?"tap":"untap");render()});
+  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];sfx(m.win?"pop":"untap");if(m.win)confetti(40);render()});
+  document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
+  document.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{ensureAudio();versus(+b.dataset.vs)});
+  document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b])});
+  document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>XM.toggleSound());
+  on("start",start);on("spin",spin);on("nextr",nextRound);on("tb",()=>tiebreak());on("back",backToShow);
+  on("save",e=>{XM.setVictor(S.game,S.champ);e.textContent="✅ Saved to The Capitol Has Spoken";e.disabled=true;sfx("reveal")});
+  on("reset",()=>{S.phase="setup";stopSong();render()});
+  on("music",()=>{stopSong();playSong("lobby")});
+}
+document.addEventListener("keydown",e=>{
+  if(document.getElementById("tov")||XM.tiebreakerOpen())return;
+  const vs=document.getElementById("vsov");
+  if(vs&&(e.key==="Escape"||e.code==="Space")){e.preventDefault();vs.querySelector("#vs-close").click();return}
+  if(e.target.closest&&e.target.closest("button"))return;
+  if(e.code==="Space"&&S.phase==="spin"){e.preventDefault();spin()}
+  if(e.key==="m"||e.key==="M")XM.toggleSound();
+});
+document.addEventListener("pointerdown",()=>ensureAudio(),{once:true});
+render();
+document.fonts&&document.fonts.ready.then(()=>drawWheel());
+</script>
+</body>
+</html>

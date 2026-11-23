@@ -1544,5 +1544,15 @@ function restartGame(ask=true){
 if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
   rows:()=>["lobby","howto","board","final","interro","story","showdown"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
+<script>
+/* 🎵 lobby music as soon as the page opens. Browsers hold sound back until the first click or key press,
+   so if it's blocked it starts on your first click anywhere. */
+(function autoLobby(){
+  const go=()=>{try{if(!S||S.phase!=="lobby"||!musicOn)return;ensureAudio();if(!song)playSong("lobby")}catch(e){}};
+  setTimeout(go,300);
+  const first=()=>{removeEventListener("pointerdown",first,true);removeEventListener("keydown",first,true);setTimeout(go,0)};
+  addEventListener("pointerdown",first,true);addEventListener("keydown",first,true);
+})();
+</script>
 </body>
 </html>

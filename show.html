@@ -230,7 +230,7 @@ body{cursor:default}
 <div id="lights"></div>
 <div id="stage" aria-live="polite"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
-<div class="hud bl"><button id="intbtn" aria-label="Intermission" title="Intermission (I)">☕</button><button id="chutebtn" aria-label="Sponsor gift" title="Sponsor gift (P)">🪂</button><button id="livebtn" aria-label="Live broadcast" title="Live broadcast (W)">🎥</button><button id="capbtn" aria-label="Capitol Interruption" title="Capitol Interruption (C)">⚡</button><button data-mute id="mute" aria-label="Mute sound" title="Mute (M)">🔊</button><button id="fs" aria-label="Fullscreen" title="Fullscreen (F)">⛶</button></div>
+<div class="hud bl"><button id="intbtn" aria-label="Intermission" title="Intermission (I)">☕</button><button id="livebtn" aria-label="Live broadcast" title="Live broadcast (W)">🎥</button><button data-mute id="mute" aria-label="Mute sound" title="Mute (M)">🔊</button><button id="fs" aria-label="Fullscreen" title="Fullscreen (F)">⛶</button></div>
 <div class="hud br"><button id="prev" aria-label="Previous slide">◀</button><span id="count">1 / 1</span><button id="next" aria-label="Next slide">▶</button></div>
 <div id="start" role="button" tabindex="0" aria-label="Start the show">
   <div><img src="/xmas/emblem.png" alt=""><h1>The 2026 Christmas Games</h1><p>Gamemaker, click anywhere to start the show (sound on).</p>
@@ -665,10 +665,8 @@ go(startI);
 document.getElementById("start").addEventListener("click",e=>{e.stopPropagation();begin()});
 document.getElementById("next").onclick=e=>{e.stopPropagation();next()};
 document.getElementById("prev").onclick=e=>{e.stopPropagation();prev()};
-document.getElementById("chutebtn").onclick=e=>{e.stopPropagation();if(started)sponsorGift()};
 document.getElementById("livebtn").onclick=e=>{e.stopPropagation();if(started)liveBroadcast()};
 document.getElementById("intbtn").onclick=e=>{e.stopPropagation();if(started)intermission()};
-document.getElementById("capbtn").onclick=e=>{e.stopPropagation();if(started)capitolInterruption()};
 document.getElementById("mute").onclick=e=>{e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()};
 document.getElementById("fs").onclick=e=>{e.stopPropagation();toggleFS()};
 XM.setSound(XM.sound);
@@ -690,9 +688,7 @@ document.addEventListener("keydown",e=>{
     e.preventDefault();next()}
   else if(["ArrowLeft","ArrowUp","PageUp","Backspace"].includes(k)){e.preventDefault();prev()}
   else if(k==="f"||k==="F"){toggleFS()}
-  else if(k==="c"||k==="C"){capitolInterruption()}
   else if(k==="i"||k==="I"){intermission()}
-  else if(k==="p"||k==="P"){sponsorGift()}
   else if(k==="w"||k==="W"){liveBroadcast()}
   else if(k==="m"||k==="M"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}
   else if(k==="Home")go(0);else if(k==="End")go(SLIDES.length-1);
@@ -738,44 +734,6 @@ function revealUltimate(el){
       if(one)XM.celebrate(u.names[0],{intro:"Your ultimate victor"});else{XM.celebrate("",{line:`It's a tie! ${u.names.map(XM.spoken).join(" and ")}!`});
         box.querySelector("#ult-tb").onclick=ev=>{ev.stopPropagation();XM.tiebreaker({tied:u.names,onClose:()=>XM.playSong("board",true)})}}},3200)};
 }
-/* ---------- Capitol Interruption: random silly challenge for a random tribute ---------- */
-const DARES=["Sing one line of a Christmas song","Do your best QUEEN MOTHER impression","Say \"May the odds be ever in your favor\" in your most dramatic voice",
- "Strike a victory pose and hold it for 10 seconds","Give the tribute on your left a compliment","Name 5 of Santa's reindeer in 10 seconds","Do 5 jumping jacks",
- "Speak only in a whisper until the next game starts","Thank the Capitol for this feast, in a fancy accent","Do your best Santa laugh","Waddle like a penguin across the room",
- "Describe your perfect Christmas morning in 3 words","Act out your weapon of choice","Swap seats with anyone you choose","Hum a Christmas song until someone guesses it",
- "Do your best turkey gobble","Make up a toast to the Gamemaker","Show us your best dance move","Stand up and take a bow","Rate the pie out loud from 1 to 10",
- "Tell your best joke","Do the three-finger salute and hold it while humming"];
-let dareBag=[];
-const nextDare=()=>{if(!dareBag.length)dareBag=DARES.slice().sort(()=>Math.random()-.5);return dareBag.pop()};
-function capitolInterruption(){
-  if(busy())return;XM.ensureAudio();const prev=XM.currentSong();XM.stopSong();announcer.stop();
-  const m=document.createElement("div");m.className="moment capint";document.body.appendChild(m);let alive=true;const timers=[];
-  const T=(f,ms)=>timers.push(setTimeout(()=>alive&&f(),ms));
-  const close=()=>{alive=false;timers.forEach(clearTimeout);m.remove();announcer.stop();document.removeEventListener("keydown",key,true);const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)};
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
-  document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
-  const run=(keepVictim)=>{
-    const victim=keepVictim||TRIBUTES[Math.random()*12|0].name,dare=nextDare();
-    m.innerHTML=`<div class="inner"><h1 style="color:#ff6b5e">⚡ CAPITOL INTERRUPTION! ⚡</h1><div class="eb" style="color:#ffd9d4">The Capitol demands...</div>
-      <div class="victim"><img src="${XM.photo(victim)}" alt="" id="vimg"><b id="vname">${esc(victim)}</b></div><div class="dare" id="dare">🎰</div>
-      <div class="row" id="crow" style="visibility:hidden"><button class="btn red" id="c-same">🎲 New challenge for ${esc(victim)}</button><button class="btn" id="c-new">⚡ Pick a new victim</button><button class="btn ghost" id="c-x">Done (Esc)</button></div></div>`;
-    const img=m.querySelector("#vimg"),nm=m.querySelector("#vname"),dr=m.querySelector("#dare");
-    XM.sfx("siren");if(!keepVictim)announcer.say("Attention, tributes! The Capitol demands...",null,{pitch:.1,rate:.85});
-    let k=0;const spins=keepVictim?0:20;
-    const tick=()=>{if(!alive)return;if(k<spins){const t=TRIBUTES[(Math.random()*12)|0];img.src=t.img;nm.textContent=t.name;XM.sfx("tick");k++;T(tick,70+k*12);return}
-      img.src=XM.photo(victim);nm.textContent=victim;XM.sfx("thud");img.animate([{transform:"scale(1.4)"},{transform:"scale(1)"}],{duration:400});
-      let j=0;const dt=()=>{if(j<12){dr.textContent=DARES[(Math.random()*DARES.length)|0];XM.sfx("tick");j++;T(dt,80+j*15);return}
-        dr.textContent=dare;XM.sfx("reveal");XM.confetti(80);m.querySelector("#crow").style.visibility="visible";
-        announcer.say(`${XM.spoken(victim)}! ${dare.replace(/QUEEN MOTHER/g,"Queen Mother")}!`,null,{pitch:.15,rate:.88})};
-      T(dt,400)};
-    T(tick,keepVictim?0:1200);
-    m.querySelector("#c-same").onclick=e=>{e.stopPropagation();announcer.stop();run(victim)};
-    m.querySelector("#c-new").onclick=e=>{e.stopPropagation();announcer.stop();run()};
-    m.querySelector("#c-x").onclick=e=>{e.stopPropagation();close()};
-  };
-  run();
-}
-
 /* ---------- Intermission: bathroom and drink break ---------- */
 function intermission(){
   if(busy())return;XM.ensureAudio();const prev=XM.currentSong();XM.stopSong();announcer.stop();
@@ -807,7 +765,7 @@ function intermission(){
     end=Math.max(Date.now()+1000,end+d*60000);delete m.dataset.warned;tick()};
   const close=()=>{alive=false;clearInterval(iv);clearInterval(fiv);m.remove();announcer.stop();XM.stopSong();document.removeEventListener("keydown",key,true);
     const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)};
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter","i","I","c","C"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter","i","I"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
   m.querySelectorAll("[data-min]").forEach(b=>b.onclick=e=>{e.stopPropagation();start(+b.dataset.min)});
   m.querySelector("#iplus").onclick=e=>{e.stopPropagation();adj(1)};m.querySelector("#iminus").onclick=e=>{e.stopPropagation();adj(-1)};
@@ -826,29 +784,6 @@ function openMoment(cls,{stopMusic=true}={}){
     if(stopMusic){const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
   return {m,T,close};
-}
-
-/* ---------- Sponsor gifts: silver parachutes ---------- */
-const PERKS=["Skip your turn once in Left, Right, Capitol","Steal one chip from anyone in Left, Right, Capitol","You pick who goes first in the next game",
- "Immunity from the next Capitol Interruption","Choose who you face first on the Matchup Wheel","Get a 5-second head start in your next face-off",
- "Pick the music for the next game","Swap seats with anyone, right now","Give a Capitol Interruption to anyone you choose","First pick of the snacks",
- "One free re-roll in Left, Right, Capitol","Make someone else keep the blindfold on 5 extra seconds","You get to read the next bingo number out loud",
- "A free hint from the Gamemaker in the next screen game"];
-let perkBag=[];const nextPerk=()=>{if(!perkBag.length)perkBag=PERKS.slice().sort(()=>Math.random()-.5);return perkBag.pop()};
-function sponsorGift(){
-  if(busy())return;const {m,T,close}=openMoment("giftm");m.style.background="radial-gradient(circle at 50% 30%,rgba(60,90,120,.6),rgba(6,14,22,.96) 70%)";
-  const who=TRIBUTES[Math.random()*12|0].name,perk=nextPerk();
-  m.innerHTML=`<div class="chute"><div class="canopy"></div><div class="lines"></div><div class="pod">🎁</div></div>
-    <div class="inner" style="margin-top:38vh;gap:12px"><div class="eb" style="color:#cfe3ff;font-size:1rem">A SPONSOR HAS SENT A GIFT</div>
-    <div id="gv" style="visibility:hidden;display:flex;align-items:center;gap:18px"><img src="${XM.photo(who)}" alt="" style="width:clamp(90px,13vh,150px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold)"><b style="font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,4vw,3rem);color:#fff">${esc(who)}</b></div>
-    <div id="gp" style="font-size:clamp(1.5rem,3.2vw,2.6rem);font-weight:800;max-width:26ch;min-height:2.4em"></div>
-    <div class="row" id="gr" style="visibility:hidden"><button class="btn" id="g-again">🪂 Another gift</button><button class="btn ghost" id="g-x">Done (Esc)</button></div></div>`;
-  XM.sfx("whoosh");announcer.say("A sponsor has sent a gift!",null,{pitch:.15,rate:.88});
-  T(()=>{XM.sfx("sparkle");XM.sfx("reveal");m.querySelector(".pod").textContent="✨";m.querySelector("#gv").style.visibility="visible";
-    m.querySelector("#gp").textContent=perk;m.querySelector("#gr").style.visibility="visible";XM.confetti(120);
-    announcer.say(`For ${XM.spoken(who)}... ${perk}!`,null,{pitch:.15,rate:.88})},3100);
-  m.querySelector("#g-again").onclick=e=>{e.stopPropagation();close();setTimeout(sponsorGift,50)};
-  m.querySelector("#g-x").onclick=e=>{e.stopPropagation();close()};
 }
 
 /* ---------- Victor's interview (Caesar Flickerman style) ---------- */

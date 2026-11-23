@@ -213,6 +213,9 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .vcard .vn{font-size:40px;font-weight:800;display:flex;align-items:center;gap:14px;min-height:56px}
 .vcard .vn .lab{color:var(--gold);font-family:var(--display);font-weight:400}
 .vcard .vn img{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.vcard .sec2{display:inline-flex;align-items:center;gap:8px;margin-top:4px;font-size:30px;font-weight:800;color:var(--muted);padding:2px 10px;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line)}
+.vcard .sec2:hover{color:var(--ink);box-shadow:inset 0 0 0 2px var(--gold)}
+.vcard .sec2 img{width:34px;height:34px;border-radius:50%;object-fit:cover}
 .vcard input{font:inherit;font-weight:800;font-size:36px;width:100%;background:rgba(0,0,0,.35);color:var(--ink);border:3px solid var(--gold);border-radius:14px;padding:4px 14px}
 
 /* order shuffle */
@@ -267,10 +270,10 @@ const ICON=k=>`/xmas/icons/${k}.png`;
 
 /* ---------- helpers ---------- */
 const d=s=>`data-d="${s}"`;
-const victorLabel=g=>{const v=XM.victors()[g];return v?`🏆 Victor: ${esc(v)}`:"🏆 Record victor"};
+const victorLabel=g=>{const v=XM.victors()[g],s2=XM.seconds()[g];return v?`🏆 ${esc(v)}${s2?` · 🥈 ${esc(s2)}`:""}`:"🏆 Record victor"};
 const AWARD={treasure:"💎",mystery:"❓",junk:"🗑️"};
 const awards=()=>XM.store.get("xmas-awards",{});
-const tbBtn=g=>`<div class="corner" data-corner="${g}">${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-interview="${g}" title="Victor's interview">🎤</button>`:""}${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-unbox="${g}">🎁 ${awards()[g]?AWARD[awards()[g]]+" Unboxed":"Unbox"}</button>`:""}${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
+const tbBtn=g=>`<div class="corner" data-corner="${g}">${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-interview="${g}" title="Victor's interview">🎤</button>`:""}${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-unbox="${g}">🎁 ${[awards()[g],awards()[g+"_2"]].filter(Boolean).map(r=>AWARD[r]).join("")||"Unbox"}</button>`:""}${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
 const openBtn=(url,label,cls="")=>`<a class="btn bigbtn ${cls}" href="${url}" target="_blank" rel="noopener">${label}</a>`;
 
 // st(): like setTimeout, but skipped if the presenter has already moved to another slide
@@ -498,7 +501,7 @@ const SLIDES=[
       <p class="fr" ${d(1.6)} style="font-size:38px;line-height:1.35;margin:0">Twelve tributes. Eight games. A pile of major awards made of real lost mail that nobody has seen inside. Not even me.</p>
       <p class="fr" ${d(2)} style="font-size:38px;line-height:1.35;margin:0">Play fair, trash talk responsibly, and remember: what happens at Thanksmas stays at Thanksmas.</p>
     </div></div>`,enter(){XM.sfx("whoosh");st(()=>XM.sfx("thud"),1000)}},
- {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","Every game you win earns you a major award. Win three games? Take home three."],
+ {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","1st and 2nd place in every game each win a major award. Win three games? Take home three."],
     ["lock","#3e8a52","What's inside? No idea","They're real unclaimed mail. Nobody knows what's inside. Not even the Gamemaker."],
     ["cannon","#2f6fb3","Tie? Sudden death","Tied tributes face off again until only one is left standing."],
     ["mitten-w","#d79a1f","Mitten Mayhem pays","That game is its own major award. Whatever you unwrap, you keep."],
@@ -536,7 +539,7 @@ const SLIDES=[
 
  // GAME 1
  gameTitle("cookie"),
- howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Winners go back on the wheel until one cookie champion is left. They win a major award."),
+ howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Winners go back on the wheel until one cookie champion is left. The champion and the runner-up each win a major award."),
  wheelSlide("cookie"),tieSlide("cookie"),
  // GAME 2
  gameTitle("tribute"),
@@ -554,7 +557,8 @@ const SLIDES=[
         <div style="width:90px;height:90px;border-radius:22px;background:${GAMES[g].color};display:grid;place-items:center"><img src="${ICON(g+"-w")}" alt="" style="width:62%"></div>
         <div style="font-size:26px;font-weight:800;color:var(--muted)">${esc(GAMES[g].name)}</div>
         ${ph?`<img src="${ph}" alt="" style="width:140px;height:140px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)">`:`<div style="width:140px;height:140px;border-radius:50%;display:grid;place-items:center;font-size:64px;background:rgba(255,255,255,.06)">${g==="mitten"?"🧤":"❔"}</div>`}
-        <div style="font-family:var(--display);font-size:40px;color:var(--gold)">${v?esc(v):"Not recorded"}</div></div>`}).join("")}</div>
+        <div style="font-family:var(--display);font-size:40px;color:var(--gold)">${v?esc(v):"Not recorded"}</div>
+        ${g!=="mitten"&&XM.seconds()[g]?`<div style="font-size:26px;font-weight:800;color:var(--muted)">🥈 ${esc(XM.seconds()[g])}</div>`:""}</div>`}).join("")}</div>
     <div id="htlead" style="min-height:90px;display:grid;justify-items:center"></div>
     <div class="fade" ${d(2.2)} style="font-size:28px;color:var(--muted)">Still to come: ${rest.map(g=>esc(GAMES[g].name)).join(" · ")}</div></div>`},
    enter(el){const c={};Object.entries(XM.victors()).forEach(([g,n])=>{if(g!=="mitten"&&n)c[n]=(c[n]||0)+1});const max=Math.max(0,...Object.values(c));
@@ -564,7 +568,7 @@ const SLIDES=[
      st(()=>ok()&&announcer.say("Halftime report!",()=>{if(!ok())return;if(max>0)announcer.say(`${lead.length>1?"Tied for the lead":"Leading the games"}... ${lead.map(XM.spoken).join(" and ")}!`,()=>XM.duck(false),{pitch:.1,rate:.82});else XM.duck(false)},{pitch:.1,rate:.82}),900);
      st(()=>XM.sfx("fanfare"),400)}},
  gameTitle("scoop"),
- howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Winners go back on the wheel until one scoop champion is left. They win a major award."),
+ howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Winners go back on the wheel until one scoop champion is left. The champion and the runner-up each win a major award."),
  wheelSlide("scoop"),tieSlide("scoop"),
  // GAME 6
  gameTitle("secrets"),
@@ -575,7 +579,7 @@ const SLIDES=[
  tieSlide("lrc"),
  // GAME 8
  gameTitle("bingo"),
- howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV: a row, four corners, a big X, or the picture frame","Yell BINGO! We check your card number on screen"],"Every bingo wins a major award. We keep playing until they're all gone.",
+ howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV: a row, four corners, a big X, or the picture frame","Yell BINGO! We check your card number on screen"],"The first bingo and the second bingo each win a major award.",
    `<a class="btn red" href="/bingo" target="_blank" rel="noopener" style="font-size:28px">Open the Bingo Board</a>`),
  {id:"bingo-board",music:null,html:()=>`${tbBtn("bingo")}<div style="display:grid;grid-template-columns:auto 1fr;gap:90px;align-items:center;text-align:left">
     <div class="ball drop" style="--r:0deg"><div class="face"><span style="font-family:var(--display);font-size:80px;color:#17998a">B</span><span style="font-weight:800;font-size:170px">7</span></div></div>
@@ -717,18 +721,23 @@ document.addEventListener("xmas-victors",()=>{const g=document.getElementById("v
 addEventListener("storage",e=>{if(e.key==="xmas-victors"){const g=document.getElementById("vgrid");if(g)drawVictors(g)}});
 
 /* ---------- record a game's victor from its slides ---------- */
-function pickVictor(g){
-  if(document.querySelector(".vpick"))return;XM.ensureAudio();const cur=XM.victors()[g];const ov=document.createElement("div");ov.className="vpick";
+function pickVictor(g,place=1){
+  if(document.querySelector(".vpick"))return;XM.ensureAudio();
+  const first=XM.victors()[g],cur=place===1?first:XM.seconds()[g];const ov=document.createElement("div");ov.className="vpick";
   ov.innerHTML=`<div style="display:grid;gap:20px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(GAMES[g].name)}</div>
-    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">Who won?</h1>
-    <div class="faces">${TRIBUTES.map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
-    <div style="display:flex;gap:12px">${cur?`<button class="btn ghost" id="vp-clear">Clear victor</button>`:""}<button class="btn ghost" id="vp-x">Cancel (Esc)</button></div></div>`;
+    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">${place===1?"🥇 Who won?":"🥈 Who came in second?"}</h1>
+    ${place===2?`<div class="eyebrow" style="font-size:.95rem;color:var(--ink)">Second place wins a major award too</div>`:""}
+    <div class="faces">${TRIBUTES.filter(t=>place===1||t.name!==first).map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
+    <div style="display:flex;gap:12px">${cur?`<button class="btn ghost" id="vp-clear">Clear ${place===1?"victor":"second place"}</button>`:""}<button class="btn ghost" id="vp-x">${place===2?"Skip (Esc)":"Cancel (Esc)"}</button></div></div>`;
   document.body.appendChild(ov);XM.sfx("whoosh");
   const close=()=>{ov.remove();document.removeEventListener("keydown",key,true)};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}};document.addEventListener("keydown",key,true);
-  ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;XM.setVictor(g,n);close();refreshCorners();
-    XM.stopSong();XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`})});
-  const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();XM.setVictor(g,"");close();refreshCorners();XM.sfx("untap")};
+  ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;
+    if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
+    close();refreshCorners();XM.stopSong();
+    if(place===1){XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
+    else XM.celebrate(n,{intro:"And in second place"})});
+  const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};
   ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};
   ov.onclick=e=>e.stopPropagation();
 }
@@ -846,13 +855,26 @@ function liveBroadcast(){
 }
 
 /* ---------- Major award unboxing ---------- */
-function unbox(g){
-  if(busy())return;XM.ensureAudio();const who=XM.victors()[g]||"Victor";const prev=XM.currentSong();XM.stopSong();announcer.stop();
+function unbox(g,place){
+  if(busy())return;XM.ensureAudio();
+  if(place==null&&XM.seconds()[g]){ // two major awards: whose turn?
+    const c=document.createElement("div");c.className="moment";document.body.appendChild(c);
+    const pick=(p)=>{c.remove();document.removeEventListener("keydown",k2,true);if(p)unbox(g,p)};
+    const k2=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();pick(0)}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
+    document.addEventListener("keydown",k2,true);c.onclick=e=>e.stopPropagation();
+    const opt=(p,n)=>`<button class="face" data-p="${p}" style="display:grid;justify-items:center;gap:10px;padding:14px;border-radius:20px">${XM.photo(n)?`<img src="${XM.photo(n)}" alt="" style="width:clamp(120px,20vh,190px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)">`:""}<b style="font-family:var(--display);font-weight:400;font-size:2rem;color:var(--gold)">${p===1?"🥇":"🥈"} ${esc(n)}</b><span class="eb">${awards()[p===1?g:g+"_2"]?"Unboxed "+AWARD[awards()[p===1?g:g+"_2"]]:"Not opened yet"}</span></button>`;
+    c.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · two major awards</div><h1>🎁 Whose turn to open?</h1>
+      <div class="row" style="gap:40px">${opt(1,XM.victors()[g])}${opt(2,XM.seconds()[g])}</div><button class="btn ghost" id="c-x">Close (Esc)</button></div>`;
+    c.querySelectorAll("[data-p]").forEach(b=>b.onclick=e=>{e.stopPropagation();pick(+b.dataset.p)});c.querySelector("#c-x").onclick=e=>{e.stopPropagation();pick(0)};
+    return;
+  }
+  place=place||1;const akey=place===1?g:g+"_2";
+  const who=(place===1?XM.victors()[g]:XM.seconds()[g])||"Victor";const prev=XM.currentSong();XM.stopSong();announcer.stop();
   const m=document.createElement("div");m.className="moment unbox";document.body.appendChild(m);let alive=true;
   const close=()=>{alive=false;m.remove();announcer.stop();document.removeEventListener("keydown",key,true);refreshCorners();if(prev)XM.playSong(prev,true)};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
-  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · major award</div>
+  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · ${place===1?"🥇 1st place":"🥈 2nd place"} major award</div>
     ${XM.photo(who)?`<img src="${XM.photo(who)}" alt="" style="width:130px;height:130px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)">`:""}
     <h1>${esc(who)}, open it!</h1><div class="gift">🎁</div>
     <div class="eb" style="font-size:1rem;color:var(--ink)">What's inside? The Capitol will judge.</div>
@@ -861,7 +883,7 @@ function unbox(g){
     <button class="btn ghost" id="u-x">Close (Esc)</button></div>`;
   XM.sfx("drumroll");announcer.say(`${XM.spoken(who)}... open your major award!`,null,{pitch:.1,rate:.82});
   const SAY={treasure:"Treasure! The Capitol approves!",mystery:"A mystery! Nobody knows what that is.",junk:"Junk! Better luck next year."};
-  m.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();const r=b.dataset.r;const a=awards();a[g]=r;XM.store.set("xmas-awards",a);
+  m.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();const r=b.dataset.r;const a=awards();a[akey]=r;XM.store.set("xmas-awards",a);
     m.querySelector(".gift").textContent=AWARD[r];m.querySelector(".gift").style.animation="popIn .6s both";
     announcer.stop();announcer.say(SAY[r],null,{pitch:.15,rate:.85});
     if(r==="junk")XM.sfx("trombone");else{XM.sfx("fanfare");XM.confetti(r==="treasure"?240:120,r==="treasure")}
@@ -874,13 +896,15 @@ let editing=null,curSave=null;
 function drawVictors(grid,anim){
   const V=XM.victors();
   grid.innerHTML=Object.entries(GAMES).map(([k,g],i)=>{
-    const v=k==="mitten"?"everyone!":V[k]||"",ph=k!=="mitten"&&XM.photo(v);
+    const v=k==="mitten"?"everyone!":V[k]||"",ph=k!=="mitten"&&XM.photo(v),S2=XM.seconds();
     return `<div class="card vcard ${anim?(i%2?"fr":"fl"):""}" ${anim?d(.5+i*.18):""} data-v="${k}" style="--gc:${g.color}" ${k==="mitten"?'title="Mitten Mayhem: everyone wins"':""}>
       <div class="ic"><img src="${ICON(k+"-w")}" alt=""></div><div style="flex:1;min-width:0"><div class="gn">${esc(g.name)}</div>
       ${editing===k?`<input id="vin" list="tnames" value="${esc(v)}" placeholder="Type the winner, then Enter" autocomplete="off">`
-        :`<div class="vn"><span class="lab">Victor:</span>${ph?`<img src="${ph}" alt="">`:""}<span>${esc(v)}</span>${awards()[k]?`<span title="Major award rating" style="margin-left:auto">${AWARD[awards()[k]]}</span>`:""}</div>`}</div></div>`}).join("")+
+        :`<div class="vn"><span class="lab">Victor:</span>${ph?`<img src="${ph}" alt="">`:""}<span>${esc(v)}</span>${awards()[k]?`<span title="Major award rating" style="margin-left:auto">${AWARD[awards()[k]]}</span>`:""}</div>`}
+      ${k!=="mitten"?`<button class="sec2" data-second="${k}">🥈 ${S2[k]?`${XM.photo(S2[k])?`<img src="${XM.photo(S2[k])}" alt="">`:""}${esc(S2[k])}${awards()[k+"_2"]?" "+AWARD[awards()[k+"_2"]]:""}`:"Add 2nd place"}</button>`:""}</div></div>`}).join("")+
     `<datalist id="tnames">${XM.NAMES.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
   grid.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
+  grid.querySelectorAll("[data-second]").forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=e=>{e.stopPropagation();if(curSave)curSave();pickVictor(b.dataset.second,2)}});
   grid.querySelectorAll("[data-v]").forEach(c=>{
     // keep the open name box from losing focus on press, so the click lands on this card
     c.onmousedown=e=>{if(!e.target.closest("input"))e.preventDefault()};

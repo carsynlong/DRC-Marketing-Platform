@@ -211,7 +211,7 @@ function newRound(names){
 function nextRound(){
   const w=S.matches.map(m=>m.win).concat(S.bye?[S.bye]:[]);
   S.history.push({round:S.round,matches:S.matches.map(m=>({a:m.a,b:m.b,win:m.win})),bye:S.bye});
-  if(w.length===1){S.champ=w[0];S.phase="champ";stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>S.phase==="champ"&&playSong("lobby"),4500);return}
+  if(w.length===1){S.champ=w[0];{const fm=S.matches.find(m=>m.win===S.champ);S.runner=fm?(fm.win===fm.a?fm.b:fm.a):null}S.phase="champ";stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>S.phase==="champ"&&playSong("lobby"),4500);return}
   S.round++;newRound(shuffle(w));
 }
 function openTimer(i){
@@ -304,7 +304,8 @@ function champ(){
   return `<div class="overlay" style="position:relative;background:none;min-height:85vh"><div class="inner champ"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} champion</div>
     <div class="crown">👑</div><img src="${AV(S.champ)}" alt=""><h1 class="title" style="font-size:clamp(2.6rem,8vw,5rem)">${esc(S.champ)}</h1>
     <p style="font-family:var(--display);font-size:clamp(1.5rem,3.4vw,2.6rem);margin:0">Go claim your major award!</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="save">🏆 Save as ${esc(G().name)} victor</button><button class="btn ghost" id="reset">Back to setup</button><button class="btn ghost" id="back">← Back to the show</button><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button></div></div></div>`;
+    ${S.runner?`<div style="display:flex;align-items:center;gap:14px;font-size:clamp(1.1rem,2.2vw,1.6rem);font-weight:800"><img src="${AV(S.runner)}" alt="" style="width:64px;height:64px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #c0c8d0">🥈 Runner-up: ${esc(S.runner)} wins a major award too!</div>`:""}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="save">🏆 Save 1st${S.runner?" and 2nd":""} place</button><button class="btn ghost" id="reset">Back to setup</button><button class="btn ghost" id="back">← Back to the show</button><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button></div></div></div>`;
 }
 
 /* ---------- controls ---------- */
@@ -319,7 +320,7 @@ function wire(){
   document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b],m)});
   document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>{XM.toggleSound();b.blur()});
   on("start",start);on("spin",spin);on("nextr",nextRound);on("tb",()=>tiebreak());on("back",backToShow);
-  on("save",e=>{XM.setVictor(S.game,S.champ);e.textContent="✅ Saved to The Capitol Has Spoken";e.disabled=true;sfx("reveal")});
+  on("save",e=>{XM.setVictor(S.game,S.champ);if(S.runner)XM.setSecond(S.game,S.runner);e.textContent="✅ Saved to The Capitol Has Spoken";e.disabled=true;sfx("reveal")});
   {const r=document.getElementById("reset");if(r)r.onclick=()=>{ensureAudio();
     if(S.phase==="champ"||r.dataset.sure){S.phase="setup";S.history=[];XM.store.set(SKEY(S.game),null);stopSong();render();return}
     r.dataset.sure=1;r.textContent="Tap again to erase this bracket";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="Start over"}},3000)}}

@@ -55,6 +55,11 @@ XM.victors=()=>store.get("xmas-victors",{});
 XM.setVictor=(g,name)=>{const v=XM.victors();if((v[g]||"")!==(name||"")){const a=store.get("xmas-awards",{});if(g in a){delete a[g];store.set("xmas-awards",a)}}   // a new (or cleared) victor hasn't unboxed anything yet
   if(name)v[g]=name;else delete v[g];store.set("xmas-victors",v)};
 
+/* Second place: each game has two major awards, one for 1st and one for 2nd */
+XM.seconds=()=>store.get("xmas-second",{});
+XM.setSecond=(g,name)=>{const v=XM.seconds();if((v[g]||"")!==(name||"")){const a=store.get("xmas-awards",{});if((g+"_2") in a){delete a[g+"_2"];store.set("xmas-awards",a)}}
+  if(name)v[g]=name;else delete v[g];store.set("xmas-second",v)};
+
 /* ================= AUDIO ================= */
 XM.sound=!store.get("xmas-muted",false);
 let AC=null,master,musicBus,sfxBus,noiseBuf,song=null,songName=null,timerId=0;

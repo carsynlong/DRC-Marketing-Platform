@@ -68,7 +68,7 @@ const {esc,sfx,playSong,stopSong,ensureAudio}=XM;
 let CARDS=[];
 const LET="BINGO",LC=["#b8322a","#1f6b4a","#c8921f","#2f6fb3","#7a3fb0"];
 const letterOf=n=>Math.floor((n-1)/15);
-let S={mode:(m=>["line","corners","x","frame"].includes(m)?m:"line")(XM.store.get("xmas-bingo-mode","line")),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
+let S={bingos:XM.store.get("xmas-bingo-winners",[]),mode:(m=>["line","corners","x","frame"].includes(m)?m:"line")(XM.store.get("xmas-bingo-mode","line")),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
 const save=()=>{XM.store.set("xmas-bingo-called",S.called);XM.store.set("xmas-bingo-gm",S.gm)};
 
 let lastTap={n:0,t:0};
@@ -104,17 +104,19 @@ function shapeMini(k){const m=MODES[k];const on=new Set((m.cells||[[0,2],[1,2],[
 function setMode(k){S.mode=k;S.checked=null;XM.store.set("xmas-bingo-mode",k);S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;sfx("reveal");render();
   XM.say(k==="line"?"Regular bingo!":`${MODES[k].name} bingo!`,null,{pitch:.1,rate:.85,interrupt:true})}
 function check(){const k=+document.getElementById("cardno").value;if(!(Number.isInteger(k)&&k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
-  const ln=lines(CARDS[k-1]);S.checked={k,ln};if(ln.length){bigWin(`Card ${k}`);XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}else sfx("cannon");render();const v=document.querySelector(".mini");if(v)v.scrollIntoView({block:"nearest",behavior:"smooth"});}
+  const ln=lines(CARDS[k-1]);S.checked={k,ln};
+  if(ln.length){S.bingos=S.bingos||[];if(!S.bingos.includes(k)){S.bingos.push(k);XM.store.set("xmas-bingo-winners",S.bingos)}const place=S.bingos.indexOf(k)+1;
+    bigWin(`Card ${k}`,"",place);XM.celebrate("",{line:place===1?`Bingo! Card ${k} takes first place!`:place===2?`Bingo! Card ${k} takes second place!`:`Bingo! Card ${k}!`})}else sfx("cannon");render();const v=document.querySelector(".mini");if(v)v.scrollIntoView({block:"nearest",behavior:"smooth"});}
 function gmCheck(justCalled){
   if(!S.gm)return;const has=lines(CARDS[S.gm-1]).length>0;
   if(has&&!S.gmBingo&&justCalled){bigWin("The Gamemaker",`Card ${S.gm}`);XM.celebrate("",{line:"Bingo! The Gamemaker is a winner!"})}
   S.gmBingo=has;render();
 }
-function bigWin(who,sub=""){
+function bigWin(who,sub="",place=1){
   document.querySelectorAll(".bigwin").forEach(x=>x.remove());
   const o=document.createElement("div");o.className="bigwin";
-  o.innerHTML=`<div style="display:grid;gap:16px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(sub)}${sub?" · ":""}${esc(MODES[S.mode].name)}</div><h1>BINGO!</h1>
-    <p style="font-family:var(--display);font-size:clamp(1.5rem,4vw,3rem);margin:0">${esc(who)} wins a major award!</p><p class="tiny" style="font-size:1.1rem">Every bingo wins a major award. Keep playing!</p>
+  o.innerHTML=`<div style="display:grid;gap:16px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(sub)}${sub?" · ":""}${esc(MODES[S.mode].name)}</div><h1>${place===1?"🥇 ":place===2?"🥈 ":""}BINGO!</h1>
+    <p style="font-family:var(--display);font-size:clamp(1.5rem,4vw,3rem);margin:0">${place<=2?`${esc(who)} takes ${place===1?"first":"second"} place and wins a major award!`:`${esc(who)} got a bingo!`}</p><p class="tiny" style="font-size:1.1rem">${place===1?"One more major award to go. Keep playing for second place!":place===2?"Both major awards for this game are claimed.":"This game's two major awards are already claimed."}</p>
     <button class="btn" style="font-size:1.2rem">Keep playing</button></div>`;
   document.body.appendChild(o);o.querySelector("button").onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};
 }
@@ -149,7 +151,7 @@ function render(){
       <div class="panel" style="width:100%;text-align:left"><div class="eyebrow">Someone yelled BINGO? Check their card</div>
       <div style="display:flex;gap:14px;align-items:flex-start;justify-content:space-between"><div style="display:grid;gap:8px">
       <div class="check"><input id="cardno" type="number" step="1" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res.replace('class="verdict"','class="verdict" style="font-size:1.25rem"').replace('style="font-size:1.25rem" style="','style="font-size:1.25rem;')}
-      <div class="tiny">Every bingo wins a major award. No limit.</div></div>${resCard}</div></div>
+      <div class="tiny">🥇 First bingo and 🥈 second bingo each win a major award.${(S.bingos||[]).length?` Winners so far: ${S.bingos.map((c,i)=>(i===0?"🥇":i===1?"🥈":"")+" Card "+c).join(", ")}`:""}</div></div>${resCard}</div></div>
     </div>
     <div style="display:grid;gap:14px">
       <div class="panel"><div class="eyebrow">Game type · pick before you start</div><div class="modes">${Object.entries(MODES).map(([k,m])=>`<button data-mode="${k}" aria-pressed="${S.mode===k}" title="${m.desc}">${shapeMini(k)}${m.name}</button>`).join("")}</div></div>
@@ -161,7 +163,7 @@ function wire(){const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.on
   document.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>call(+b.dataset.n));
   document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ensureAudio();setMode(b.dataset.mode)});
   on("chk",check);on("undo",()=>{S.called.pop();S.checked=null;sfx("untap");save();S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;render()});
-  {const r=document.getElementById("reset");r.onclick=()=>{if(r.dataset.sure){S.called=[];S.checked=null;S.gmBingo=false;save();render()}else{r.dataset.sure=1;r.textContent="Tap again to clear";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="New game"}},3000)}}}
+  {const r=document.getElementById("reset");r.onclick=()=>{if(r.dataset.sure){S.called=[];S.checked=null;S.gmBingo=false;S.bingos=[];XM.store.set("xmas-bingo-winners",[]);save();render()}else{r.dataset.sure=1;r.textContent="Tap again to clear";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="New game"}},3000)}}}
   on("music",()=>{if(XM.currentSong())stopSong();else playSong("lobby")});
   on("tb",()=>{stopSong();XM.tiebreaker({game:"bingo"})});
   on("back",()=>{if(window.opener&&!window.opener.closed)window.close();location.href="/show"});

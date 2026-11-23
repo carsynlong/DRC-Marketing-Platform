@@ -178,7 +178,7 @@ const Party = (() => {
     if (!right.length) return startShowdown(S.tb, true);
     const w = S.players.find(p => p.name === right[0]); w.delta = 1000; w.score += 1000;
     S.tbWinner = w.name; S.tb = null;
-    S.phase = "final"; stopSong(); sfx("fanfare"); confetti(260, true); S.sound = true; playSong("lobby"); render();
+    S.phase = "final"; stopSong(); sfx("fanfare"); confetti(260, true); playWinner(); render();
   }
 
   /* ---------------- hooks ---------------- */

@@ -105,7 +105,7 @@ const Extras = (() => {
     if (S.phase === "final" || S.phase === "interview") {
       if (!mb) { mb = document.createElement("button"); mb.id = "winmusic"; mb.className = "btn";
         mb.style.cssText = "position:fixed;top:14px;right:14px;z-index:50;padding:.6em 1.1em;font-size:1.05rem";
-        mb.onclick = () => { try { ensureAudio(); } catch (e) {} if (song) { stopSong(); } else { S.sound = true; playSong("lobby"); } label(); };
+        mb.onclick = () => { try { ensureAudio(); } catch (e) {} if (song) { stopSong(); } else { playWinner(); } label(); };
         document.body.appendChild(mb); }
       label();
     } else if (mb) mb.remove();

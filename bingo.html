@@ -32,7 +32,7 @@ h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 
 .mini{display:grid;grid-template-columns:repeat(5,2.8em);gap:4px;margin-top:6px}
 .mini .h{font-family:var(--display);text-align:center;color:var(--gold)}
 .mini div:not(.h){aspect-ratio:1;border-radius:6px;display:grid;place-items:center;font-weight:800;background:rgba(255,255,255,.06)}
-.mini .hit{background:var(--gold);color:#2a1c05}.mini .win{background:var(--good);color:#06210f}
+.mini div.hit:not(.h){background:var(--gold);color:#2a1c05}.mini div.win:not(.h){background:var(--good);color:#06210f}
 .verdict{font-family:var(--display);font-size:1.6rem}
 .last{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .last span{padding:.25em .6em;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800;font-size:.9rem}
@@ -47,6 +47,7 @@ h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 
 .gm.bingo{box-shadow:0 0 0 3px var(--good),0 0 30px rgba(111,211,138,.4)}
 .bigwin{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(6,16,12,.93);text-align:center;padding:20px}
 .bigwin h1{font-size:clamp(3rem,10vw,8rem);color:var(--gold);text-shadow:0 6px 0 var(--red-d);animation:slam .8s cubic-bezier(.2,1.4,.4,1) both}
+@media (max-height:820px){.ball{width:min(26vw,230px)}.board .c{aspect-ratio:auto;height:30px}.mini{grid-template-columns:repeat(5,2.3em)}.mini div:not(.h){aspect-ratio:auto;height:2em}.app{gap:10px;padding-block:40px 12px}}
 @media (max-width:900px){.layout{grid-template-columns:1fr}.board{grid-template-columns:2.4em repeat(15,minmax(0,1fr))}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
@@ -67,12 +68,15 @@ const {esc,sfx,playSong,stopSong,ensureAudio}=XM;
 let CARDS=[];
 const LET="BINGO",LC=["#b8322a","#1f6b4a","#c8921f","#2f6fb3","#7a3fb0"];
 const letterOf=n=>Math.floor((n-1)/15);
-let S={mode:XM.store.get("xmas-bingo-mode","line"),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
+let S={mode:(m=>["line","corners","x","frame","blackout"].includes(m)?m:"line")(XM.store.get("xmas-bingo-mode","line")),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
 const save=()=>{XM.store.set("xmas-bingo-called",S.called);XM.store.set("xmas-bingo-gm",S.gm)};
 
+let lastTap={n:0,t:0};
 function call(n){
   ensureAudio();
   const i=S.called.indexOf(n);
+  if(i>=0&&lastTap.n===n&&Date.now()-lastTap.t<700)return; // ignore an accidental double-tap
+  lastTap={n,t:Date.now()};
   if(i>=0){ // tapped a called number again: take it back
     if(n!==S.called[S.called.length-1]&&!confirm(`Un-call ${LET[letterOf(n)]} ${n}?`))return;
     S.called.splice(i,1);sfx("untap");
@@ -100,14 +104,15 @@ function shapeMini(k){const m=MODES[k];const on=new Set((m.cells||[[0,2],[1,2],[
   return `<span class="shape">${g}</span>`}
 function setMode(k){S.mode=k;S.checked=null;XM.store.set("xmas-bingo-mode",k);S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;sfx("reveal");render();
   XM.say(k==="line"?"Regular bingo!":`${MODES[k].name} bingo!`,null,{pitch:.1,rate:.85,interrupt:true})}
-function check(){const k=+document.getElementById("cardno").value;if(!(k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
-  const ln=lines(CARDS[k-1]);S.checked={k,ln};if(ln.length){bigWin(`Card ${k}`);XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}else sfx("cannon");render();}
+function check(){const k=+document.getElementById("cardno").value;if(!(Number.isInteger(k)&&k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
+  const ln=lines(CARDS[k-1]);S.checked={k,ln};if(ln.length){bigWin(`Card ${k}`);XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}else sfx("cannon");render();const v=document.querySelector(".mini");if(v)v.scrollIntoView({block:"nearest",behavior:"smooth"});}
 function gmCheck(justCalled){
   if(!S.gm)return;const has=lines(CARDS[S.gm-1]).length>0;
   if(has&&!S.gmBingo&&justCalled){bigWin("The Gamemaker",`Card ${S.gm}`);XM.celebrate("",{line:"Bingo! The Gamemaker is a winner!"})}
   S.gmBingo=has;render();
 }
 function bigWin(who,sub=""){
+  document.querySelectorAll(".bigwin").forEach(x=>x.remove());
   const o=document.createElement("div");o.className="bigwin";
   o.innerHTML=`<div style="display:grid;gap:16px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(sub)}${sub?" · ":""}${esc(MODES[S.mode].name)}</div><h1>${S.mode==="blackout"?"BLACKOUT!":"BINGO!"}</h1>
     <p style="font-family:var(--display);font-size:clamp(1.5rem,4vw,3rem);margin:0">${esc(who)} wins a major award!</p><p class="tiny" style="font-size:1.1rem">Every bingo wins a major award. Keep playing!</p>
@@ -121,7 +126,8 @@ function miniCard(card,winSet,big){
 }
 function render(){
   const last=S.called[S.called.length-1];
-  const ball=last?`<div class="ball" style="--bc:${LC[letterOf(last)]}" key="${last}"><div class="face"><span class="l">${LET[letterOf(last)]}</span><span class="n">${last}</span></div></div>`
+  const fresh=last!==S.shownBall;S.shownBall=last;
+  const ball=last?`<div class="ball" style="--bc:${LC[letterOf(last)]};${fresh?"":"animation:none"}" key="${last}"><div class="face"><span class="l">${LET[letterOf(last)]}</span><span class="n">${last}</span></div></div>`
     :`<div class="ball" style="--bc:#1f6b4a"><div class="face"><span class="l" style="font-size:1.6rem">Ready?</span></div></div>`;
   let board="";for(let l=0;l<5;l++){board+=`<div class="L" style="background:${LC[l]}">${LET[l]}</div>`;for(let i=1;i<=15;i++){const n=l*15+i;board+=`<button class="c ${n===last?"new":S.called.includes(n)?"on":""}" data-n="${n}" aria-label="${LET[l]} ${n}${S.called.includes(n)?", called":""}">${n}</button>`}}
   let res="";const C=S.checked;
@@ -144,7 +150,7 @@ function render(){
       <div class="panel"><div class="eyebrow">Game type · pick before you start</div><div class="modes">${Object.entries(MODES).map(([k,m])=>`<button data-mode="${k}" aria-pressed="${S.mode===k}" title="${m.desc}">${shapeMini(k)}${m.name}</button>`).join("")}</div></div>
       <div class="board">${board}</div>
       <div class="panel"><div class="eyebrow">Someone yelled BINGO? Check their card</div>
-      <div class="check"><input id="cardno" type="number" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res}
+      <div class="check"><input id="cardno" type="number" step="1" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res}
       <div class="tiny">Every bingo wins a major award. No limit.</div></div></div></div>`;
   wire();
 }
@@ -166,8 +172,9 @@ function deal(){
 // Hidden tester: triple-click the "District Bingo" title, or press Shift+T, to preview a win (changes nothing)
 function testWin(){ensureAudio();const k=1+Math.floor(Math.random()*24);bigWin(`Card ${k}`,"Test run");XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}
 document.addEventListener("click",e=>{if(e.detail===3&&e.target.closest&&e.target.closest("h1.title"))testWin()});
-document.addEventListener("keydown",e=>{if(e.key==="T"&&e.shiftKey&&!(e.target.closest&&e.target.closest("input")))testWin()});
-document.addEventListener("keydown",e=>{if(e.key==="m"||e.key==="M"){if(!(e.target.closest&&e.target.closest("input")))XM.toggleSound()}});
+document.addEventListener("keydown",e=>{if(e.key==="T"&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!(e.target.closest&&e.target.closest("input")))testWin()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".bigwin").forEach(x=>x.remove())}});
+document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;if(e.key==="m"||e.key==="M"){if(!(e.target.closest&&e.target.closest("input")))XM.toggleSound()}});
 fetch("/xmas/bingo-cards.json",{cache:"no-cache"}).then(r=>r.json()).then(c=>{CARDS=c;if(S.gm&&!(S.gm<=CARDS.length))S.gm=null;S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;render()})
   .catch(()=>{document.getElementById("app").innerHTML=`<p style="margin-top:20vh;text-align:center">Couldn't load the bingo cards. Check the internet connection and refresh.</p>`});
 </script>

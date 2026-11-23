@@ -27,7 +27,7 @@ const Sync = (() => {
       tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
         results: S.mini.results, all: S.mini.all } : undefined,
       left: S.phase === "question" && !S.locked ? Math.max(0, Math.ceil(S.secs - S.elapsed)) : undefined,   // phones show the countdown
-      feast: S.qi >= FEAST, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
+      feast: S.qi >= FEAST && !S.tb, secs: S.secs, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
       howto: window.Rules && Rules.active() ? "tribute" : undefined,
       hurry: S.phase === "question" && !S.locked && S.hurryEnds ? S.hurryEnds : undefined,        // ⏰ last 10 seconds: phones hurry (howto.js)
       slow: ["reveal", "board", "final"].includes(S.phase) && S.slow && S.slow.length ? S.slow : undefined, slowPen: SLOW_PEN };   // How to play is on the TV: phones show it too (howto.js)
@@ -254,7 +254,7 @@ const Sync = (() => {
     try { ensureAudio(); } catch (e) {}
     if (!S.rounds || !S.rounds.length || S.phase === "lobby") { newGame(); try { clearInterval(readyT); } catch (e) {} }
     S.minisDone = [12, 24]; S.tb = null;
-    S.qi = S.rounds.length - 1; S.locked = true; S.phase = "reveal"; S.correct = []; S.typed = {};
+    S.qi = S.rounds.length - 1; S.locked = true; S.phase = "reveal"; S.correct = []; S.typed = Object.fromEntries(S.players.map(p => [p.name, "skip"]));   // everyone counts as answered: no "too slow" penalty
     score();
   }
   // Back to the lobby with a clean slate. Phones keep their names and follow along.

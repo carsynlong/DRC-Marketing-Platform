@@ -85,7 +85,9 @@ const Party = (() => {
     clearInterval(pollT); m.stage = "tally"; stopSong(); sfx("cannon"); render();
     await new Promise(r => setTimeout(r, 1200)); await pollCounts();       // let the last taps arrive
     const all = players().map(p => [p.name, counts[p.name] || 0]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
-    m.results = all.slice(0, 3).map(([name, n], i) => ({ name, n, bonus: BONUS[i] }));
+    // ties share a place: same count = same prize (1, 1, 3 …)
+    const place = n => 1 + all.filter(([, k]) => k > n).length;
+    m.results = all.filter(([, n]) => place(n) <= 3).map(([name, n]) => ({ name, n, bonus: BONUS[place(n) - 1] }));
     m.all = all;
     m.results.forEach(r => { const p = S.players.find(x => x.name === r.name); if (p) { p.score += r.bonus; } });
     if (m.results[0]) stat(m.results[0].name)[m.kind] = m.results[0].n;
@@ -121,9 +123,10 @@ const Party = (() => {
       return `<section class="mg" style="gap:8px"><div class="eyebrow">${info.title}</div>
         <div class="clock">${m.stage === "tally" ? "💥 Time!" : `⏱ <span id="mclock">${SECS}</span>`}</div>${field}</section>`;
     }
-    const rows = (m.all || []).map(([name, n], i) => `<div class="r${i < 3 ? " top" : ""}"><span class="rk" style="font-family:var(--display);color:var(--gold)">${i + 1}</span>${avatar(name)}
-      <span>${esc(name)} <span class="tiny">${n} ${info.verb}</span></span><span class="b">${i < 3 ? "+" + BONUS[i] : ""}</span></div>`).join("");
-    return `<section class="mg"><div class="icon">🏆</div><h1>${m.results?.[0] ? esc(m.results[0].name) + " wins!" : "Nobody moved!"}</h1>
+    const place = n => 1 + (m.all || []).filter(([, k]) => k > n).length;
+    const rows = (m.all || []).map(([name, n]) => { const pl = n > 0 ? place(n) : 99; return `<div class="r${pl <= 3 ? " top" : ""}"><span class="rk" style="font-family:var(--display);color:var(--gold)">${n > 0 ? pl : "–"}</span>${avatar(name)}
+      <span>${esc(name)} <span class="tiny">${n} ${info.verb}</span></span><span class="b">${pl <= 3 ? "+" + BONUS[pl - 1] : ""}</span></div>`; }).join("");
+    return `<section class="mg"><div class="icon">🏆</div><h1>${m.results?.[0] ? (() => { const top = m.results.filter(r => r.n === m.results[0].n).map(r => esc(r.name)); return top.length > 1 ? top.join(" & ") + " tie!" : top[0] + " wins!"; })() : "Nobody moved!"}</h1>
       <div class="mres">${rows || "<p>No taps came in. Was everyone asleep?</p>"}</div>
       <div class="ctl" style="justify-content:center"><button class="btn" id="mnext">On to ${esc(roundOf(m.qi).name)} ▶</button></div><div class="tiny">Space: continue</div></section>`;
   }

@@ -278,7 +278,7 @@ window.Walkout = (() => {
         const slips = Array.from({ length: 14 }, (_, k) => `<i style="left:${(k * 6.5) % 76}%;bottom:${(k * 13) % 50}%;transform:rotate(${(k * 37) % 70 - 35}deg);animation-delay:${(k % 5) * 60}ms"></i>`).join("");
         return `<div class="wo-stage"><div class="wo-bowl" aria-hidden="true"><div class="wo-glass">${slips}</div><div class="wo-hand">✋</div><div class="wo-slip">${esc(n)}</div></div>
           <div class="wo-card">${photoHTML(n, prop)}<div><div class="wo-from">District ${dn} Tribute</div>${letters(n)}
-          <div class="wo-sheet"><div style="--d:1.9s">🎯 Training score: <b>${5 + ((i * 7 + seed) % 8)}</b></div><div style="--d:2.15s">🗡️ Weapon of choice: <b>${esc(pick(WEAPONS, i))}</b></div><div style="--d:2.4s">🎲 Odds: <b>${esc(pick(ODDS, i))}</b></div></div></div></div></div>${hypeLine(n, i)}`;
+          <div class="wo-sheet"><div style="--d:1.9s">🎯 Training score: <b>${o.training ? o.training(n) : 5 + ((i * 7 + seed) % 8)}</b></div><div style="--d:2.15s">🗡️ Weapon of choice: <b>${esc(pick(WEAPONS, i))}</b></div><div style="--d:2.4s">🎲 Odds: <b>${esc(pick(ODDS, i))}</b></div></div></div></div></div>${hypeLine(n, i)}`;
       }
       if (style === "lineup") {   // 🔏 mugshot against the height chart, fingerprint match, typed case file
         const red = "█".repeat(6 + (i % 5));
@@ -382,6 +382,13 @@ body.has-ticker{padding-bottom:52px}
       }).join("")}</div>`;
       prev = Object.fromEntries(rows.map(r => [r.name, r.score]));
     }, 300);
+    // more players than fit: glide back and forth so everyone gets seen
+    if (!start.glide) { let dir = 1, wait = 0; start.glide = setInterval(() => {
+      const l = el && el.querySelector(".tk-l"); if (!l) return;
+      const max = l.scrollWidth - l.clientWidth; if (max <= 4) { l.scrollLeft = 0; return; }
+      if (wait > 0) { wait--; return; }
+      l.scrollLeft += dir; if (l.scrollLeft >= max - 1 || l.scrollLeft <= 0) { dir = -dir; wait = 60; }
+    }, 30); }
   }
   return { start };
 })();
@@ -403,9 +410,9 @@ window.Rules = (() => {
     feud: { font: '"Bungee", Impact, sans-serif', ink: "#ffffff", accent: "#ffc92e", accent2: "#e3232c", bg1: "#1846c4", bg2: "#060b26", btnInk: "#3a2000" },
   };
   const CSS = `
-#rules{position:fixed;inset:0;z-index:2147483001;display:grid;place-items:center;overflow:auto;color:var(--ru-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+#rules{position:fixed;inset:0;z-index:2147483001;display:flex;overflow:auto;color:var(--ru-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
   background:radial-gradient(ellipse at 50% 30%,var(--ru-bg1),var(--ru-bg2) 75%);padding:24px 16px;box-sizing:border-box}
-#rules .ru-in{width:100%;max-width:980px;display:grid;gap:clamp(8px,1.5vh,16px);justify-items:center;text-align:center}
+#rules .ru-in{margin:auto;width:100%;max-width:980px;display:grid;gap:clamp(8px,1.5vh,16px);justify-items:center;text-align:center}
 #rules h1{margin:0;font-family:var(--ru-font);font-weight:400;font-size:clamp(2rem,min(5.5vw,8vh),4.2rem);line-height:1;color:var(--ru-accent);text-shadow:0 4px 0 var(--ru-accent2);animation:ru-pop .6s cubic-bezier(.2,1.5,.4,1) both}
 #rules .ru-sub{font-weight:700;opacity:.8;font-size:clamp(1rem,2vw,1.25rem)}
 #rules ol{list-style:none;margin:0;padding:0;display:grid;gap:clamp(5px,1vh,10px);width:100%;text-align:left}
@@ -652,7 +659,13 @@ window.SkipEnd = { add(fn) {
   b.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:99999;font:10px system-ui,sans-serif;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:rgba(255,255,255,.55);opacity:.35;cursor:pointer";
   b.onmouseenter = () => b.style.opacity = "1"; b.onmouseleave = () => b.style.opacity = ".35";
   b.onclick = e => { e.stopPropagation(); b.blur(); if (confirm("Skip to the end of the game? (for testing the end music)")) try { fn(); } catch (err) { console.error(err); } };
-  (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => document.body.appendChild(b));
+  // sit just above anything pinned to the bottom (like the leaderboard strip)
+  const lift = () => { try {
+    b.style.visibility = "hidden"; let el = document.elementFromPoint(40, innerHeight - 4), up = 0;
+    while (el && el !== document.body) { if (getComputedStyle(el).position === "fixed") { up = Math.max(0, innerHeight - el.getBoundingClientRect().top); break; } el = el.parentElement; }
+    b.style.bottom = (up ? up + 4 : 4) + "px";
+  } catch (e) {} finally { b.style.visibility = ""; } };
+  (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => { document.body.appendChild(b); lift(); setInterval(lift, 700); });
 } };
 
 /* 🔊 Music on/off pinned to the top-left of the TV, so it's one quick click instead of scrolling to the bottom.
@@ -665,7 +678,7 @@ window.MusicPill = { add({ on, toggle }) {
     let state = false; try { state = !!on(); } catch (e) {}
     b.textContent = state ? "🔊 Music on" : "🔇 Music off"; b.setAttribute("aria-pressed", state);
     const own = document.getElementById("snd"), r = own && own.getBoundingClientRect();
-    b.hidden = !!(r && r.width && r.top >= 0 && r.bottom <= innerHeight * .3);
+    b.hidden = !!(r && r.width && r.top >= 0 && r.bottom <= innerHeight);   // the screen already shows its own Music button
     if (!b.hidden) place();
   };
   // top-left corner; if another button is already there (like "Back to setup"), slide down just below it
@@ -681,7 +694,12 @@ window.MusicPill = { add({ on, toggle }) {
   };
   function place() {
     b.style.left = "14px"; b.style.top = "14px";
-    for (let n = 0; n < 4; n++) { const hit = blocker(); if (!hit) return; b.style.top = Math.round(hit.getBoundingClientRect().bottom + 8) + "px"; }
+    for (let n = 0; n < 4; n++) {
+      const hit = blocker(); if (!hit) return;
+      const below = Math.round(hit.getBoundingClientRect().bottom + 8);
+      if (below > 140) { b.hidden = true; return; }   // a menu is open there: step aside until it closes
+      b.style.top = below + "px";
+    }
   }
   b.onclick = e => { e.stopPropagation(); try { toggle(); } catch (err) { console.error(err); } b.blur(); paint(); };
   (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => { document.body.appendChild(b); paint(); setInterval(paint, 400); });

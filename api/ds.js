@@ -12,6 +12,9 @@
 //   POST { op: "fifth",  pid, name, qi }          🤐 the person in the hot seat pleads the Fifth (once per game)
 //   POST { op: "duel",   pid, name, round }       ⚔️ Quick Draw: a finalist taps (before DRAW = too soon)
 //   POST { op: "draw", round }                    ⚔️ the TV says DRAW: the server stamps the moment
+//   POST { op: "ttl", pid, name, truths, lie }    🤥 your two truths and a lie (or { op: "unttl" } to take it back)
+//   POST { op: "likely", pid, name, round, vote } 🗳️ Most likely to… (one vote, changeable, not yourself)
+//   POST { op: "ttlremove", who } (host)          remove someone's two truths and a lie
 // Host phone (needs the key the TV shows in its host menu). Anonymous: the host sees the text, never who wrote it.
 //   GET  ?op=review&k=KEY                         every written secret: { id, text, status }
 //   POST { op: "approve", k, id, ok }             approve (true) or skip (false) one
@@ -39,7 +42,7 @@ export default async function handler(req, res) {
 
   if (req.method === "GET" && op === "tv") {
     const qi = Number.parseInt(q.qi, 10);
-    const duelRound = Number.parseInt(q.duel, 10);
+    const duelRound = Number.parseInt(q.duel, 10), likelyRound = Number.parseInt(q.likely, 10);
     const [bets, votes, subs, ok, switches, storyAns, frames, fifth, duel] = await Promise.all([
       Number.isInteger(qi) ? hash(`${P}bets:${qi}`) : {},
       Number.isInteger(qi) ? hash(`${P}story:${qi}`) : {},
@@ -50,15 +53,16 @@ export default async function handler(req, res) {
       Number.isInteger(qi) ? redis.get(`${P}fifth:${qi}`) : null,
       Number.isInteger(duelRound) ? hash(`${P}duel:${duelRound}`) : {},
     ]);
+    const [ttl, likely] = await Promise.all([hash(P + "ttl"), Number.isInteger(likelyRound) ? hash(`${P}likely:${likelyRound}`) : {}]);
     const approved = Object.keys(subs).filter(n => ok[n] === "1").map(n => ({ name: n, text: parse(subs[n])?.text })).filter(x => x.text);
-    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel, decoys: await redis.lrange(P + "decoys", 0, 49) });
+    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel, ttl, likely, decoys: await redis.lrange(P + "decoys", 0, 49) });
   }
   if (req.method === "GET" && op === "review") {
     if (!(await isHost(q))) return reply(res, 403, { error: "Only the host's phone can do that" });
     const [subs, ok] = await Promise.all([hash(P + "subs"), hash(P + "approved")]);
     const list = Object.keys(subs).map(n => { const x = parse(subs[n]) || {};
       return { id: x.id || "", text: x.text || "", t: x.t || 0, status: ok[n] === "1" ? "approved" : ok[n] === "0" ? "skipped" : "new" }; });
-    return reply(res, 200, { list: list.sort((a, b) => a.t - b.t), decoys: await redis.lrange(P + "decoys", 0, 49) });
+    return reply(res, 200, { list: list.sort((a, b) => a.t - b.t), ttl: await hash(P + "ttl"), decoys: await redis.lrange(P + "decoys", 0, 49) });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "Unknown request" });
 
@@ -83,6 +87,26 @@ export default async function handler(req, res) {
     if (!game || game.qi !== qi || game.phase !== "interro" || !game.roomOpen) return reply(res, 409, { error: "The room is closed" });
     if (!(await redis.hget(`${P}answers:${qi}`, q.name))) return reply(res, 409, { error: "No sealed guess to change" });
     await redis.hset(`${P}switch:${qi}`, { [q.name]: guess });
+    return reply(res, 200, { ok: true });
+  }
+  if (op === "ttl" || op === "unttl") {
+    if (!(await isPlayer(q.name, q.pid))) return reply(res, 403, { error: "Not your name" });
+    if (op === "unttl") { await redis.hdel(P + "ttl", q.name); return reply(res, 200, { ok: true }); }
+    const t1 = text(q.truths?.[0], 140), t2 = text(q.truths?.[1], 140), lie = text(q.lie, 140);
+    if (!t1 || !t2 || !lie) return reply(res, 400, { error: "Fill in all three" });
+    await redis.hset(P + "ttl", { [q.name]: JSON.stringify({ truths: [t1, t2], lie }) });
+    return reply(res, 200, { ok: true });
+  }
+  if (op === "ttlremove") {
+    if (!(await isHost(q))) return reply(res, 403, { error: "Only the host's phone can do that" });
+    await redis.hdel(P + "ttl", String(q.who));
+    return reply(res, 200, { ok: true });
+  }
+  if (op === "likely") {
+    const game = await readGame(P);
+    if (!(await isPlayer(q.name, q.pid))) return reply(res, 403, { error: "Not your name" });
+    if (!game || game.phase !== "likely" || game.likely?.round !== q.round || game.likely?.show || !game.names?.includes(q.vote) || q.vote === q.name) return reply(res, 409, { error: "Not now" });
+    await redis.hset(`${P}likely:${q.round}`, { [q.name]: q.vote });
     return reply(res, 200, { ok: true });
   }
   if (op === "frame" || op === "fifth" || op === "duel") {
@@ -160,7 +184,7 @@ export default async function handler(req, res) {
   }
   if (op === "reset") {
     const total = Math.min(Math.max(Number(q.total) || 0, 1), 100);
-    await redis.del(...Array.from({ length: total }, (_, i) => [`${P}bets:${i}`, `${P}story:${i}`, `${P}switch:${i}`, `${P}storyans:${i}`, `${P}frame:${i}`, `${P}fifth:${i}`, `${P}duel:${i}`, `${P}duelat:${i}`]).flat(), P + "fifthused");
+    await redis.del(...Array.from({ length: total }, (_, i) => [`${P}bets:${i}`, `${P}story:${i}`, `${P}switch:${i}`, `${P}storyans:${i}`, `${P}frame:${i}`, `${P}fifth:${i}`, `${P}duel:${i}`, `${P}duelat:${i}`, `${P}likely:${i}`]).flat(), P + "fifthused");
     return reply(res, 200, { ok: true });
   }
   reply(res, 400, { error: "Unknown op" });

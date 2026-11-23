@@ -579,7 +579,7 @@ const SLIDES=[
  tieSlide("lrc"),
  // GAME 8
  gameTitle("bingo"),
- howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV: a row, four corners, a big X, or the picture frame","Yell BINGO! We check your card number on screen"],"The first bingo and the second bingo each win a major award.",
+ howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV: a row, four corners, a big X, or the picture frame","Yell BINGO! We check your card number on screen"],"Four rounds: Regular, Four Corners, Big X and Picture Frame. The first bingo in each round wins a major award.",
    `<a class="btn red" href="/bingo" target="_blank" rel="noopener" style="font-size:28px">Open the Bingo Board</a>`),
  {id:"bingo-board",music:null,html:()=>`${tbBtn("bingo")}<div style="display:grid;grid-template-columns:auto 1fr;gap:90px;align-items:center;text-align:left">
     <div class="ball drop" style="--r:0deg"><div class="face"><span style="font-family:var(--display);font-size:80px;color:#17998a">B</span><span style="font-weight:800;font-size:170px">7</span></div></div>
@@ -735,7 +735,7 @@ function pickVictor(g,place=1){
   ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;
     if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
     close();refreshCorners();XM.stopSong();
-    if(place===1){XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
+    if(place===1){XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten"&&g!=="bingo")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
     else XM.celebrate(n,{intro:"And in second place"})});
   const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};
   ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};
@@ -901,7 +901,7 @@ function drawVictors(grid,anim){
       <div class="ic"><img src="${ICON(k+"-w")}" alt=""></div><div style="flex:1;min-width:0"><div class="gn">${esc(g.name)}</div>
       ${editing===k?`<input id="vin" list="tnames" value="${esc(v)}" placeholder="Type the winner, then Enter" autocomplete="off">`
         :`<div class="vn"><span class="lab">Victor:</span>${ph?`<img src="${ph}" alt="">`:""}<span>${esc(v)}</span>${awards()[k]?`<span title="Major award rating" style="margin-left:auto">${AWARD[awards()[k]]}</span>`:""}</div>`}
-      ${k!=="mitten"?`<button class="sec2" data-second="${k}">🥈 ${S2[k]?`${XM.photo(S2[k])?`<img src="${XM.photo(S2[k])}" alt="">`:""}${esc(S2[k])}${awards()[k+"_2"]?" "+AWARD[awards()[k+"_2"]]:""}`:"Add 2nd place"}</button>`:""}</div></div>`}).join("")+
+      ${k!=="mitten"&&k!=="bingo"?`<button class="sec2" data-second="${k}">🥈 ${S2[k]?`${XM.photo(S2[k])?`<img src="${XM.photo(S2[k])}" alt="">`:""}${esc(S2[k])}${awards()[k+"_2"]?" "+AWARD[awards()[k+"_2"]]:""}`:"Add 2nd place"}</button>`:""}</div></div>`}).join("")+
     `<datalist id="tnames">${XM.NAMES.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
   grid.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
   grid.querySelectorAll("[data-second]").forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=e=>{e.stopPropagation();if(curSave)curSave();pickVictor(b.dataset.second,2)}});

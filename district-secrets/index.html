@@ -430,6 +430,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.ctl.stick{position:sticky;bottom:62px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 </style>
 </head>
 <body>
@@ -736,7 +737,7 @@ function snapshot(){
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:isDouble(S.qi),secs:qs(),opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:Q.filter(x=>!x.bonus&&!x.ttl).length,lightning:!!Q[S.qi]?.lightning,ttl:Q[S.qi]?.ttl?{who:Q[S.qi].a,opts:Q[S.qi].opts}:undefined,
     howto:window.Rules&&Rules.active()?"secrets":undefined,
-    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:Q[S.qi]?.golden?3:1),mult:isDouble(S.qi)?2:Q[S.qi]?.golden?3:1,
+    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*qMult(S.qi),mult:qMult(S.qi),
     wanted:["reveal","story","board"].includes(S.phase)&&S.qi<Q.length&&gmPredicts()?wantedTop():undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.phase==="question"&&Q[S.qi].hide)g.hide=hiddenNow()}
   if(inGame&&["reveal","story","board"].includes(S.phase)&&Q[S.qi].golden)g.golden=true;
@@ -1440,11 +1441,12 @@ function revealView(){
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>{const own=p.name===x.a;
         return `<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled":""}>${esc(p.name)}<span>${own?"their secret":g[p.name]!=null?"guessed “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`}).join("")}</div></div>`:""}
     </div></section>
-  <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: ${S.opts?.story&&!cur().lightning?"story time":"scores"}</span>${S.opts?.story&&!cur().lightning?`<button class="btn" id="story">🎤 Story time</button>`:`<button class="btn" id="score">Show scores</button>`}</div>`;
+  <div class="ctl stick"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: ${S.opts?.story&&!cur().lightning?"story time":"scores"}</span>${S.opts?.story&&!cur().lightning?`<button class="btn" id="story">🎤 Story time</button>`:`<button class="btn" id="score">Show scores</button>`}</div>`;
 }
 /* 🔮 how the Gamemaker's prediction went */
+const qMult=qi=>Q[qi]?.golden?3:isDouble(qi)||Q[qi]?.lightning?2:1;   // same multiplier score() uses
 function gmHTML(){
-  if(!gmPredicts())return"";const pick=gmPick(),top=wantedTop(),mult=isDouble(S.qi)?2:1;
+  if(!gmPredicts())return"";const pick=gmPick(),top=wantedTop(),mult=qMult(S.qi);
   if(!pick)return `<div class="fooled">🕵️ ${HOST} didn't name a Most Wanted this time</div>`;
   const hit=top.includes(pick);
   return `<div class="fooled">🕵️ ${HOST}'s Most Wanted: <b>${esc(pick)}</b> · the room accused ${top.length?esc(top.join(" & ")):"nobody"}${hit?` · NAILED IT! +${WANTED_PTS*mult}`:""}</div>`;
@@ -1466,7 +1468,7 @@ function fakeView(){
       ${suspectsHTML(null).replace("WHO THE ROOM ACCUSED","WHO THE ROOM BLAMED (FOR NOTHING)")}
       ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>`<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}">${esc(p.name)}<span>${g[p.name]!=null?"said “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`).join("")}</div></div>`:""}
     </div></section>
-  <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`;
+  <div class="ctl stick"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`;
 }
 /* who changed their vote in the Interrogation Room, and how it went */
 function switchHTML(){
@@ -1517,7 +1519,7 @@ function finalView(){
     <div class="podium">${pod}</div>
     ${awards().length?`<div class="eyebrow" style="margin-top:8px">The Capitol's special honors</div><div class="awards">${awards().map((a,i)=>`<div class="award" style="animation-delay:${.6+i*.25}s"><div class="ic">${a.ic}</div><div class="t">${a.t}</div><img src="${AV(a.av)}" alt=""><div class="nm">${esc(a.name)}</div><div class="why">${a.why}</div></div>`).join("")}</div>`:""}
     <div class="ledger">${rows()}</div>
-    <div class="ctl" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to the lobby</button><button class="btn" id="again">Play again</button></div></section>`;
+    <div class="ctl stick" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to the lobby</button><button class="btn" id="again">Play again</button></div></section>`;
 }
 
 /* ================= CONTROLS ================= */
@@ -1562,6 +1564,7 @@ S.opts={...freshState().opts,...(S.opts||{})};S.extra=S.extra||[];S.players.forE
 if(S.deck?.length)Q.splice(0,Q.length,...S.deck);  // a reload mid game keeps the same decoys in the same places
 if(S.extra.length)Q.push(...S.extra);               // a reload mid bonus round keeps the bonus secrets
 if(S.phase==="interro")S.phase="question";
+if(S.phase==="showdown"&&S.duel&&["steady","draw"].includes(S.duel.state))S.duel.state="vs";   // a reload mid Quick Draw: back to Ready, press Space to go again
 // still guessing: the clock picks up where it was (with at least 8 seconds left) so nobody loses points to a refresh
 if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,qs()-8))}
 /* the host phone (approving bonus secrets) proves itself with this key */

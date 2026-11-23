@@ -1,4 +1,5 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.ctl.stick{position:sticky;bottom:62px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+</style></head><body>
 <meta charset="utf-8">
 <title>Who's That Tribute?</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -232,7 +233,8 @@ function freshState(){
     players:NAMES.map(n=>({name:n,on:true,score:0,streak:0,delta:0})),
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
-function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked) S.locked=true; render(); }
+// a TV reload mid-face picks up the clock where it was (at least 8 seconds left), so nobody loses points to a refresh
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); }
 
 /* ================= MUSIC: original game-show loops over public-domain carols ================= */
 let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
@@ -492,7 +494,7 @@ function score(){
   Party.scored();
   // the host (🔮 Gamemaker) predicted how many would get it right: exact +500, off by one +200
   const h=S.players.find(p=>p.name===HOST),pick=Sync.hostPick();
-  if(h&&h.on&&pick!=null){const n=S.correct.length,d=Math.abs(pick-n);h.delta=d===0?500:d===1?200:0;h.score+=h.delta;S.hostPick={pick,n}}else S.hostPick=null;
+  if(h&&h.on&&pick!=null){const n=S.correct.length,d=Math.abs(pick-n);const add=d===0?500:d===1?200:0;h.delta=(h.delta||0)+add;h.score+=add;S.hostPick={pick,n}}   // keeps a 🌹 rose in her deltaelse S.hostPick=null;
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
   if(S.phase==="final"&&Party.tie())return;   // tied at the top: showdown first
@@ -606,7 +608,7 @@ function finalView(){
     <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Run a sudden death round to pick who gets the major award.`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
     <div class="podium">${pod}</div>
     <div class="board">${boardRows()}</div>
-    <div class="ctl" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="interview">🎤 Victor's interview</button><button class="btn" id="again">Play again</button></div>
+    <div class="ctl stick" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="interview">🎤 Victor's interview</button><button class="btn" id="again">Play again</button></div>
   </section>`;
 }
 

@@ -265,6 +265,7 @@ const Sync = (() => {
     try { window.Walkout && Walkout.cancel && Walkout.cancel(); } catch (e) {}
     try { window.Rules && Rules.active() ? Rules.go(true) : document.getElementById("rules")?.remove(); } catch (e) {}
     try { FireTimer.stop(); } catch (e) {}
+    try { Party.reset(); } catch (e) {}   // stops a mini-game that's mid-race
     try { cancelAnimationFrame(raf); } catch (e) {}
     S.players.forEach(p => { p.score = 0; p.streak = 0; p.delta = 0; p.move = 0; });
     try { Extras.reset(); } catch (e) {}

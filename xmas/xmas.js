@@ -52,7 +52,8 @@ XM.TB_ORDER=["cookie","scoop","lrc","bingo","stare","toss","cane"];
 
 /* Victors board, saved on this laptop */
 XM.victors=()=>store.get("xmas-victors",{});
-XM.setVictor=(g,name)=>{const v=XM.victors();if(name)v[g]=name;else delete v[g];store.set("xmas-victors",v)};
+XM.setVictor=(g,name)=>{const v=XM.victors();if((v[g]||"")!==(name||"")){const a=store.get("xmas-awards",{});if(g in a){delete a[g];store.set("xmas-awards",a)}}   // a new (or cleared) victor hasn't unboxed anything yet
+  if(name)v[g]=name;else delete v[g];store.set("xmas-victors",v)};
 
 /* ================= AUDIO ================= */
 XM.sound=!store.get("xmas-muted",false);

@@ -179,7 +179,7 @@ const Extras = (() => {
   let ivT = 0;
   function startInterview() { S.phase = "interview"; S.iv = S.iv || { i: 0, list: [] }; stopSong(); render(); pullAsks(); clearInterval(ivT); ivT = setInterval(pullAsks, 2000); }
   async function pullAsks() {
-    if (S.phase !== "interview") return clearInterval(ivT);
+    if (S.phase !== "interview") { clearInterval(ivT); ivT = 0; return; }
     try {
       const d = await (await fetch("/api/host?asks=1", { cache: "no-store" })).json();
       const list = (d.asks || []).map(x => { try { return JSON.parse(x); } catch (e) { return null; } }).filter(Boolean);
@@ -205,6 +205,7 @@ const Extras = (() => {
     const b = id => document.getElementById(id);
     if (b("ivnext")) b("ivnext").onclick = nextQ;
     if (b("ivagain")) b("ivagain").onclick = readQ;
+    if (S.phase === "interview" && !ivT) { pullAsks(); ivT = setInterval(pullAsks, 2000); }   // after a TV reload, keep picking up new questions
     if (b("ivdone")) b("ivdone").onclick = () => { clearInterval(ivT); try { speechSynthesis.cancel(); } catch (e) {} S.phase = "final"; render(); };
   }
   function label() { const mb = document.getElementById("winmusic"); if (mb) mb.textContent = song ? "🔇 Stop music" : "🎵 Play music"; }

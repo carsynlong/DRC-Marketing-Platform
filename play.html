@@ -296,7 +296,7 @@ async function leave(){
 // typed a name but never tapped Lock it in? send it just before the cannon fires
 setInterval(()=>{const g=D.game,i=document.getElementById("guess");
   if(!g||g.phase!=="question"||!g.hurry||pending||D.myAnswer||!i||!i.value.trim())return;
-  if(Date.now()>g.hurry-1600){i.blur();answer(i.value)}},250);
+  if(Date.now()>g.hurry-1600||(g.left!=null&&g.left<=3)){i.blur();answer(i.value)}},250);
 async function answer(text){
   buzz(15);PFX.sfx("tap");
   const g=D.game;text=String(text||"").trim();
@@ -373,7 +373,7 @@ function miniScreen(g,key){
   if(m.stage==="live")return [key+"live",header()+`<section class="mgplay"><div class="eyebrow">${info.title}</div><div class="mgn" id="mgn">${mg.n}</div>
       <button class="mgbtn" id="mgtap">${m.kind==="climb"?"SHAKE!<small>or tap here</small>":"TAP!"}</button></section>`];
   if(m.stage==="tally")return [key+"tally",header()+msg("💥","Time!",`<p class="said">You did ${mg.n}!</p><p>Eyes on the TV…</p>`,"late")];
-  const all=m.all||[],i=all.findIndex(([n])=>n===D.me),bonus=[500,300,200][i];
+  const all=m.all||[],me=all.find(([n])=>n===D.me),i=me&&me[1]>0?all.filter(([,k])=>k>me[1]).length:(me?99:-1),bonus=[500,300,200][i];   // ties share a place, like the TV
   return [key+"done",header()+msg(i===0?"🏆":i>0&&i<3?"🥇":"🏅",i<0?"No score":`You came #${i+1}!`,`<p class="said">${i>=0?`${all[i][1]} ${m.kind==="climb"?"shakes":"taps"}`:""}${bonus?` · <b style="color:var(--good)">+${bonus} points</b>`:""}</p><p>Eyes on the TV.</p>`,bonus?"right":"")+reactBar(),bonus?"points":""];
 }
 // send the count to the TV a few times a second while the race is on
@@ -396,7 +396,7 @@ setInterval(()=>{
 
 /* ---------- scoreboard on the phone: who leads, how far you are from catching up, and the full board ---------- */
 function chase(g,s){
-  const sc=(g.scores||[]).slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));if(!sc.length||!s)return "";
+  const sc=(g.scores||[]).slice().sort((a,b)=>(a.rank||0)-(b.rank||0)||b.score-a.score||a.name.localeCompare(b.name));   // the TV's order (a tribute beats Carsyn on a tie)if(!sc.length||!s)return "";
   const lead=sc[0],tied=sc.filter(x=>x.score===lead.score),me=sc.findIndex(x=>x.name===D.me),above=sc.slice(0,me).reverse().find(x=>x.score>s.score);
   let top;
   if(s.score===lead.score&&lead.score>0)top=tied.length>1?`👑 You're tied for the lead with ${tied.filter(x=>x.name!==D.me).map(x=>esc(x.name)).join(", ")}!`:`👑 You're in the lead! ${sc[1]?`${fmt(s.score-sc[1].score)} ahead of ${esc(sc[1].name)}`:""}`;

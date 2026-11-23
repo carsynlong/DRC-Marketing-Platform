@@ -601,7 +601,7 @@ function header(){
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
 const factHTML=g=>{const f=g.fact||"";if(!g.hide?.length)return esc(f);const h=new Set(g.hide);return f.split(" ").map((w,i)=>h.has(i)?`<span class="rd">${esc(w)}</span>`:esc(w)).join(" ")};
-const fileCard=g=>(g.lightning?`<div class="goldnote" style="background:#2a2350">🌩️ LIGHTNING · 10 SEC · DOUBLE POINTS</div>`:"")+`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${factHTML(g)}”</p>${g.hide?'<div class="redtag">🖤 REDACTED · guess early for a bigger bonus</div>':""}</div>`;
+const fileCard=g=>(g.lightning?`<div class="goldnote" style="background:#2a2350;color:#ffe9a8">🌩️ LIGHTNING · 10 SEC · DOUBLE POINTS</div>`:"")+`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${factHTML(g)}”</p>${g.hide?'<div class="redtag">🖤 REDACTED · guess early for a bigger bonus</div>':""}</div>`;
 
 function view(){
   const g=D.game;
@@ -667,7 +667,7 @@ function view(){
       return [key+"trw",header()+msg("🤫","These are YOURS!","<p>Poker face! Everyone's hunting for your lie.</p>","")+reactBar(),"shh"];
     }
     if(g.phase==="reveal"){const right=(g.correct||[]).includes(D.me);
-      return [key+"tr"+right,header()+(right?msg("🕵️","You found the lie!","<p>Nice detective work.</p>","right"):msg("🤥","Fooled you!",`<p>${pickI?`You picked #${pickI}.`:"You didn't pick one."} Check the TV for the lie.</p>`,"wrong"))+reactBar(),right?"right":"wrong"];}
+      return [key+"tr"+right,header()+(right?msg("🕵️","You found the lie!","<p>Nice detective work.</p>","right"):msg("🤥",pickI?"Fooled you!":"No pick this time",`<p>${pickI?`You picked #${pickI}.`:"You didn't pick one."} Check the TV for the lie.</p>`,"wrong"))+reactBar(),right?"right":"wrong"];}
     if(pickI)return [key+"tp"+pickI,header()+msg("🔏",`Sealed: #${pickI} is the lie`,`<p class="said">“${esc(T.opts[pickI-1])}”</p><p>Eyes on the TV.</p>`)+reactBar(),"seal"];
     if(g.locked)return [key+"tl",header()+msg("💥","Time's up!",`<p class="said">No pick: −${NO_GUESS} points.</p>`,"wrong"),"wrong"];
     return [key+"ta"+!!g.left,header()+`<section class="msg" style="flex:none;padding:4px 0 0"><div class="eyebrow">🤥 ${esc(T.who)}'s two truths and a lie</div><h1 style="font-size:1.5rem">Which one is the lie?</h1></section>
@@ -702,10 +702,10 @@ function view(){
       ${hot&&g.roomOpen&&g.fifthOk&&!fifthUsed()?`<button class="btn" id="fifth" style="background:#2b1d12;box-shadow:0 4px 0 #000;margin-top:6px">🤐 Plead the Fifth · −100 · once per game</button>`:""}</section>`;
     if(mineSecret)return [key+"own"+g.roomOpen+fifthUsed(),header()+top+msg("🤫","They're trying to crack YOU","<p>Keep a straight face… or point the finger at someone else!</p>")+reactBar(),"shh"];
     if(!mine)return [key+"none"+g.roomOpen,header()+top+msg("","You didn't seal a guess","<p>Sit back and watch the interrogation.</p>")+reactBar()];
-    if(moleTarget(g)&&g.roomOpen)return [key+"mole",header()+top+moleNote(g)+reactBar(),"shh"];
+    const mn=moleTarget(g)&&g.roomOpen?moleNote(g):"";   // the mole still gets to change their own vote
     if(!g.roomOpen)return [key+"closed"+mySwitch.to,header()+top+msg("🔒","Votes are final",`<p class="said">Your vote: <b>${esc(mySwitch.to||mine)}</b></p><p>Eyes on the TV for the reveal.</p>`)+reactBar(),"tap"];
     const now=mySwitch.to||mine;
-    return [key+"room"+now+mySwitch.open+fifthUsed(),header()+top+`<div class="write" style="transform:none">
+    return [key+"room"+now+mySwitch.open+fifthUsed()+!!mn,header()+top+mn+`<div class="write" style="transform:none">
         <b>${mySwitch.to?"🔄 You changed your vote":"Your sealed guess"}</b><div class="done" style="font-size:1.4rem">“${esc(now)}”</div>
         ${mySwitch.to?`<p>Was: ${esc(mine)}</p>`:""}
         ${mySwitch.open?`<form id="swform" style="display:grid;gap:8px"><input id="sw" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Who is it really?" style="font-family:var(--type);font-size:1.3rem;padding:.5em;border-radius:10px;border:2px dashed #c9b385;background:rgba(255,255,255,.5);color:var(--parch-ink);text-align:center">

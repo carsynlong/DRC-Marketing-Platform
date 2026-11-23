@@ -189,7 +189,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     if (ends && !o.answered && !exempt && Date.now() < ends) startHurry(ends); else stopHurry();
     if (g && me && g.slow && g.slow.includes(me)) {
       const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;
-      if (k !== slowKey) { slowKey = k; const mine = (g.scores || []).find(s => s.name === me), pen = mine ? Math.max(0, -(mine.delta || 0)) : g.slowPen;
+      if (k !== slowKey) { slowKey = k; const mine = (g.scores || []).find(s => s.name === me), pen = mine ? Math.min(g.slowPen || Infinity, Math.max(0, -(mine.delta || 0))) : g.slowPen;   // the no-answer part only (not a rose)
         slowToast(`⏰ Too slow! You didn't answer in time${pen ? `: −${pen}` : ""}`); }
     }
   }

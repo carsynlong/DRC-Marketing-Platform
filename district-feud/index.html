@@ -409,6 +409,7 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 .called b{font-family:var(--display);font-weight:400;color:#7dff9e;font-size:1.1rem}
 @media (max-width:700px){.join{flex-direction:column;text-align:center}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}.card.flip{transform:rotateX(180deg)}.beam{display:none}}
+.settings.stick{position:sticky;bottom:62px;z-index:6;background:rgba(6,10,30,.9);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}   /* final board buttons stay on screen */
 </style>
 
 <div class="beam l" aria-hidden="true"></div><div class="beam r" aria-hidden="true"></div>
@@ -724,7 +725,7 @@ function resumeGame(){
   gid=g.gid||gid;answers={};answersQi=-1;S.preAns=true;sfx("fanfare");
   if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
 }
-function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
+function showQuestion(){clearTimers();clearBanners();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
 setInterval(()=>{
   const fo=S.tie&&S.tie.ends&&["tb","ballot","cast"].includes(S.phase);
@@ -771,12 +772,13 @@ function scoreGuesses(top){
   });
 }
 /* 🔥 NEW LEADER and ON FIRE banners */
-let bannerQ=[],bannerOn=false;
+let bannerQ=[],bannerOn=false,bannerT=0;
+function clearBanners(){bannerQ=[];bannerOn=false;clearTimeout(bannerT);document.querySelectorAll("body>.leader").forEach(e=>e.remove())}   // a new question starts clean
 function banner(html,sound){bannerQ.push([html,sound]);if(!bannerOn)nextBanner()}
 function nextBanner(){
   const b=bannerQ.shift();if(!b){bannerOn=false;return}bannerOn=true;
   const el=document.createElement("div");el.className="leader";el.innerHTML=b[0];document.body.appendChild(el);
-  sfx(b[1]||"cheer");flash();setTimeout(()=>{el.remove();nextBanner()},3300);
+  sfx(b[1]||"cheer");flash();bannerT=setTimeout(()=>{el.remove();nextBanner()},3300);
 }
 function leaderCheck(){
   (S.newFire||[]).forEach(n=>banner(`<img src="${AV(n)}" alt=""><div><small>🔥 3 in a row! 🔥</small><b>${esc(n)} is on fire!</b></div>`,"cheer"));S.newFire=[];
@@ -807,6 +809,7 @@ async function countVotes(auto){
   later(()=>{const T=S.tie,max=Math.max(...T.names.map(n=>T.votes[n])),lead=T.names.filter(n=>T.votes[n]===max);
     T.lead=lead;
     if(T.prize){   // 🏆 sudden death for the major award
+      S.slow=[];   // the prize face-off takes no points, so no "too slow" list
       if(lead.length===1){S.pkg.winner=lead[0];S.pkg.faceoff=true;S.phase="pkg";giftFx();render();return}
       S.phase="tbresult";later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300);render();return}
     T.names.forEach(n=>addVotes(n,T.votes[n]*(S.mult||1)));
@@ -1019,7 +1022,7 @@ function tbresult(){
     <div class="ctl">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
   const more=voters().length>0&&T.round<TB_PER_TIE;   // up to 3 face-off questions, then a lucky spin
   return `<section class="center">${podiums(T.lead,sc)}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>${slowLine(.8)}
-    <p class="sub late" style="--d:1s">${more?`On to another face-off question${T.prize?" for the major award":""}.`:"Nobody's left to vote. Time for a lucky spin!"}</p>
+    <p class="sub late" style="--d:1s">${more?`On to another face-off question${T.prize?" for the major award":""}.`:voters().length?"Still tied after 3 face-offs. Time for a lucky spin!":"Nobody's left to vote. Time for a lucky spin!"}</p>
     <div class="ctl late" style="--d:1s"><button class="btn red" id="${more?"again":"fate"}">${more?"⚡ Next face-off":"🎰 Lucky spin"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
 }
 const spinView=(label,n)=>`<section class="center"><span class="qtag">${label}</span><div class="bulbs"><div class="board spinbox"><img id="fateImg" src="${AV(n)}" alt=""><div class="nm" id="fateName">${esc(n)}</div></div></div></section>`;
@@ -1028,7 +1031,7 @@ function end(){
   return `<section class="lobby">${logo(true)}<span class="qtag">The final board</span>
     <div class="recap">${S.order.map((qi,k)=>{const r=S.results[k];if(!r)return"";
       return `<div class="rrow" style="--d:${(k*.12).toFixed(2)}s"><img src="${AV(r.name)}" alt=""><div><small>${esc(QUESTIONS[qi].q)}</small><span>${esc(r.name)}</span></div><em>${r.tb?(r.fate?"Lucky spin":"Face-off"):plural(r.votes,"vote")}</em></div>`}).join("")}</div>
-    <div class="settings">${sndBtn()}<button class="btn ghost" id="replay">Play again</button><button class="btn red" id="pkgbtn">🎁 Prize round</button></div><div class="hint">Space: Prize round</div></section>`;
+    <div class="settings stick">${sndBtn()}<button class="btn ghost" id="replay">Play again</button><button class="btn red" id="pkgbtn">🎁 Prize round</button></div><div class="hint">Space: Prize round</div></section>`;
 }
 function pkgView(){
   const P=S.pkg,open=P.done,compact=P.rows.length>4?"compact":"";

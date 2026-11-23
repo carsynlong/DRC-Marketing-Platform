@@ -3,13 +3,16 @@
 <head>
 <script>/* if anything breaks while loading, say what on screen (helps fix phone-only problems) */
 window.addEventListener("error",function(e){try{var b=document.getElementById("jserr");if(!b){b=document.createElement("div");b.id="jserr";b.style.cssText="position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#b3121b;color:#fff;font:600 14px/1.3 system-ui,sans-serif;padding:10px;border-radius:10px;white-space:pre-wrap";(document.body||document.documentElement).appendChild(b)}
-b.textContent+="⚠️ "+(e.message||"error")+" ("+String(e.filename||"").split("/").pop()+":"+(e.lineno||"?")+":"+(e.colno||"?")+")\n"}catch(_){}});</script>
+b.textContent+=(e.target&&e.target.src?"⚠️ Couldn't load "+String(e.target.src).split("/").pop():"⚠️ "+(e.message||"error")+" ("+String(e.filename||"").split("/").pop()+":"+(e.lineno||"?")+":"+(e.colno||"?")+")")+"\n"}catch(_){}},true);
+/* still stuck after 8 seconds? say so, with a reload button */
+setTimeout(function(){var c=document.getElementById("count");if(!c||c.textContent.replace(/\s/g,"")!=="1/1")return;var w=document.createElement("div");w.style.cssText="position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#1b1b1b;color:#fff;font:600 15px/1.35 system-ui,sans-serif;padding:12px;border-radius:12px;box-shadow:0 0 0 2px #e8b04b;text-align:center";
+w.innerHTML="The show didn't finish loading. Check your connection, and in Brave turn Shields off for this site (lion icon). <button style='font:inherit;margin-top:8px;padding:6px 14px;border-radius:999px;border:0;background:#e8b04b;color:#2a1c05' onclick='location.reload()'>Reload</button>";document.body.appendChild(w)},8000);</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>The 2026 Christmas Games</title>
 <link rel="icon" href="/xmas/emblem.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap" media="print" onload="this.media='all'">   <!-- fonts never hold up the page scripts -->
 <link rel="stylesheet" href="/xmas/xmas.css">
 <style>
 html,body{overflow:hidden}
@@ -60,6 +63,7 @@ body{cursor:default}
 
 /* corner controls */
 .hud{position:fixed;z-index:45;display:flex;gap:10px;align-items:center}
+body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute){visibility:hidden}   /* 🔊 stays reachable during intermission, interviews, etc. */
 .hud.br{right:18px;bottom:14px}
 .hud.bl{left:18px;bottom:14px}
 .hud button{width:44px;height:44px;border-radius:50%;background:rgba(13,31,24,.7);box-shadow:inset 0 0 0 2px var(--line);font-size:18px;opacity:.55;transition:opacity .2s}
@@ -781,7 +785,7 @@ function intermission(){
     end=Math.max(Date.now()+1000,end+d*60000);delete m.dataset.warned;tick()};
   const close=()=>{alive=false;clearInterval(iv);clearInterval(fiv);m.remove();announcer.stop();XM.stopSong();document.removeEventListener("keydown",key,true);
     const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)};
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter","i","I"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter","i","I"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
   m.querySelectorAll("[data-min]").forEach(b=>b.onclick=e=>{e.stopPropagation();start(+b.dataset.min)});
   m.querySelector("#iplus").onclick=e=>{e.stopPropagation();adj(1)};m.querySelector("#iminus").onclick=e=>{e.stopPropagation();adj(-1)};
@@ -795,7 +799,7 @@ function openMoment(cls,{stopMusic=true}={}){
   XM.ensureAudio();const prev=XM.currentSong();if(stopMusic)XM.stopSong();announcer.stop();
   const m=document.createElement("div");m.className="moment "+cls;document.body.appendChild(m);const timers=[];let alive=true;
   const T=(f,ms)=>{timers.push(setTimeout(()=>alive&&f(),ms))};
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)||/^[a-zA-Z]$/.test(e.key)){e.preventDefault();e.stopPropagation()}};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)||/^[a-zA-Z]$/.test(e.key)){e.preventDefault();e.stopPropagation()}};
   const close=()=>{if(!alive)return;alive=false;timers.forEach(clearTimeout);m.remove();announcer.stop();document.removeEventListener("keydown",key,true);if(m.onClose)m.onClose();
     if(stopMusic){const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
@@ -846,7 +850,7 @@ function unbox(g){
   if(busy())return;XM.ensureAudio();const who=XM.victors()[g]||"Victor";const prev=XM.currentSong();XM.stopSong();announcer.stop();
   const m=document.createElement("div");m.className="moment unbox";document.body.appendChild(m);let alive=true;
   const close=()=>{alive=false;m.remove();announcer.stop();document.removeEventListener("keydown",key,true);refreshCorners();if(prev)XM.playSong(prev,true)};
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
   m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · major award</div>
     ${XM.photo(who)?`<img src="${XM.photo(who)}" alt="" style="width:130px;height:130px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)">`:""}

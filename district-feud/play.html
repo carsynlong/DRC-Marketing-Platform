@@ -297,7 +297,7 @@ function view(){
   if(g.phase==="final"){
     if(g.winner===D.me)return [key+"pkgme",header()+msg("🏆","You won the major award!","<p>Top of the prize race. Go claim your prize!</p>","win")+soundBtn(),"win"];
     if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the major award!`,"<p>Merry Christmas from District Feud!</p>")+soundBtn(),"ding"];
-    return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most votes?</p>")+soundBtn()];
+    return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most points?</p>")+soundBtn()];
   }
   if(g.view==="intro"){
     if(g.spot===D.me)return [key+"spot",header()+msg("🎤","That's YOU on the TV!",`<p>Take a bow! ${g.cheer?"Everyone's cheering for you. Watch your crowd meter! 📣":"The crowd goes wild! 👏"}</p>`,"win"),"win"];

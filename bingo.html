@@ -131,10 +131,10 @@ function render(){
   // laid out like the real masterboard: B I N G O across the top, 15 numbers down each column
   let board="";for(let l=0;l<5;l++)board+=`<div class="L" style="background:${LC[l]}">${LET[l]}</div>`;
   for(let i=1;i<=15;i++)for(let l=0;l<5;l++){const n=l*15+i;board+=`<button class="c ${n===last?"new":S.called.includes(n)?"on":""}" data-n="${n}" aria-label="${LET[l]} ${n}${S.called.includes(n)?", called":""}">${n}</button>`}
-  let res="";const C=S.checked;
+  let res="",resCard="";const C=S.checked;
   if(C&&C.err)res=`<div class="verdict" style="color:#ff8a7a">Cards go from 1 to ${CARDS.length}.</div>`;
   else if(C){const win=new Set(C.ln.flat().map(p=>p.join()));
-    res=`<div class="verdict" style="color:${C.ln.length?"var(--good)":"#ff8a7a"}">${C.ln.length?"🎉 BINGO! Card "+C.k+" wins a major award!":"🪦 Not yet, Card "+C.k+". Keep playing."}</div>${miniCard(CARDS[C.k-1],win)}`}
+    res=`<div class="verdict" style="color:${C.ln.length?"var(--good)":"#ff8a7a"}">${C.ln.length?"🎉 BINGO! Card "+C.k+" wins a major award!":"🪦 Not yet, Card "+C.k+". Keep playing."}</div>`;resCard=miniCard(CARDS[C.k-1],win)}
   let gm="";
   if(S.gm){const ln=lines(CARDS[S.gm-1]),win=new Set(ln.flat().map(p=>p.join()));
     gm=`<div class="panel gm ${ln.length?"bingo":""}"><div style="display:grid;gap:8px"><div class="eyebrow">Gamemaker's card</div><div class="verdict" style="font-size:1.3rem">Card #${S.gm}</div>
@@ -146,13 +146,15 @@ function render(){
     <div class="tiny" style="font-size:1rem">Tap each number on the board as it comes out of the cage.<br>${S.called.length} called · ${75-S.called.length} left</div>
     <div class="last">${S.called.slice(-6,-1).reverse().map(n=>`<span>${LET[letterOf(n)]} ${n}</span>`).join("")}</div>
     ${last?`<button class="btn ghost" id="undo" style="font-size:.9rem">↩ Undo ${LET[letterOf(last)]} ${last}</button>`:""}
+      <div class="panel" style="width:100%;text-align:left"><div class="eyebrow">Someone yelled BINGO? Check their card</div>
+      <div style="display:flex;gap:14px;align-items:flex-start;justify-content:space-between"><div style="display:grid;gap:8px">
+      <div class="check"><input id="cardno" type="number" step="1" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res.replace('class="verdict"','class="verdict" style="font-size:1.25rem"').replace('style="font-size:1.25rem" style="','style="font-size:1.25rem;')}
+      <div class="tiny">Every bingo wins a major award. No limit.</div></div>${resCard}</div></div>
     </div>
     <div style="display:grid;gap:14px">
       <div class="panel"><div class="eyebrow">Game type · pick before you start</div><div class="modes">${Object.entries(MODES).map(([k,m])=>`<button data-mode="${k}" aria-pressed="${S.mode===k}" title="${m.desc}">${shapeMini(k)}${m.name}</button>`).join("")}</div></div>
       <div class="board">${board}</div>
-      <div class="panel"><div class="eyebrow">Someone yelled BINGO? Check their card</div>
-      <div class="check"><input id="cardno" type="number" step="1" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res}
-      <div class="tiny">Every bingo wins a major award. No limit.</div></div></div></div>`;
+      </div></div>`;
   wire();
 }
 function wire(){const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};

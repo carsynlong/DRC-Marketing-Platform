@@ -12,7 +12,7 @@ XM.store=store;
 XM.TRIBUTES=[
  {d:1,name:"Jessie",weapon:"Shears in one hand, lash tweezers in the other",strategy:"Give everyone a fresh cut, then take them out",odds:"4 to 1"},
  {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1"},
- {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Something's broken? He's already on it.",odds:"7 to 1"},
+ {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Offer to fix everyone's gear. Fix it wrong. On purpose.",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"Daily motivation, straight from JT Motivation",strategy:"Stay fresh. Stay motivated. Stay undefeated.",odds:"5 to 1"},
  {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},

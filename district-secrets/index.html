@@ -387,7 +387,7 @@ body.shake .app{animation:quake .5s}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-1";
+const BUILD="ds-build-2026-11-23-2";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -887,7 +887,7 @@ async function afterLock(){
   S.hot=Object.keys(t).filter(n=>t[n]===max).slice(0,2);S.hotN=max;
   curtains(()=>{S.phase="interro";S.hotAt=Date.now();S.roomOpen=true;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500)},"🔦 The Interrogation Room");
 }
-const ROOM_SECS=15;
+const ROOM_SECS=30;   // how long the Interrogation Room stays open
 /* velvet curtains sweep shut, something changes behind them, then they open again */
 function curtains(fn,sign=""){
   let c=$("#curtains");if(!c){c=document.createElement("div");c.id="curtains";c.setAttribute("aria-hidden","true");c.innerHTML="<i class='l'></i><i class='r'></i><div class='sign'></div>";document.body.appendChild(c)}
@@ -897,7 +897,7 @@ function curtains(fn,sign=""){
   setTimeout(()=>{fn();setTimeout(()=>{c.classList.remove("shut");sfx("curtain")},650)},1000);
 }
 /* the room closes when its clock runs out: no more vote changes */
-function closeRoom(){if(!S.roomOpen)return;S.roomOpen=false;clearInterval(drumT);drumT=0;sfx("stamp");const s=$(".room .how");if(s)s.innerHTML="🔒 <b>Votes are final.</b> Press Space to open the seal."}
+function closeRoom(){if(!S.roomOpen)return;S.roomOpen=false;clearInterval(drumT);drumT=0;stopSong();sfx("stamp");const s=$(".room .how");if(s)s.innerHTML="🔒 <b>Votes are final.</b> Press Space to open the seal."}
 let switchSeen=0;
 function showSwitches(){
   const n=Object.keys(curX().switches||{}).filter(x=>x!==cur().a).length,el=$(".room .switched");if(!el)return;
@@ -973,7 +973,9 @@ function render(){
   const v={howto:howView,lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
   if(S.phase==="interro"){startClock(".room .clock",ROOM_SECS,S.hotAt||Date.now(),closeRoom);showSwitches();
-    if(!drumT){let k=0;drumT=setInterval(()=>{if(++k>15000/90){clearInterval(drumT);return}sfx("roll",k/(15000/90))},90)}}
+    // tense music while the room is open; the drumroll builds over the last 8 seconds
+    if(S.roomOpen)playSong("count");
+    if(!drumT)drumT=setInterval(()=>{const left=ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000;if(left<=0){clearInterval(drumT);drumT=0;return}if(left<=8)sfx("roll",1-left/8)},90)}
   if(S.phase==="story"){startClock(".story .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
   if(S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".sus .bar").forEach(b=>b.style.width=b.dataset.w)));

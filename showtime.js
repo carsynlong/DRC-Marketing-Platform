@@ -607,3 +607,36 @@ window.Hurry = (() => {
   const wake = () => { try { if (typeof AC !== "undefined" && AC && AC.state === "suspended") AC.resume(); } catch (e) {} };
   ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, wake, true));
 })();
+
+/* 🏆 A recorded track for a big moment (District Feud's winner reveal).
+   Track.preload(url) early (decodes it ahead of time), Track.play(url) at the moment (loops), Track.stop() fades out.
+   If the browser held sound back, it starts on the next tap or key press. */
+window.Track = (() => {
+  let ac = null, src = null, gain = null, want = null;
+  const bufs = {};
+  const ctx = () => { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac; };
+  function load(url) {
+    if (!bufs[url]) bufs[url] = fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(a => new Promise((ok, no) => ctx().decodeAudioData(a, ok, no))).catch(e => { delete bufs[url]; throw e; });
+    return bufs[url];
+  }
+  function preload(url) { try { ctx(); load(url).catch(() => {}); } catch (e) {} }
+  async function play(url) {
+    want = url;
+    try {
+      ctx(); const b = await load(url);
+      if (want !== url || src) return true;
+      gain = ac.createGain(); gain.gain.value = .0001; gain.connect(ac.destination); gain.gain.setTargetAtTime(.95, ac.currentTime, .08);
+      src = ac.createBufferSource(); src.buffer = b; src.loop = true; src.connect(gain); src.start();
+      return true;
+    } catch (e) { return false; }
+  }
+  function stop() {
+    want = null; if (!src) return;
+    const s = src, g = gain; src = null; gain = null;
+    try { g.gain.setTargetAtTime(.0001, ac.currentTime, .15); } catch (e) {}
+    setTimeout(() => { try { s.stop(); g.disconnect(); } catch (e) {} }, 700);
+  }
+  ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (want && ac && ac.state === "suspended") ac.resume(); if (want && !src) play(want); }, true));
+  return { preload, play, stop, playing: () => !!src };
+})();

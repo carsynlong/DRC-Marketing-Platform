@@ -527,7 +527,7 @@ function playSong(name){
     }
   },25);
 }
-function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop()}
+function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop();window.Track&&Track.stop()}
 function sfx(kind){
   if(!S.sound||!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")osc("sine",1400,t,.05,.12,sfxBus);
@@ -833,9 +833,11 @@ function nextQuestion(){
   goQuestion();
 }
 
+const WIN_TRACK="/sfx/winner-feud.m4a";   // plays the moment the major award winner is revealed
 /* Prize round: flip everyone's total from the bottom of the board up, #1 last. */
 function packageReveal(){
   clearTimers();const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
+  if(window.Track)Track.preload(WIN_TRACK);   // ready to go the instant the winner pops out
   S.pkg={rows,done:false,lead:[],winner:null,fate:false};S.phase="pkg";playSong("think");render();
   if(!rows.length){S.pkg.done=true;render();return}
   const gap=1100,flipAt=i=>{const e=$("#pk"+i);if(e){e.classList.add("flip");e.querySelectorAll(".cu").forEach(c=>countUp(c,450))}sfx("flip");later(()=>sfx("ding"),380)};
@@ -858,7 +860,8 @@ function pkgFate(){
 }
 
 /* the gift box shakes, the lid flies off, the winner pops out */
-function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(()=>{winFx();applause(4000);fireworks(7);playSong("joy")},1600)}
+function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:15
+    if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
 /* ---------- views ---------- */
 const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${S.sound}">${S.sound?"🔊 Music on":"🔇 Music off"}</button>`;

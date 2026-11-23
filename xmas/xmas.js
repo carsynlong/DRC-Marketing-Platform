@@ -12,7 +12,7 @@ XM.store=store;
 XM.TRIBUTES=[
  {d:1,name:"Jessie",weapon:"A very sharp candy cane",strategy:"Charm the sponsors, then take a nap",odds:"4 to 1"},
  {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Already knows where everyone is hiding",odds:"2 to 1"},
- {d:3,name:"Grandad",weapon:"Dad jokes at close range",strategy:"Never leave the recliner",odds:"7 to 1"},
+ {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Remodel the arena, then retreat to the lake",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"Pure confidence",strategy:"Make friends, then make deals",odds:"5 to 1"},
  {d:6,name:"Carsyn",weapon:"The clicker (and a mask)",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},

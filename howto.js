@@ -173,7 +173,8 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
   }
   function hurry(g, o) {
     const me = o.me, ends = g && g.hurry;
-    const exempt = !me || (g && g.tied && g.tied.includes(me)) || (g && g.host && g.host === me) || (g && g.playing && !g.playing.includes(me)) || (g && g.exempt === me);
+    const hostPlays = g && g.hostPlays && g.host === me;   // Who's That Tribute: the Gamemaker hurries too until she predicts
+    const exempt = !me || (!hostPlays && ((g && g.tied && g.tied.includes(me)) || (g && g.host && g.host === me) || (g && g.playing && !g.playing.includes(me)) || (g && g.exempt === me)));
     if (ends && !o.answered && !exempt && Date.now() < ends) startHurry(ends); else stopHurry();
     if (g && me && g.slow && g.slow.includes(me)) {
       const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;

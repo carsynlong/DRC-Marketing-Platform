@@ -192,11 +192,22 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 #hurry.tick .hn{animation:hpop .35s cubic-bezier(.2,1.6,.4,1)}
 @keyframes hb{from{opacity:.65}to{opacity:1}}
 @keyframes hpop{from{transform:translateX(-50%) scale(1.4)}to{transform:translateX(-50%) scale(1)}}
+.shop{background:var(--night-2);border-radius:16px;padding:10px;box-shadow:0 0 0 2px var(--gold);display:grid;gap:8px}
+.shop .lbl{text-align:center;font-weight:800;color:var(--gold)}.shop .lbl small{display:block;color:var(--muted);font-weight:600}
+.shop .items{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.shop button{background:rgba(255,255,255,.06);border-radius:12px;padding:8px;font-weight:800;text-align:left;display:grid;gap:2px;min-height:58px;box-shadow:inset 0 0 0 1px var(--line)}
+.shop button small{font-weight:600;color:var(--muted);font-size:.75rem}.shop button:disabled{opacity:.35}.shop button.got{box-shadow:inset 0 0 0 2px var(--good);opacity:1}
+.shop .who{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.shop .who button{min-height:40px;padding:6px 12px;grid-template-columns:none}
+#hintpill{position:fixed;left:max(12px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));z-index:8;max-width:60vw;background:#2a1c05;color:#ffe9a8;
+  font-weight:800;padding:8px 14px;border-radius:999px;box-shadow:0 0 0 2px var(--gold),0 6px 18px rgba(0,0,0,.5);animation:pop .5s both}
+.ask{display:grid;gap:8px;background:var(--night-2);border-radius:16px;padding:12px;box-shadow:0 0 0 2px var(--gold)}
+.ask input{font:inherit;font-size:1.05rem;font-weight:700;background:rgba(0,0,0,.3);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:.6em;-webkit-user-select:text;user-select:text}
 </style>
 </head>
 <body>
 <canvas id="snow" aria-hidden="true"></canvas>
 <main class="app" id="app" aria-live="polite"></main>
+<div id="hintpill" hidden></div>
 <div id="clock" hidden>⏱ <b></b></div>
 <div id="hurry" aria-live="assertive" hidden><div class="hb"></div><div class="hn"><b></b><span>seconds left!</span></div></div>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -372,7 +383,7 @@ setInterval(()=>{
   const left=hurry&&g&&hurry.gid===g.gid&&hurry.qi===g.qi&&g.phase==="question"&&!g.locked?Math.ceil(hurry.left-(Date.now()-hurry.at)/1000):null;
   const ck=$("#clock");
   if(ck){if(left==null||left<0||!D.me){ck.hidden=true}else{ck.hidden=false;ck.querySelector("b").textContent=Math.max(0,left)+"s";ck.classList.toggle("low",left<=10)}}
-  if(left==null||left<1||left>10||mine||!D.me){el.hidden=true;hurryShown=null;return}
+  el.hidden=true;return;   // the hurry-up bar now comes from howto.js (shared by all games); this file keeps only the ⏱ pill
   el.hidden=false;el.style.setProperty("--h",((10-left)/9).toFixed(2));
   if(left!==hurryShown){hurryShown=left;el.querySelector("b").textContent=left;el.querySelector("span").textContent=left===1?"second left!":"seconds left!";
     el.classList.remove("tick");void el.offsetWidth;el.classList.add("tick");buzz(left<=3?[60,40,60]:40);if(left<=5)PFX.sfx("tap")}
@@ -388,6 +399,41 @@ function chase(g,s){
   else top=`👑 <b>${esc(lead.name)}</b> leads with ${fmt(lead.score)}${above?`<small>You need <b>${fmt(above.score-s.score+1)}</b> to pass ${esc(above.name)} (#${above.rank})${above!==lead?` · ${fmt(lead.score-s.score+1)} to take the lead`:""}</small>`:""}`;
   const rows=sc.map(x=>`<li class="${x.name===D.me?"me":""}"><span class="r">#${x.rank}</span><span class="n">${esc(x.name)}</span><span class="p">${fmt(x.score)}</span></li>`).join("");
   return `<div class="chase">${top}</div><details class="lb" open><summary>🏆 Full leaderboard</summary><ol>${rows}</ol></details>`;
+}
+
+/* ---------- 💡 hint + 🔍 spyglass pill during a face ---------- */
+setInterval(()=>{const el=$("#hintpill"),g=D.game;if(!el)return;
+  const sp=g&&g.phase==="question"&&g.spy&&D.me&&g.spy[D.me],t=g&&g.phase==="question"?[sp?`🔍 Spyglass: starts with ${sp}`:"",g.hint?`💡 ${g.hint}`:""].filter(Boolean).join(" · "):"";
+  if(!t){el.hidden=true;el.dataset.t="";return}if(el.dataset.t!==t){el.dataset.t=t;el.textContent=t;el.hidden=false;buzz(30)}},400);
+
+/* ---------- 🛒 sponsor shop (spend Capitol coins on the scoreboard screen) ---------- */
+const SHOP=[["shield","🛡️ Shield",3,"Miss? Keep your streak, no penalty"],["spy","🔍 Spyglass",2,"See the first letter"],["dd","🎯 Double down",4,"Right ×2, wrong −500"],["rose","🌹 Rose",3,"A rival loses 200"]];
+let roseOpen=false;
+const coinsLeft=()=>Math.max(0,myCoins()-(coins.gid===D.game?.gid?(coins.spent||0):0));
+const boughtFor=qi=>(coins.gid===D.game?.gid&&coins.bought&&coins.bought[qi])||{};
+function shopBar(g){
+  if(!g||g.qi+1>=g.total||g.tb)return "";
+  const left=coinsLeft(),qi=g.qi+1,got=boughtFor(qi);
+  const items=SHOP.map(([k,t,p,d])=>`<button data-buy="${k}" class="${got[k]?"got":""}" ${got[k]||left<p?"disabled":""}>${t} · 🪙${p}<small>${got[k]?"✅ Ready for the next face":d}</small></button>`).join("");
+  const who=roseOpen?`<div class="who">${(g.playing||g.names||[]).filter(n=>n!==D.me).map(n=>`<button data-rose="${esc(n)}">🌹 ${esc(n)}</button>`).join("")}</div>`:"";
+  return `<div class="shop"><div class="lbl">🛒 Sponsor shop · 🪙 ${left} coin${left===1?"":"s"}<small>Power-ups for the next face. Tap floating coins to earn more!</small></div><div class="items">${items}</div>${who}</div>`;
+}
+async function buy(item,target){
+  const g=D.game;if(!g)return;const qi=g.qi+1;
+  if(item==="rose"&&!target){roseOpen=!roseOpen;lastKey="";render();return}
+  try{const{status,data}=await post("/api/shop",{name:myName,item,target,qi});
+    if(status===200){if(coins.gid!==g.gid)coins={gid:g.gid,n:0};coins.spent=(coins.spent||0)+SHOP.find(x=>x[0]===item)[2];
+      coins.bought=coins.bought||{};(coins.bought[qi]=coins.bought[qi]||{})[item]=target||true;store.set("tribute-coins",JSON.stringify(coins));
+      PFX.sfx("gift");buzz(40);toast(item==="rose"?`🌹 Rose sent to ${target}!`:"✅ Power-up ready for the next face!")}
+    else toast(status===402?"Not enough coins. Tap the floating coins!":status===409?"You already have that one.":"That didn't work. Try again.")}catch(e){toast("No connection. Try again.")}
+  roseOpen=false;lastKey="";render();
+}
+
+/* ---------- 🎤 victor's interview: ask the winner a question ---------- */
+function askBox(g,isWinner){
+  if(isWinner)return "";
+  const w=(g.scores||[])[0];if(!w||w.name===D.me)return "";
+  return `<form class="ask" id="askf"><label class="eyebrow" for="askq">🎤 Ask ${esc(w.name)} a question</label><input id="askq" maxlength="140" autocomplete="off" placeholder="How did you know it was Grandad?"><button class="btn" type="submit">Send to the TV</button></form>`;
 }
 
 /* arena tips that rotate while you wait */
@@ -460,6 +506,7 @@ function view(){
   const gift=g.feast?`<span class="gift">🍗 Triple points</span>`:g.double?`<span class="gift">🎁 Double points</span>`:"";
   const faceNo=`<div class="eyebrow">Face ${g.qi+1} of ${g.total}</div>`;
   if(g.phase==="roundcard")return [key,header()+`<section class="msg">${g.feast?`<div class="horn">${Ambient.CORNUCOPIA}</div>`:`<img class="round-sym" src="bird.svg" alt="">`}<div class="eyebrow">${esc(g.round?.num||"")}</div><h1>${esc(g.round?.name||"Next round")}</h1><p>${g.feast?"Every face is worth triple. Everything you need is at the cornucopia!":"Let the Games begin. Eyes on the TV."}</p></section>`+soundBar(),"gong"];
+  if(g.phase==="ready"&&g.twist)return [key+"tw",header()+`<section class="msg ready"><div class="eyebrow">🎲 Gamemaker twist</div><div class="icon">${g.twist.icon}</div><h1>${esc(g.twist.title)}</h1><p class="said">${esc(g.twist.text)}</p></section>`,"gift"];
   if(g.phase==="ready"&&g.feast)return [key,header()+`<section class="msg ready"><div class="horn">${Ambient.CORNUCOPIA}</div><h1>The Feast!</h1>${faceNo}${gift}<p>This face is worth triple. Run for the cornucopia!</p></section>`,"gift"];
   if(g.phase==="ready")return [key,header()+(g.double
       ?`<section class="msg ready">${ART.chute}<h1>Get ready!</h1>${faceNo}${gift}<p>A sponsor sent a gift: this face is worth double!</p></section>`
@@ -489,12 +536,14 @@ function view(){
   if(g.phase==="board"){
     const got=s&&s.delta>0;
     return [key+(s?.score),header()+chase(g,s)+msg(got?"🎉":s&&s.delta<0?"⏰":"🏹",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:s&&s.delta<0?`−${fmt(-s.delta)}`:"No points",
-      `${s&&s.delta<0?`<p class="said">No answer before the cannon fired.</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire! 🔥</div><p class="said">${s.streak} in a row</p>`:s?.streak>1?`<p class="said">🔥 ${s.streak} in a row</p>`:""}<p>You're <b>#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")+reactBar()+soundBar(),got?(s.streak>=3?"fire":"points"):""];
+      `${s&&s.delta<0?`<p class="said">No answer before the cannon fired.</p>`:""}${s?.notes?`<p class="said">${s.notes.map(esc).join(" · ")}</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire! 🔥</div><p class="said">${s.streak} in a row</p>`:s?.streak>1?`<p class="said">🔥 ${s.streak} in a row</p>`:""}<p>You're <b>#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")+shopBar(g)+reactBar()+soundBar(),got?(s.streak>=3?"fire":"points"):""];
   }
+  if(g.phase==="interview"){const w=(g.scores||[])[0],me1=w&&w.name===D.me;
+    return [key+"iv",header()+msg("🎤",me1?"You're being interviewed!":"Victor's interview",me1?"<p>Questions pop up on the TV. Answer them out loud!</p>":`<p>Ask ${esc(w?.name||"the victor")} anything!</p>`)+askBox(g,me1)+reactBar()];}
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You won!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Christmas, tribute!"}</p>${myCoins()?`<p class="said">🪙 You collected ${myCoins()} Capitol coin${myCoins()>1?"s":""}. Check the TV for the coin champion!</p>`:""}`,won?"win":"")+reactBar()+soundBar(),won?"win":"final"];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Christmas, tribute!"}</p>${myCoins()?`<p class="said">🪙 You collected ${myCoins()} Capitol coin${myCoins()>1?"s":""}. Check the TV for the coin champion!</p>`:""}`,won?"win":"")+askBox(g,won)+reactBar()+soundBar(),won?"win":"final"];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }
@@ -511,6 +560,10 @@ function render(){
   const f=$("#typeit");if(f)f.onsubmit=e=>{e.preventDefault();const i=$("#guess");i.blur();answer(i.value)};
   const l=$("#leave");if(l)l.onclick=leave;
   document.querySelectorAll("[data-react]").forEach(b=>b.onclick=()=>react(b.dataset.react,b));
+  document.querySelectorAll("[data-buy]").forEach(b=>b.onclick=()=>buy(b.dataset.buy));
+  document.querySelectorAll("[data-rose]").forEach(b=>b.onclick=()=>buy("rose",b.dataset.rose));
+  const af=$("#askf");if(af)af.onsubmit=async e=>{e.preventDefault();const i=$("#askq"),q=i.value.trim();if(!q)return;i.blur();
+    try{const{status}=await post("/api/ask",{name:myName,q});toast(status===200?"🎤 Sent to the TV!":status===429?"One second, then try again.":"That didn't send. Try again.");if(status===200)i.value=""}catch(err){toast("No connection. Try again.")}};
   document.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>answer("🔮"+b.dataset.pred));
   const tap=$("#mgtap");if(tap)tap.onpointerdown=e=>{e.preventDefault();mgBump()};
   const so=$("#shakeon");if(so)so.onclick=enableShake;

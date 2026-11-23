@@ -154,7 +154,7 @@ const Sync = (() => {
   function burst(who, e) {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const x = 8 + Math.random() * 84, box = document.createElement("div");
-    box.style.cssText = `position:fixed;left:${x}vw;bottom:-80px;z-index:9;pointer-events:none;width:0;height:0`;
+    box.style.cssText = `position:fixed;left:${x}vw;bottom:-80px;z-index:2147483005;pointer-events:none;width:0;height:0`;
     for (let k = 0; k < 6; k++) {
       const s = document.createElement("span"); s.textContent = e;
       const size = 1.4 + Math.random() * 1.6, dx = (Math.random() - .5) * 140, rise = 55 + Math.random() * 30;

@@ -286,7 +286,7 @@ function champ(){
   return `<div class="overlay" style="position:relative;background:none;min-height:85vh"><div class="inner champ"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} champion</div>
     <div class="crown">👑</div><img src="${AV(S.champ)}" alt=""><h1 class="title" style="font-size:clamp(2.6rem,8vw,5rem)">${esc(S.champ)}</h1>
     <p style="font-family:var(--display);font-size:clamp(1.5rem,3.4vw,2.6rem);margin:0">Go claim your major award!</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="save">🏆 Save as ${esc(G().name)} victor</button><button class="btn ghost" id="reset">Back to setup</button><button class="btn ghost" id="back">← Back to the show</button><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button></div></div></div>`;
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn ghost" id="reset">Back to setup</button><button class="btn ghost" id="back">← Back to the show</button><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button></div></div></div>`;
 }
 
 /* ---------- controls ---------- */

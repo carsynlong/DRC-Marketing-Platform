@@ -580,7 +580,7 @@ function finalView(){
   return `<section class="lobby" style="gap:16px">
     <div class="eyebrow">The Capitol has spoken</div>
     <h1 style="font-size:clamp(2rem,6vw,4rem)">${tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" wins! 🎄"}</h1>
-    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Run a sudden death round to pick who gets the mystery package.`:"Our victor claims a mystery package. Remember, no second package until everyone has one."}</p>
+    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Run a sudden death round to pick who gets the major award.`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
     <div class="podium">${pod}</div>
     <div class="board">${boardRows()}</div>
     <div class="ctl" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="again">Play again</button></div>

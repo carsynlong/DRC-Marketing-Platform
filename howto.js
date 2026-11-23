@@ -58,7 +58,7 @@ window.HowTo = (() => {
           ["💰", "Last question", "Counts ×2"],
           ["🎉", "Emojis", "Tap them to send them up the TV."]]],
       ],
-      end: "🎁 Most points wins the mystery package!",
+      end: "🏆 Most points wins the major award!",
     };
   }
 

@@ -61,7 +61,7 @@ const Ambient = (() => {
   };
   const GIFTS = ["hot cocoa ☕", "a warm loaf of bread 🍞", "a candy cane 🍬", "burn cream 🧴", "fuzzy socks 🧦", "a sleeping bag 🛌",
     "a Christmas cookie 🍪", "a box of matches 🔥", "a water bottle 💧", "an ugly sweater 🧶", "a bow and arrows 🏹", "a gingerbread man 🍪",
-    "mittens 🧤", "a snow globe 🔮", "a lump of coal 🪨 (ouch)", "a rope 🪢", "a map of the arena 🗺️", "a mystery package 🎁"];
+    "mittens 🧤", "a snow globe 🔮", "a lump of coal 🪨 (ouch)", "a rope 🪢", "a map of the arena 🗺️", "a major award 🏆"];
 
   const layer = document.createElement("div");
   layer.setAttribute("aria-hidden", "true");

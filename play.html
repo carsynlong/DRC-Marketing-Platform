@@ -442,7 +442,7 @@ function view(){
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You won!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>${myCoins()?`<p class="said">🪙 You collected ${myCoins()} Capitol coin${myCoins()>1?"s":""}. Check the TV for the coin champion!</p>`:""}`,won?"win":"")+reactBar()+soundBar(),won?"win":"final"];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Christmas, tribute!"}</p>${myCoins()?`<p class="said">🪙 You collected ${myCoins()} Capitol coin${myCoins()>1?"s":""}. Check the TV for the coin champion!</p>`:""}`,won?"win":"")+reactBar()+soundBar(),won?"win":"final"];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }

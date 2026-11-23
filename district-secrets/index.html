@@ -387,7 +387,7 @@ body.shake .app{animation:quake .5s}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-22-13";
+const BUILD="ds-build-2026-11-23-1";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -790,7 +790,7 @@ function howSteps(){
   if(o.story)st.push(["🎤","Then the owner tells the <b>story</b> behind their secret, and you rate it on your phone.","Then the owner tells the story behind their secret, and you rate it on your phone."]);
   if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
-  st.push(["👑","Most points wins the <b>mystery package</b>. The final secret counts <b>double</b>.","Most points wins the mystery package. The final secret counts double. And may the odds be ever in your favor."]);
+  st.push(["👑","Most points wins the <b>major award</b>. The final secret counts <b>double</b>.","Most points wins the major award. The final secret counts double. And may the odds be ever in your favor."]);
   return st;
 }
 let howI=-1,howRun=0;
@@ -1146,7 +1146,7 @@ function finalView(){
   return `<section class="center" style="min-height:0;gap:14px">
     <div class="eyebrow">The vault is empty</div>
     <h1 style="font-size:clamp(2rem,6vw,4.4rem)">${tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" knows all! 🎄"}</h1>
-    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Sudden death: the host reads one more secret out loud.`:"Our victor claims a mystery package. Remember, no second package until everyone has one."}</p>
+    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Sudden death: the host reads one more secret out loud.`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
     <div class="podium">${pod}</div>
     ${awards().length?`<div class="eyebrow" style="margin-top:8px">The Capitol's special honors</div><div class="awards">${awards().map((a,i)=>`<div class="award" style="animation-delay:${.6+i*.25}s"><div class="ic">${a.ic}</div><div class="t">${a.t}</div><img src="${AV(a.av)}" alt=""><div class="nm">${esc(a.name)}</div><div class="why">${a.why}</div></div>`).join("")}</div>`:""}
     <div class="ledger">${rows()}</div>

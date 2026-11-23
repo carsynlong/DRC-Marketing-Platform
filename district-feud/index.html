@@ -543,7 +543,7 @@ NAMES.forEach(n=>{const i=new Image();i.src=AV(n)});
 
 let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true])),use:QUESTIONS.map(()=>true),
   order:[],k:0,tbNext:0,tie:null,results:[],tally:{},pkg:null,bump:{},logoShown:false};
-/* Mystery package: every vote a tribute receives (survey + face-offs) adds to their total,
+/* Major award: every vote a tribute receives (survey + face-offs) adds to their total,
    plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
 const GUESS_PTS=1;
 const TIMER_SECS=30; // seconds to guess each question; Survey says starts by itself when it runs out
@@ -558,7 +558,7 @@ const winFx=()=>{sfx("fanfare");sfx("applause");confetti(220,true)};
 const SPEED_SECS=10;      // lock in a correct guess this fast for a speed bonus (+1)
 const FIRE_AT=3;          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
 const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
-const HYPE=["Here to win the package!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
+const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
@@ -573,7 +573,7 @@ function startGame(){
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
     ["🏆","If you're the number one answer, your votes go into the prize race too."],
     ["⚡","Ties go to a secret face-off vote."],
-    ["💰","The final question is double points. Most points wins the mystery package!"],
+    ["💰","The final question is double points. Most points wins the major award!"],
     ["🎉","Tap the emojis on your phone anytime to send them up the TV."]]});
 }
 /* 🎤 Meet the contestants: everyone here gets a spotlight walk-out */
@@ -735,7 +735,7 @@ const strike=d=>`<svg class="xmark" viewBox="0 0 100 100" aria-hidden="true" sty
 function raceBar(){
   const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
   return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc ${S.bump[n]?"bump":""} ${(S.streak||{})[n]>=FIRE_AT?"fire":""}">${(S.streak||{})[n]>=FIRE_AT?"🔥":""}${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i>${S.bump[n]?`<em class="plus">+${S.bump[n]}</em>`:""}</span>`).join("")
-    :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the mystery package</span>'}</div></div>`;
+    :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the major award</span>'}</div></div>`;
 }
 function render(){
   const v={intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
@@ -774,7 +774,7 @@ function lobby(){
   return `<section class="lobby">${logo()}
     ${joinCard()}
     <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
-    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the mystery package!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
+    <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the major award!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}${hasPhone(n)?' <span class="ph" title="Signed in on a phone">📱</span>':""}</button>`).join("")}</div>
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
@@ -840,13 +840,13 @@ function end(){
 function pkgView(){
   const P=S.pkg,open=P.done,compact=P.rows.length>4?"compact":"";
   const tiles=P.rows.map(([n,v],i)=>tile({n,v,num:i+1,id:"pk"+i,state:open?"open":"",count:open?"":"manual"})).join("");
-  const b=board("Final totals",tiles,"Votes + correct guesses · highest total wins the mystery package",compact);
+  const b=board("Final totals",tiles,"Votes + correct guesses · highest total wins the major award",compact);
   if(!open) return `<section class="center"><h1 class="ptitle">🎁 Prize Round</h1>${b}</section>`;
   if(!P.winner) return `<section class="center"><div class="tieban late" style="--d:0s">${strike(.15)}Tied for the prize!</div>
     ${podiums(P.lead,n=>S.tally[n])}
     <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">🎰 Lucky spin for the prize</button></div><div class="hint">Space: continue</div>${b}</section>`;
   const list=board("Final totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Votes + correct guesses","compact one");
-  return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🎁 Mystery package winner</h1>
+  return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🏆 Major award winner</h1>
     <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"vote")}</div>
     <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
 }

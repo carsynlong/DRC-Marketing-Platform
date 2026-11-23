@@ -222,7 +222,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-22-13";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-1";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -321,7 +321,7 @@ function phoneRules(o){
   if(o.story)r.push(["Extras","🎤","Story time","The owner tells the story. Rate it 🔥 😂 🤯"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
-  r.push(["Have fun","👑","Winning","Most points wins the mystery package. Last secret = double!"]);
+  r.push(["Have fun","👑","Winning","Most points wins the major award. Last secret = double!"]);
   return r;
 }
 /* bonus secret: written in the lobby, approved by the host, played as a bonus round */
@@ -557,7 +557,7 @@ function view(){
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You know all!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your mystery package!":"Merry Christmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+`<div class="cert"><button class="btn" id="cert">📜 Get my certificate</button><div id="certout"></div></div>`+standings()+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Christmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+`<div class="cert"><button class="btn" id="cert">📜 Get my certificate</button><div id="certout"></div></div>`+standings()+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }

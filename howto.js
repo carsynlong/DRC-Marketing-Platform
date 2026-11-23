@@ -193,6 +193,7 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
   let manual = false, lastG = null;
   const pageKind = () => /district-secrets/.test(location.pathname) ? "secrets" : /district-feud/.test(location.pathname) ? "feud" : "tribute";
   function rulesButton(show) {
+    if (window.HOWTO_OWN_BUTTON) return;   // District Secrets has its own How to play button (with every twist that's on)
     let b = document.getElementById("rulesbtn");
     if (!show) { if (b) { b.remove(); document.body.style.paddingBottom = ""; } return; }
     if (b) return lift(b);

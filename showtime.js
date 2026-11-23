@@ -541,6 +541,7 @@ window.LobbyMusic = (() => {
     tribute: "/sfx/lobby-tribute.m4a",   // Caesar Flick, from 0:06.55 (the flashy host: presenting the tributes)
     feud: "/sfx/lobby-feud.m4a",         // track 2, from 0:13 (upbeat, game show)
     secrets: "/sfx/lobby-secrets.m4a",   // The Hanging Tree, from 1:34 (dark and haunting: the mystery game)
+    "secrets-win": "/sfx/winner-secrets.m4a?v=10s",   // "Can't Catch", from 0:10: the District Secrets winners screen
   };
   let ac = null, buf = null, bufFor = null, loading = null, src = null, gain = null, want = false, SRC = null;
   function load() {
@@ -550,9 +551,6 @@ window.LobbyMusic = (() => {
     return loading = loading || fetch(SRC).then(r => r.arrayBuffer())
       .then(a => new Promise((ok, no) => ac.decodeAudioData(a, ok, no))).then(b => (buf = b));
   }
-  // browsers keep sound muted until a tap: unlock this player on the first click anywhere, so it can start on its own later
-  const unlock = () => { try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (e) {} };
-  ["pointerdown", "keydown"].forEach(ev => addEventListener(ev, unlock, { capture: true, passive: true }));
   async function start(game) {
     want = true; SRC = TRACKS[game] || SRC;
     try {
@@ -574,7 +572,17 @@ window.LobbyMusic = (() => {
     setTimeout(() => { try { s.stop(); g.disconnect(); } catch (e) {} }, 600);
   }
   function duck(v) { if (gain) gain.gain.setTargetAtTime(v, ac.currentTime, .1); }
-  return { start, stop, duck, playing: () => !!src, has: game => !!TRACKS[game] };
+  /* Browsers only let audio start right after a tap or key press. The winners' song starts on a timer after the fanfare,
+     so wake the player up on every Space press or click during the game; then the end music plays on its own, no click needed. */
+  function unlock() {
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (ac.state === "suspended") ac.resume().then(() => { if (want && !src) start(); }).catch(() => {});
+      else if (want && !src) start();
+    } catch (e) {}
+  }
+  ["pointerdown", "keydown", "touchend"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
+  return { start, stop, duck, unlock, playing: () => !!src, has: game => !!TRACKS[game] };
 })();
 
 /* ⏰ The last 10 seconds to answer: a giant see-through countdown, red edges getting hotter, a heartbeat thump.

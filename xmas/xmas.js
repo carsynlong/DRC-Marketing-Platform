@@ -328,8 +328,10 @@ XM.snow=function(canvas){
 
 /* ================= WINNER CELEBRATION ================= */
 // XM.celebrate("Kamdon") -> booms, fanfare, crowd cheer, fireworks, confetti, and "Winner... Camden!"
+let celebT=[];
+XM.cancelCelebrate=()=>{celebT.forEach(clearTimeout);celebT=[]};
 XM.celebrate=(name,{intro="Winner",line=null}={})=>{
-  ensureAudio();XM.sfx("boom");setTimeout(()=>XM.sfx("boom"),380);
+  ensureAudio();XM.cancelCelebrate();const setTimeout=(f,ms)=>{const id=window.setTimeout(f,ms);celebT.push(id);return id};XM.sfx("boom");setTimeout(()=>XM.sfx("boom"),380);
   setTimeout(()=>XM.sfx("fanfare"),700);setTimeout(()=>XM.sfx("cheer"),900);setTimeout(()=>XM.sfx("applause"),2200);
   [1500,2100,2700,3400].forEach(d=>setTimeout(()=>XM.sfx("firework"),d));
   XM.confetti(240,true);setTimeout(()=>XM.confetti(200,true),2200);
@@ -357,8 +359,10 @@ XM.confetti=function(n=150,big){
 
 /* ================= TIEBREAKER ================= */
 /* XM.tiebreaker({game:"cookie"|"scoop"|"lrc"|"bingo", tied:[names], onClose}) */
-let T=null,tbTimer=0;
-const clearT=()=>{clearInterval(tbTimer);tbTimer=0;if(T&&T.raf)cancelAnimationFrame(T.raf)};
+let T=null,tbTimer=0,tbRun=0;
+const clearT=()=>{tbRun++;clearInterval(tbTimer);tbTimer=0;if(T&&T.raf)cancelAnimationFrame(T.raf)};
+// run fn later only if nothing has changed in the tiebreaker since (no close, switch, still-tied, stop)
+const later=(fn,ms)=>{const r=tbRun;setTimeout(()=>{if(T&&r===tbRun)fn()},ms)};
 XM.tiebreakerOpen=()=>!!T;
 XM.tiebreaker=function(opts={}){
   ensureAudio();
@@ -368,7 +372,7 @@ XM.tiebreaker=function(opts={}){
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
 };
-function closeTB(){clearT();XM.hush();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
+function closeTB(){clearT();XM.hush();XM.cancelCelebrate();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
 XM.closeTiebreaker=closeTB;
 const tied=()=>XM.NAMES.filter(n=>T.picked.has(n));
 const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">DISTRICT ${t.d}</span></button>`};
@@ -399,11 +403,11 @@ const VIEWS={
     return `<div class="ic-big">${t.ic}</div><h1 class="big ttl">${esc(t.title)}</h1><p class="rules">${esc(t.rules)}</p>
     <div id="tb-tool" style="display:grid;justify-items:center;gap:14px;width:100%">${TOOLS[t.tool].html(t)}</div>
     <div class="panel" style="display:grid;gap:10px;justify-items:center"><div class="eyebrow">${t.tool==="elim"?"Tap who's out. Last one standing wins":"Tap who won"}</div>
-      <div class="faces">${tied().map(n=>faceBtn(n,`data-win="${esc(n)}"`,T.state.out&&T.state.out.has(n)?"out":"")).join("")}</div>
+      <div class="faces ${tied().length>6?"many":""}">${tied().map(n=>faceBtn(n,`data-win="${esc(n)}"`,T.state.out&&T.state.out.has(n)?"out":"")).join("")}</div>
       <div class="row"><button class="btn ghost" id="tb-again">😬 Still tied</button><button class="btn ghost" id="tb-switch">Switch tiebreaker</button></div></div>`},
-  fate:()=>`<div class="ic-big">🎡</div><h1 class="big ttl">Let Fate Decide</h1><p class="rules">The odds are about to be in someone's favor.</p>
-    <div class="fatebox"><div class="pointer"></div><canvas class="fate" id="fate" width="900" height="900"></canvas><div class="hub"></div></div>
-    <button class="btn red" id="fate-spin" style="font-size:1.4rem;padding:.9em 2.2em">🎡 Spin the wheel of fate</button>`,
+  fate:()=>`<h1 class="big ttl">Let Fate Decide</h1><p class="rules">The odds are about to be in someone's favor.</p>
+    <button class="btn red" id="fate-spin" style="font-size:1.4rem;padding:.9em 2.2em">🎡 Spin the wheel of fate</button>
+    <div class="fatebox"><div class="pointer"></div><canvas class="fate" id="fate" width="900" height="900"></canvas><div class="hub"></div></div>`,
   win:()=>`<div class="eyebrow" style="font-size:1rem">${esc(T.game?XM.GAMES[T.game].name:"Tiebreaker")} · the tie is broken</div>
     <div class="champ" style="display:grid;justify-items:center"><div class="crown">👑</div><img src="${XM.photo(T.winner)}" alt=""></div>
     <h1 class="big ttl" style="animation-delay:.6s">${esc(T.winner)}</h1>
@@ -418,7 +422,7 @@ function startTB(k){
   T.tb=k;T.used.push(k);T.state={};
   if(k==="fate"){view("fate");return}
   view("play");XM.sfx("stinger");
-  if(XM.TB[k].song)setTimeout(()=>{if(T&&T.tb===k)XM.playSong(XM.TB[k].song)},900);
+  if(XM.TB[k].song)later(()=>XM.playSong(XM.TB[k].song),900);
 }
 function winner(n){
   clearT();XM.stopSong();T.winner=n;if(T.onWinner)T.onWinner(n);view("win");XM.celebrate(n);
@@ -449,7 +453,8 @@ function toggleOut(n){
   if(s.out.has(n))s.out.delete(n);else{s.out.add(n);XM.sfx("thud")}
   document.querySelectorAll("#xm-tb [data-win]").forEach(b=>b.classList.toggle("out",s.out.has(b.dataset.win)));
   const left=tied().filter(x=>!s.out.has(x));
-  if(left.length===1){XM.sfx("tap");setTimeout(()=>{if(T&&T.view==="play")winner(left[0])},700)}
+  if(left.length===1){XM.sfx("tap");const r=tbRun;setTimeout(()=>{if(!T||r!==tbRun||T.view!=="play")return;
+    const now=tied().filter(x=>!(T.state.out&&T.state.out.has(x)));if(now.length===1)winner(now[0])},900)}
 }
 /* --- tools --- */
 const fmt=ms=>{const s=ms/1000;return s<60?s.toFixed(1):Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0")};
@@ -484,11 +489,11 @@ function countIn(fn,el){const c=el.querySelector("#tb-clock");let k=5;c.textCont
   tbTimer=setInterval(()=>{k--;if(k>0){c.textContent=k;pulse(c);XM.sfx(k===1?"thud":"drum");XM.say(WORDS[k],null,{pitch:.1,rate:1,interrupt:true})}
     else{clearInterval(tbTimer);c.classList.remove("hot");c.textContent="GO!";pulse(c);XM.sfx("boom");XM.sfx("go");XM.say("Go!",null,{pitch:.3,rate:1,interrupt:true});
       const o=document.getElementById("xm-tb");if(o&&o.animate)o.animate([{transform:"translate(-14px,6px)"},{transform:"translate(12px,-6px)"},{transform:"none"}],{duration:350});
-      setTimeout(fn,700)}},1000)}
+      later(fn,700)}},1000)}
 function stopwatchWire(el,withCount){
   const b=el.querySelector("#tb-start"),st=el.querySelector("#tb-stop"),c=el.querySelector("#tb-clock");
-  b.onclick=()=>{b.disabled=true;countIn(()=>{const t0=performance.now();if(!XM.TB[T.tb].song)XM.playSong("battle");
-    const tick=()=>{c.textContent=fmt(performance.now()-t0);T.raf=requestAnimationFrame(tick)};tick()},el)};
+  b.onclick=()=>{clearT();b.disabled=true;countIn(()=>{const t0=performance.now(),r=tbRun;if(!XM.TB[T.tb].song)XM.playSong("battle");
+    const tick=()=>{if(!T||r!==tbRun||!c.isConnected)return;c.textContent=fmt(performance.now()-t0);T.raf=requestAnimationFrame(tick)};tick()},el)};
   st.onclick=()=>{clearT();if(!XM.TB[T.tb].song)XM.stopSong();XM.sfx("drum");b.disabled=false;b.textContent="Restart"};
 }
 const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
@@ -508,7 +513,7 @@ function rollDice(el){
 }
 function revealClosest(el){
   const s=T.state,g={};let ok=true;
-  el.querySelectorAll("[data-g]").forEach(i=>{const v=+i.value;if(!(v>=1&&v<=75)){ok=false;i.style.borderColor="#ff6b5e"}else{i.style.borderColor="";g[i.dataset.g]=v}});
+  el.querySelectorAll("[data-g]").forEach(i=>{const v=+i.value;if(!(Number.isInteger(v)&&v>=1&&v<=75)){ok=false;i.style.borderColor="#ff6b5e"}else{i.style.borderColor="";g[i.dataset.g]=v}});
   const r=el.querySelector("#tb-result");if(!ok){r.textContent="Everyone needs a guess from 1 to 75.";return}
   const b=el.querySelector("#tb-reveal");b.disabled=true;XM.sfx("drumroll");const sec=el.querySelector("#tb-secret");let k=0;
   tbTimer=setInterval(()=>{sec.textContent=1+Math.floor(Math.random()*75);if(++k>=20){clearInterval(tbTimer);sec.textContent=s.secret;sec.style.animation="slam .6s both";XM.sfx("reveal");
@@ -523,14 +528,15 @@ function tossCheck(el){
   if(!all){r.innerHTML="";return}
   const sc=tied().map(n=>[n,s.toss[n].filter(x=>x===1).length]);const m=Math.max(...sc.map(x=>x[1]));const top=sc.filter(x=>x[1]===m).map(x=>x[0]);
   if(top.length===1){r.innerHTML=`<button class="btn" id="tb-crown" style="font-size:1.3rem">👑 Crown ${esc(top[0])} (${m} in the cup)</button>`;r.querySelector("#tb-crown").onclick=()=>winner(top[0])}
-  else r.textContent=`${top.join(" & ")} tied with ${m}. Tap "Still tied" for another round.`;
+  else{r.innerHTML=`${top.map(esc).join(" & ")} tied with ${m}. <button class="btn ghost" id="tb-redo">Toss-off: just ${top.map(esc).join(" & ")}</button>`;
+    r.querySelector("#tb-redo").onclick=()=>{T.picked=new Set(top);T.state={};view("play")}}
 }
 /* --- fate spinner --- */
 const FCOL=["#b8322a","#e8b04b","#3e8a52","#2f6fb3","#c8412f","#d79a1f","#1f6b4a","#7a3fb0"];
 function drawFate(names,rot){
   const c=document.getElementById("fate");if(!c)return;const x=c.getContext("2d"),W=c.width,R=W/2-14,n=names.length,sl=2*Math.PI/n;
   x.clearRect(0,0,W,W);x.save();x.translate(W/2,W/2);x.beginPath();x.arc(0,0,R+10,0,7);x.fillStyle="#e8b04b";x.fill();x.rotate(rot);
-  for(let i=0;i<n;i++){x.beginPath();x.moveTo(0,0);x.arc(0,0,R,i*sl,(i+1)*sl);x.closePath();x.fillStyle=FCOL[i%FCOL.length];x.fill();x.strokeStyle="rgba(251,246,234,.6)";x.lineWidth=3;x.stroke();
+  for(let i=0;i<n;i++){x.beginPath();x.moveTo(0,0);x.arc(0,0,R,i*sl,(i+1)*sl);x.closePath();x.fillStyle=FCOL[i%(n%FCOL.length===1?FCOL.length-1:FCOL.length)];x.fill();x.strokeStyle="rgba(251,246,234,.6)";x.lineWidth=3;x.stroke();
     x.save();x.rotate(i*sl+sl/2);x.textAlign="right";x.textBaseline="middle";let fs=Math.min(56,Math.max(24,sl*R*.4));x.font=`800 ${fs}px Outfit, system-ui, sans-serif`;
     while(x.measureText(names[i]).width>R*.6&&fs>16){fs-=2;x.font=`800 ${fs}px Outfit, system-ui, sans-serif`}
     x.fillStyle="#fff";x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=6;x.fillText(names[i],R-30,0);x.restore()}
@@ -544,7 +550,7 @@ function spinFate(names){
   XM.playSong("count");let last=-1;const ease=t=>1-Math.pow(1-t,5);
   const step=now=>{const t=Math.min(1,(now-t0)/dur),rot=start+dist*ease(t);drawFate(names,rot);
     let a=(-Math.PI/2-rot)%(2*Math.PI);if(a<0)a+=2*Math.PI;const i=Math.floor(a/sl)%n;if(i!==last){last=i;XM.sfx("tick")}
-    if(t<1)T.raf=requestAnimationFrame(step);else{XM.stopSong();XM.sfx("cannon");setTimeout(()=>T&&winner(names[i]),1400)}};
+    if(t<1)T.raf=requestAnimationFrame(step);else{XM.stopSong();XM.sfx("cannon");later(()=>T.view==="fate"&&winner(names[i]),1400)}};
   T.raf=requestAnimationFrame(step);
 }
 document.addEventListener("keydown",e=>{if(T&&e.key==="Escape"){e.preventDefault();closeTB()}},true);

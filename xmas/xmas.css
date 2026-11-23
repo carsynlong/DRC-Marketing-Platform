@@ -37,7 +37,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 
 /* ===== Tiebreaker overlay (shared) ===== */
 .tb{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 0%,rgba(184,50,42,.55),transparent 60%),rgba(6,16,12,.97);
-  display:flex;flex-direction:column;align-items:center;overflow:auto;padding:52px max(16px,3vw) 24px;text-align:center;color:var(--ink);font-family:var(--body);animation:tbIn .35s ease both}
+  display:flex;flex-direction:column;align-items:center;overflow:auto;padding:52px max(16px,3vw) 24px;text-align:center;color:var(--ink);font-family:var(--body);animation:tbIn .35s ease backwards}
 @keyframes tbIn{from{opacity:0;transform:scale(1.04)}}
 .tb .tb-top{position:fixed;top:44px;left:0;right:0;display:flex;justify-content:space-between;padding:0 max(16px,2vw);pointer-events:none;z-index:2}
 .tb .tb-top>*{pointer-events:auto}
@@ -89,7 +89,7 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 .tb .crown{font-size:clamp(3.5rem,7vw,6rem);margin-bottom:calc(-1 * clamp(36px,4vw,60px));position:relative;z-index:1;animation:crownDrop .9s .5s cubic-bezier(.2,1.5,.4,1) both,bob 1.1s 1.4s ease-in-out infinite alternate}
 @keyframes crownDrop{from{transform:translateY(-60vh) rotate(-40deg)}}
 @keyframes bob{to{transform:translateY(-8px) rotate(5deg)}}
-.tb canvas.fate{width:min(70vh,560px,90vw);aspect-ratio:1}
+.tb canvas.fate{width:min(55vh,560px,90vw);aspect-ratio:1}
 .tb .fatebox{position:relative;display:grid;place-items:center}
 .tb .fatebox .pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);border-left:24px solid transparent;border-right:24px solid transparent;border-top:48px solid var(--gold);filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
 .tb .fatebox .hub{position:absolute;width:22%;aspect-ratio:1;border-radius:50%;background:var(--night) url(/xmas/emblem.png) center/90% no-repeat;box-shadow:0 0 0 6px var(--gold)}
@@ -98,3 +98,22 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 @keyframes spinIn{from{transform:rotate(-540deg) scale(0);opacity:0}to{transform:none;opacity:1}}
 @keyframes popIn{0%{transform:scale(0);opacity:0}70%{transform:scale(1.15);opacity:1}100%{transform:none}}
 @media (prefers-reduced-motion:reduce){.tb *{animation-duration:.01s!important}}
+
+/* fit laptop screens (about 768px tall) */
+.tb .faces.many .face img{width:clamp(48px,min(6vw,8vh),90px)}
+.tb .faces.many .face .d{display:none}
+@media (max-height:860px){
+  .tb{padding-top:46px}
+  .tb .ic-big{font-size:2.2rem}
+  .tb h1.big{font-size:clamp(1.8rem,min(5vw,7vh),4rem)}
+  .tb .rules{font-size:1.05rem}
+  .tb .clock{font-size:clamp(3rem,11vh,6rem)}
+  .tb .panel{padding:10px 14px}
+  .tb .face{padding:4px}
+  .tb .face img{width:clamp(48px,9vh,90px)}
+  .tb .face .d{display:none}
+  .tb .die{width:70px;height:70px;padding:9px}.tb .die i{width:13px;height:13px}
+  .tb .die-card{padding:8px;min-width:110px}.tb .die-card img{width:52px;height:52px}
+  .tb .champ img{width:clamp(150px,30vh,260px)}
+  .tb .inner{gap:8px}
+}

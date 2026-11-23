@@ -130,6 +130,14 @@ body{cursor:default}
 @keyframes tick{to{transform:translateX(-100%)}}
 .live .x{position:absolute;top:44px;left:50%;transform:translateX(-50%)}
 .interview .q{font-size:clamp(1.8rem,4.2vw,3.6rem);font-weight:800;max-width:26ch;line-height:1.2;min-height:2.5em}
+/* Thanksgiving touches */
+#leaves{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+#leaves i{position:absolute;top:-80px;font-style:normal;opacity:.85;animation:leafFall var(--t) linear var(--d) infinite;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}
+@keyframes leafFall{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(var(--sw),25vh) rotate(90deg)}50%{transform:translate(calc(var(--sw)*-1),50vh) rotate(180deg)}75%{transform:translate(var(--sw),75vh) rotate(270deg)}100%{transform:translate(0,110vh) rotate(360deg)}}
+.lights i.fall{background:#ff8a1f!important;box-shadow:0 0 12px #ff8a1f!important}
+.tg{display:inline-block;animation:tgBob 1.4s ease-in-out infinite alternate;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.tg.r{animation-delay:.7s}
+@keyframes tgBob{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(-10px) rotate(8deg)}}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:700px}
 .lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
@@ -227,6 +235,7 @@ body{cursor:default}
 </head>
 <body>
 <canvas id="snow" aria-hidden="true"></canvas>
+<div id="leaves" aria-hidden="true"></div>
 <div id="lights"></div>
 <div id="stage" aria-live="polite"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
@@ -242,6 +251,10 @@ body{cursor:default}
 const {esc,TRIBUTES,GAMES,TB}=XM;
 document.getElementById("lights").outerHTML=XM.lights(30);
 const SNOW=XM.snow(document.getElementById("snow"));
+// autumn leaves drifting with the snow, and some pumpkin-orange bulbs in the lights
+(()=>{const R=(a,b)=>a+Math.random()*(b-a);document.getElementById("leaves").innerHTML=Array.from({length:14},(_,k)=>
+  `<i style="left:${R(0,98)}vw;font-size:${R(22,46)}px;--t:${R(11,20)}s;--d:${-R(0,20)}s;--sw:${R(30,90)}px">${["🍁","🍂","🍁","🍂","🍃"][k%5]}</i>`).join("");
+  document.querySelectorAll(".lights i").forEach((b,i)=>{if(i%5===2)b.classList.add("fall")})})();
 const stage=document.getElementById("stage");
 const ICON=k=>`/xmas/icons/${k}.png`;
 
@@ -440,7 +453,7 @@ const SLIDES=[
       <img src="/xmas/emblem.png" alt="" class="spin" style="width:200px">
       <div class="eb fd" ${d(.4)} style="letter-spacing:.5em;color:var(--ink)">THE 2026</div>
       <h1 class="title-xl slam" ${d(.6)} style="font-size:120px">Christmas Games</h1>
-      <span class="pill pop" ${d(1.1)}>Thanksmas Edition</span>
+      <div class="pop" ${d(1.1)} style="display:flex;align-items:center;gap:18px"><span class="tg" style="font-size:64px">🦃</span><span class="pill">Thanksmas Edition</span><span class="tg r" style="font-size:60px">🥧</span></div>
       <div class="fade" ${d(1.4)} style="font-size:44px;font-weight:600">The Games begin soon. Find your seat, tributes.</div>
       <div class="card fade" ${d(1.8)} style="padding:22px 30px;max-width:980px;min-height:150px;transition:opacity .6s" id="hgfact"></div>
     </div></div>`,
@@ -456,7 +469,7 @@ const SLIDES=[
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:330px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <div class="eb fd" ${d(.8)} style="font-size:34px;letter-spacing:.6em;color:var(--ink)">THE 2026</div>
     <h1 class="title-xl slam" ${d(1.1)} style="font-size:170px">CHRISTMAS GAMES</h1>
-    <span class="pill pop" ${d(1.8)} style="font-size:38px">Thanksmas Edition</span>
+    <div class="pop" ${d(1.8)} style="display:flex;align-items:center;gap:22px"><span class="tg" style="font-size:80px">🦃</span><span class="pill" style="font-size:38px">Thanksmas Edition</span><span class="tg r" style="font-size:74px">🥧</span></div>
     <div class="motto fade" ${d(2.3)}>May the odds be ever in your favor</div></div>`,
    enter(el){st(()=>XM.confetti(200,true),1300);
      announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;
@@ -573,7 +586,7 @@ const SLIDES=[
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:260px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
-    <h2 class="title-l fd" ${d(1.8)} style="color:#fff;font-size:84px">Merry Christmas, Tributes</h2>
+    <h2 class="title-l fd" ${d(1.8)} style="color:#fff;font-size:84px"><span class="tg" style="font-size:.8em">🦃</span> Merry Christmas, Tributes <span class="tg r" style="font-size:.8em">🥧</span></h2>
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
     <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div>`,
    enter(el){SNOW.set(3.2);
@@ -739,7 +752,8 @@ function intermission(){
   const mix=a=>a.slice().sort(()=>Math.random()-.5);const facts=[];const hg=mix(HG_FACTS),xm=mix(XMAS_FACTS);
   for(let k=0;k<Math.max(hg.length,xm.length);k++){if(hg[k])facts.push(["🏹 HUNGER GAMES FUN FACT",hg[k]]);if(xm[k])facts.push(["🎄 CHRISTMAS FUN FACT",xm[k]])}let f=0;
   m.innerHTML=`<div class="inner" style="gap:clamp(6px,1.4vh,16px)">
-    <h1>☕ Intermission</h1><div style="font-size:clamp(1.2rem,2.6vw,2rem);font-weight:600">Grab a drink. Take a break. The Games will resume shortly.</div>
+    <div style="font-size:clamp(2.4rem,6vh,4rem)"><span class="tg">🦃</span> <span class="tg r">🥧</span> <span class="tg">🌽</span></div>
+    <h1>☕ Intermission</h1><div style="font-size:clamp(1.2rem,2.6vw,2rem);font-weight:600">Grab a drink. Grab some pie. Take a break. The Games will resume shortly.</div>
     <div class="clock" id="iclock">☕</div><div id="imsg" style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--gold);min-height:1.2em"></div>
     <div class="row" id="ipick"><span class="eb" style="align-self:center">Timer:</span>${[5,10,15].map(n=>`<button class="btn ghost" data-min="${n}">${n} min</button>`).join("")}<button class="btn ghost" data-min="0">No timer</button></div>
     <div class="row" id="iadj" style="display:none"><button class="btn ghost" id="iminus">−1 min</button><button class="btn ghost" id="iplus">+1 min</button></div>

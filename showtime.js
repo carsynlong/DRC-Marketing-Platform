@@ -554,6 +554,8 @@ window.LobbyMusic = (() => {
       src = ac.createBufferSource(); src.buffer = buf; src.loop = true; src.connect(gain); src.start();
     } catch (e) { loading = null; }
   }
+  // if the browser held the track back (no recent tap), start it on the next tap, click or key press
+  ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (want && ac && ac.state === "suspended") { ac.resume(); } if (want && !src && ac) start(); }, true));
   function stop() {
     want = false;
     if (!src) return;
@@ -598,4 +600,10 @@ window.Hurry = (() => {
   }
   function hide() { if (el) el.remove(); el = null; last = null; }
   return { show, hide };
+})();
+
+/* 🔊 the same safety net for each game's own music: any sound the browser held back starts on the next tap or key press */
+(() => {
+  const wake = () => { try { if (typeof AC !== "undefined" && AC && AC.state === "suspended") AC.resume(); } catch (e) {} };
+  ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, wake, true));
 })();

@@ -827,7 +827,7 @@ function fate(){
 }
 function nextQuestion(){
   clearTimers();S.k++;
-  if(S.k>=S.order.length){saveGame("end");S.phase="end";stopSong();sfx("fanfare");confetti(160,true);fireworks(4);later(()=>S.phase==="end"&&playSong("joy"),2200);render();return}
+  if(S.k>=S.order.length){saveGame("end");S.phase="end";stopSong();sfx("fanfare");confetti(160,true);fireworks(4);later(()=>S.phase==="end"&&playSong("joy"),300);render();return}
   /* 📊 halftime standings */
   if(!S.halfDone&&S.order.length>=7&&S.k===HALFTIME_AFTER){S.halfDone=true;S.phase="half";stopSong();sfx("fanfare");later(()=>playSong("half"),1200);confetti(80);render();return}
   goQuestion();
@@ -858,7 +858,7 @@ function pkgFate(){
 }
 
 /* the gift box shakes, the lid flies off, the winner pops out */
-function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(()=>{winFx();applause(4000);fireworks(7)},1600);later(()=>playSong("joy"),3600)}
+function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(()=>{winFx();applause(4000);fireworks(7);playSong("joy")},1600)}
 
 /* ---------- views ---------- */
 const sndBtn=()=>`<button class="btn ghost" id="snd" aria-pressed="${S.sound}">${S.sound?"🔊 Music on":"🔇 Music off"}</button>`;

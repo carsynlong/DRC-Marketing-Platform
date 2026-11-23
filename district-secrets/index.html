@@ -1119,7 +1119,7 @@ function score(){
     S.extra=dsx.approved.map(x=>({f:x.text,a:x.name,bonus:true}));Q.push(...S.extra);S.bonusDone=true}
   S.phase=S.qi===Q.length-1?"final":"board";
   if(S.phase==="final"&&showdownDue())return startShowdown();
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),3200)}else playSong("board");
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),300)}else playSong("board");
   render();
 }
 /* 🎯 Frame job: the owner names someone; it works if that person is (one of) the most accused */
@@ -1159,7 +1159,7 @@ function checkDuel(taps){
 function duelEnd(n){const d=S.duel;clearTimeout(duelT);clearInterval(duelPoll);d.state="done";S.champ=n;stopSong();sfx("fanfare");confetti(220,true);render()}
 function finishShowdown(){   // breaking the tie: the champion finishes on top
   const c=S.players.find(p=>p.name===S.champ);if(c){c.delta=500;c.score+=500;c.note="⚔️ Won the Quick Draw +500"}
-  S.phase="final";stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),3200);render();
+  S.phase="final";stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),300);render();
 }
 function duelView(){
   const d=S.duel,f=(n,c)=>`<div class="f ${c}${d.state==="vs"?" in":""}${S.champ?(S.champ===n?" win":" lose"):""}"><img src="${AV(n)}" alt="">${esc(n)}</div>`;

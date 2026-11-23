@@ -1076,7 +1076,7 @@ function wire(){
   on("home",()=>{if(confirm("Stop this game and go back to setup? The prize race goes back to zero."))goSetup()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("clearphones",async()=>{if(!confirm("Clear every phone's name? Everyone will need to scan and tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
-  on("snd",()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m=musicFor();m&&playSong(m)}
+  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m=musicFor();m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 /* ================= PHONES =================
@@ -1193,9 +1193,20 @@ document.addEventListener("keydown",e=>{
 });
 render();
 /* ⏭️ test button: straight to the final board, then the major award (Carsyn's champions song) */
+window.MusicPill&&MusicPill.add({on:()=>S.sound,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
 window.SkipEnd&&SkipEnd.add(()=>{clearTimers();stopSong();S.tie=null;
   if(!Object.keys(S.tally||{}).length){const who=NAMES.filter(n=>S.present[n]).slice(0,4);S.tally=Object.fromEntries(who.map((n,i)=>[n,8-i*2]))}
   if(!S.order||!S.order.length)S.order=[0];S.results=S.results||[];S.k=S.order.length-1;nextQuestion();
   later(()=>S.phase==="end"&&packageReveal(),2500)});
+</script>
+<script>
+/* 🎵 lobby music as soon as the page opens. Browsers hold sound back until the first click or key press,
+   so if it's blocked it starts on your first click anywhere. */
+(function autoLobby(){
+  const go=()=>{try{if(!S||S.phase!=="lobby"||!S.sound)return;ensureAudio();if(!song)playSong("lobby")}catch(e){}};
+  setTimeout(go,300);
+  const first=()=>{removeEventListener("pointerdown",first,true);removeEventListener("keydown",first,true);setTimeout(go,0)};
+  addEventListener("pointerdown",first,true);addEventListener("keydown",first,true);
+})();
 </script>
 </html>

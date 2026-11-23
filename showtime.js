@@ -654,3 +654,19 @@ window.SkipEnd = { add(fn) {
   b.onclick = e => { e.stopPropagation(); b.blur(); if (confirm("Skip to the end of the game? (for testing the end music)")) try { fn(); } catch (err) { console.error(err); } };
   (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => document.body.appendChild(b));
 } };
+
+/* 🔊 Music on/off pinned to the top-left of the TV, so it's one quick click instead of scrolling to the bottom.
+   Hides itself whenever the screen already shows its own Music button near the top. */
+window.MusicPill = { add({ on, toggle }) {
+  const b = document.createElement("button"); b.type = "button"; b.id = "musicpill";
+  b.style.cssText = "position:fixed;left:14px;top:14px;z-index:99998;font:800 15px/1 system-ui,-apple-system,'Segoe UI',sans-serif;padding:9px 14px;border-radius:999px;border:0;cursor:pointer;" +
+    "color:#fff;background:rgba(0,0,0,.55);box-shadow:inset 0 0 0 2px rgba(255,255,255,.4),0 4px 14px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)";
+  const paint = () => {
+    let state = false; try { state = !!on(); } catch (e) {}
+    b.textContent = state ? "🔊 Music on" : "🔇 Music off"; b.setAttribute("aria-pressed", state);
+    const own = document.getElementById("snd"), r = own && own.getBoundingClientRect();
+    b.hidden = !!(r && r.width && r.top >= 0 && r.bottom <= innerHeight * .3);
+  };
+  b.onclick = e => { e.stopPropagation(); try { toggle(); } catch (err) { console.error(err); } b.blur(); paint(); };
+  (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => { document.body.appendChild(b); paint(); setInterval(paint, 400); });
+} };

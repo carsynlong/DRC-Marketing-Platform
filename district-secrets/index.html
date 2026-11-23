@@ -1434,7 +1434,7 @@ function wire(){
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
-  on("snd",()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
+  on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
     const e=$("#snd");e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)});
   on("clearphones",async()=>{if(!confirm("Clear every phone sign-in? Everyone will need to tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
 }
@@ -1544,9 +1544,20 @@ function restartGame(ask=true){
 if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
   rows:()=>["lobby","howto","board","final","interro","story","showdown"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 /* ⏭️ test button: jump to the last secret and score it, which goes to the final board and its music */
+window.MusicPill&&MusicPill.add({on:()=>musicOn,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
 window.SkipEnd&&SkipEnd.add(()=>{clearInterval(readyT);stopSong();
   if(!S.gid||S.phase==="lobby")newGame();
   S.qi=Q.length-1;S.phase="reveal";S.correct=[];S.locked=true;S.guesses=Object.fromEntries(S.players.map(p=>[p.name,""]));score()});   // counts everyone as answered: no "too slow" penalty
+</script>
+<script>
+/* 🎵 lobby music as soon as the page opens. Browsers hold sound back until the first click or key press,
+   so if it's blocked it starts on your first click anywhere. */
+(function autoLobby(){
+  const go=()=>{try{if(!S||S.phase!=="lobby"||!musicOn)return;ensureAudio();if(!song)playSong("lobby")}catch(e){}};
+  setTimeout(go,300);
+  const first=()=>{removeEventListener("pointerdown",first,true);removeEventListener("keydown",first,true);setTimeout(go,0)};
+  addEventListener("pointerdown",first,true);addEventListener("keydown",first,true);
+})();
 </script>
 </body>
 </html>

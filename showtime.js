@@ -543,6 +543,9 @@ window.LobbyMusic = (() => {
     return loading = loading || fetch(SRC).then(r => r.arrayBuffer())
       .then(a => new Promise((ok, no) => ac.decodeAudioData(a, ok, no))).then(b => (buf = b));
   }
+  // browsers keep sound muted until a tap: unlock this player on the first click anywhere, so it can start on its own later
+  const unlock = () => { try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); } catch (e) {} };
+  ["pointerdown", "keydown"].forEach(ev => addEventListener(ev, unlock, { capture: true, passive: true }));
   async function start(game) {
     want = true; SRC = TRACKS[game] || SRC;
     try {

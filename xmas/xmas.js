@@ -10,7 +10,7 @@ XM.store=store;
 
 /* ================= DATA ================= */
 XM.TRIBUTES=[
- {d:1,name:"Jessie",weapon:"A very sharp candy cane",strategy:"Charm the sponsors, then take a nap",odds:"4 to 1"},
+ {d:1,name:"Jessie",weapon:"Shears in one hand, lash tweezers in the other",strategy:"Give everyone a fresh cut, then take them out",odds:"4 to 1"},
  {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Already knows where everyone is hiding",odds:"2 to 1"},
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Remodel the arena, then retreat to the lake",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},

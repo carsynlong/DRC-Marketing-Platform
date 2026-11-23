@@ -207,12 +207,6 @@ const Extras = (() => {
   setInterval(label, 700);
   function reset() { restore(); S.buys = {}; S.rosesShown = []; S.iv = null; S.hintShown = false; clearInterval(ivT); }
 
-  // on a twist face, phones get the same photo (with the same twist) to squint at
-  function pic() {
-    const t = tw(); if (!t || S.phase !== "question" || S.locked) return undefined;
-    const x = cur(), z = x.zoom || { fx: .5, fy: .5, z: 1.14, cap: 1 };
-    return { src: `img/${x.q}.jpg`, fx: z.fx, fy: z.fy, z: z.z, cap: z.cap, twist: t, secs: S.secs };
-  }
-  return { pic, zoomP, deal, card, start, restore, zoomStyle, tick, after, before, score, spy, loadBuys, startInterview, interviewView, nextQ, reset,
+  return { zoomP, deal, card, start, restore, zoomStyle, tick, after, before, score, spy, loadBuys, startInterview, interviewView, nextQ, reset,
     twist: () => TWISTS[tw()] || null, hint: () => S.hintShown ? hintText().replace(/<\/?b>/g, "") : null };
 })();

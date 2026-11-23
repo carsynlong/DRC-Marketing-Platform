@@ -178,6 +178,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
+const SLOW_PEN=200;   // ⏰ signed in on a phone but didn't answer in time
 const HOST="Carsyn"; // runs the game: knows every face, so instead of guessing she predicts (🔮) and plays the mini-games
 const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
 const groupOf=n=>GIRLS.has(n)?"girls":"boys";
@@ -415,7 +416,7 @@ function roundCardOrQuestion(){
 let readyT=0;
 function beginQuestion(){S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
-function startQuestion(){clearInterval(readyT);S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
+function startQuestion(){clearInterval(readyT);S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const giftTag=()=>S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
@@ -445,6 +446,7 @@ function tick(last){
     S.elapsed=Math.min(S.secs,S.elapsed+dt);
     const left=Math.ceil(S.secs-S.elapsed);
     if(left!==before&&left<=5&&left>0){sfx(left===1?"tick":"tock");tempoMul=1.18;$(".timer")?.classList.add("hurry")}
+    if(left!==before&&left<=10&&left>0){if(!S.hurryEnds)S.hurryEnds=Date.now()+(S.secs-S.elapsed)*1000;if(left>5)tempoMul=1.1;if(window.Hurry)Hurry.show(left,S.sound)}   // ⏰ hurry (showtime.js + phones)
     drawTimer();setZoom(S.elapsed/S.secs);
     if(S.elapsed>=S.secs){lock();return}
     raf=requestAnimationFrame(loop);
@@ -456,7 +458,7 @@ function drawTimer(){
   n.textContent=left;const frac=1-S.elapsed/S.secs;
   c.setAttribute("stroke-dasharray",`${(frac*176).toFixed(1)} 176`);c.setAttribute("stroke",left<=5?"var(--a1)":"var(--gold)");
 }
-function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
+function lock(){S.locked=true;S.hurryEnds=0;if(window.Hurry)Hurry.hide();cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
 function reveal(){
   Sync.fillAnswers();
   if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
@@ -464,11 +466,12 @@ function reveal(){
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
 function score(){
   if(S.rounds[S.qi]?.tb)return Party.scoreTiebreak();
-  const name=cur().a,mult=pointsX(S.qi),before=rankMap();
+  const name=cur().a,mult=pointsX(S.qi),before=rankMap();S.slow=[];
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
     if(S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
-    else{p.delta=0;p.streak=0}
+    else{p.delta=0;p.streak=0;
+      if(p.name!==HOST&&Sync.hasPhone(p.name)&&!String(S.typed[p.name]||"").trim()){const pen=Math.min(SLOW_PEN,p.score);p.delta=-pen;p.score-=pen;S.slow.push(p.name)}}   // ⏰ too slow
   });
   Party.scored();
   // the host (🔮 Gamemaker) predicted how many would get it right: exact +500, off by one +200
@@ -484,6 +487,7 @@ function next(){S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();}
 
 /* ---------- views ---------- */
 function render(){
+  if(window.Hurry&&(S.phase!=="question"||S.locked))Hurry.hide();
   cancelAnimationFrame(raf);
   const app=$("#app");
   app.innerHTML=S.phase==="lobby"?lobbyView():S.phase==="ready"?readyView():S.phase==="roundcard"?roundView():(S.phase==="question"||S.phase==="reveal")?questionView():S.phase==="board"?boardView():(S.phase==="mini"||S.phase==="tbcard")?Party.view():finalView();
@@ -558,10 +562,10 @@ function boardRows(){
   return r.map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}
     return `<div class="row"><div class="fill" data-w="${(p.score/max*100).toFixed(1)}%"></div><div class="rk">${rank}</div><img class="av" src="${AV(p.name)}" alt="">
       <div class="nm">${esc(p.name)}${p.move>0?`<span class="mv up">▲${p.move}</span>`:p.move<0?`<span class="mv dn">▼${-p.move}</span>`:""}${p.streak>1?`<span class="streak">🔥 ${p.streak} in a row</span>`:""}</div>
-      <div class="pts">${p.score.toLocaleString()}${p.delta?`<span class="delta">+${p.delta.toLocaleString()}</span>`:""}</div></div>`}).join("");
+      <div class="pts">${p.score.toLocaleString()}${p.delta?`<span class="delta" ${p.delta<0?'style="color:#ff8f80"':""}>${p.delta>0?"+":"−"}${Math.abs(p.delta).toLocaleString()}${p.delta<0?" ⏰":""}</span>`:""}</div></div>`}).join("");
 }
 function quip(){
-  const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta).length;
+  const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta>0).length;
   const lines=[`${lead} is the Capitol's favorite right now.`,`Sponsors are lining up for ${lead}.`,`Somebody send ${last} a parachute.`,
     got===0?"Not one tribute got that. The Gamemakers are thrilled.":got>=r.length-1?"Everybody got that one. Too easy. The Gamemakers are taking notes.":`${got} tributes survived that face.`,
     hot?`${hot.name} is on fire. Literally, like Katniss.`:`Plenty of game left. Stay alive.`,`${last}, the odds are not currently in your favor.`];

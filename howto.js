@@ -121,8 +121,60 @@ window.HowTo = (() => {
     root.querySelector(".ht-ok").onclick = () => { folded = true; try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} draw(kind, g); };
   }
 
-  /* called with the latest game state after every poll */
-  function sync(g) {
+  /* ⏰ HURRY: the last 10 seconds, only for people who still haven't answered.
+     The TV publishes game.hurry = the moment answers lock (ms); game.slow = who ran out of time (and slowPen). */
+  const HCSS = `
+#hurrybar{position:fixed;left:0;right:0;top:0;z-index:2147482500;display:flex;align-items:center;justify-content:center;gap:12px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;background:linear-gradient(180deg,#ff2d37,#b3121b);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-shadow:0 6px 0 #ffc92e,0 12px 30px rgba(0,0,0,.45);animation:hb-in .35s cubic-bezier(.2,1.5,.4,1) both}
+#hurrybar b{font-size:2.6rem;line-height:1;font-weight:900;min-width:1.4em;text-align:center;font-variant-numeric:tabular-nums;animation:hb-pop .4s cubic-bezier(.2,1.8,.4,1) both}
+#hurrybar span{font-weight:900;font-size:1.05rem;line-height:1.15;letter-spacing:.02em}
+#hurrybar small{display:block;font-weight:700;font-size:.8rem;opacity:.9}
+body.hurrying{padding-top:84px!important}
+body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
+#slowtoast{position:fixed;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top,0px));z-index:2147482600;background:#1b1b1b;color:#fff;font:800 1.15rem/1.3 system-ui,-apple-system,sans-serif;
+  border-radius:16px;padding:16px;text-align:center;box-shadow:0 0 0 3px #ff2d37,0 10px 30px rgba(0,0,0,.5);animation:hb-in .4s cubic-bezier(.2,1.5,.4,1) both}
+@keyframes hb-in{from{transform:translateY(-120%)}}
+@keyframes hb-pop{from{transform:scale(1.8);opacity:0}}
+@keyframes hb-shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+@media (prefers-reduced-motion:reduce){#hurrybar,#hurrybar *,body.hurry-shake{animation:none!important}}`;
+  let hb = null, hbTimer = 0, hbEnds = 0, hbLast = null, slowKey = "";
+  const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+  function css2() { if (!document.getElementById("hurry-css2")) { const st = document.createElement("style"); st.id = "hurry-css2"; st.textContent = HCSS; document.head.appendChild(st); } }
+  function stopHurry() { clearInterval(hbTimer); hbTimer = 0; hbEnds = 0; hbLast = null; if (hb) { hb.remove(); hb = null; } document.body.classList.remove("hurrying", "hurry-shake"); }
+  function startHurry(ends) {
+    if (hbTimer && hbEnds === ends) return;
+    css2(); hbEnds = ends; clearInterval(hbTimer);
+    if (!hb) { hb = document.createElement("div"); hb.id = "hurrybar"; hb.setAttribute("role", "alert"); document.body.appendChild(hb); }
+    document.body.classList.add("hurrying");
+    const tick = () => {
+      const sec = Math.ceil((hbEnds - Date.now()) / 1000);
+      if (sec <= 0) { stopHurry(); return; }
+      if (sec === hbLast) return; hbLast = sec;
+      hb.innerHTML = `<b>${sec}</b><span>⏰ HURRY! Lock in your answer!<small>Too slow = you lose points</small></span>`;
+      buzz(sec <= 3 ? [180, 60, 180] : 120);
+      document.body.classList.remove("hurry-shake"); void document.body.offsetWidth; document.body.classList.add("hurry-shake");
+    };
+    tick(); hbTimer = setInterval(tick, 150);
+  }
+  function slowToast(text) {
+    css2(); let t = document.getElementById("slowtoast");
+    if (!t) { t = document.createElement("div"); t.id = "slowtoast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+    t.textContent = text; buzz([300, 80, 300]); clearTimeout(slowToast.t); slowToast.t = setTimeout(() => t.remove(), 4000);
+  }
+  function hurry(g, o) {
+    const me = o.me, ends = g && g.hurry;
+    const exempt = !me || (g && g.tied && g.tied.includes(me)) || (g && g.host && g.host === me) || (g && g.playing && !g.playing.includes(me)) || (g && g.exempt === me);
+    if (ends && !o.answered && !exempt && Date.now() < ends) startHurry(ends); else stopHurry();
+    if (g && me && g.slow && g.slow.includes(me)) {
+      const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;
+      if (k !== slowKey) { slowKey = k; slowToast(`⏰ Too slow! You didn't answer in time${g.slowPen ? `: −${g.slowPen}` : ""}`); }
+    }
+  }
+
+  /* called with the latest game state after every poll; o = { me, answered } */
+  function sync(g, o) {
+    hurry(g, o || {});
     const kind = g && g.howto;
     if (!kind) { if (root) { root.remove(); root = null; key = ""; folded = false; } return; }
     const k = kind + ":" + (g.gid || "") + ":" + JSON.stringify(g.opts && g.opts.bets || 0);

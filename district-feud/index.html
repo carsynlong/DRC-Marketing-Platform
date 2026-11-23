@@ -293,6 +293,36 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 .jab{font-size:clamp(1.15rem,2.4vw,1.6rem);font-weight:800;color:#fff;background:rgba(227,35,44,.85);padding:.3em 1em;border-radius:12px;box-shadow:0 0 0 3px var(--gold);transform:rotate(-1.5deg)}
 .race .rc.fire{color:#ffb02e;text-shadow:0 0 12px #ff6a00}
 .perks{font-weight:800;color:var(--gold2);font-size:clamp(.95rem,1.8vw,1.15rem)}
+/* question screen: board on the left, contestant panel on the right */
+.qscreen{display:grid;grid-template-columns:minmax(0,1fr) clamp(250px,25vw,360px);gap:clamp(14px,2vw,28px);width:100%;max-width:1500px;margin:0 auto;align-items:center;min-height:calc(100vh - 150px)}
+.qmain{display:grid;gap:clamp(10px,1.6vh,16px);justify-items:center;min-width:0;text-align:center}
+.qtop{display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center}
+.qscreen .slot{height:clamp(110px,17vh,170px)}
+.qside{display:grid;gap:clamp(10px,1.6vh,14px);justify-items:center;align-content:center;background:linear-gradient(180deg,rgba(24,70,196,.4),rgba(6,11,38,.75));border-radius:22px;
+  padding:18px 16px;box-shadow:inset 0 0 0 3px rgba(255,201,46,.5),0 20px 50px rgba(0,0,0,.4);animation:pop .6s .2s cubic-bezier(.2,1.3,.4,1) both}
+.qside .timer{width:clamp(120px,11vw,170px)} .qside .timer b{font-size:clamp(2.4rem,4.2vw,3.8rem)}
+.tlabel{font-weight:800;letter-spacing:.22em;font-size:.72rem;color:var(--gold2);margin-top:-6px;text-transform:uppercase}
+.qside .says{font-size:clamp(1.8rem,3vw,2.6rem);text-align:center;line-height:1.05}
+.lockgrid{width:100%}
+.lkhead{font-family:var(--display);text-align:center;color:#fff;margin-bottom:10px;font-size:clamp(.9rem,1.4vw,1.1rem)} .lkhead b{color:var(--gold);font-weight:400;font-size:1.4em}
+.lkfaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 6px}
+.lk{position:relative;display:grid;justify-items:center;gap:3px;font-weight:800;font-size:clamp(.6rem,.9vw,.75rem);text-transform:uppercase;opacity:.4;filter:grayscale(.9);transition:opacity .3s,filter .3s;min-width:0}
+.lk img{width:100%;max-width:58px;aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+.lk span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lk.in{opacity:1;filter:none} .lk.in img{box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(255,201,46,.7)}
+.lk.in::before{content:"✓";position:absolute;top:-4px;right:calc(50% - 32px);z-index:1;background:var(--green);color:#fff;border-radius:50%;width:20px;height:20px;display:grid;place-items:center;font-size:.75rem;box-shadow:0 0 0 2px #fff}
+.lk.pop{animation:lkpop .6s cubic-bezier(.2,1.8,.4,1)}
+@keyframes lkpop{40%{transform:scale(1.35)}}
+.shout{font-family:var(--display);color:var(--gold);text-align:center;font-size:clamp(1.1rem,2vw,1.4rem);line-height:1.2}
+.qside #says{width:100%}
+.pchips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.pchip{background:rgba(6,11,38,.65);border-radius:999px;padding:.35em .9em;font-weight:800;box-shadow:inset 0 0 0 2px rgba(255,201,46,.45);font-size:clamp(.85rem,1.4vw,1.05rem)}
+.front.myst{gap:clamp(12px,2vw,24px)}
+.front.myst::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);transform:translateX(-100%);animation:sweep2x 2.8s ease-in-out infinite}
+@keyframes sweep2x{to{transform:translateX(100%)}}
+.mq{font-family:var(--display);font-size:clamp(2.6rem,6vw,4.4rem);color:var(--gold);text-shadow:0 0 22px rgba(255,201,46,.85);animation:pulse .9s ease-in-out infinite alternate}
+.mlabel{font-family:var(--display);letter-spacing:.08em;color:#fff;font-size:clamp(1.1rem,2.4vw,1.8rem);text-shadow:0 3px 0 #061447}
+@media (max-width:900px){.qscreen{grid-template-columns:1fr}}
 /* 30-second question timer */
 .tq{display:flex;align-items:center;gap:14px;justify-content:center}
 .timer{position:relative;width:clamp(84px,9vw,112px);aspect-ratio:1;flex:none;animation:pop .5s .3s cubic-bezier(.2,1.6,.4,1) both}
@@ -342,7 +372,7 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 const $=s=>document.querySelector(s);
 
 /* ================= MUSIC: game-show arrangements of public-domain carols + original cues ================= */
-let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, timerId=0;
+let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, timerId=0, tempoMul=1;
 function ensureAudio(){
   try{
     if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();
@@ -437,9 +467,9 @@ function playSong(name){
   if(song===SONGS[name])return;
   stopSong(); if(!S.sound||!ensureAudio())return;
   if(name==="lobby"&&window.LobbyMusic?.has("feud")){song=SONGS[name];LobbyMusic.start("feud");return}   // Carsyn's lobby music (showtime.js)
-  song=SONGS[name];const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=AC.currentTime+.08,i=0;
+  song=SONGS[name];tempoMul=1;const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=AC.currentTime+.08,i=0;
   timerId=setInterval(()=>{
-    const spb=60/song.bpm;
+    const spb=60/(song.bpm*tempoMul);
     while(true){
       const e=evs[i];const t=loopStart+e[0]*spb;
       if(t>AC.currentTime+.15)break;
@@ -546,8 +576,9 @@ let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true]
 /* Major award: every vote a tribute receives (survey + face-offs) adds to their total,
    plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
 const GUESS_PTS=1;
-const TIMER_SECS=30; // seconds to guess each question; Survey says starts by itself when it runs out
-const addVotes=(n,v)=>{if(!v)return;S.tally[n]=(S.tally[n]||0)+v;S.bump[n]=(S.bump[n]||0)+v};
+const TIMER_SECS=30;
+const FACEOFF_SECS=10; // seconds to vote in a face-off; the votes are counted when it runs out // seconds to guess each question; Survey says starts by itself when it runs out
+const addVotes=(n,v)=>{if(!v)return;const was=S.tally[n]||0,now=Math.max(0,was+v);if(now===was&&v<0)return;S.tally[n]=now;S.bump[n]=(S.bump[n]||0)+(now-was)};
 const cur=()=>QUESTIONS[S.order[S.k]];
 const isTie=q=>q.top.length>1;
 const plural=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
@@ -556,7 +587,8 @@ const winFx=()=>{sfx("fanfare");sfx("applause");confetti(220,true)};
 
 /* ---------- flow ---------- */
 const SPEED_SECS=10;      // lock in a correct guess this fast for a speed bonus (+1)
-const FIRE_AT=3;          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
+const FIRE_AT=3;
+const SLOW_PEN=1;        // signed in on a phone but didn't answer in time: −1          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
 const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
 const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
@@ -598,14 +630,19 @@ function goQuestion(){
   if(isFinal()&&S.phase!=="double"){S.phase="double";stopSong();sfx("siren");later(()=>{sfx("fanfare");fireworks(3)},900);render();later(()=>S.phase==="double"&&showQuestion(),5200);return}
   showQuestion();
 }
-function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;playSong("think");render();}
+function showQuestion(){clearTimers();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
 setInterval(()=>{
-  if(S.phase!=="question"||!S.ends)return;
-  const ms=S.ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000)),el=$("#tsec");
+  const fo=S.tie&&S.tie.ends&&["tb","ballot","cast"].includes(S.phase);
+  if(!fo&&(S.phase!=="question"||!S.ends))return;
+  const ends=fo?S.tie.ends:S.ends,total=(fo?FACEOFF_SECS:TIMER_SECS)*1000;
+  const ms=ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000)),el=$("#tsec");
   if(el&&el.textContent!==String(sec)){el.textContent=sec;$("#timer").classList.toggle("low",sec<=10);if(sec<=10&&sec>0)sfx("tick")}
-  const r=$("#tring");if(r)r.style.strokeDashoffset=(213.6*(1-Math.max(0,ms)/(TIMER_SECS*1000))).toFixed(1);
-  if(ms<=0){S.ends=0;sfx("buzz");surveySays()}
+  if(window.Hurry){const show=sec<=10&&ms>0&&S.phase!=="ballot"&&S.phase!=="cast";if(show){Hurry.show(sec,S.sound);tempoMul=fo?1.15:1.3}else Hurry.hide()}
+  const r=$("#tring");if(r)r.style.strokeDashoffset=(213.6*(1-Math.max(0,ms)/total)).toFixed(1);
+  if(ms>0)return;
+  if(!fo){S.ends=0;sfx("buzz");surveySays();return}
+  if(S.phase==="tb"){S.tie.ends=0;sfx("buzz");countVotes(true)}   // someone still in the voting booth gets to finish first
 },100);
 /* time's up (or the host pressed it): lock the phones, show what the room guessed, then the reveal */
 async function surveySays(){
@@ -626,8 +663,9 @@ function runSurvey(){
 }
 /* 🎯 phone guesses: +1 for calling it, +1 ⚡ speed bonus, +1 🔥 when on fire, all doubled in the finale */
 function scoreGuesses(top){
-  const got=phoneAnswers(),m=S.mult||1;S.earn={};S.newFire=[];
+  const got=phoneAnswers(),m=S.mult||1;S.earn={};S.newFire=[];S.slow=[];
   phones.forEach(n=>{
+    if(got[n]==null&&S.present[n]){S.streak[n]=0;S.slow.push(n);addVotes(n,-SLOW_PEN);return}   // ⏰ too slow
     if(!top.includes(got[n])){S.streak[n]=0;return}
     const speed=S.seen[n]!=null&&S.seen[n]-S.qStart<=(SPEED_SECS+1)*1000;
     S.streak[n]=(S.streak[n]||0)+1;const fire=S.streak[n]>=FIRE_AT;if(S.streak[n]===FIRE_AT)S.newFire.push(n);
@@ -652,7 +690,7 @@ function leaderCheck(){
 function startTie(){const q=cur();S.tie={names:q.top.map(t=>t[0]),round:0,q:null,votes:{},voted:[]};nextTiebreaker();}
 function nextTiebreaker(){
   clearTimers();const T=S.tie;T.round++;T.q=TIEBREAKERS[S.tbNext%TIEBREAKERS.length];S.tbNext++;
-  T.votes=Object.fromEntries(T.names.map(n=>[n,0]));T.voted=[];T.voter=null;T.lead=null;T.qn=S.tbNext;T.enter=true;
+  T.votes=Object.fromEntries(T.names.map(n=>[n,0]));T.voted=[];T.voter=null;T.lead=null;T.qn=S.tbNext;T.enter=true;T.ends=Date.now()+FACEOFF_SECS*1000;
   S.phase="tb";playSong("faceoff");sfx("whoosh");render();
 }
 const voters=()=>NAMES.filter(n=>S.present[n]&&!S.tie.names.includes(n));
@@ -662,13 +700,15 @@ function castVote(pick){
   T.votes[pick]++;T.voted.push(T.voter);T.voter=null;S.phase="cast";sfx("cash");render();
   later(()=>{if(S.phase==="cast"){S.phase="tb";playSong("faceoff");render()}},1800);
 }
-async function countVotes(){
+async function countVotes(auto){
   clearTimers();if(S.phase!=="tb")return;
+  S.tie.ends=0;
   await poll();mergePhoneVotes(true);       // last look at the phones before counting
-  if(S.phase!=="tb"||!S.tie.voted.length)return;
+  if(S.phase!=="tb"||(!S.tie.voted.length&&auto!==true))return;   // time ran out with no votes: still tied
   S.phase="tbsuspense";stopSong();render();drumroll(1.9);
   later(()=>{const T=S.tie,max=Math.max(...T.names.map(n=>T.votes[n])),lead=T.names.filter(n=>T.votes[n]===max);
     T.names.forEach(n=>addVotes(n,T.votes[n]*(S.mult||1)));
+    S.slow=phones.filter(n=>voters().includes(n)&&!T.voted.includes(n));S.slow.forEach(n=>addVotes(n,-SLOW_PEN));   // ⏰ didn't vote in time
     T.lead=lead;S.phase="tbresult";
     if(lead.length===1){S.results[S.k]={name:lead[0],votes:cur().top[0][1],tb:true};later(()=>{winFx();applause();flash()},700);later(()=>playSong("strut"),2000);later(leaderCheck,3200)}
     else{later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300)}
@@ -722,9 +762,9 @@ function logo(small){
   const word=w=>anim?[...w].map(c=>`<span class="lt" style="--d:${(.15+(k++)*.07).toFixed(2)}s">${c}</span>`).join(""):w;
   return `<div class="bulbs logo-frame ${small?"small":""}"><div class="logo"><div class="l1">The Christmas</div><div class="l2">${word("District")}</div><div class="l2 l3">${word("Feud")}</div><div class="ribbon">★ The Survey Show ★</div></div></div>`;
 }
-function tile({n,v,state="",num=1,id="",delay=0,count=""}){
+function tile({n,v,state="",num=1,id="",delay=0,count="",myst=false}){
   const pts=count?`<b class="cu" ${count==="auto"?"data-auto":""} data-to="${v}" data-delay="${Math.round((delay+.6)*1000)}">0</b>`:v;
-  return `<div class="slot"><div class="card ${state}" ${id?`id="${id}"`:""} style="animation-delay:${delay}s"><div class="face front"><span class="num">${num}</span></div>
+  return `<div class="slot"><div class="card ${state}" ${id?`id="${id}"`:""} style="animation-delay:${delay}s"><div class="face front ${myst?"myst":""}">${myst?'<span class="mq">?</span><span class="mlabel">The #1 answer</span>':`<span class="num">${num}</span>`}</div>
     <div class="face back">${n?`<img src="${AV(n)}" alt=""><span class="nm">${esc(n)}</span><span class="pts">${pts}<small>${v===1?"vote":"votes"}</small></span>`:""}</div></div></div>`;
 }
 const words=q=>esc(q).split(" ").map((w,i)=>`<span class="w" style="--d:${(.55+i*.07).toFixed(2)}s">${w}</span>`).join(" ");
@@ -734,13 +774,14 @@ const podiums=(names,scoreOf,clsOf=()=>"",cls="")=>`<div class="podiums ${cls}">
 const strike=d=>`<svg class="xmark" viewBox="0 0 100 100" aria-hidden="true" style="--d:${d}s"><path d="M20 20 80 80M80 20 20 80" stroke="#fff" stroke-width="30" stroke-linecap="round"/><path d="M20 20 80 80M80 20 20 80" stroke="#e3232c" stroke-width="18" stroke-linecap="round"/></svg>`;
 function raceBar(){
   const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
-  return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc ${S.bump[n]?"bump":""} ${(S.streak||{})[n]>=FIRE_AT?"fire":""}">${(S.streak||{})[n]>=FIRE_AT?"🔥":""}${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i>${S.bump[n]?`<em class="plus">+${S.bump[n]}</em>`:""}</span>`).join("")
+  return `<div class="race"><b>🎁 Prize race</b><div class="rl">${rows.length?rows.map(([n,v],i)=>`<span class="rc ${S.bump[n]?"bump":""} ${(S.streak||{})[n]>=FIRE_AT?"fire":""}">${(S.streak||{})[n]>=FIRE_AT?"🔥":""}${i===0?"👑":""}<img src="${AV(n)}" alt="">${esc(n)} <i>${v}</i>${S.bump[n]?`<em class="plus" ${S.bump[n]<0?'style="color:#ff8f80"':""}>${S.bump[n]>0?"+":"−"}${Math.abs(S.bump[n])}</em>`:""}</span>`).join("")
     :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the major award</span>'}</div></div>`;
 }
 function render(){
   const v={intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
   const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup">↩ <span>Back to setup</span></button>`;
   document.body.classList.toggle("focus",["suspense","tbsuspense"].includes(S.phase));
+  if(window.Hurry&&!["question","tb"].includes(S.phase))Hurry.hide();
   $("#app").innerHTML=v()+home;S.bump={};wire();countUps();
 }
 function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
@@ -780,15 +821,30 @@ function lobby(){
     <div class="settings">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
     <div class="hint">Space moves the show along · M turns music on or off · <span style="opacity:.7">version QR-3</span></div></section>`;
 }
-function question(){
-  const left=Math.max(0,Math.ceil(((S.ends||Date.now())-Date.now())/1000));
-  const timer=`<div class="timer ${left<=10?"low":""}" id="timer" aria-label="Seconds left"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" id="tring" cx="40" cy="40" r="34"/></svg><b id="tsec">${left}</b></div>`;
-  const x2=(S.mult||1)>1?'<span class="x2">💰 ×2</span>':"";
-  return `<section class="center"><div class="tq">${tag()}${timer}${x2}</div>${board(cur().q,tile({}),undefined,"","drop",true)}
-    ${phones.length?"":`<p class="sub late" style="--d:1s">Shout your guesses! Who's the district's <b>#1 answer</b>?</p>`}${guessedLine()}${phones.length?`<div class="perks late" style="--d:1.2s">Lock in your guess on your phone! ⚡ First ${SPEED_SECS} seconds = speed bonus · 🔥 ${FIRE_AT} in a row = on fire</div>`:""}
-    <div class="ctl"><button class="btn red" id="says">Survey says…</button>${sndBtn()}</div><div class="hint">Survey says starts by itself when time runs out · Space: Survey says now</div></section>${raceBar()}`;
+/* contestants light up as they lock in (never showing their pick) */
+let shownLocked=new Set();
+function lockGrid(){
+  const who=NAMES.filter(n=>S.present[n]),got=phoneAnswers();
+  if(!apiOk||!phones.length)return `<div class="lockgrid" id="lockgrid"><div class="shout">📣 Shout your guesses!</div></div>`;
+  const n=who.filter(x=>got[x]!=null).length;
+  const html=`<div class="lockgrid" id="lockgrid"><div class="lkhead"><b>${n}</b> of ${who.length} locked in</div><div class="lkfaces">${who.map(x=>{const on=got[x]!=null;
+    return `<div class="lk ${on?"in":""} ${on&&!shownLocked.has(x)?"pop":""}"><img src="${AV(x)}" alt=""><span>${esc(x)}</span></div>`}).join("")}</div></div>`;
+  shownLocked=new Set(who.filter(x=>got[x]!=null));
+  return html;
 }
-function suspense(){return `<section class="center">${tag()}${board(cur().q,tile({state:"wig"}))}<div class="says">Survey says…</div></section>${raceBar()}`;}
+function question(){
+  shownLocked=new Set(Object.keys(phoneAnswers()));
+  const left=Math.max(0,Math.ceil(((S.ends||Date.now())-Date.now())/1000));
+  const timer=`<div class="timer ${left<=10?"low":""}" id="timer" aria-label="Seconds left"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" id="tring" cx="40" cy="40" r="34"/></svg><b id="tsec">${left}</b></div><div class="tlabel">seconds</div>`;
+  const x2=(S.mult||1)>1?'<span class="x2">💰 ×2</span>':"";
+  const chips=phones.length?`<div class="pchips late" style="--d:1.1s"><span class="pchip">📱 Lock in on your phone</span><span class="pchip">⚡ First ${SPEED_SECS}s = speed bonus</span><span class="pchip">🔥 ${FIRE_AT} in a row = on fire</span></div>`:"";
+  return `<section class="qscreen"><div class="qmain"><div class="qtop">${tag()}${x2}</div>${board(cur().q,tile({myst:true}),undefined,"","drop",true)}${chips}</div>
+    <aside class="qside">${timer}${lockGrid()}<button class="btn red" id="says">Survey says…</button>${sndBtn()}<div class="hint">Space: Survey says now</div></aside></section>${raceBar()}`;
+}
+function suspense(){
+  return `<section class="qscreen"><div class="qmain"><div class="qtop">${tag()}</div>${board(cur().q,tile({state:"wig",myst:true}))}</div>
+    <aside class="qside" style="animation:none"><div class="says">Survey says…</div>${lockGrid()}</aside></section>${raceBar()}`;
+}
 function reveal(){
   const q=cur(),tiles=q.top.map(([n,v],i)=>tile({n,v,state:"flip",delay:i*.15,count:"auto"})).join("");
   if(isTie(q)) return `<section class="center">${tag()}${board(q.q,tiles)}
@@ -800,12 +856,14 @@ function reveal(){
 }
 function tb(){
   const T=S.tie,vs=voters(),done=T.voted.length,all=done>=vs.length;setTimeout(()=>{T.enter=false});
-  return `<section class="center"><span class="qtag">⚡ Face-off ${T.round}${T.round>1?" · still tied!":""}</span>${board(T.q,"","Face-off question","","tight")}
+  const left=Math.max(0,Math.ceil(((T.ends||Date.now())-Date.now())/1000));
+  const timer=`<div class="timer ${left<=10?"low":""}" id="timer" aria-label="Seconds left"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" id="tring" cx="40" cy="40" r="34"/></svg><b id="tsec">${left}</b></div>`;
+  return `<section class="center"><div class="tq"><span class="qtag">⚡ Face-off ${T.round}${T.round>1?" · still tied!":""}</span>${timer}</div>${board(T.q,"","Face-off question","","tight")}
     ${podiums(T.names,()=>"?",()=>"",T.enter?"enter":"")}
     <div class="eyebrow">${phones.length?"Vote on your phone, or tap your name here to vote in secret":"Voters: tap your name to vote in secret"}</div>
     <div class="chips voters">${vs.map(n=>{const d=T.voted.includes(n);return `<button class="chip ${d?"done":""}" data-vote="${esc(n)}" ${d?"disabled":""}><img src="${AV(n)}" alt="">${d?"✓ ":""}${esc(n)}${!d&&hasPhone(n)?' <span class="ph">📱</span>':""}</button>`}).join("")}</div>
     <div class="ctl"><div class="count">${done} of ${vs.length} voted</div>${sndBtn()}<button class="btn ${all?"red":"ghost"}" id="count" ${done?"":"disabled"}>${all?"🗳️ Everyone voted! Count the votes":"Count the votes"}</button></div>
-    ${all?'<div class="hint">Space: count the votes</div>':""}</section>${raceBar()}`;
+    <div class="hint">⏱ Votes are counted when time runs out${all?" · Space: count now":""}</div></section>${raceBar()}`;
 }
 function ballot(){
   const T=S.tie;
@@ -822,7 +880,7 @@ function tbresult(){
   if(won) return `<div class="rays" style="--d:.7s"></div><section class="center"><span class="qtag">${r.fate?"Lucky spin winner":"Face-off winner"}</span><h2 class="qhead">${esc(cur().q)}</h2>
     ${podiums(T.names,sc,n=>n===r.name?"win":"lose")}
     <p class="sub">${r.fate?`The lucky spin picked <b>${esc(r.name)}</b>!`:`<b>${esc(r.name)}</b> wins the face-off, ${T.names.map(n=>T.votes[n]).sort((a,b)=>b-a).join(" to ")}!`}</p>
-    ${cur().jab?`<div class="jab late" style="--d:1.2s">${esc(cur().jab.replace("{n}",r.name))}</div>`:""}
+    ${cur().jab?`<div class="jab late" style="--d:1.2s">${esc(cur().jab.replace("{n}",r.name))}</div>`:""}${slowLine(1.6)}
     <div class="ctl">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
   const more=T.round<TB_PER_TIE;
   return `<section class="center">${podiums(T.lead,sc)}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>
@@ -896,13 +954,14 @@ function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult
 const phoneAnswers=()=>answersQi===curQi()?answers:{};
 function snapshot(){
   const p=S.phase,g={gid,view:p,names:NAMES,playing:NAMES.filter(n=>S.present[n]),num:S.k+1,total:S.order.length,phase:p==="lobby"?"lobby":"watch",locked:true,mode:"choice",tally:S.tally};
-  if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
-  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1});
+  if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,
+    hurry:p==="question"&&S.ends&&S.ends-Date.now()<=10500?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
+  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1,slow:S.slow,slowPen:SLOW_PEN});
   if(p==="intro"&&S.intro)g.spot=S.intro.who[S.intro.i]||null;
   if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
-  if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense"});
-  if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q});
+  if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p==="tbsuspense"?0:S.tie.ends||0});
+  if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
   if(["end","pkg","pkgfate"].includes(p)){g.phase="final";if(p==="pkg"&&S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
   return JSON.stringify(g);
 }
@@ -926,7 +985,7 @@ async function poll(){
     if(d.qi!=null&&d.qi===curQi()){
       const n0=Object.keys(phoneAnswers()).length;answers=d.answers||{};answersQi=d.qi;const n1=Object.keys(answers).length;
       if(S.phase==="question"&&S.seen)Object.keys(answers).forEach(n=>{if(S.seen[n]==null)S.seen[n]=Date.now()}); // when each guess arrived (speed bonus)
-      if(S.phase==="question"&&n1>n0){sfx("cash");const e=$("#guessed");if(e){e.outerHTML=guessedLine(true)}}
+      if(S.phase==="question"&&n1>n0){sfx("cash");const e=$("#lockgrid");if(e){e.outerHTML=lockGrid()}}
       if(S.phase==="tb")mergePhoneVotes();
     }
     if(S.phase==="lobby"&&(before!==phones.join("|")||!wasOk))render();
@@ -958,12 +1017,13 @@ function guessedLine(bump){
   return `<div class="guessed ${bump?"bump":""}" id="guessed">📱 ${n} ${n===1?"guess":"guesses"} locked in</div>`;
 }
 /* who called it on their phone, with what they earned */
+const slowLine=(d=1.6)=>S.slow&&S.slow.length?`<div class="called"><b class="late" style="--d:${d}s;color:#ff8f80">⏰ Too slow, −${SLOW_PEN}:</b>${S.slow.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.08).toFixed(2)}s;box-shadow:inset 0 0 0 3px #ff8f80"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`:"";
 function calledIt(d=1.2){
-  const got=phoneAnswers();if(!Object.keys(got).length)return "";
+  const got=phoneAnswers();if(!Object.keys(got).length)return slowLine(d+.4);
   const right=Object.keys(S.earn||{});
-  if(!right.length)return `<div class="called late" style="--d:${d}s"><b>🎯 Nobody called it!</b></div>`;
+  if(!right.length)return `<div class="called late" style="--d:${d}s"><b>🎯 Nobody called it!</b></div>${slowLine(d+.4)}`;
   return `<div class="called"><b class="late" style="--d:${d}s">🎯 Called it:</b>${right.map((n,i)=>{const e=S.earn[n];
-    return `<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)} +${e.pts}${e.speed?" ⚡":""}${e.fire?" 🔥":""}</span>`}).join("")}</div>`;
+    return `<span class="chip" style="--d:${(d+.15+i*.1).toFixed(2)}s"><img src="${AV(n)}" alt="">${esc(n)} +${e.pts}${e.speed?" ⚡":""}${e.fire?" 🔥":""}</span>`}).join("")}</div>${slowLine(d+.6)}`;
 }
 const joinUrl=()=>`${location.origin}/district-feud/play`;
 const onWebsite=()=>/^https?:$/.test(location.protocol)&&!/claude|anthropic/.test(location.hostname);

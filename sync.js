@@ -223,10 +223,10 @@ const Sync = (() => {
   (function hostMenu() {
     const b = document.createElement("button");
     b.textContent = "⚙"; b.title = "Host menu"; b.setAttribute("aria-label", "Host menu");
-    b.style.cssText = "position:fixed;left:6px;bottom:6px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:#fbf6ea;opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
+    b.style.cssText = "position:fixed;left:6px;top:6px;z-index:40;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:#fbf6ea;opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
     b.onmouseenter = () => b.style.opacity = ".9"; b.onmouseleave = () => b.style.opacity = ".18";
     const m = document.createElement("div"); m.hidden = true;
-    m.style.cssText = "position:fixed;left:8px;bottom:38px;z-index:21;background:#16302a;border-radius:12px;padding:8px;display:grid;gap:6px;box-shadow:0 0 0 2px #e8b04b,0 10px 30px rgba(0,0,0,.5);font:600 14px Outfit,system-ui,sans-serif";
+    m.style.cssText = "position:fixed;left:8px;top:38px;z-index:41;background:#16302a;border-radius:12px;padding:8px;display:grid;gap:6px;box-shadow:0 0 0 2px #e8b04b,0 10px 30px rgba(0,0,0,.5);font:600 14px Outfit,system-ui,sans-serif";
     const item = (label, fn) => { const x = document.createElement("button"); x.textContent = label;
       x.style.cssText = "background:transparent;color:#fbf6ea;border:0;text-align:left;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit";
       x.onmouseenter = () => x.style.background = "rgba(255,255,255,.08)"; x.onmouseleave = () => x.style.background = "transparent";

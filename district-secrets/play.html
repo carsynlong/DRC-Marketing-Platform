@@ -325,7 +325,7 @@ function phoneRules(o){
   if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
   if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
-  if(gmOn)r.push(["Have fun","🔮","The Gamemaker",`${HOST_NAME} knows the secrets, so she predicts how many crack each one. Bonus round: she guesses too!`]);
+  if(gmOn)r.push(["Have fun","🕵️","Most Wanted",`${HOST_NAME} knows the secrets, so she bets on who you'll wrongly accuse most. Nail it: +400. Bonus round: she guesses too!`]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
   r.push(["Have fun","👑","Winning","Most points wins the major award. Last secret = double!"]);
   return r;
@@ -496,7 +496,7 @@ function view(){
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
     return [key+"in"+editing+declined+mySecret+!!g.opts?.bonus,`<section class="msg"><div class="eyebrow">Signed in</div>
       <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
-      <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p>${D.me===HOST_NAME?`<p class="note">🔮 You're the Gamemaker: predict how many crack each secret, and guess in the bonus round!</p>`:""}</section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
+      <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p>${D.me===HOST_NAME?`<p class="note">🕵️ You're the Gamemaker: each secret, bet on who the room will wrongly accuse most (+400), and guess in the bonus round!</p>`:""}</section>${writeCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
   if(!playing){   // the host (and anyone sitting out) still gets the same meme as everyone else
     const meme=["question","interro","reveal","story"].includes(g.phase)?Memes.html("secrets",g.gid,g.qi):"";
@@ -517,19 +517,19 @@ function view(){
 
   if(g.phase==="bonuscard")return [key,header()+msg("📝","Bonus round!","<p>Fresh secrets, written tonight by people in this room. Eyes on the TV.</p>")+soundBtn()];
   const mineSecret=g.own&&g.own===ownTag(g.gid,g.qi,D.me);
-  // 🔮 the Gamemaker (Carsyn) knows the real secrets: she predicts how many will crack it. Bonus round: she guesses like everyone.
+  // 🕵️ the Gamemaker (Carsyn) knows the real secrets: she plays MOST WANTED, betting on who the room will wrongly accuse most. Bonus round: she guesses like everyone.
   if(D.me===HOST_NAME&&!g.bonus&&!mineSecret&&["question","interro","reveal"].includes(g.phase)){
-    const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null),pick=/^🔮(\d+)$/.exec(mine||"")?.[1];
-    if(g.phase==="reveal"){const n=(g.correct||[]).filter(x=>x!==HOST_NAME).length,d=pick==null?null:Math.abs(+pick-n);
-      return [key+"gr"+pick,header()+msg(d===0?"🔮":d===1?"✨":"🎙️",d===0?"Perfect prediction!":d===1?"So close!":pick==null?"No prediction":"Not this time",
-        `<p class="said">${n} cracked it${pick!=null?` · you said ${pick}`:""}</p><p>${d===0?"+500 points":d===1?"+200 points":"Better luck on the next one!"}</p>`,d!=null&&d<2?"right":"")+reactBar(),d===0?"right":""];}
-    if(g.phase==="interro")return [key+"gi",header()+msg("🔮","The Interrogation","<p>You're the Gamemaker. Enjoy watching them squirm.</p>")+reactBar()];
-    if(pick!=null)return [key+"gp"+pick,header()+msg("🔮",`You predicted ${pick}`,"<p>Exactly right: +500. Off by one: +200. Eyes on the TV!</p>")+reactBar(),"seal"];
-    if(g.locked)return [key+"gl",header()+msg("💥","Time's up!","<p>No prediction this time.</p>")];
-    const n=Math.max(1,(g.playing||[]).length-1);
-    return [key+"ga",header()+fileCard(g)+`<section class="msg" style="flex:none;padding:4px 0 0"><div class="icon">🔮</div><h1 style="font-size:1.6rem">You're the Gamemaker</h1>
-      <p>You know this one! How many will crack it?</p><p style="font-size:.85rem">Exactly right: <b style="color:var(--good)">+500</b> · off by one: <b style="color:var(--good)">+200</b></p></section>
-      <div class="pick">${Array.from({length:n+1},(_,i)=>`<button data-pred="${i}">${i}<small>${i===0?"nobody":i===n?"everyone":"crack it"}</small></button>`).join("")}</div>`,"shh"];
+    const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null),pick=/^🕵️(.+)$/u.exec(mine||"")?.[1]||null;
+    if(g.phase==="reveal"){const top=g.wanted||[],hit=pick&&top.includes(pick),pts=400*(g.double?2:1);
+      return [key+"gr"+pick+top.join(),header()+msg(hit?"🕵️":"🎙️",hit?"Most Wanted: nailed it!":pick?"Not this time":"No pick",
+        `<p class="said">The room accused ${top.length?top.map(esc).join(" & "):"nobody"}${pick?` · you bet on ${esc(pick)}`:""}</p><p>${hit?`+${pts} points`:"Better luck on the next one!"}</p>`,hit?"right":"")+reactBar(),hit?"right":""];}
+    if(g.phase==="interro")return [key+"gi",header()+msg("🕵️","The Interrogation","<p>You're the Gamemaker. Will they cave and accuse your Most Wanted?</p>")+reactBar()];
+    if(pick)return [key+"gp"+pick,header()+msg("🕵️",`Most Wanted: ${esc(pick)}`,"<p>If the room wrongly accuses them the most, you get <b>+400</b>. Eyes on the TV!</p>")+reactBar(),"seal"];
+    if(g.locked)return [key+"gl",header()+msg("💥","Time's up!","<p>No Most Wanted pick this time.</p>")];
+    const others=(g.playing||g.names).filter(n=>n!==D.me);
+    return [key+"ga",header()+fileCard(g)+`<section class="msg" style="flex:none;padding:4px 0 0"><div class="icon">🕵️</div><h1 style="font-size:1.6rem">Most Wanted</h1>
+      <p>You know whose secret it is. Who will the room <b>wrongly accuse</b> the most?</p><p style="font-size:.85rem">Nail it: <b style="color:var(--good)">+400</b></p></section>
+      <div class="pick">${others.map((n,i)=>`<button style="--i:${i}" data-wanted="${esc(n)}">${esc(n)}</button>`).join("")}</div>`,"shh"];
   }
 
   if(g.phase==="interro"){
@@ -647,6 +647,7 @@ function render(){
   const sn=$("#storyno");if(sn)sn.onclick=()=>storyAnswer(false);
   clearInterval(render.ac);if($("#askclock")&&D.game?.askLeft!=null){const end=Date.now()+D.game.askLeft*1000;render.ac=setInterval(()=>{const b=$("#askclock b");if(!b)return clearInterval(render.ac);b.textContent=Math.max(0,Math.ceil((end-Date.now())/1000))},200)}
   document.querySelectorAll("[data-pred]").forEach(b=>b.onclick=()=>{sfx("tap");buzz(15);send("🔮"+b.dataset.pred)});
+  document.querySelectorAll("[data-wanted]").forEach(b=>b.onclick=()=>{sfx("tap");buzz(15);send("🕵️"+b.dataset.wanted)});
   const cv=$("#changevote");if(cv)cv.onclick=()=>{sfx("tap");mySwitch.open=true;lastKey="";render();$("#sw")?.focus()};
   const kv=$("#keepvote");if(kv)kv.onclick=()=>{sfx("tap");buzz(15);toast("Kept. Your sealed guess stands.")};
   const sc=$("#swcancel");if(sc)sc.onclick=()=>{mySwitch.open=false;lastKey="";render()};

@@ -689,7 +689,8 @@ function snapshot(){
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:isDouble(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:Q.filter(x=>!x.bonus).length,
     howto:window.Rules&&Rules.active()?"secrets":undefined,
-    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:1)};   // How to play is on the TV: phones show it too (howto.js)
+    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:1),
+    wanted:["reveal","story","board"].includes(S.phase)&&S.qi<Q.length&&gmPredicts()?wantedTop():undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
   if(S.phase==="story"){g.storyState=S.storyState;if(S.storyState==="ask")g.askLeft=Math.max(0,Math.ceil(STORY_ASK-(Date.now()-(S.askAt||Date.now()))/1000))}
   if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
@@ -757,7 +758,13 @@ function showBets(){const el=$("#betcount");if(!el)return;const n=bigBets();el.t
 /* the guessers for this secret: everyone playing except the person it belongs to */
 const gmPredicts=()=>!cur()?.bonus&&cur()?.a!==HOST&&active().some(p=>p.name===HOST);   // the Gamemaker predicts on this secret
 const guessers=()=>active().filter(p=>p.name!==cur().a&&!(p.name===HOST&&gmPredicts()));
-const gmPick=()=>{const m=/^🔮(\d+)$/.exec((S.orig||current())[HOST]||"");return m?+m[1]:null};
+/* 🕵️ MOST WANTED: the Gamemaker knows whose secret it is, so she bets on who the room will WRONGLY accuse most */
+const WANTED_PTS=400;
+const gmPick=()=>{const m=/^🕵️(.+)$/u.exec((S.orig||current())[HOST]||"");return m?NAMES.find(n=>n===m[1].trim())||null:null};
+function wantedTop(){   // the most-accused wrong name(s) this round
+  const wrong=accusations().filter(([n])=>n!==cur().a),max=wrong.length?wrong[0][1]:0;
+  return max?wrong.filter(([,c])=>c===max).map(([n])=>n):[];
+}
 function sealedCount(){const got=current();return guessers().filter(p=>got[p.name]!=null).length}
 function showSealed(){
   const n=sealedCount(),tot=guessers().length;
@@ -799,7 +806,8 @@ function fillAnswers(){
 const fooledList=()=>guessers().filter(p=>S.guesses?.[p.name]!=null&&!S.correct.includes(p.name));
 /* who the room accused this round (decoys included), most first */
 function accusations(){
-  const t={};Object.values(S.guesses||{}).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
+  const t={};Object.entries(S.guesses||{}).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
+    const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
   return Object.entries(t).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
 }
 function awards(){
@@ -856,7 +864,7 @@ function howSteps(){
   if(o.interro)st.push(["🔦","Then the <b>Interrogation Room</b>: the most accused defends themselves, and you can <b>change your vote</b>. Switch to the right person: <b>+250</b>. Switch away from it: <b>−500</b>.","Then, the Interrogation Room. Whoever is accused most defends themselves, and you can change your vote. Switch to the right person for two hundred and fifty bonus points. But switch away from the right answer, and you lose five hundred."]);
   if(o.story)st.push(["🎤","<b>Story time:</b> the owner can accept (<b>+300</b>) and tell the story behind their secret, or decline (<b>−200</b>). Rate the story on your phone.","Then it's story time. The owner can accept, for three hundred points, and tell the story behind their secret. Or decline, and lose two hundred. Everyone rates the story on their phone."]);
   if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
-  if(active().some(p=>p.name===HOST))st.push(["🔮",`<b>${HOST} is the Gamemaker.</b> She knows the secrets, so she predicts how many of you crack each one. In the bonus round, she guesses too!`,`${HOST} is the Gamemaker. She knows the secrets, so she predicts how many of you will crack each one. In the bonus round, she guesses too.`]);
+  if(active().some(p=>p.name===HOST))st.push(["🕵️",`<b>${HOST} is the Gamemaker.</b> She knows the secrets, so she plays <b>Most Wanted</b>: she bets on who you'll wrongly accuse the most. Nail it: <b>+400</b>. In the bonus round, she guesses too!`,`${HOST} is the Gamemaker. She knows the secrets, so she plays Most Wanted. She bets on who you will wrongly accuse the most. If she nails it, four hundred points. In the bonus round, she guesses too.`]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
   st.push(["👑","Most points wins the <b>major award</b>. The final secret counts <b>double</b>.","Most points wins the major award. The final secret counts double. And may the odds be ever in your favor."]);
   return st;
@@ -1020,10 +1028,10 @@ function score(){
   S.players.forEach(p=>{
     p.note="";
     if(!p.on){p.delta=0;return}
-    if(p.name===HOST&&gmPredicts()){   // 🔮 the Gamemaker's prediction: how many cracked it
-      const pick=gmPick(),n=S.correct.filter(x=>x!==HOST).length,d=pick==null?null:Math.abs(pick-n);
-      p.delta=d===0?500*mult:d===1?200*mult:0;p.score+=p.delta;
-      p.note=pick==null?"🔮 No prediction":d===0?`🔮 Perfect prediction: ${n} +${p.delta}`:d===1?`🔮 So close: said ${pick}, it was ${n} +${p.delta}`:`🔮 Said ${pick}, it was ${n}`;return}
+    if(p.name===HOST&&gmPredicts()){   // 🕵️ Most Wanted: did she call who the room would wrongly accuse most?
+      const pick=gmPick(),top=wantedTop(),hit=pick&&top.includes(pick);
+      p.delta=hit?WANTED_PTS*mult:0;p.score+=p.delta;
+      p.note=!pick?"🕵️ No Most Wanted pick":hit?`🕵️ Most Wanted: ${pick}! +${p.delta}`:`🕵️ Bet on ${pick}${top.length?`, the room accused ${top.join(" & ")}`:""}`;return}
     if(p.name===name){
       const st=storyVotes*100*mult,bw=cur().bonus?BONUS_WRITER:0;   // writing a bonus secret that got played is worth points too
       const sb=story==="on"?STORY_YES:0,sn=declined?Math.min(STORY_NO,p.score+fooled*150*mult+st+bw):0;   // took the stage, or declined it
@@ -1206,9 +1214,10 @@ function revealView(){
 }
 /* 🔮 how the Gamemaker's prediction went */
 function gmHTML(){
-  if(!gmPredicts())return"";const pick=gmPick(),n=S.correct.filter(x=>x!==HOST).length;
-  if(pick==null)return `<div class="fooled">🔮 The Gamemaker didn't predict this one</div>`;
-  const d=Math.abs(pick-n);return `<div class="fooled">🔮 ${HOST} predicted ${pick} · ${n} cracked it${d===0?" · PERFECT! +500":d===1?" · so close! +200":""}</div>`;
+  if(!gmPredicts())return"";const pick=gmPick(),top=wantedTop(),mult=isDouble(S.qi)?2:1;
+  if(!pick)return `<div class="fooled">🕵️ ${HOST} didn't name a Most Wanted this time</div>`;
+  const hit=top.includes(pick);
+  return `<div class="fooled">🕵️ ${HOST}'s Most Wanted: <b>${esc(pick)}</b> · the room accused ${top.length?esc(top.join(" & ")):"nobody"}${hit?` · NAILED IT! +${WANTED_PTS*mult}`:""}</div>`;
 }
 /* 🃏 the reveal for a decoy: nobody said it */
 function fakeView(){

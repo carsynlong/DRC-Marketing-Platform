@@ -236,6 +236,7 @@ const Sync = (() => {
       x.onmouseenter = () => x.style.background = "rgba(255,255,255,.08)"; x.onmouseleave = () => x.style.background = "transparent";
       x.onclick = () => { m.hidden = true; fn(); }; m.appendChild(x); };
     item("↺ Restart from the beginning", restart);
+    item("⏭ Skip to the winner (test)", skipToEnd);
     item("📱 Clear phone names", async () => { if (!confirm("Clear every phone's name? Everyone will need to tap their name again.")) return;
       try { await post({ action: "clearPlayers" }); } catch (e) {} phones = []; render(); });
     item("✕ Close", () => {});
@@ -244,6 +245,18 @@ const Sync = (() => {
     const add = () => { document.body.appendChild(b); document.body.appendChild(m); };
     document.body ? add() : addEventListener("DOMContentLoaded", add);
   })();
+  // Host test: jump straight to the winner screen (to check the winner song)
+  function skipToEnd() {
+    try { clearInterval(readyT); } catch (e) {}
+    try { cancelAnimationFrame(raf); } catch (e) {}
+    try { window.Walkout && Walkout.cancel && Walkout.cancel(); } catch (e) {}
+    try { document.getElementById("rules")?.remove(); } catch (e) {}
+    try { ensureAudio(); } catch (e) {}
+    if (!S.rounds || !S.rounds.length || S.phase === "lobby") { newGame(); try { clearInterval(readyT); } catch (e) {} }
+    S.minisDone = [12, 24]; S.tb = null;
+    S.qi = S.rounds.length - 1; S.locked = true; S.phase = "reveal"; S.correct = []; S.typed = {};
+    score();
+  }
   // Back to the lobby with a clean slate. Phones keep their names and follow along.
   function restart(ask = true) {
     if (ask && !confirm("Restart from the beginning? This ends the current game and clears the scores.")) return;

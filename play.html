@@ -403,11 +403,11 @@ function chase(g,s){
 
 /* ---------- 💡 hint + 🔍 spyglass pill during a face ---------- */
 setInterval(()=>{const el=$("#hintpill"),g=D.game;if(!el)return;
-  const sp=g&&g.phase==="question"&&g.spy&&D.me&&g.spy[D.me],t=g&&g.phase==="question"?[sp?`🔍 Spyglass: starts with ${sp}`:"",g.hint?`💡 ${g.hint}`:""].filter(Boolean).join(" · "):"";
+  const sp=g&&g.phase==="question"&&g.spy&&D.me&&g.spy[D.me],t=g&&g.phase==="question"?[sp?`🔍 Spyglass: it's one of ${sp}`:"",g.hint?`💡 ${g.hint}`:""].filter(Boolean).join(" · "):"";
   if(!t){el.hidden=true;el.dataset.t="";return}if(el.dataset.t!==t){el.dataset.t=t;el.textContent=t;el.hidden=false;buzz(30)}},400);
 
 /* ---------- 🛒 sponsor shop (spend Capitol coins on the scoreboard screen) ---------- */
-const SHOP=[["shield","🛡️ Shield",3,"Miss? Keep your streak, no penalty"],["spy","🔍 Spyglass",2,"See the first letter"],["dd","🎯 Double down",4,"Right ×2, wrong −500"],["rose","🌹 Rose",3,"A rival loses 200"]];
+const SHOP=[["shield","🛡️ Shield",3,"Miss? Keep your streak, no penalty"],["spy","🔍 Spyglass",2,"See 4 possible names"],["dd","🎯 Double down",4,"Right ×2, wrong −500"],["rose","🌹 Rose",3,"A rival loses 200"]];
 let roseOpen=false;
 const coinsLeft=()=>Math.max(0,myCoins()-(coins.gid===D.game?.gid?(coins.spent||0):0));
 const boughtFor=qi=>(coins.gid===D.game?.gid&&coins.bought&&coins.bought[qi])||{};

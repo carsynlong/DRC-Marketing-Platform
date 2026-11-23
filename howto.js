@@ -119,7 +119,10 @@ window.HowTo = (() => {
       ${c.sections.map(([h, rows]) => `<h2>${esc(h)}</h2><ul>${rows.map(row).join("")}</ul>`).join("")}
       <div class="ht-end">${esc(c.end)}</div></div>
       <div class="ht-bar"><button type="button" class="ht-ok">Got it! ✅</button></div>`;
-    root.querySelector(".ht-ok").onclick = () => { folded = true; try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} draw(kind, g); tellReady(kind); };
+    root.querySelector(".ht-ok").onclick = () => {
+      try { navigator.vibrate && navigator.vibrate(20); } catch (e) {}
+      if (manual) { manual = false; root.remove(); root = null; key = ""; return; }   // opened from the ❓ button: just close
+      folded = true; draw(kind, g); tellReady(kind); };
   }
 
   // let the TV count this phone as ready (pid / D are the phone page's own globals)
@@ -184,10 +187,30 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
   }
 
   /* called with the latest game state after every poll; o = { me, answered } */
+  /* ❓ a small button on every phone to read the rules again at any time */
+  let manual = false, lastG = null;
+  const pageKind = () => /district-secrets/.test(location.pathname) ? "secrets" : /district-feud/.test(location.pathname) ? "feud" : "tribute";
+  function rulesButton(show) {
+    let b = document.getElementById("rulesbtn");
+    if (!show) { if (b) b.remove(); return; }
+    if (b) return;
+    b = document.createElement("button"); b.id = "rulesbtn"; b.type = "button"; b.textContent = "❓"; b.setAttribute("aria-label", "How to play");
+    b.style.cssText = "position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:2147482400;width:40px;height:40px;border-radius:50%;border:0;" +
+      "background:rgba(0,0,0,.55);color:#fff;font-size:20px;box-shadow:0 0 0 2px rgba(255,255,255,.35);cursor:pointer;padding:0";
+    b.onclick = () => {
+      if (root) return;
+      if (!document.getElementById("howto-css")) { const st = document.createElement("style"); st.id = "howto-css"; st.textContent = CSS; document.head.appendChild(st); }
+      manual = true; folded = false; root = document.createElement("div"); root.id = "howto"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "How to play");
+      document.body.appendChild(root); key = "manual"; draw((lastG && lastG.howto) || pageKind(), lastG || {});
+    };
+    document.body.appendChild(b);
+  }
   function sync(g, o) {
+    lastG = g || lastG; rulesButton(!!(o && o.me && g));
     hurry(g, o || {});
     const kind = g && g.howto;
-    if (!kind) { if (root) { root.remove(); root = null; key = ""; folded = false; } return; }
+    if (!kind) { if (root && !manual) { root.remove(); root = null; key = ""; folded = false; } return; }
+    if (manual) { manual = false; if (root) { root.remove(); root = null; key = ""; } }   // the real How to play takes over
     const k = kind + ":" + (g.gid || "") + ":" + JSON.stringify(g.opts && g.opts.bets || 0);
     // already tapped Got it: keep reminding the TV every few seconds (the TV clears the list each time the rules start)
     if (root && folded && Date.now() - (sync.sent || 0) > 4000) { sync.sent = Date.now(); tellReady(kind); }

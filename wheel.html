@@ -168,12 +168,21 @@ function versus(i){
   document.body.appendChild(ov);
   sfx("whoosh");setTimeout(()=>{sfx("cannon");confetti(140)},700);
   setTimeout(()=>{if(!document.getElementById("vsov"))return;XM.say(XM.spoken(m.a)+"...",()=>{if(!document.getElementById("vsov"))return;
-    XM.say("versus...",()=>{if(document.getElementById("vsov"))XM.say(XM.spoken(m.b)+"!",null,{pitch:.05,rate:.75})},{pitch:.1,rate:.7})},{pitch:.05,rate:.75,interrupt:true})},900);
+    XM.say("versus...",()=>{if(document.getElementById("vsov"))XM.say(XM.spoken(m.b)+"!",()=>booms(ov),{pitch:.05,rate:.75})},{pitch:.1,rate:.7})},{pitch:.05,rate:.75,interrupt:true})},900);
   const close=()=>{XM.hush();ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
   ov.querySelector("#vs-timer").onclick=()=>{XM.hush();ov.remove();openTimer(i)};
   ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{m.win=m[b.dataset.vswin];sfx("fanfare");confetti(160);ov.remove();render();if(S.phase==="play")playSong("board")});
   ov.querySelector("#vs-tie").onclick=()=>{ov.remove();tiebreak([m.a,m.b],m)};
+}
+
+// BOOM. BOOM. BOOM. after the announcer calls the matchup
+function booms(ov){
+  [0,650,1300].forEach((d,k)=>setTimeout(()=>{if(!document.body.contains(ov))return;sfx("boom");
+    ov.animate([{transform:"translate(-18px,8px)"},{transform:"translate(16px,-8px)"},{transform:"translate(-8px,4px)"},{transform:"none"}],{duration:380});
+    const v=ov.querySelector(".VS");if(v)v.animate([{transform:"scale(1)"},{transform:`scale(${1.35+k*.15})`,filter:"brightness(1.8)"},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.2,1.4,.4,1)"});
+    ov.querySelectorAll(".fighter img").forEach(i=>i.animate([{transform:"scale(1)"},{transform:"scale(1.06)"},{transform:"scale(1)"}],{duration:300}));
+    if(k===2)confetti(120)},d));
 }
 
 /* ---------- flow ---------- */

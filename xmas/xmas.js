@@ -218,6 +218,10 @@ XM.sfx=function(kind){
   if(kind==="drum"){INST.kick(t,0,0,1.2);noise(t,.18,.35,sfxBus,"bandpass",1800,.7);osc("triangle",hz(43),t,.4,.3,sfxBus)}
   if(kind==="drumroll"){for(let k=0;k<40;k++)noise(t+k*.05,.06,.08+k*.006,sfxBus,"bandpass",2000,.8);INST.kick(t+2,0,0,1.4);noise(t+2,.5,.4,sfxBus,"highpass",5000)}
   if(kind==="go"){[79,84,88].forEach((m,k)=>osc("sine",hz(m),t+k*.05,.9,.15,sfxBus));for(let k=0;k<8;k++)noise(t+k*.04,.08,.12,sfxBus,"bandpass",9000,1.3)}
+  if(kind==="boom"){ // big dramatic hit: deep drop, sub thump and a crack of noise
+    const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(30,t+.5);
+    o.connect(g);g.connect(sfxBus);env(g,t,.003,1,1.1);o.start(t);o.stop(t+1.2);
+    noise(t,.9,.7,sfxBus,"lowpass",260);noise(t,.12,.45,sfxBus,"bandpass",1500,.7);osc("sawtooth",hz(28),t,.8,.25,sfxBus,200)}
   if(kind==="gong"){osc("sine",hz(45),t,2.5,.4,sfxBus);osc("sine",hz(57),t,2,.15,sfxBus);noise(t,.6,.2,sfxBus,"bandpass",600,2)}
   if(kind==="trombone"){[[58,0,.45],[57,.5,.45],[56,1,.45],[55,1.5,1.4]].forEach(([m,d,len])=>{const o=osc("sawtooth",hz(m-12),t+d,len,.16,sfxBus,1300);
     if(len>1){const l=AC.createOscillator(),lg=AC.createGain();l.frequency.value=6;lg.gain.value=8;l.connect(lg);lg.connect(o.frequency);l.start(t+d);l.stop(t+d+len)}})}

@@ -118,9 +118,18 @@ window.HowTo = (() => {
       ${c.sections.map(([h, rows]) => `<h2>${esc(h)}</h2><ul>${rows.map(row).join("")}</ul>`).join("")}
       <div class="ht-end">${esc(c.end)}</div></div>
       <div class="ht-bar"><button type="button" class="ht-ok">Got it! ✅</button></div>`;
-    root.querySelector(".ht-ok").onclick = () => { folded = true; try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} draw(kind, g); };
+    root.querySelector(".ht-ok").onclick = () => { folded = true; try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} draw(kind, g); tellReady(kind); };
   }
 
+  // let the TV count this phone as ready (pid / D are the phone page's own globals)
+  function tellReady(kind) {
+    try {
+      const who = typeof D !== "undefined" && D && D.me, id = typeof pid !== "undefined" ? pid : null;
+      if (!who || !id) return;
+      fetch("/api/ready", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ g: { secrets: "ds", feud: "df" }[kind] || "", pid: id, name: who }) }).catch(() => {});
+    } catch (e) {}
+  }
   /* called with the latest game state after every poll */
   function sync(g) {
     const kind = g && g.howto;

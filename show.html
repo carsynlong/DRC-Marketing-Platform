@@ -78,7 +78,8 @@ body{cursor:default}
 
 /* lobby */
 .lobbycard{position:relative;width:560px;height:700px}
-.lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity 1s ease,transform 1s ease;transform:scale(.94)}
+.lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
+.lobbycard .lc.on{transition-delay:.35s}
 .lobbycard .lc.on{opacity:1;transform:none}
 .lobbycard img{width:460px;height:460px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)}
 /* full-screen moments: Capitol Interruption, unboxing, photo */
@@ -341,6 +342,36 @@ function beginTrack(id){
 {const set=XM.setSound;XM.setSound=on=>{set(on);BEGIN.muted=!on}}
 
 /* ---------- the slides, in show order ---------- */
+const HG_FACTS=[
+ "Suzanne Collins got the idea while flipping channels between a reality competition show and news footage of war.",
+ "\"Panem\" comes from the Latin phrase \"panem et circenses,\" meaning \"bread and circuses.\"",
+ "Katniss is named after a real edible plant, also called arrowhead.",
+ "Every Hunger Games has 24 tributes: one boy and one girl from each of the 12 districts.",
+ "Katniss volunteers for the 74th Hunger Games to save her sister Prim.",
+ "The mockingjay is a mix of mockingbirds and jabberjays, spy birds the Capitol created.",
+ "Peeta's family runs a bakery in District 12.",
+ "District 12 is the coal mining district. District 4 is the fishing district.",
+ "In District 12, the three-finger salute means thanks, admiration, and goodbye to someone you love.",
+ "The first Hunger Games book came out in 2008. The first movie came out in 2012.",
+ "Catching Fire's Quarter Quell, the 75th Games, reaped tributes from past victors.",
+ "Haymitch won the 50th Hunger Games, the second Quarter Quell.",
+ "The prequel, The Ballad of Songbirds and Snakes, follows a young Coriolanus Snow.",
+ "Sunrise on the Reaping, published in 2025, tells the story of Haymitch's Games.",
+ "Nightlock berries are deadly. Katniss and Peeta's berry trick ends the 74th Games with two victors.",
+];
+const XMAS_FACTS=[
+ "\"Jingle Bells\" was the first song played in space, by the Gemini 6 astronauts in 1965.",
+ "\"Jingle Bells\" was first published in 1857 under the title \"One Horse Open Sleigh.\"",
+ "Tinsel was originally made from real silver.",
+ "In Japan, KFC is a popular Christmas dinner.",
+ "Rudolph the Red-Nosed Reindeer was created in 1939 for a department store booklet.",
+ "\"Silent Night\" was first performed in 1818 in a small church in Oberndorf, Austria.",
+ "Every year since 1947, Norway has sent London a giant Christmas tree as a thank-you for help during World War II.",
+ "\"Twas the Night Before Christmas\" was first published in 1823, as \"A Visit from St. Nicholas.\"",
+ "In Iceland, 13 mischievous Yule Lads visit children on the 13 nights before Christmas.",
+ "\"Carol of the Bells\" comes from a Ukrainian folk chant arranged by Mykola Leontovych.",
+ "Decorating Christmas trees became a tradition in Germany hundreds of years ago.",
+];
 const SLIDES=[
  {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:64px;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
@@ -351,8 +382,14 @@ const SLIDES=[
       <h1 class="title-xl slam" ${d(.6)} style="font-size:120px">Christmas Games</h1>
       <span class="pill pop" ${d(1.1)}>Thanksmas Edition</span>
       <div class="fade" ${d(1.4)} style="font-size:44px;font-weight:600">The Games begin soon. Find your seat, tributes.</div>
+      <div class="card fade" ${d(1.8)} style="padding:22px 30px;max-width:980px;min-height:150px;transition:opacity .6s" id="hgfact"></div>
     </div></div>`,
    enter(el){const cards=[...el.querySelectorAll(".lc")];let i=0;
+     const box=el.querySelector("#hgfact");const mix=a=>a.slice().sort(()=>Math.random()-.5);
+     const hg=mix(HG_FACTS).map(t=>["🏹 HUNGER GAMES FUN FACT",t]),xm=mix(XMAS_FACTS).map(t=>["🎄 CHRISTMAS FUN FACT",t]);
+     const facts=[];for(let k=0;k<Math.max(hg.length,xm.length);k++){if(hg[k])facts.push(hg[k]);if(xm[k])facts.push(xm[k])}let f=0;
+     const fact=()=>{box.style.opacity=0;setTimeout(()=>{const [lab,txt]=facts[f%facts.length];box.innerHTML=`<div class="eb" style="color:${lab.startsWith("🎄")?"#6fe38e":"var(--gold)"}">${lab}</div><div style="font-size:32px;font-weight:600;line-height:1.3;margin-top:8px">${esc(txt)}</div>`;box.style.opacity=1;f++},600)};
+     fact();const fiv=setInterval(()=>{if(curEl!==el){clearInterval(fiv);return}fact()},9000);
      const show=()=>{cards.forEach((c,j)=>c.classList.toggle("on",j===i))};
      show();const iv=setInterval(()=>{if(curEl!==el){clearInterval(iv);return}i=(i+1)%cards.length;show()},4500)}},
  {id:"title",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:20px">

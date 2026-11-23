@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gamemaker Cheat Sheet</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<style>
+:root{--ink:#16211c;--muted:#5d6b63;--gold:#b07a14;--red:#a52a22;--line:#e2ddd0;--bg:#fbf8f1}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Outfit",system-ui,sans-serif}
+main{max-width:1000px;margin:0 auto;padding:24px 16px 40px}
+h1{font-family:"Rye",Georgia,serif;font-weight:400;color:var(--red);margin:0;font-size:2rem}
+h2{font-family:"Rye",Georgia,serif;font-weight:400;color:var(--gold);font-size:1.25rem;margin:22px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.sub{color:var(--muted);margin:4px 0 0}
+.keys{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px}
+kbd{font:700 .8rem "Outfit",sans-serif;border:1px solid #bbb;border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:#fff}
+ol{margin:0;padding:0;list-style:none;columns:2;column-gap:28px}
+ol li{break-inside:avoid;display:grid;grid-template-columns:2.1em 1fr;gap:6px;padding:5px 0;border-bottom:1px dashed var(--line)}
+ol li .n{font-weight:800;color:var(--muted);text-align:right}
+ol li b{display:block}
+ol li span{color:var(--muted);font-size:.92rem}
+.box{border:2px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff}
+.box ul{margin:6px 0 0;padding-left:18px}
+.print{float:right;font:700 .9rem "Outfit",sans-serif;border:0;border-radius:999px;padding:8px 16px;background:var(--red);color:#fff;cursor:pointer}
+@media (max-width:700px){ol{columns:1}}
+@media print{.print{display:none}body{background:#fff;font-size:11.5px}main{padding:0}h2{margin-top:12px}ol li{padding:3px 0}}
+</style>
+</head>
+<body>
+<main>
+<button class="print" onclick="print()">Print</button>
+<h1>Gamemaker Cheat Sheet</h1>
+<p class="sub">The 2026 Christmas Games, Thanksmas Edition. Show link: <b>whos-that-tribute.vercel.app/show</b></p>
+
+<h2>Before everyone arrives</h2>
+<div class="box"><ul>
+<li>Plug the laptop into the TV. Open the show link in Chrome and click to start. Press <kbd>F</kbd> for fullscreen.</li>
+<li>Turn the volume up. Test sound on the lobby screen (lo-fi music should be playing).</li>
+<li>Have ready: cookies, blindfolds, spoons, bowls and cotton snowballs, 3 dice and chips, bingo cards and pens, the bingo cage, major awards.</li>
+<li>Clear test names: on The Capitol Has Spoken (slide 43), tap each game, delete the name, press Enter.</li>
+</ul></div>
+
+<h2>Keys</h2>
+<div class="keys"><span><kbd>→</kbd> <kbd>Space</kbd> or click: next</span><span><kbd>←</kbd>: back</span><span><kbd>F</kbd>: fullscreen</span><span><kbd>M</kbd>: mute</span><span><kbd>C</kbd> or ⚡: Capitol Interruption</span><span><kbd>Esc</kbd>: close a pop-up</span><span><kbd>Home</kbd> / <kbd>End</kbd>: first / last slide</span></div>
+<p class="sub">Games, the wheel and bingo open in a new tab. When done, close that tab to come back to the same slide.</p>
+
+<h2>The show, slide by slide</h2>
+<ol>
+<li><span class="n">1</span><div><b>Lobby</b><span>Leave this up while people arrive. Press → when it's time.</span></div></li>
+<li><span class="n">2</span><div><b>Title</b><span>The announcer welcomes everyone. Wait for it.</span></div></li>
+<li><span class="n">3</span><div><b>Welcome (your speech)</b><span>Read it yourself: "Citizens of the living room!"</span></div></li>
+<li><span class="n">4</span><div><b>Rules of the Arena</b><span>Announcer reads the 4 rules. Let it finish.</span></div></li>
+<li><span class="n">5</span><div><b>Eight Games. One Arena.</b><span>The lineup.</span></div></li>
+<li><span class="n">6</span><div><b>Meet the Tributes</b><span>All 12.</span></div></li>
+<li><span class="n">7-18</span><div><b>Tribute profiles, District 1 to 12</b><span>Announcer calls each name, then reads the weapon, strategy and odds. Let each finish before →.</span></div></li>
+<li><span class="n">19</span><div><b>Let the Games BEGIN!</b><span>Your song plays. It stops when you press →.</span></div></li>
+<li><span class="n">20</span><div><b>Game 1: Smart Cookie Showdown</b><span>Title slide.</span></div></li>
+<li><span class="n">21</span><div><b>How to Play</b><span>Announcer reads the steps.</span></div></li>
+<li><span class="n">22</span><div><b>Matchup Wheel</b><span>Click SPIN THE WHEEL. Spin twice per face-off, tap who won on the VS screen. Winners go back on until one champion. Save as victor, close the tab.</span></div></li>
+<li><span class="n">23</span><div><b>Was There a Tie?</b><span>Yes: tap who tied. No: skip.</span></div></li>
+<li><span class="n">24</span><div><b>Game 2: Who's That Tribute?</b><span>Click Play (new tab). Close it when done.</span></div></li>
+<li><span class="n">25</span><div><b>Game 3: Mitten Mayhem</b><span>Title slide.</span></div></li>
+<li><span class="n">26</span><div><b>How to Play... IDK. Ask Granny.</b><span>The joke slide.</span></div></li>
+<li><span class="n">27</span><div><b>Who Goes First?</b><span>Tap to sit people out, then Shuffle. Everyone wins this one.</span></div></li>
+<li><span class="n">28</span><div><b>Game 4: District Feud</b><span>Click Play (new tab). Close it when done.</span></div></li>
+<li><span class="n">29</span><div><b>Halftime Report</b><span>Shows Games 1 to 4 victors and who's leading. Record victors first so it fills in.</span></div></li>
+<li><span class="n">30</span><div><b>Game 5: Blind Snowball Scoop</b><span>Title slide.</span></div></li>
+<li><span class="n">31</span><div><b>How to Play</b><span>Announcer reads the steps.</span></div></li>
+<li><span class="n">32</span><div><b>Matchup Wheel</b><span>Same as Game 1 (30-second timer).</span></div></li>
+<li><span class="n">33</span><div><b>Was There a Tie?</b><span>Yes or skip.</span></div></li>
+<li><span class="n">34</span><div><b>Game 6: District Secrets</b><span>Click Play (new tab). Close it when done.</span></div></li>
+<li><span class="n">35</span><div><b>Game 7: Left, Right, Capitol</b><span>Title slide.</span></div></li>
+<li><span class="n">36</span><div><b>How to Play... IDK. Ask Elisha.</b><span>The joke slide.</span></div></li>
+<li><span class="n">37</span><div><b>Who Goes First?</b><span>Shuffle for the rolling order.</span></div></li>
+<li><span class="n">38</span><div><b>Was There a Tie?</b><span>Yes or skip.</span></div></li>
+<li><span class="n">39</span><div><b>Game 8: District Bingo</b><span>Title slide.</span></div></li>
+<li><span class="n">40</span><div><b>How to Play</b><span>Announcer reads the steps.</span></div></li>
+<li><span class="n">41</span><div><b>The Bingo Board</b><span>Click to open. Pick the game type first (Blackout last). Tap each number from the cage. Someone yells BINGO? Type their card number, Check card.</span></div></li>
+<li><span class="n">42</span><div><b>Was There a Tie?</b><span>Closest Call tiebreaker, or skip.</span></div></li>
+<li><span class="n">43</span><div><b>The Capitol Has Spoken</b><span>All victors. If someone won 2+ games, click Reveal the Ultimate Victor.</span></div></li>
+<li><span class="n">44</span><div><b>Congrats to All Our Victors!</b><span>Click 📸 Victors' photo for the group photo countdown.</span></div></li>
+</ol>
+
+<h2>On every game slide (top right)</h2>
+<div class="box"><ul>
+<li><b>🏆 Record victor:</b> tap the winner's photo. It celebrates and saves.</li>
+<li><b>🎁 Unbox:</b> appears after a victor is recorded. They open the major award, you rate it Treasure, Mystery or Junk.</li>
+<li><b>⚔️ Tiebreaker:</b> on the physical and luck games. Tap who tied, pick a tiebreaker, tap who won.</li>
+<li><b>⚡ Capitol Interruption</b> (bottom left, or <kbd>C</kbd>): a random challenge for a random tribute. Great while setting up the next game.</li>
+</ul></div>
+</main>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/xmas-sw.js").catch(()=>{}));</script>
+</body>
+</html>

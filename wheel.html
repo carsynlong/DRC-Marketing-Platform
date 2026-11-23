@@ -326,5 +326,6 @@ document.addEventListener("pointerdown",()=>ensureAudio(),{once:true});
 render();
 document.fonts&&document.fonts.ready.then(()=>drawWheel());
 </script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/xmas-sw.js").catch(()=>{}));</script>
 </body>
 </html>

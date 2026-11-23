@@ -178,5 +178,6 @@ document.addEventListener("keydown",e=>{if(e.ctrlKey||e.metaKey||e.altKey)return
 fetch("/xmas/bingo-cards.json",{cache:"no-cache"}).then(r=>r.json()).then(c=>{CARDS=c;if(S.gm&&!(S.gm<=CARDS.length))S.gm=null;S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;render()})
   .catch(()=>{document.getElementById("app").innerHTML=`<p style="margin-top:20vh;text-align:center">Couldn't load the bingo cards. Check the internet connection and refresh.</p>`});
 </script>
+<script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/xmas-sw.js").catch(()=>{}));</script>
 </body>
 </html>

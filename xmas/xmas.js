@@ -225,6 +225,8 @@ const HIP={
     chords:[Gm,GmF,Eb,D7],bpm:136,style:"trap"}),
   lrc:mkHip({mel:[[62,1],[67,1],[67,1.5],[66,.5],[67,1],[71,1],[71,1],[69,1],[74,1],[74,1],[74,1.5],[72,.5],[71,1],[69,1],[71,2]],oct:12,lead:"bell",
     chords:[G,D,Em7,C],bpm:96,style:"boom"}),
+  lounge:mkHip({mel:[[64,1],[64,1],[64,2],[64,1],[64,1],[64,2],[64,1],[67,1],[60,1.5],[62,.5],[64,4],[65,1],[65,1],[65,1.5],[65,.5],[65,1],[64,1],[64,1],[64,.5],[64,.5],[67,1],[67,1],[65,1],[62,1],[60,4]],
+    oct:0,lead:"soft",leadVol:.8,chords:[C7,Am7,Dm7,G7],bpm:72,style:"lofi",swing:.12}),
   bingo:mkHip({mel:[[72,1],[71,.75],[69,.25],[67,1.5],[65,.5],[64,1],[62,1],[60,1.5],[67,.5],[69,1.5],[69,.5],[71,1.5],[71,.5],[72,3.5]],oct:12,lead:"bell",leadVol:.8,
     chords:[C,Am7,F,G7],bpm:98,style:"boom"}),
 };
@@ -233,7 +235,7 @@ XM.duck=on=>{if(musicBus)musicBus.gain.setTargetAtTime(on?.16:.5,AC.currentTime,
 XM.playSong=function(name,force){
   if(songName===name&&!force)return;
   XM.stopSong();if(!ensureAudio())return;
-  song=SONGS[name];songName=name;
+  song=SONGS[name];if(!song){songName=null;return}songName=name;
   const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=AC.currentTime+.08,i=0;
   timerId=setInterval(()=>{
     const spb=60/song.bpm;
@@ -271,6 +273,10 @@ XM.sfx=function(kind){
   if(kind==="go"){[79,84,88].forEach((m,k)=>osc("sine",hz(m),t+k*.05,.9,.15,sfxBus));for(let k=0;k<8;k++)noise(t+k*.04,.08,.12,sfxBus,"bandpass",9000,1.3)}
   if(kind==="firework"){const o=osc("sine",600,t,.6,.05,sfxBus);o.frequency.exponentialRampToValueAtTime(2400,t+.55);
     INST.kick(t+.6,0,0,1.2);noise(t+.6,.5,.45,sfxBus,"lowpass",900);for(let k=0;k<14;k++)noise(t+.7+k*.04+Math.random()*.03,.03,.12,sfxBus,"highpass",5000)}
+  if(kind==="siren"){const o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";o.frequency.setValueAtTime(600,t);
+    for(let k=0;k<6;k++){o.frequency.linearRampToValueAtTime(1100,t+k*.5+.25);o.frequency.linearRampToValueAtTime(600,t+k*.5+.5)}
+    const f=AC.createBiquadFilter();f.type="lowpass";f.frequency.value=2200;o.connect(f);f.connect(g);g.connect(sfxBus);env(g,t,.05,.12,3);o.start(t);o.stop(t+3.05)}
+  if(kind==="shutter"){noise(t,.05,.5,sfxBus,"highpass",3000);noise(t+.09,.06,.4,sfxBus,"bandpass",2000,1)}
   if(kind==="boom"){ // big dramatic hit: deep drop, sub thump and a crack of noise
     const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(30,t+.5);
     o.connect(g);g.connect(sfxBus);env(g,t,.003,1,1.1);o.start(t);o.stop(t+1.2);

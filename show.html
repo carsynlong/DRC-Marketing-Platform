@@ -575,8 +575,7 @@ const SLIDES=[
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
     <h2 class="title-l fd" ${d(1.8)} style="color:#fff;font-size:84px">Merry Christmas, Tributes</h2>
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
-    <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div>
-    <button class="btn bigbtn pop" ${d(3.2)} id="photo" style="font-size:30px;padding:18px 40px">📸 Victors' photo countdown</button></div>`,
+    <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div>`,
    enter(el){SNOW.set(3.2);
      st(()=>{if(curEl!==el)return;XM.sfx("boom");st(()=>XM.sfx("boom"),380);st(()=>XM.sfx("cheer"),600);st(()=>XM.sfx("applause"),1800);
        [1200,1800,2400,3100,3800,4600].forEach(t=>st(()=>curEl===el&&XM.sfx("firework"),t));XM.confetti(260,true);st(()=>curEl===el&&XM.confetti(220,true),2500)},1000);
@@ -650,7 +649,6 @@ function wireSlide(el){
   el.querySelectorAll("[data-victor]").forEach(b=>b.onclick=e=>{e.stopPropagation();pickVictor(b.dataset.victor)});
   el.querySelectorAll("[data-unbox]").forEach(b=>b.onclick=e=>{e.stopPropagation();unbox(b.dataset.unbox)});
   el.querySelectorAll("[data-interview]").forEach(b=>b.onclick=e=>{e.stopPropagation();interview(b.dataset.interview)});
-  const ph=el.querySelector("#photo");if(ph)ph.onclick=e=>{e.stopPropagation();photoCountdown()};
   el.querySelectorAll("[data-skip]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.sfx("whoosh");next()});
   const m=el.querySelector("#memo");if(m)m.onclick=e=>{e.stopPropagation();memorial()};
 }
@@ -846,26 +844,6 @@ function unbox(g){
     if(r==="junk")XM.sfx("trombone");else{XM.sfx("fanfare");XM.confetti(r==="treasure"?240:120,r==="treasure")}
     setTimeout(()=>alive&&close(),3500)});
   m.querySelector("#u-x").onclick=e=>{e.stopPropagation();close()};
-}
-
-/* ---------- Victors' photo countdown ---------- */
-function photoCountdown(){
-  if(busy())return;XM.ensureAudio();announcer.stop();
-  const m=document.createElement("div");m.className="moment photo";document.body.appendChild(m);let alive=true;const timers=[];
-  const T=(f,ms)=>timers.push(setTimeout(()=>alive&&f(),ms));
-  const close=()=>{alive=false;timers.forEach(clearTimeout);m.remove();announcer.stop();document.removeEventListener("keydown",key,true)};
-  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
-  document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
-  m.innerHTML=`<div class="inner"><h1>📸 Victors' Photo!</h1><div class="eb" style="font-size:1.1rem;color:var(--ink)">Everyone squeeze in. Victors up front.</div><div class="num" id="pn"></div><div class="flash" id="pf"></div>
-    <div class="row"><button class="btn ghost" id="p-again">Take another</button><button class="btn ghost" id="p-x">Done (Esc)</button></div></div>`;
-  const pn=m.querySelector("#pn"),pf=m.querySelector("#pf");
-  const go=()=>{pn.style.fontSize="";announcer.say("Everyone in the photo!",null,{pitch:.15,rate:.9});
-    [5,4,3,2,1].forEach((n,i)=>T(()=>{pn.textContent=n;pn.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350});XM.sfx(n===1?"thud":"drum");announcer.say(["","one","two","three","four","five"][n],null,{pitch:.1,rate:1})},1800+i*1000));
-    T(()=>{announcer.say("Say major award!",null,{pitch:.3,rate:1});pn.style.fontSize="min(18vh,12vw)";pn.textContent="Say MAJOR AWARD!"},6800);
-    T(()=>{XM.sfx("shutter");pf.animate([{opacity:1},{opacity:0}],{duration:700,easing:"ease-out"});XM.confetti(240,true)},8000)};
-  m.querySelector("#p-again").onclick=e=>{e.stopPropagation();timers.forEach(clearTimeout);go()};
-  m.querySelector("#p-x").onclick=e=>{e.stopPropagation();close()};
-  go();
 }
 
 /* ---------- victors board ---------- */

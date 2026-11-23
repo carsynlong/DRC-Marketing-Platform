@@ -78,10 +78,10 @@ function lines(card){const has=(c,r)=>(c===2&&r===2)||S.called.includes(card[c][
   if([0,1,2,3,4].every(i=>has(i,i)))out.push([0,1,2,3,4].map(i=>[i,i]));
   if([0,1,2,3,4].every(i=>has(i,4-i)))out.push([0,1,2,3,4].map(i=>[i,4-i]));return out}
 function check(){const k=+document.getElementById("cardno").value;if(!(k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
-  const ln=lines(CARDS[k-1]);S.checked={k,ln};if(ln.length){sfx("fanfare");XM.confetti(220,true);bigWin(`Card ${k}`)}else sfx("cannon");render();}
+  const ln=lines(CARDS[k-1]);S.checked={k,ln};if(ln.length){bigWin(`Card ${k}`);XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}else sfx("cannon");render();}
 function gmCheck(justCalled){
   if(!S.gm)return;const has=lines(CARDS[S.gm-1]).length>0;
-  if(has&&!S.gmBingo&&justCalled){sfx("fanfare");XM.confetti(200,true);bigWin("The Gamemaker",`Card ${S.gm}`)}
+  if(has&&!S.gmBingo&&justCalled){bigWin("The Gamemaker",`Card ${S.gm}`);XM.celebrate("",{line:"Bingo! The Gamemaker is a winner!"})}
   S.gmBingo=has;render();
 }
 function bigWin(who,sub=""){

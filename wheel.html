@@ -172,7 +172,7 @@ function versus(i){
   const close=()=>{XM.hush();ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
   ov.querySelector("#vs-timer").onclick=()=>{XM.hush();ov.remove();openTimer(i)};
-  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{m.win=m[b.dataset.vswin];sfx("fanfare");confetti(160);ov.remove();render();if(S.phase==="play")playSong("board")});
+  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{XM.hush();m.win=m[b.dataset.vswin];ov.remove();render();stopSong();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
   ov.querySelector("#vs-tie").onclick=()=>{ov.remove();tiebreak([m.a,m.b],m)};
 }
 
@@ -196,7 +196,7 @@ function newRound(names){
 function nextRound(){
   const w=S.matches.map(m=>m.win).concat(S.bye?[S.bye]:[]);
   S.history.push({round:S.round,matches:S.matches.map(m=>({a:m.a,b:m.b,win:m.win})),bye:S.bye});
-  if(w.length===1){S.champ=w[0];S.phase="champ";stopSong();sfx("fanfare");confetti(240,true);setTimeout(()=>S.phase==="champ"&&playSong("lobby"),2600);render();return}
+  if(w.length===1){S.champ=w[0];S.phase="champ";stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>S.phase==="champ"&&playSong("lobby"),4500);return}
   S.round++;newRound(shuffle(w));
 }
 let tId=0;
@@ -211,7 +211,7 @@ function openTimer(i){
   document.body.appendChild(ov);
   const close=()=>{clearInterval(tId);XM.hush();ov.remove();stopSong();playSong("board")};
   ov.querySelector("#tclose").onclick=close;
-  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{clearInterval(tId);m.win=m[b.dataset.twin];ov.remove();stopSong();sfx("fanfare");confetti(160);render();if(S.phase==="play")playSong("board")});
+  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{clearInterval(tId);XM.hush();m.win=m[b.dataset.twin];ov.remove();stopSong();render();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
   ov.querySelector("#ttie").onclick=()=>{clearInterval(tId);ov.remove();tiebreak([m.a,m.b],m)};
   const word=["zero","one","two","three","four","five"];
   const num=(t,hot)=>{const el=document.getElementById("tnum");if(!el)return;el.textContent=t;el.style.color=hot?"#ff6b5e":"";el.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350,easing:"cubic-bezier(.2,1.4,.4,1)"})};
@@ -295,7 +295,7 @@ function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
   document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");loadS(S.game);render()});
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{S.present[b.dataset.here]=!S.present[b.dataset.here];XM.store.set("xmas-present",S.present);sfx(S.present[b.dataset.here]?"tap":"untap");render()});
-  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];sfx(m.win?"pop":"untap");if(m.win)confetti(40);render()});
+  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];render();if(m.win)XM.celebrate(m.win);else sfx("untap")});
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
   document.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{ensureAudio();versus(+b.dataset.vs)});
   document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b],m)});

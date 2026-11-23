@@ -101,6 +101,14 @@ const INST={
   timp:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(hz(m)*1.5,t);o.frequency.exponentialRampToValueAtTime(hz(m),t+.08);
     o.connect(g);g.connect(musicBus);env(g,t,.004,v*.6,1.2);o.start(t);o.stop(t+1.3);noise(t,.15,v*.12,musicBus,"lowpass",500)},
   snare:(t,m,d,v)=>noise(t,.12,v*.16,musicBus,"bandpass",2200,.8),
+  b808:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain(),f=AC.createBiquadFilter();o.type="sine";o.frequency.setValueAtTime(hz(m)*1.6,t);o.frequency.exponentialRampToValueAtTime(hz(m),t+.06);
+    f.type="lowpass";f.frequency.value=600;o.connect(f);f.connect(g);g.connect(musicBus);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v*.75,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+Math.max(.35,d));o.start(t);o.stop(t+Math.max(.4,d)+.05)},
+  hkick:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(170,t);o.frequency.exponentialRampToValueAtTime(45,t+.09);
+    o.connect(g);g.connect(musicBus);env(g,t,.002,v*.9,.28);o.start(t);o.stop(t+.32);noise(t,.02,v*.15,musicBus,"highpass",3000)},
+  clap:(t,m,d,v)=>{[0,.012,.026].forEach(x=>noise(t+x,.05,v*.2,musicBus,"bandpass",1400,1.2));noise(t+.03,.18,v*.12,musicBus,"bandpass",1800,.9)},
+  that:(t,m,d,v)=>noise(t,.03,v*.11,musicBus,"highpass",9000),
+  crackle:(t,m,d,v)=>noise(t,.008,v*.05,musicBus,"highpass",4000),
+  rhodes:(t,m,d,v)=>{osc("sine",hz(m),t,Math.max(.5,d),v*.13,musicBus);osc("triangle",hz(m+12),t,.35,v*.03,musicBus);osc("sine",hz(m)*3,t,.15,v*.02,musicBus)},
   taiko:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);
     o.connect(g);g.connect(musicBus);env(g,t,.003,v*.9,.5);o.start(t);o.stop(t+.6);noise(t,.12,v*.22,musicBus,"lowpass",700)},
   brass:(t,m,d,v)=>{[-6,6].forEach(det=>{const o=AC.createOscillator(),f=AC.createBiquadFilter(),g=AC.createGain();o.type="sawtooth";o.frequency.value=hz(m);o.detune.value=det;
@@ -177,7 +185,50 @@ function mkBattle(){ // "We Three Kings" (Hopkins, 1857): fast, pounding battle 
     if(i%4===0)ev.push([b,"brass",r+12,3,.7],[b,"brass",r+19,3,.5]);});
   return {bpm:210,len:48,ev};
 }
-const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge(),march:mkMarch(),battle:mkBattle()};
+/* Hip-hop Christmas tracks, one per game. Melodies are public-domain carols. */
+function mkHip({mel,stretch=1,oct=12,lead="bell",leadVol=.7,chords,bpm=90,style="boom",swing=.08}){
+  let b=0;const ev=[];mel.forEach(([m,d])=>{const dd=d*stretch;if(m)ev.push([b,lead,m+oct,dd,leadVol]);b+=dd});
+  const bars=Math.max(4,Math.ceil(b/4));
+  for(let bar=0;bar<bars;bar++){const B=bar*4,ch=chords[bar%chords.length],r=ch[0]-12;
+    ch.forEach((m,k)=>ev.push([B+k*.03,"rhodes",m,3.6,style==="lofi"?.7:.85]));
+    if(style==="trap"){ // half-time: clap on 3, 16th hats with rolls, sliding 808s
+      ev.push([B,"hkick",0,1,1],[B+1.75,"hkick",0,1,.7],[B+2.5,"hkick",0,1,.6],[B+2,"clap",0,1,1.1]);
+      ev.push([B,"b808",r,1.6,1],[B+1.75,"b808",r,.8,.8],[B+2.5,"b808",r+(bar%2?3:7),1.3,.9]);
+      for(let k=0;k<16;k++)ev.push([B+k/4,"that",0,.25,k%4===0?1:.55]);
+      if(bar%2)for(let k=0;k<8;k++)ev.push([B+3+k/8,"that",0,.1,.8]);
+    }else if(style==="lofi"){ // chill: lazy swing, soft drums, vinyl crackle
+      ev.push([B,"hkick",0,1,.8],[B+2.5+swing,"hkick",0,1,.6],[B+1,"clap",0,1,.55],[B+3,"clap",0,1,.55],[B,"b808",r,3.5,.7]);
+      for(let k=0;k<8;k++)ev.push([B+k/2+(k%2?swing:0),"that",0,.5,k%2?.35:.6]);
+      for(let k=0;k<12;k++)ev.push([B+Math.random()*4,"crackle",0,.1,1]);
+    }else{ // boom-bap bounce
+      ev.push([B,"hkick",0,1,1],[B+.75+swing,"hkick",0,1,.6],[B+2.5,"hkick",0,1,.9],[B+1,"clap",0,1,1],[B+3,"clap",0,1,1]);
+      ev.push([B,"b808",r,1.4,1],[B+1.5+swing,"b808",r,.6,.8],[B+2.5,"b808",r+(bar%2?7:0),1.2,.9]);
+      for(let k=0;k<8;k++)ev.push([B+k/2+(k%2?swing:0),"that",0,.5,k%2?.6:1]);
+      if(bar%2)for(let k=0;k<6;k++)ev.push([B+3.5+k/12,"that",0,.1,.7]);
+      for(let k=0;k<4;k++)ev.push([B+k+.5+swing,"sleigh",0,.5,.45]);
+    }}
+  return {bpm,len:bars*4,ev};
+}
+const C7=[48,52,55,59],Am7=[45,48,52,55],Fm7=[41,45,48,52],G7=[43,47,50,53],Em7=[40,43,47,50],Cm7=[36,40,43,47],B7=[47,51,54,57],Dm7=[50,53,57,60],Gm=[43,46,50,55],GmF=[41,46,50,55],Eb=[39,43,46,51],D7=[38,42,45,48],G=[43,47,50,55],D=[38,42,45,50],C=[36,40,43,48],F=[41,45,48,53];
+const HIP={
+  cookie:mkHip({mel:[[64,1],[64,1],[64,2],[64,1],[64,1],[64,2],[64,1],[67,1],[60,1.5],[62,.5],[64,4],[65,1],[65,1],[65,1.5],[65,.5],[65,1],[64,1],[64,1],[64,.5],[64,.5],[64,1],[62,1],[62,1],[64,1],[62,2],[67,2]],
+    chords:[Am7,Fm7,C7,G7],bpm:94,style:"boom"}),
+  tribute:mkHip({mel:[[71,2],[69,1],[67,2],[64,1],[66,1],[67,1],[66,1],[64,3],[71,2],[69,1],[67,2],[64,1],[66,1],[67,1],[66,1],[64,3]],stretch:4/3,oct:0,lead:"rhodes",leadVol:1.4,
+    chords:[Em7,Cm7,Am7,B7],bpm:140,style:"trap"}),
+  mitten:mkHip({mel:[[67,1.5],[65,.5],[64,1],[62,1],[60,1],[62,1],[64,1],[60,1],[62,.5],[64,.5],[65,.5],[62,.5],[64,1.5],[62,.5],[60,1],[59,1],[60,2],[0,2]],
+    chords:[C,G,F,G],bpm:104,style:"boom",swing:.04}),
+  feud:mkHip({mel:[[64,1],[64,1],[71,1],[71,1],[69,1],[67,1],[66,1],[64,1],[62,1],[64,1],[66,1],[67,1],[69,1],[71,3]],oct:0,lead:"brass",leadVol:.9,
+    chords:[Em7,Cm7,Am7,B7],bpm:150,style:"trap"}),
+  scoop:mkHip({mel:[[67,1.5],[69,.5],[67,1],[64,3],[67,1.5],[69,.5],[67,1],[64,3],[74,2],[74,1],[71,3],[72,2],[72,1],[67,3]],stretch:4/3,lead:"soft",leadVol:.8,
+    chords:[C7,Am7,Dm7,G7],bpm:76,style:"lofi",swing:.12}),
+  secrets:mkHip({mel:Array.from({length:8},()=>[[70,.5],[69,.25],[70,.25],[67,.5],[0,.5]]).flat(),oct:12,lead:"bell",leadVol:.75,
+    chords:[Gm,GmF,Eb,D7],bpm:136,style:"trap"}),
+  lrc:mkHip({mel:[[62,1],[67,1],[67,1.5],[66,.5],[67,1],[71,1],[71,1],[69,1],[74,1],[74,1],[74,1.5],[72,.5],[71,1],[69,1],[71,2]],oct:12,lead:"bell",
+    chords:[G,D,Em7,C],bpm:96,style:"boom"}),
+  bingo:mkHip({mel:[[72,1],[71,.75],[69,.25],[67,1.5],[65,.5],[64,1],[62,1],[60,1.5],[67,.5],[69,1.5],[69,.5],[71,1.5],[71,.5],[72,3.5]],oct:12,lead:"bell",leadVol:.8,
+    chords:[C,Am7,F,G7],bpm:98,style:"boom"}),
+};
+const SONGS={...Object.fromEntries(Object.entries(HIP).map(([k,v])=>["hh_"+k,v])),lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge(),march:mkMarch(),battle:mkBattle()};
 XM.duck=on=>{if(musicBus)musicBus.gain.setTargetAtTime(on?.16:.5,AC.currentTime,.15)};
 XM.playSong=function(name,force){
   if(songName===name&&!force)return;

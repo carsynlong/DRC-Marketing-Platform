@@ -586,7 +586,8 @@ function quip(){
   const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta>0).length;
   const lines=[`${lead} is the Capitol's favorite right now.`,`Sponsors are lining up for ${lead}.`,`Somebody send ${last} a parachute.`,
     got===0?"Not one tribute got that. The Gamemakers are thrilled.":got>=r.length-1?"Everybody got that one. Too easy. The Gamemakers are taking notes.":`${got} tributes survived that face.`,
-    hot?`${hot.name} is on fire. Literally, like Katniss.`:`Plenty of game left. Stay alive.`,`${last}, the odds are not currently in your favor.`];
+    hot?`${hot.name} is on fire. Literally, like Katniss.`:`Plenty of game left. Stay alive.`,`${last}, the odds are not currently in your favor.`,
+    r.some(p=>p.name==="Tinsley")?"Capitol traffic alert: Tinsley has her driver's permit. Stay off the roads when you see her coming.":`${lead} is the Capitol's favorite right now.`];
   return esc(lines[(S.qi*7+got)%lines.length]);
 }
 function boardView(){

@@ -252,11 +252,25 @@ function view(){
       <div class="plate"><img src="${avOf(D.me)}" alt=""><div class="nm">${esc(D.me)}</div></div>
       <p style="margin-top:10px">Welcome, <b>${esc(D.me)}</b>! Eyes on the TV. You'll guess the #1 answers right here.</p></section>${soundBtn()}${notYou}`,"welcome"];
 
+  if(g.kind==="guess"&&g.phase==="question"&&g.stump&&D.me===g.host){   // 🎯 Stump the Room: the host bets on who will miss it
+    if(mine)return [key+"stump:"+mine,header()+lockedCard(mine,`Your Stump bet: you think <b>${esc(mine)}</b> will miss it. They miss: <b>+1</b> for you. They call it: they steal it!`),"lock"];
+    if(g.locked)return [key+"slate",header()+msg("🥁","Survey says…","<p>No Stump bet this time. Watch the board!</p>")];
+    if(!g.stump.length)return [key+"snone",header()+msg("🎯","Stump the Room","<p>Nobody's on a phone to bet on yet. Enjoy the show!</p>")];
+    return [key+"sask",header()+qcard(g,`Question ${g.num} of ${g.total} · You know this one!`)+`<div class="ask">🎯 Who will MISS it?</div>`+
+      `<p class="priv" style="text-align:center;margin:-6px 0 0">They miss: <b>+1</b> for you · They call it: they steal +1</p>`+nameBtns(g.stump)];
+  }
   if(g.kind==="guess"&&g.phase==="question"){
     if(mine)return [key+"lock:"+mine+g.locked,header()+ptimer(g)+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
     if(g.locked)return [key+"late",header()+msg("🥁","Survey says…","<p>Guesses are locked. Watch the board!</p>")];
     return [key+"ask",header()+ptimer(g)+(g.mult>1?'<div class="perk x2">💰 DOUBLE POINTS ROUND 💰</div>':"")+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`
       +(g.speedEnds&&Date.now()<g.speedEnds?`<div class="perk">⚡ Lock in fast for a speed bonus!</div>`:"")+nameBtns(g.names)];
+  }
+  if(g.kind==="guess"&&g.phase==="reveal"&&g.stumped&&(D.me===g.host||D.me===g.stumped.pick)){
+    const st=g.stumped,who=(g.answer||[]).map(esc).join(" & ");
+    if(D.me===g.host)return [key+"sr",header()+msg(st.called?"😱":"🎯",st.called?`${esc(st.pick)} called it!`:"You stumped them!",
+      `<p>The #1 answer: <b>${who}</b></p><p>${st.called?`${esc(st.pick)} steals <b>+${st.pts}</b>.`:`<b>+${st.pts}</b> for you!`}</p>`,st.called?"wrong":"right"),st.called?"wrong":"right"];
+    return [key+"st",header()+msg(st.called?"😎":"😈",st.called?"You beat the host!":`${esc(g.host)} stumped you!`,
+      `<p>The #1 answer: <b>${who}</b></p><p>${esc(g.host)} bet you'd miss it${st.called?`… and you called it! You steal <b>+${st.pts}</b>.`:"… and you did."}</p>`,st.called?"right":"wrong"),st.called?"right":"wrong"];
   }
   if(g.kind==="guess"&&g.phase==="reveal"){
     const top=g.answer||[],me=top.includes(D.me),right=mine&&top.includes(mine),who=top.map(esc).join(" & ");

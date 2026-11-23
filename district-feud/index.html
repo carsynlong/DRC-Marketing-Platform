@@ -282,6 +282,33 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 .cheerhint{font-weight:800;color:var(--gold2);font-size:clamp(1rem,1.8vw,1.25rem);animation:pop .45s 1.2s both}
 .fanrow{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
 .idots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.idots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}.idots i.on{background:var(--gold)}
+/* 🎬 game-show entrance: curtains, crossing spotlights, a rising podium, a marquee name, confetti cannons */
+.curt{position:fixed;top:0;bottom:0;width:51vw;z-index:6;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 120%,rgba(0,0,0,.35),transparent 60%),repeating-linear-gradient(90deg,#8e0f15 0 34px,#c1121c 34px 52px,#6e0a10 52px 68px);
+  box-shadow:inset 0 -26px 0 #ffc92e,inset 0 -30px 0 #b57800;animation:curtL 1s .15s cubic-bezier(.6,.05,.3,1) both}
+.curt.l{left:0;transform-origin:left} .curt.r{right:0;animation-name:curtR}
+@keyframes curtL{to{transform:translateX(-100%)}} @keyframes curtR{to{transform:translateX(100%)}}
+.xbeam{position:fixed;top:-12vh;width:26vw;height:120vh;z-index:0;pointer-events:none;transform-origin:50% 0;
+  background:linear-gradient(180deg,rgba(255,240,190,.38),rgba(255,240,190,0) 82%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);animation:xlock 1.1s .3s cubic-bezier(.2,1.3,.4,1) both}
+.xbeam.l{left:6vw;--a:-34deg;--b:22deg} .xbeam.r{right:6vw;--a:34deg;--b:-22deg}
+@keyframes xlock{from{transform:rotate(var(--a));opacity:0}to{transform:rotate(var(--b));opacity:1}}
+.entrance{position:relative;display:grid;justify-items:center}
+.entrance .iav{width:clamp(150px,25vh,250px);animation:rise .9s .7s cubic-bezier(.2,1.35,.4,1) both;position:relative;z-index:1;margin-bottom:-8px}
+@keyframes rise{from{transform:translateY(120px) scale(.55);opacity:0}60%{opacity:1}}
+.podium2{position:relative;z-index:2;min-width:clamp(300px,46vw,640px);padding:14px 26px 16px;text-align:center;
+  background:linear-gradient(180deg,#2b6af0,#0c2f8f 70%,#061447);clip-path:polygon(4% 0,96% 0,100% 100%,0 100%);
+  box-shadow:inset 0 0 0 4px var(--gold);animation:podin .6s .5s cubic-bezier(.2,1.4,.4,1) both}
+.podium2::before{content:"";position:absolute;left:4%;right:4%;top:6px;height:8px;border-radius:4px;background:radial-gradient(circle,#fff6c2 0 3px,var(--gold) 4px,transparent 5px) 0 0/16px 8px repeat-x;animation:glow .5s ease-in-out infinite alternate}
+@keyframes podin{from{transform:translateY(100%) scaleY(.4);opacity:0}}
+.bulbname{font-family:var(--display);font-size:clamp(2.6rem,7.5vw,5.6rem);line-height:1;letter-spacing:.04em;text-transform:uppercase;margin-top:6px}
+.bulbname span{display:inline-block;color:rgba(255,255,255,.18);animation:bulbon .35s var(--d) both,bulbtwinkle 1.6s calc(var(--d) + .4s) ease-in-out infinite alternate}
+@keyframes bulbon{60%{transform:scale(1.35)}to{color:#fff;text-shadow:0 0 10px #fff3b8,0 0 26px var(--gold),0 4px 0 var(--red)}}
+@keyframes bulbtwinkle{to{color:#fff6d6;text-shadow:0 0 16px #fff3b8,0 0 36px var(--gold),0 4px 0 var(--red)}}
+.dplate{display:inline-block;font-family:var(--display);font-size:clamp(.85rem,1.6vw,1.1rem);color:var(--navy);background:var(--gold);padding:.2em .9em;border-radius:999px;margin-bottom:4px;animation:pop .4s .9s both}
+.bubble{position:relative;background:#fff;color:var(--navy);font-weight:800;font-size:clamp(1.1rem,2.3vw,1.6rem);padding:.45em 1.1em;border-radius:18px;margin-top:16px;
+  box-shadow:0 0 0 3px var(--gold),0 10px 24px rgba(0,0,0,.4);animation:bubblein .5s 2s cubic-bezier(.2,1.8,.4,1) both}
+.bubble::before{content:"";position:absolute;left:50%;top:-14px;margin-left:-12px;border:12px solid transparent;border-bottom-color:#fff;border-top:0}
+@keyframes bubblein{from{transform:scale(0) rotate(-8deg);opacity:0}}
 /* 💰 double points */
 .dbl{font-family:var(--display);font-size:clamp(3rem,11vw,8rem);line-height:.95;color:var(--gold);text-shadow:0 6px 0 var(--red),0 10px 0 var(--red-d),0 0 60px rgba(255,201,46,.85);
   animation:dblin .8s cubic-bezier(.2,1.6,.4,1) both,pulse .45s .8s ease-in-out infinite alternate}
@@ -611,7 +638,12 @@ const winFx=()=>{sfx("fanfare");sfx("applause");confetti(220,true)};
 /* ---------- flow ---------- */
 const SPEED_SECS=10;      // lock in a correct guess this fast for a speed bonus (+1)
 const FIRE_AT=3;
-const SLOW_PEN=1;        // signed in on a phone but didn't answer in time: −1          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
+const SLOW_PEN=1;
+/* 🎯 STUMP THE ROOM: Carsyn made the survey, so she knows every #1 answer. Instead of guessing, she bets on one
+   player (signed in on a phone) to MISS it: they miss → Carsyn +1; they call it → they steal +1. Doubled in the finale. */
+const HOST="Carsyn",STUMP_PTS=1;
+const stumpOn=()=>!!(S.present[HOST]&&phones.includes(HOST));
+const stumpable=()=>phones.filter(n=>n!==HOST&&S.present[n]);        // signed in on a phone but didn't answer in time: −1          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
 const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
 const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
@@ -628,6 +660,7 @@ function startGame(){
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
     ["🏆","If you're the number one answer, your votes go into the prize race too."],
     ["⚡","Ties go to a secret face-off vote."],
+    ...(S.present[HOST]?[["🎯",`${HOST} made the survey, so she plays Stump the Room. Each question she bets on someone to miss it. Call it anyway and you steal a point!`]]:[]),
     ["💰","The final question is double points. Most points wins the major award!"],
     ["🎉","Tap the emojis on your phone anytime to send them up the TV."]]});
 }
@@ -641,9 +674,11 @@ function startIntro(){
 function introStep(){
   const I=S.intro;if(S.phase!=="intro")return;I.i++;
   if(I.i>=I.who.length){later(fanFavorite,600);return}
-  render();const n=I.who[I.i];sfx("whoosh");later(()=>{sfx("cheer");flash()},500);
+  render();const n=I.who[I.i];sfx("whoosh");drumroll(.9);
+  later(()=>{sfx("pop");flash();applause(1800);   // 💥 confetti cannons from both sides as the name lights up
+    if(!calm){FX.burst(innerWidth*.06,innerHeight*.78,90);FX.burst(innerWidth*.94,innerHeight*.78,90);confetti(70)}sfx("cheer")},1000);
   announce(`From District ${NAMES.indexOf(n)+1}… ${n}!`);
-  later(introStep,phones.length?4300:2300);   // phones get time to cheer
+  later(introStep,phones.length?4600:3400);   // phones get time to cheer
 }
 const METER_MAX=20;   // cheers that fill the crowd meter
 function cheer(r){   // a phone's emoji during someone's walk-out fills their crowd meter
@@ -687,7 +722,7 @@ async function surveySays(){
   if(S.phase!=="question")return;
   S.ends=0;S.phase="lock";stopSong();render();
   await poll();if(S.phase!=="lock")return;
-  if(Object.keys(phoneAnswers()).length){S.phase="room";sfx("whoosh");render();later(runSurvey,4600)}
+  if(Object.keys(phoneAnswers()).filter(n=>!(n===HOST&&stumpOn())).length){S.phase="room";sfx("whoosh");render();later(runSurvey,4600)}
   else runSurvey();
 }
 function runSurvey(){
@@ -702,7 +737,11 @@ function runSurvey(){
 /* 🎯 phone guesses: +1 for calling it, +1 ⚡ speed bonus, +1 🔥 when on fire, all doubled in the finale */
 function scoreGuesses(top){
   const got=phoneAnswers(),m=S.mult||1;S.earn={};S.newFire=[];S.slow=[];
+  S.stump=null;
+  const bet=stumpOn()?got[HOST]:null;
+  if(bet&&bet!==HOST&&S.present[bet]){const called=top.includes(got[bet]),pts=STUMP_PTS*m;addVotes(called?bet:HOST,pts);S.stump={pick:bet,called,pts}}
   phones.forEach(n=>{
+    if(n===HOST&&stumpOn())return;   // her answer was the Stump bet
     if(got[n]==null&&S.present[n]){S.streak[n]=0;S.slow.push(n);addVotes(n,-SLOW_PEN);return}   // ⏰ too slow
     if(!top.includes(got[n])){S.streak[n]=0;return}
     const speed=S.seen[n]!=null&&S.seen[n]-S.qStart<=(SPEED_SECS+1)*1000;
@@ -835,8 +874,11 @@ function render(){
 function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
-  return `<div class="rays" style="--d:0s"></div><section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>
-    <img class="iav" src="${AV(n)}" alt=""><div class="ifrom">From District ${NAMES.indexOf(n)+1}…</div><div class="iname">${esc(n)}</div><div class="ihype">${esc(I.hype[I.i%I.hype.length])}</div>
+  const letters=[...n].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
+  return `${calm?"":'<div class="curt l"></div><div class="curt r"></div><div class="xbeam l"></div><div class="xbeam r"></div>'}<div class="rays" style="--d:.6s"></div>
+    <section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>
+    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">District ${NAMES.indexOf(n)+1}</div><div class="bulbname" aria-label="${esc(n)}">${letters}</div></div>
+    <div class="bubble">“${esc(I.hype[I.i%I.hype.length])}”</div></div>
     ${phones.length?`<div class="meter"><span class="mlab">📣 Crowd meter</span><div class="mbar ${(I.meter[n]||0)>=METER_MAX?"max":""}"><i id="mfill" style="width:${Math.min(100,(I.meter[n]||0)/METER_MAX*100).toFixed(0)}%"></i></div><b id="mnum">${I.meter[n]||0}</b></div>
     <div class="cheerhint">👏 Everyone else: tap emojis on your phone to cheer for ${esc(n)}!</div>`:""}
     <div class="idots">${I.who.map((_,k)=>`<i class="${k<=I.i?"on":""}"></i>`).join("")}</div>
@@ -856,7 +898,7 @@ function doubleView(){
 function barRows(rows,cls=n=>""){const max=Math.max(1,...rows.map(r=>r[1]));
   return `<div class="rbars">${rows.map(([n,v],i)=>`<div class="rbar ${i===0?"top":""} ${cls(n)}"><img src="${AV(n)}" alt=""><span class="nm">${esc(n)}</span><div><div class="bar" style="--w:${Math.max(4,v/max*100).toFixed(1)}%;--d:${(.3+i*.12).toFixed(2)}s"></div></div><b class="late" style="--d:${(1+i*.12).toFixed(2)}s">${v}</b></div>`).join("")}</div>`}
 function roomView(){
-  const got=phoneAnswers(),c={};Object.values(got).forEach(a=>c[a]=(c[a]||0)+1);
+  const got={...phoneAnswers()};if(stumpOn())delete got[HOST];const c={};Object.values(got).forEach(a=>c[a]=(c[a]||0)+1);
   const rows=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,6),n=Object.keys(got).length;
   return `<section class="center">${tag()}<h2 class="qhead">${esc(cur().q)}</h2><div class="says" style="animation:none">📊 The room says…</div>
     ${barRows(rows)}<p class="sub">${n} ${n===1?"guess":"guesses"} locked in. Let's see if you're right…</p></section>${raceBar()}`;
@@ -912,9 +954,9 @@ function reveal(){
   const q=cur(),tiles=q.top.map(([n,v],i)=>tile({n,v,state:"flip",delay:i*.15,count:"auto"})).join("");
   if(isTie(q)) return `<section class="center">${tag()}${board(q.q,tiles)}
     <div class="ctl"><div class="tieban late" style="--d:1.3s">${strike(1.45)}It's a tie!</div><button class="btn red late" style="--d:2.3s" id="tie">⚡ Face-off!</button></div>
-    <p class="sub late" style="--d:2.3s">Everyone except ${q.top.map(t=>`<b>${esc(t[0])}</b>`).join(" and ")} votes in secret.</p>${calledIt(2.4)}<div class="hint">Space: start the face-off</div></section>${raceBar()}`;
+    <p class="sub late" style="--d:2.3s">Everyone except ${q.top.map(t=>`<b>${esc(t[0])}</b>`).join(" and ")} votes in secret.</p>${calledIt(2.4)}${stumpLine(2.8)}<div class="hint">Space: start the face-off</div></section>${raceBar()}`;
   return `<div class="rays"></div><section class="center">${tag()}${board(q.q,tiles)}
-    <div class="jab late" style="--d:1s">${esc((q.jab||"The district has spoken: {n}!").replace("{n}",q.top[0][0]))}</div>${calledIt()}
+    <div class="jab late" style="--d:1s">${esc((q.jab||"The district has spoken: {n}!").replace("{n}",q.top[0][0]))}</div>${calledIt()}${stumpLine()}
     <div class="ctl late" style="--d:1s">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
 }
 function tb(){
@@ -1019,9 +1061,10 @@ function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult
 const phoneAnswers=()=>answersQi===curQi()?answers:{};
 function snapshot(){
   const p=S.phase,g={gid,view:p,names:NAMES,playing:NAMES.filter(n=>S.present[n]),num:S.k+1,total:S.order.length,phase:p==="lobby"?"lobby":"watch",locked:true,mode:"choice",tally:S.tally};
-  if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,
+  g.host=HOST;
+  if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,stump:stumpOn()?stumpable():undefined,locked:p!=="question",ends:p==="question"?S.ends:0,
     hurry:p==="question"&&S.ends&&S.ends-Date.now()<=10500?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
-  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1,slow:S.slow,slowPen:SLOW_PEN});
+  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,stumped:S.stump||undefined,mult:S.mult||1,slow:S.slow,slowPen:SLOW_PEN});
   if(p==="intro"&&S.intro){g.spot=S.intro.who[S.intro.i]||null;g.cheer=!!phones.length}
   if(p==="fanfav")g.fan=S.fan;
   if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
@@ -1084,6 +1127,8 @@ function guessedLine(bump){
   return `<div class="guessed ${bump?"bump":""}" id="guessed">📱 ${n} ${n===1?"guess":"guesses"} locked in</div>`;
 }
 /* who called it on their phone, with what they earned */
+const stumpLine=(d=1.9)=>{const st=S.stump;if(!st)return "";
+  return `<div class="called late" style="--d:${d}s"><b style="color:var(--gold)">🎯 ${HOST} bet <span style="color:#fff">${esc(st.pick)}</span> would miss it…</b><span class="chip" style="box-shadow:inset 0 0 0 3px ${st.called?"#7dff9e":"#ff8f80"}"><img src="${AV(st.called?st.pick:HOST)}" alt="">${st.called?`${esc(st.pick)} called it! Steals +${st.pts}`:`Stumped! ${HOST} +${st.pts}`}</span></div>`};
 const slowLine=(d=1.6)=>S.slow&&S.slow.length?`<div class="called"><b class="late" style="--d:${d}s;color:#ff8f80">⏰ Too slow, −${SLOW_PEN}:</b>${S.slow.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.08).toFixed(2)}s;box-shadow:inset 0 0 0 3px #ff8f80"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`:"";
 function calledIt(d=1.2){
   const got=phoneAnswers();if(!Object.keys(got).length)return slowLine(d+.4);

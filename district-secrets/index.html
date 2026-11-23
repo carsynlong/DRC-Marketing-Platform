@@ -419,7 +419,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-4";
+const BUILD="ds-build-2026-11-23-5";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -432,8 +432,30 @@ const Q=[ /* the real fun facts the family sent in; edit wording here */
  {f:"I almost got kicked out of a concert for being too loud.",a:"Carsyn"},
  {f:"I named my dog after a neighbor. Then the neighbor moved away.",a:"QUEEN MOTHER"},
 ];
-const DOUBLE=new Set([Q.length-1]);   // the last secret is worth double
 const BASE=Q.length;                  // bonus secrets written on phones tonight are added after these
+const REAL=Q.slice();                 // the real secrets, before decoys are shuffled in
+/* 🃏 Decoy secrets: made up. A few are shuffled in among the real ones each game (never first or last).
+   Phones can call a secret FAKE; spotting a decoy scores like a right answer. Edit the list freely. */
+const DECOYS=[
+ "I once got stuck in a revolving door for twenty minutes.",
+ "I've never seen a single Hunger Games movie.",
+ "I accidentally crashed a stranger's wedding and stayed for the cake.",
+ "I've been banned from a bowling alley.",
+ "I can solve a Rubik's cube in under a minute.",
+ "I still sleep with the stuffed animal I got in kindergarten.",
+ "I once won a hula hoop contest at the county fair.",
+ "I've eaten a whole large pizza by myself in one sitting. Twice.",
+];
+const DECOY_COUNT=3;
+const FAKE="🃏 FAKE";                  // what a phone seals when it calls a secret fake
+const isFake=v=>v===FAKE||norm(v)==="fake";
+function buildDeck(){
+  const fakes=DECOYS.slice().sort(()=>Math.random()-.5).slice(0,DECOY_COUNT).map(f=>({f,a:null,fake:true})),deck=REAL.slice();
+  fakes.forEach(x=>deck.splice(1+Math.floor(Math.random()*(deck.length-1)),0,x));   // somewhere after the first, before the last
+  return deck;
+}
+// the last secret before any bonus round is worth double
+const isDouble=qi=>{let k=-1;Q.forEach((x,i)=>{if(!x.bonus)k=i});return qi===k};
 const BONUS_WRITER=500;               // points for the writer when their bonus secret is played
 const pad=n=>String(n).padStart(2,"0");
 const AV=n=>`img/p${pad(NAMES.indexOf(n)+1)}.jpg`;   // small face
@@ -451,6 +473,7 @@ const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
 function matches(typed,answer){const t=norm(typed);if(!t)return false;
+  if(answer==null)return isFake(typed);   // a decoy: the right answer is FAKE
   return (ALIASES[answer]||[]).concat(norm(answer)).some(a=>a===t||(a.length>=4&&lev(a,t)<=1))}
 /* lets a phone tell "this secret is mine" without the answer being sent to every phone */
 const ownTag=(gid,qi,name)=>{let h=5381;for(const c of `${gid}|${qi}|${name}`)h=((h<<5)+h+c.charCodeAt(0))|0;return (h>>>0).toString(36)};
@@ -663,7 +686,7 @@ const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"appli
 function snapshot(){
   const inGame=S.phase!=="lobby"&&S.qi<Q.length;
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
-    locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE,
+    locked:!(S.phase==="question"&&!S.locked),double:isDouble(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:Q.filter(x=>!x.bonus).length,
     howto:window.Rules&&Rules.active()?"secrets":undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
   if(S.phase==="story"){g.storyState=S.storyState;if(S.storyState==="ask")g.askLeft=Math.max(0,Math.ceil(STORY_ASK-(Date.now()-(S.askAt||Date.now()))/1000))}
@@ -673,7 +696,7 @@ function snapshot(){
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
   if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
   if(S.phase==="final")g.played=Q.length;
-  if(inGame&&["reveal","story","board","final"].includes(S.phase)){g.answer=Q[S.qi].a;g.correct=S.correct}
+  if(inGame&&["reveal","story","board","final"].includes(S.phase)){g.answer=Q[S.qi].a;g.correct=S.correct;g.fake=!!Q[S.qi].fake}
   if(inGame){let rank=0,prev=null;
     g.scores=ranked().map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}return {name:p.name,score:p.score,delta:p.delta,streak:p.streak,rank,note:p.note||"",right:p.right||0,fooled:p.fooled||0,story:p.story||0}})}
   return JSON.stringify(g);
@@ -782,6 +805,7 @@ function awards(){
   add("🎭","Master of Disguise","fooled",n=>`fooled ${n} tribute${n>1?"s":""}`);
   add("🕵️","Most Suspicious","accused",n=>`accused ${n} time${n>1?"s":""}`);
   add("🎤","Best Storyteller","story",n=>`${n} story vote${n>1?"s":""}`);
+  add("🃏","Lie Detector","fakes",n=>`spotted ${n} fake${n>1?"s":""}`);
   return out;
 }
 function lateAnswers(){
@@ -805,7 +829,7 @@ const SAVE="ds-host-game";
 let S,raf=0,readyT=0,typeT=0,shownIn=[],shownCount=-1,hostOpen=false;
 function freshState(){
   return {phase:"lobby",secs:30,qi:0,elapsed:0,locked:false,correct:[],guesses:{},gid:0,extra:[],bonusDone:false,bets:{},votes:{},
-    opts:{interro:true,bets:true,story:true,bonus:true},
+    opts:{interro:true,bets:true,story:true,bonus:true,decoys:true},
     players:NAMES.map(n=>({name:n,on:n!==HOST,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,story:0,note:""}))};
 }
 function saved(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.players?.length===NAMES.length&&g.total===BASE?g:null}catch(e){return null}}
@@ -823,6 +847,7 @@ function howSteps(){
     ["⏰","Seal a guess before time's up. <b>No guess: −200.</b>","Seal a guess before time is up. If you don't guess, you lose two hundred points."],
     ["⚡","A right guess scores <b>1,000 points</b>. Answer fast for a <b>speed bonus</b>, and keep a streak going for extra.","A right guess scores one thousand points. Answer fast for a speed bonus, and keep a streak going for even more."],
     ["🎭","If it's <b>your</b> secret, keep a straight face and type a <b>decoy</b>. You earn 150 for everyone you fool.","If it's your secret, keep a straight face, and type a decoy. You earn a hundred and fifty points for everyone you fool."]];
+  if(o.decoys)st.push(["🃏","Some secrets are <b>FAKE</b>. Think nobody here said it? Tap <b>🃏 It's fake</b>. Spot a fake and it scores like a right answer.","Watch out. Some secrets are fake. If you think nobody here said it, tap It's fake. Spotting a fake scores just like a right answer."]);
   if(o.bets)st.push(["🎲","Feeling sure? Place a <b>sponsor bet</b> before you seal: <b>Sure</b> or <b>All in</b>. Big risk, big reward.","Feeling sure? Place a sponsor bet before you seal your guess. Sure, or all in. Big risk. Big reward."]);
   if(o.interro)st.push(["🔦","Then the <b>Interrogation Room</b>: the most accused defends themselves, and you can <b>change your vote</b>. Switch to the right person: <b>+250</b>. Switch away from it: <b>−500</b>.","Then, the Interrogation Room. Whoever is accused most defends themselves, and you can change your vote. Switch to the right person for two hundred and fifty bonus points. But switch away from the right answer, and you lose five hundred."]);
   if(o.story)st.push(["🎤","<b>Story time:</b> the owner can accept (<b>+300</b>) and tell the story behind their secret, or decline (<b>−200</b>). Rate the story on your phone.","Then it's story time. The owner can accept, for three hundred points, and tell the story behind their secret. Or decline, and lose two hundred. Everyone rates the story on their phone."]);
@@ -867,9 +892,10 @@ function showIntro(){
   Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",sound:()=>musicOn,onDone:newGame});
 }
 function newGame(){
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.note=""});
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
-  Q.length=BASE;S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
+  S.deck=S.opts?.decoys?buildDeck():REAL.slice();Q.splice(0,Q.length,...S.deck);   // decoys shuffled in fresh each game
+  S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
   post({action:"reset",total:BASE+40}).catch(()=>{});dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
 }
@@ -979,7 +1005,7 @@ function score(){
   const story=S.phase==="story"?S.storyState:null;
   if(story==="on")S.votes={...(curX().votes||{})};else S.votes={};
   const declined=story==="no"||story==="late";
-  const name=cur().a,mult=DOUBLE.has(S.qi)?2:1,before=rankMap();
+  const name=cur().a,mult=isDouble(S.qi)?2:1,before=rankMap();
   const storyVotes=Object.keys(S.votes).filter(n=>n!==name).length;
   const fooled=fooledList().length;
   // speed bonus: up to 500 for sealing a right guess the moment the secret appears
@@ -1000,6 +1026,7 @@ function score(){
     if(S.correct.includes(p.name)){p.streak++;const sp=sw?0:speed(p.name);let d=(1000+Math.min(p.streak-1,5)*100)*mult+sp;const notes=sp?[`⚡ Speed bonus +${sp}`]:[];
       if(sw&&!wasRight){d+=250*mult;notes.push(`🔄 Switched to the right answer +${250*mult}`)}
       if(bet==="allin"){d*=2;notes.push("💀 All in paid off: double!")}else if(bet==="sure"){d+=500*mult;notes.push(`🎯 Sure bet +${500*mult}`)}
+      if(cur().fake){p.fakes=(p.fakes||0)+1;notes.unshift("🃏 Spotted the fake!")}
       p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
     else{p.streak=0;p.delta=0;
       // signed in on a phone but never sealed a guess: time ran out
@@ -1046,9 +1073,9 @@ function lobbyView(){
     <div class="hero">${EMBLEM}
       <div class="eyebrow">The 2026 Christmas Games · Game 6</div>
       <h1 class="title">District Secrets</h1>
-      <p class="tagline">Twelve tributes. ${Q.length} secrets. Every single one is true.</p>
+      <p class="tagline">Twelve tributes. ${REAL.length} secrets. ${S.opts?.decoys?"Plus a few fakes. Can you tell?":"Every single one is true."}</p>
       ${joinCard()}
-      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Feeling lucky? Place a <b>🎲 sponsor bet</b>. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
+      <p class="rules">A real secret from someone in this room appears on the screen. On your phone, type <b>who you think it belongs to</b>. Your guess is sealed, so nobody sees it. Right guesses score <b>1,000</b>, plus a <b>⚡ speed bonus</b> and extra for streaks. If it's <b>your</b> secret, type a decoy: you earn <b>🎭 150</b> for everyone you fool. Some secrets are <b>🃏 fakes</b>: call them out. Feeling lucky? Place a <b>🎲 sponsor bet</b>. Tap the emojis on your phone to pop them up on the TV with your name. The final secret counts double.</p>
     </div>
     <div class="roster">
       <div class="count" aria-label="${n} of ${on.length} signed in"><span class="n${bump?" bump":""}">${n}</span><span class="of">/ ${on.length}</span><span class="lbl">tributes signed in</span></div>
@@ -1058,7 +1085,7 @@ function lobbyView(){
           ${ph?'<span class="seal" aria-hidden="true">🔏</span>':""}<img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${!p.on?"sitting out":ph?"signed in":"waiting"}</small></button>`}).join("")}</div>
       <div class="tiny" style="text-align:center">Host: tap someone to sit them out. No phone? They can whisper their guess to the host.</div>
       <div class="eyebrow" style="text-align:center">Extras · tap to switch on or off</div>
-      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
+      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
       ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved · +500 points each if it's played`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
@@ -1068,14 +1095,14 @@ function lobbyView(){
 }
 function roundView(){
   return `<section class="center">${EMBLEM}<div class="num">CAPITOL ARCHIVES · CLASSIFIED</div><h1>The Vault Opens</h1>
-    <p>${Q.length} secrets, sealed by the people in this room. Guess whose each one is, on your phone.</p>
+    <p>${Q.length} secrets, sealed by the people in this room${S.opts?.decoys?", and a few FAKES slipped in by the Capitol. Guess whose each one is, or call it fake":". Guess whose each one is"}, on your phone.</p>
     <button class="btn wax" id="begin">May the odds be ever in your favor</button><div class="tiny">Space to begin</div></section>`;
 }
 const dialHTML=c=>`<div class="dial"><svg viewBox="0 0 200 200" aria-hidden="true"><g class="ring">
   <circle cx="100" cy="100" r="94" fill="#1b1328" stroke="#d9b25f" stroke-width="4"/>
   ${Array.from({length:40},(_,i)=>`<line x1="100" y1="10" x2="100" y2="${i%5?18:26}" stroke="#d9b25f" stroke-width="${i%5?1.5:3}" transform="rotate(${i*9} 100 100)"/>`).join("")}
   <circle cx="100" cy="100" r="64" fill="#a3182b" stroke="#5e0a17" stroke-width="5"/></g></svg><div class="big">${c}</div></div>`;
-const giftTag=()=>DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
+const giftTag=()=>isDouble(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 function readyView(){
   return `<section class="center"><div class="eyebrow">Secret ${S.qi+1} of ${Q.length}</div>${giftTag()}${dialHTML(S.count)}<div class="quip">Unlocking the next file…</div></section>`;
 }
@@ -1145,6 +1172,7 @@ function typeFact(){ // the secret types itself out on the file
     if(S.typed%3===0&&S.typed<f.length)sfx("click");if(S.typed>=f.length)clearInterval(typeT)},38);
 }
 function revealView(){
+  if(cur().fake)return fakeView();
   const x=cur(),right=S.correct.filter(n=>S.players.find(p=>p.name===n)?.on),tot=guessers().length;
   const g=S.guesses||{};
   const line=!right.length?"Nobody cracked it. The secret was safe.":right.length===tot?"Every single tribute cracked it!":`${right.length} of ${tot} tributes cracked it`;
@@ -1164,6 +1192,25 @@ function revealView(){
         return `<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled":""}>${esc(p.name)}<span>${own?"their secret":g[p.name]!=null?"guessed “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`}).join("")}</div></div>`:""}
     </div></section>
   <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: ${S.opts?.story?"story time":"scores"}</span>${S.opts?.story?`<button class="btn" id="story">🎤 Story time</button>`:`<button class="btn" id="score">Show scores</button>`}</div>`;
+}
+/* 🃏 the reveal for a decoy: nobody said it */
+function fakeView(){
+  const x=cur(),right=S.correct.filter(n=>S.players.find(p=>p.name===n)?.on),tot=guessers().length,g=S.guesses||{};
+  const line=!right.length?"Nobody spotted it. The Capitol fooled you all!":right.length===tot?"Every tribute spotted the fake!":`${right.length} of ${tot} spotted the fake`;
+  return `<div class="top"><div><div class="eyebrow">Secret ${S.qi+1} of ${Q.length} · Declassified</div></div>${giftTag()}${sndBtn()}</div>
+  <section class="reveal">
+    <div class="polaroid" style="display:grid;place-items:center;width:min(100%,380px);aspect-ratio:1/1.1"><div style="font-size:clamp(7rem,16vw,12rem);line-height:1">🃏</div><div class="stamp" style="color:#a3182b">FAKE!</div><div class="cap">Planted by the Capitol</div></div>
+    <div class="rv">
+      <div class="dist">IT BELONGS TO…</div>
+      <div class="who">NOBODY!</div>
+      <p class="said">“${esc(x.f)}” was a decoy. Nobody in this room said that.</p>
+      <div class="cracked"><h3>🃏 ${line}</h3>
+        ${right.length?`<div class="faces">${right.map((n,i)=>`<div class="face" style="animation-delay:${1.1+i*.12}s"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
+      ${switchHTML()}${betsHTML()}
+      ${suspectsHTML(null).replace("WHO THE ROOM ACCUSED","WHO THE ROOM BLAMED (FOR NOTHING)")}
+      ${hostOpen?`<div class="hostpanel"><div class="eyebrow">Host check: tap a name to fix a call</div><div class="guesses">${active().map(p=>`<button class="guess" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}">${esc(p.name)}<span>${g[p.name]!=null?"said “"+esc(g[p.name])+"”":hasPhone(p.name)?"no guess":"no phone"}</span></button>`).join("")}</div></div>`:""}
+    </div></section>
+  <div class="ctl"><button class="btn ghost" id="host">${hostOpen?"Hide guesses":"🔑 Host: check guesses"}</button><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`;
 }
 /* who changed their vote in the Interrogation Room, and how it went */
 function switchHTML(){
@@ -1226,7 +1273,7 @@ function primary(){
   if(S.phase==="ready")return (clearInterval(readyT),sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?afterLock():lock();
   if(S.phase==="interro")return reveal();
-  if(S.phase==="reveal")return S.opts?.story?storyTime():score();
+  if(S.phase==="reveal")return S.opts?.story&&!cur().fake?storyTime():score();
   if(S.phase==="story")return S.storyState==="ask"?(S.storyState="skip",score()):score();
   if(S.phase==="board")return next();
 }
@@ -1253,6 +1300,7 @@ document.addEventListener("keydown",e=>{
 /* a TV reload mid-question picks up with the guesses locked */
 S=saved()||freshState();
 S.opts=S.opts||freshState().opts;S.extra=S.extra||[];S.players.forEach(p=>p.story=p.story||0);
+if(S.deck?.length)Q.splice(0,Q.length,...S.deck);  // a reload mid game keeps the same decoys in the same places
 if(S.extra.length)Q.push(...S.extra);               // a reload mid bonus round keeps the bonus secrets
 if(S.phase==="interro")S.phase="question";
 if(S.phase==="question")S.locked=true;
@@ -1338,8 +1386,8 @@ function restartGame(ask=true){
   if(ask&&!confirm("Restart from the beginning? This ends the current game and clears the scores."))return;
   stopReading();
   clearInterval(readyT);clearInterval(typeT);cancelAnimationFrame(raf);stopSong();
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.note=""});
-  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now(),extra:[],bonusDone:false,bets:{},votes:{}});Q.length=BASE;
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
+  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now(),extra:[],bonusDone:false,bets:{},votes:{},deck:null});Q.splice(0,Q.length,...REAL);
   dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   answers={};answersQi=-1;counted=null;hostOpen=false;
   post({action:"reset",total:BASE+40}).catch(()=>{});

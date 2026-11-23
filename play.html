@@ -113,6 +113,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   box-shadow:0 10px 0 #5e0f0b,0 0 0 4px var(--gold);touch-action:manipulation;-webkit-user-select:none;user-select:none;display:grid;place-content:center}
 .mgbtn small{display:block;font-family:var(--body);font-size:1rem;opacity:.8}
 .mgbtn:active{transform:translateY(6px);box-shadow:0 4px 0 #5e0f0b,0 0 0 4px var(--gold)}
+.chase{background:linear-gradient(180deg,#2a4a3f,#16302a);border-radius:14px;padding:10px 14px;text-align:center;font-weight:800;box-shadow:0 0 0 2px var(--gold);animation:pop .5s both}
+.chase b{color:var(--gold)}.chase small{display:block;font-weight:600;color:var(--muted);margin-top:3px;font-size:.85rem}.chase small b{color:#ffd36b}
+.lb{background:var(--night-2);border-radius:14px;padding:8px 12px;box-shadow:inset 0 0 0 1px var(--line)}
+.lb summary{font-weight:800;cursor:pointer;text-align:center;color:var(--gold);padding:4px}
+.lb ol{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px;max-height:34dvh;overflow:auto}
+.lb li{display:grid;grid-template-columns:2.6em 1fr auto;gap:8px;padding:5px 8px;border-radius:8px;font-weight:700}
+.lb li.me{background:rgba(232,176,75,.2);box-shadow:inset 0 0 0 2px var(--gold)}
+.lb .r{color:var(--gold)}.lb .p{font-variant-numeric:tabular-nums}
 .tip{min-height:2.6em;text-align:center;color:var(--gold);font-weight:800;font-size:.95rem;max-width:30ch;margin:0 auto;transition:opacity .4s}
 .tiphint{text-align:center;color:var(--muted);font-size:.8rem;margin:0}
 .switch{display:block;margin:4px auto 0;background:transparent;color:var(--ink);font-weight:800;font-size:1rem;padding:.75em 1.3em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);min-height:52px;animation:rise .5s .4s both}
@@ -362,6 +370,18 @@ setInterval(()=>{
     el.classList.remove("tick");void el.offsetWidth;el.classList.add("tick");buzz(left<=3?[60,40,60]:40);if(left<=5)PFX.sfx("tap")}
 },200);
 
+/* ---------- scoreboard on the phone: who leads, how far you are from catching up, and the full board ---------- */
+function chase(g,s){
+  const sc=(g.scores||[]).slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));if(!sc.length||!s)return "";
+  const lead=sc[0],tied=sc.filter(x=>x.score===lead.score),me=sc.findIndex(x=>x.name===D.me),above=sc.slice(0,me).reverse().find(x=>x.score>s.score);
+  let top;
+  if(s.score===lead.score&&lead.score>0)top=tied.length>1?`👑 You're tied for the lead with ${tied.filter(x=>x.name!==D.me).map(x=>esc(x.name)).join(", ")}!`:`👑 You're in the lead! ${sc[1]?`${fmt(s.score-sc[1].score)} ahead of ${esc(sc[1].name)}`:""}`;
+  else if(lead.score===0)top="Nobody's on the board yet. It's anyone's game!";
+  else top=`👑 <b>${esc(lead.name)}</b> leads with ${fmt(lead.score)}${above?`<small>You need <b>${fmt(above.score-s.score+1)}</b> to pass ${esc(above.name)} (#${above.rank})${above!==lead?` · ${fmt(lead.score-s.score+1)} to take the lead`:""}</small>`:""}`;
+  const rows=sc.map(x=>`<li class="${x.name===D.me?"me":""}"><span class="r">#${x.rank}</span><span class="n">${esc(x.name)}</span><span class="p">${fmt(x.score)}</span></li>`).join("");
+  return `<div class="chase">${top}</div><details class="lb" open><summary>🏆 Full leaderboard</summary><ol>${rows}</ol></details>`;
+}
+
 /* arena tips that rotate while you wait */
 const TIPS=["Sponsors love a confident tribute.","Never eat berries you can't name.","Tracker jackers hate being swatted. Swat them anyway.",
   "Find water first. Then find the cocoa.","The President is watching. Smile.","Camouflage tip: wear the ugly sweater.",
@@ -460,7 +480,7 @@ function view(){
   }
   if(g.phase==="board"){
     const got=s&&s.delta>0;
-    return [key+(s?.score),header()+msg(got?"🎉":s&&s.delta<0?"⏰":"🏹",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:s&&s.delta<0?`−${fmt(-s.delta)}`:"No points",
+    return [key+(s?.score),header()+chase(g,s)+msg(got?"🎉":s&&s.delta<0?"⏰":"🏹",got?`+<span data-from="0" data-to="${s.delta}">${fmt(s.delta)}</span>`:s&&s.delta<0?`−${fmt(-s.delta)}`:"No points",
       `${s&&s.delta<0?`<p class="said">No answer before the cannon fired.</p>`:""}${s?.streak>=3?`<div class="onfire">🔥 You're on fire! 🔥</div><p class="said">${s.streak} in a row</p>`:s?.streak>1?`<p class="said">🔥 ${s.streak} in a row</p>`:""}<p>You're <b>#${s?.rank}</b> with ${fmt(s?.score)} points. Eyes on the TV.</p>`,got?"right":"")+reactBar()+soundBar(),got?(s.streak>=3?"fire":"points"):""];
   }
   if(g.phase==="final"){

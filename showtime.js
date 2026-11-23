@@ -666,7 +666,23 @@ window.MusicPill = { add({ on, toggle }) {
     b.textContent = state ? "🔊 Music on" : "🔇 Music off"; b.setAttribute("aria-pressed", state);
     const own = document.getElementById("snd"), r = own && own.getBoundingClientRect();
     b.hidden = !!(r && r.width && r.top >= 0 && r.bottom <= innerHeight * .3);
+    if (!b.hidden) place();
   };
+  // top-left corner; if another button is already there (like "Back to setup"), slide down just below it
+  const blocker = () => {
+    const r = b.getBoundingClientRect(); b.style.visibility = "hidden";
+    try {
+      for (const [x, y] of [[r.left + 4, r.top + 4], [r.right - 4, r.top + 4], [r.left + 4, r.bottom - 4], [r.right - 4, r.bottom - 4], [(r.left + r.right) / 2, (r.top + r.bottom) / 2]]) {
+        const el = document.elementFromPoint(x, y), hit = el && el.closest && el.closest("button,a,input,select,[role=button]");
+        if (hit) return hit;
+      }
+      return null;
+    } finally { b.style.visibility = ""; }
+  };
+  function place() {
+    b.style.left = "14px"; b.style.top = "14px";
+    for (let n = 0; n < 4; n++) { const hit = blocker(); if (!hit) return; b.style.top = Math.round(hit.getBoundingClientRect().bottom + 8) + "px"; }
+  }
   b.onclick = e => { e.stopPropagation(); try { toggle(); } catch (err) { console.error(err); } b.blur(); paint(); };
   (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => { document.body.appendChild(b); paint(); setInterval(paint, 400); });
 } };

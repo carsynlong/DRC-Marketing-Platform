@@ -357,7 +357,7 @@ const VIEWS={
     <div class="champ" style="display:grid;justify-items:center"><div class="crown">👑</div><img src="${XM.photo(T.winner)}" alt=""></div>
     <h1 class="big ttl" style="animation-delay:.6s">${esc(T.winner)}</h1>
     <p class="who" style="font-size:clamp(1.6rem,3.4vw,2.8rem);color:var(--ink)">${T.noSave?"Wins the face-off and moves on!":"Go claim your major award!"}</p>
-    <div class="row"><button class="btn" id="tb-done">Done</button></div>`,
+    <div class="row">${T.game&&!T.noSave?`<button class="btn" id="tb-save">🏆 Save as ${esc(XM.GAMES[T.game].name)} victor</button>`:""}<button class="btn ghost" id="tb-done">Done</button></div>`,
 };
 function suggest(){
   if(T.round===1&&T.game)return T.game;

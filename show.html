@@ -63,6 +63,18 @@ body{cursor:default}
 .hud button:hover{opacity:1}
 #count{font-weight:800;font-size:15px;color:var(--muted);background:rgba(13,31,24,.7);padding:6px 12px;border-radius:999px;opacity:.7;font-variant-numeric:tabular-nums}
 .tbcorner{position:absolute;top:64px;right:60px;font-size:26px;padding:14px 28px;z-index:3}
+.corner{position:absolute;top:60px;right:60px;display:flex;gap:14px;z-index:3}
+.corner .btn{font-size:24px;padding:12px 24px}
+/* victor picker */
+.vpick{position:fixed;inset:0;z-index:52;background:rgba(6,16,12,.95);display:grid;place-items:center;padding:50px 20px 20px;text-align:center;animation:fade .3s both}
+.vpick .faces{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:1100px}
+.vpick .face{display:grid;justify-items:center;gap:6px;padding:8px;border-radius:18px;transition:transform .15s}
+.vpick .face:hover{transform:translateY(-4px);background:rgba(232,176,75,.12)}
+.vpick .face img{width:min(110px,12vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line)}
+.vpick .face.on img{box-shadow:0 0 0 6px var(--gold)}
+.vpick .face b{font-weight:800;font-size:1.1rem}
+.ultimate{display:flex;align-items:center;gap:30px;justify-content:center;padding:18px 40px;border-radius:30px;background:linear-gradient(160deg,rgba(232,176,75,.25),rgba(22,48,42,.95));box-shadow:0 0 0 4px var(--gold),0 0 60px rgba(232,176,75,.35)}
+.ultimate img{width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red)}
 
 /* start screen */
 #start{position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:rgba(6,16,12,.9);text-align:center;cursor:pointer}
@@ -100,7 +112,7 @@ body{cursor:default}
 @keyframes flick{50%{opacity:.85}}
 
 /* victors board */
-.vcard{display:flex;align-items:center;gap:22px;padding:20px 26px;text-align:left;cursor:pointer;transition:transform .15s,box-shadow .15s;width:100%}
+.vcard{display:flex;align-items:center;gap:22px;padding:14px 24px;text-align:left;cursor:pointer;transition:transform .15s,box-shadow .15s;width:100%}
 .vcard:hover{transform:translateY(-4px);box-shadow:0 0 0 3px var(--gold),0 20px 50px rgba(0,0,0,.45)}
 .vcard .ic{width:84px;height:84px;border-radius:20px;background:var(--gc);display:grid;place-items:center;flex:none}
 .vcard .ic img{width:62%;height:62%;object-fit:contain}
@@ -156,7 +168,8 @@ const ICON=k=>`/xmas/icons/${k}.png`;
 
 /* ---------- helpers ---------- */
 const d=s=>`data-d="${s}"`;
-const tbBtn=g=>GAMES[g].tb?`<button class="btn red tbcorner" data-tb="${g}">⚔️ Tiebreaker</button>`:"";
+const victorLabel=g=>{const v=XM.victors()[g];return v?`🏆 Victor: ${esc(v)}`:"🏆 Record victor"};
+const tbBtn=g=>`<div class="corner">${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
 const openBtn=(url,label,cls="")=>`<a class="btn bigbtn ${cls}" href="${url}" target="_blank" rel="noopener">${label}</a>`;
 
 /* ---------- slide builders ---------- */
@@ -387,6 +400,10 @@ const SLIDES=[
    enter(){setTimeout(()=>XM.sfx("thud"),700)}},
  tieSlide("bingo"),
 
+ {id:"victors",music:"board",big:true,html:()=>`<div style="display:grid;gap:22px;width:100%"><div><h1 class="title-l slam">The Capitol Has Spoken</h1>
+    <div class="fade" ${d(.5)} style="font-size:22px;color:var(--muted);margin-top:8px">Tap a game to change its victor. Saved on this laptop.</div></div>
+    <div id="vgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 30px"></div><div id="ult" style="min-height:10px;display:grid;justify-items:center"></div></div>`,
+   enter(el){drawVictors(el.querySelector("#vgrid"),true);setTimeout(()=>XM.sfx("fanfare"),400);setTimeout(()=>XM.confetti(160,true),900);revealUltimate(el)}},
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:260px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
@@ -425,6 +442,7 @@ function go(i){
 function wireSlide(el){
   el.querySelectorAll("[data-tb]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.tiebreaker({game:b.dataset.tb,onClose:()=>{const s=SLIDES[cur];if(s.music&&s.music!=="stop")XM.playSong(s.music,true)}})});
   el.querySelectorAll("a[target]").forEach(a=>a.addEventListener("click",()=>{XM.stopSong();XM.sfx("go")}));
+  el.querySelectorAll("[data-victor]").forEach(b=>b.onclick=e=>{e.stopPropagation();pickVictor(b.dataset.victor)});
   el.querySelectorAll("[data-skip]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.sfx("whoosh");next()});
   const m=el.querySelector("#memo");if(m)m.onclick=e=>{e.stopPropagation();memorial()};
 }
@@ -443,7 +461,7 @@ document.getElementById("mute").onclick=e=>{e.stopPropagation();XM.toggleSound()
 document.getElementById("fs").onclick=e=>{e.stopPropagation();toggleFS()};
 XM.setSound(XM.sound);
 function toggleFS(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}
-const busy=()=>XM.tiebreakerOpen()||document.querySelector(".memorial");
+const busy=()=>XM.tiebreakerOpen()||document.querySelector(".memorial,.vpick");
 document.addEventListener("click",e=>{
   if(!started||busy())return;
   if(e.target.closest("button,a,input,video,label,textarea,select,.vcard,.noadv,.hud"))return;
@@ -465,6 +483,43 @@ document.addEventListener("keydown",e=>{
 document.addEventListener("xmas-victors",()=>{const g=document.getElementById("vgrid");if(g)drawVictors(g)});
 addEventListener("storage",e=>{if(e.key==="xmas-victors"){const g=document.getElementById("vgrid");if(g)drawVictors(g)}});
 
+/* ---------- record a game's victor from its slides ---------- */
+function pickVictor(g){
+  XM.ensureAudio();const cur=XM.victors()[g];const ov=document.createElement("div");ov.className="vpick";
+  ov.innerHTML=`<div style="display:grid;gap:20px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(GAMES[g].name)}</div>
+    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">Who won?</h1>
+    <div class="faces">${TRIBUTES.map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
+    <div style="display:flex;gap:12px">${cur?`<button class="btn ghost" id="vp-clear">Clear victor</button>`:""}<button class="btn ghost" id="vp-x">Cancel (Esc)</button></div></div>`;
+  document.body.appendChild(ov);XM.sfx("whoosh");
+  const close=()=>{ov.remove();document.removeEventListener("keydown",key,true)};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}};document.addEventListener("keydown",key,true);
+  ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;XM.setVictor(g,n);close();refreshCorners();
+    XM.stopSong();XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`})});
+  const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();XM.setVictor(g,"");close();refreshCorners();XM.sfx("untap")};
+  ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};
+  ov.onclick=e=>e.stopPropagation();
+}
+function refreshCorners(){document.querySelectorAll("[data-victor]").forEach(b=>{const g=b.dataset.victor;b.innerHTML=victorLabel(g);b.classList.toggle("ghost",!XM.victors()[g])});
+  const g=document.getElementById("vgrid");if(g)drawVictors(g)}
+document.addEventListener("xmas-victors",refreshCorners);
+/* Ultimate Victor: whoever won the most games (2 or more) */
+function ultimateList(){const c={};Object.entries(XM.victors()).forEach(([g,n])=>{if(g==="mitten"||!n)return;const m=XM.NAMES.find(x=>x.toLowerCase()===n.toLowerCase())||n;c[m]=(c[m]||0)+1});
+  const max=Math.max(0,...Object.values(c));return max>=2?{max,names:Object.keys(c).filter(n=>c[n]===max)}:null}
+function revealUltimate(el){
+  const box=el.querySelector("#ult");const u=ultimateList();if(!u){box.innerHTML="";return}
+  box.innerHTML=`<button class="btn red bigbtn pop" ${d(1.6)} id="ult-go" style="font-size:32px">👑 Reveal the Ultimate Victor</button>`;
+  box.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
+  box.querySelector("#ult-go").onclick=e=>{e.stopPropagation();XM.stopSong();XM.sfx("drumroll");box.innerHTML=`<div class="title-m" style="animation:pulse .4s infinite alternate">🥁 And the Ultimate Victor is...</div>`;
+    announcer.say("And the ultimate victor is...",null,{pitch:.1,rate:.75});
+    setTimeout(()=>{if(!box.isConnected)return;const one=u.names.length===1;
+      box.innerHTML=`<div class="ultimate pop">${u.names.map(n=>`<img src="${XM.photo(n)||"/xmas/emblem.png"}" alt="">`).join("")}
+        <div style="text-align:left"><div class="eb" style="color:var(--gold)">${one?"👑 ULTIMATE VICTOR":"👑 CO-ULTIMATE VICTORS"}</div>
+        <div style="font-family:var(--display);font-size:72px;color:var(--gold);line-height:1;text-shadow:0 5px 0 var(--red-d)">${u.names.map(esc).join(" & ")}</div>
+        <div style="font-size:28px;font-weight:800">${u.max} games won</div></div>
+        ${one?"":`<button class="btn" id="ult-tb" style="font-size:24px">⚔️ Settle it with a tiebreaker</button>`}</div>`;
+      if(one)XM.celebrate(u.names[0],{intro:"Your ultimate victor"});else{XM.celebrate("",{line:`It's a tie! ${u.names.map(XM.spoken).join(" and ")}!`});
+        box.querySelector("#ult-tb").onclick=ev=>{ev.stopPropagation();XM.tiebreaker({tied:u.names})}}},3200)};
+}
 /* ---------- victors board ---------- */
 let editing=null;
 function drawVictors(grid,anim){

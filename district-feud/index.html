@@ -1192,5 +1192,10 @@ document.addEventListener("keydown",e=>{
   e.preventDefault();primary();
 });
 render();
+/* ⏭️ test button: straight to the final board, then the major award (Carsyn's champions song) */
+window.SkipEnd&&SkipEnd.add(()=>{clearTimers();stopSong();S.tie=null;
+  if(!Object.keys(S.tally||{}).length){const who=NAMES.filter(n=>S.present[n]).slice(0,4);S.tally=Object.fromEntries(who.map((n,i)=>[n,8-i*2]))}
+  if(!S.order||!S.order.length)S.order=[0];S.results=S.results||[];S.k=S.order.length-1;nextQuestion();
+  later(()=>S.phase==="end"&&packageReveal(),2500)});
 </script>
 </html>

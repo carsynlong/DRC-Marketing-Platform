@@ -645,6 +645,10 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV,
   rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
+/* ⏭️ test button: jump to the last face and score it, which goes to the final board and its music */
+window.SkipEnd&&SkipEnd.add(()=>{cancelAnimationFrame(raf);FireTimer.stop();stopSong();
+  if(!S.rounds||!S.rounds.length)newGame();
+  S.qi=S.rounds.length-1;S.phase="reveal";S.correct=[];S.locked=true;S.typed=Object.fromEntries(S.players.map(p=>[p.name,"skip"]));score()});   // counts everyone as answered: no "too slow" penalty
 </script>
 
 </body></html>

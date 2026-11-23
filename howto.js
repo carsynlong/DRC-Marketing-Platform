@@ -101,14 +101,15 @@ window.HowTo = (() => {
   let root = null, key = "", folded = false;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-  function draw(kind, g) {
+  function draw(kind, g, el, peek) {
+    const root = el || window.HowTo._root();
     const T = THEMES[kind] || THEMES.feud;
     root.style.cssText = `--ht-font:${T.font};--ht-ink:${T.ink};--ht-accent:${T.accent};--ht-accent2:${T.accent2};--ht-bg1:${T.bg1};--ht-bg2:${T.bg2};--ht-btn:${T.btnInk}`;
-    root.classList.toggle("done", folded);
-    if (folded) {
+    root.classList.toggle("done", !peek && folded);
+    if (!peek && folded) {
       root.innerHTML = `<div class="ht-done"><div class="e">✅</div><b>You're ready!</b><div>Eyes on the TV. The show starts soon.</div>
         <button type="button" class="ht-again">📋 See the rules again</button></div>`;
-      root.querySelector(".ht-again").onclick = () => { folded = false; draw(kind, g); };
+      root.querySelector(".ht-again").onclick = () => { folded = false; draw(kind, g, root); };
       return;
     }
     const c = content(kind, g); let i = 0;
@@ -118,8 +119,9 @@ window.HowTo = (() => {
       <div class="ht-goal"><span class="e" aria-hidden="true">${c.goal[0]}</span><div><b>${esc(c.goal[1])}</b><span>${esc(c.goal[2])}</span></div></div>
       ${c.sections.map(([h, rows]) => `<h2>${esc(h)}</h2><ul>${rows.map(row).join("")}</ul>`).join("")}
       <div class="ht-end">${esc(c.end)}</div></div>
-      <div class="ht-bar"><button type="button" class="ht-ok">Got it! ✅</button></div>`;
-    root.querySelector(".ht-ok").onclick = () => { folded = true; try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} draw(kind, g); tellReady(kind); };
+      <div class="ht-bar"><button type="button" class="ht-ok">${peek ? "Back to the game ↩" : "Got it! ✅"}</button></div>`;
+    if (peek) { root.querySelector(".ht-ok").onclick = closePeek; return; }
+    root.querySelector(".ht-ok").onclick = () => { folded = true; try { navigator.vibrate && navigator.vibrate(20); } catch (e) {} draw(kind, g, root); tellReady(kind); };
   }
 
   // let the TV count this phone as ready (pid / D are the phone page's own globals)
@@ -183,18 +185,52 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     }
   }
 
+  /* ❓ "Rules" pill: any time during the game, a player can reopen How to play on their own phone.
+     It only shows the cards on this phone; nothing is sent to the TV. */
+  let peekEl = null, helpBtn = null, lastG = null;
+  const pageKind = () => /district-feud/.test(location.pathname) ? "feud" : /district-secrets/.test(location.pathname) ? "secrets" : "tribute";
+  const HELPCSS = `#ht-help{position:fixed;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:2147482000;font:800 .9rem/1 system-ui,-apple-system,"Segoe UI",sans-serif;
+  color:#fff;background:rgba(0,0,0,.55);border:0;border-radius:999px;padding:.6em .9em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.45),0 4px 14px rgba(0,0,0,.35);cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#ht-help:active{transform:scale(.94)}
+body.ht-room{padding-bottom:calc(56px + env(safe-area-inset-bottom,0px))!important}`;
+  function openPeek() {
+    if (peekEl || root) return;
+    ensureCss();
+    peekEl = document.createElement("div"); peekEl.id = "howto"; peekEl.setAttribute("role", "dialog"); peekEl.setAttribute("aria-label", "How to play");
+    document.body.appendChild(peekEl); draw(pageKind(), lastG || {}, peekEl, true);
+    if (helpBtn) helpBtn.hidden = true;
+  }
+  function closePeek() { if (peekEl) { peekEl.remove(); peekEl = null; } if (helpBtn) helpBtn.hidden = false; }
+  function ensureCss() { if (!document.getElementById("howto-css")) { const st = document.createElement("style"); st.id = "howto-css"; st.textContent = CSS + HELPCSS; document.head.appendChild(st); } }
+  function help(g, o) {
+    const show = !!(g && o.me && !g.howto && g.phase !== "lobby");
+    if (!show) { if (helpBtn) { helpBtn.remove(); helpBtn = null; document.body.classList.remove("ht-room"); } closePeek(); return; }
+    if (!helpBtn) { ensureCss(); helpBtn = document.createElement("button"); helpBtn.type = "button"; helpBtn.id = "ht-help"; helpBtn.textContent = "❓ Rules";
+      helpBtn.setAttribute("aria-label", "See how to play again"); helpBtn.onclick = openPeek; document.body.appendChild(helpBtn); helpBtn.hidden = !!peekEl; }
+    // sit just above anything pinned to the bottom of the screen (like the emoji bar), never on top of it
+    try {
+      helpBtn.style.visibility = "hidden";
+      let el = document.elementFromPoint(innerWidth - 24, innerHeight - 6), lift = 0;
+      while (el && el !== document.body) { const cs = getComputedStyle(el); if (cs.position === "fixed" || cs.position === "sticky") { lift = Math.max(0, innerHeight - el.getBoundingClientRect().top); break; } el = el.parentElement; }
+      helpBtn.style.bottom = lift ? `${lift + 8}px` : "";
+      document.body.classList.toggle("ht-room", !lift);   // nothing pinned at the bottom: leave room to scroll past the pill
+    } catch (e) {} finally { helpBtn.style.visibility = ""; }
+  }
+
   /* called with the latest game state after every poll; o = { me, answered } */
   function sync(g, o) {
     hurry(g, o || {});
+    lastG = g; help(g, o || {});
     const kind = g && g.howto;
+    if (kind) closePeek();
     if (!kind) { if (root) { root.remove(); root = null; key = ""; folded = false; } return; }
     const k = kind + ":" + (g.gid || "") + ":" + JSON.stringify(g.opts && g.opts.bets || 0);
     // already tapped Got it: keep reminding the TV every few seconds (the TV clears the list each time the rules start)
     if (root && folded && Date.now() - (sync.sent || 0) > 4000) { sync.sent = Date.now(); tellReady(kind); }
     if (root && k === key) return;
-    if (!document.getElementById("howto-css")) { const st = document.createElement("style"); st.id = "howto-css"; st.textContent = CSS; document.head.appendChild(st); }
+    ensureCss();
     if (!root) { root = document.createElement("div"); root.id = "howto"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "How to play"); document.body.appendChild(root); folded = false; }
-    key = k; draw(kind, g);
+    key = k; draw(kind, g, root);
   }
-  return { sync };
+  return { sync, open: openPeek, _root: () => root };
 })();

@@ -643,3 +643,14 @@ window.Track = (() => {
   ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (want && ac && ac.state === "suspended") ac.resume(); if (want && !src) play(want); }, true));
   return { preload, play, stop, playing: () => !!src };
 })();
+
+/* ⏭️ A tiny, faint "skip to end" button in the bottom-left corner of the TV, so Carsyn can test the end music.
+   SkipEnd.add(fn): fn jumps the game to its ending. Asks first, since it ends the game in progress. */
+window.SkipEnd = { add(fn) {
+  const b = document.createElement("button");
+  b.textContent = "⏭ skip to end"; b.title = "Test: jump to the end of the game";
+  b.style.cssText = "position:fixed;left:4px;bottom:4px;z-index:99999;font:10px system-ui,sans-serif;padding:2px 6px;border-radius:6px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.35);color:rgba(255,255,255,.55);opacity:.35;cursor:pointer";
+  b.onmouseenter = () => b.style.opacity = "1"; b.onmouseleave = () => b.style.opacity = ".35";
+  b.onclick = e => { e.stopPropagation(); b.blur(); if (confirm("Skip to the end of the game? (for testing the end music)")) try { fn(); } catch (err) { console.error(err); } };
+  (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => document.body.appendChild(b));
+} };

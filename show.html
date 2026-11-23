@@ -229,7 +229,7 @@ function orderSlide(k,blurb){
 
 /* ---------- deep-voice announcer for the tribute profiles ---------- */
 // Uses the laptop's built-in speech voice, pitched way down. Names are spelled for the voice the way they're said.
-const SAY={"Elisha":"Alicia","QUEEN MOTHER":"Queen Mother"};
+const SAY=XM.SAY;
 const NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"];
 const announcer=(()=>{
   let gen=0;const synth=window.speechSynthesis;

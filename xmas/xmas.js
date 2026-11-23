@@ -17,8 +17,8 @@ XM.TRIBUTES=[
  {d:5,name:"Jonny",weapon:"A motivational speech, live from JT Motivation",strategy:"Take a 45-minute shower, then post a pep talk about it",odds:"5 to 1"},
  {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},
  {d:7,name:"Tinsley",weapon:"A perfectly timed meme reference",strategy:"Make everyone laugh till they drop",odds:"3 to 1"},
- {d:8,name:"Natalie",weapon:"A wooden spoon",strategy:"Smile sweetly, strike fast",odds:"4 to 1"},
- {d:9,name:"Kamdon",weapon:"Perfectly packed snowballs",strategy:"Stay quiet, then strike",odds:"5 to 1"},
+ {d:8,name:"Natalie",weapon:"A rolling pin and a fresh batch of cookies",strategy:"Bribe the whole arena with baked goods",odds:"4 to 1"},
+ {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)"},
  {d:10,name:"Brandon",weapon:"A Santa hat, for camouflage",strategy:"Blend in with the elves",odds:"6 to 1"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
  {d:12,name:"Kyle",weapon:"Master of disguise",strategy:"Pull a Peeta. Become a rock and wait it out.",odds:"12 to 1"},
@@ -239,7 +239,7 @@ XM.sfx=function(kind){
 };
 
 /* ================= ANNOUNCER (laptop's built-in voice, pitched down) ================= */
-XM.SAY={"Elisha":"Alicia","QUEEN MOTHER":"Queen Mother"};
+XM.SAY={"Elisha":"Alicia","QUEEN MOTHER":"Queen Mother","Kamdon":"Camden"};
 XM.spoken=n=>XM.SAY[n]||n;
 let sayGen=0;
 const pickVoice=()=>{const sy=window.speechSynthesis;if(!sy)return null;const v=sy.getVoices().filter(v=>/^en/i.test(v.lang));

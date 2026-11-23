@@ -173,11 +173,13 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 <script src="qrcode.js"></script>
 <script src="sync.js"></script>
 <script src="minigames.js"></script>
+<script src="firetimer.js"></script>
 <script>
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
+const NO_ANSWER=250; // points lost for not locking in a guess before the cannon fires
 const HOST="Carsyn"; // runs the game: knows every face, so instead of guessing she predicts (🔮) and plays the mini-games
 const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
 const groupOf=n=>GIRLS.has(n)?"girls":"boys";
@@ -393,7 +395,7 @@ function showIntro(){
   Rules.run({theme:"tribute",title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
     ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
     ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
-    ["⏱️","You have 30 seconds before the cannon fires."],
+    ["⏱️","You have 30 seconds before the cannon fires. No answer in time? You lose 250 points!"],
     ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
     ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
     ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
@@ -445,7 +447,7 @@ function tick(last){
     S.elapsed=Math.min(S.secs,S.elapsed+dt);
     const left=Math.ceil(S.secs-S.elapsed);
     if(left!==before&&left<=5&&left>0){sfx(left===1?"tick":"tock");tempoMul=1.18;$(".timer")?.classList.add("hurry")}
-    drawTimer();setZoom(S.elapsed/S.secs);
+    drawTimer();setZoom(S.elapsed/S.secs);FireTimer.update(left,1-S.elapsed/S.secs);
     if(S.elapsed>=S.secs){lock();return}
     raf=requestAnimationFrame(loop);
   };
@@ -456,8 +458,9 @@ function drawTimer(){
   n.textContent=left;const frac=1-S.elapsed/S.secs;
   c.setAttribute("stroke-dasharray",`${(frac*176).toFixed(1)} 176`);c.setAttribute("stroke",left<=5?"var(--a1)":"var(--gold)");
 }
-function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();sfx("cannon");render();}
+function lock(){S.locked=true;cancelAnimationFrame(raf);stopSong();FireTimer.stop();sfx("cannon");render();}
 function reveal(){
+  FireTimer.stop();
   Sync.fillAnswers();
   if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
@@ -468,6 +471,9 @@ function score(){
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
     if(S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
+    else if(p.name!==HOST&&Sync.hasPhone(p.name)&&answering().includes(p)&&!String(S.typed[p.name]||"").trim()){
+      // signed in but no guess before the cannon: lose points (never below 0)
+      p.streak=0;p.delta=-Math.min(NO_ANSWER,p.score);p.score+=p.delta;p.missed=true}
     else{p.delta=0;p.streak=0}
   });
   Party.scored();
@@ -558,7 +564,7 @@ function boardRows(){
   return r.map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}
     return `<div class="row"><div class="fill" data-w="${(p.score/max*100).toFixed(1)}%"></div><div class="rk">${rank}</div><img class="av" src="${AV(p.name)}" alt="">
       <div class="nm">${esc(p.name)}${p.move>0?`<span class="mv up">▲${p.move}</span>`:p.move<0?`<span class="mv dn">▼${-p.move}</span>`:""}${p.streak>1?`<span class="streak">🔥 ${p.streak} in a row</span>`:""}</div>
-      <div class="pts">${p.score.toLocaleString()}${p.delta?`<span class="delta">+${p.delta.toLocaleString()}</span>`:""}</div></div>`}).join("");
+      <div class="pts">${p.score.toLocaleString()}${p.delta>0?`<span class="delta">+${p.delta.toLocaleString()}</span>`:p.delta<0?`<span class="delta" style="color:#ff8a7a">−${(-p.delta).toLocaleString()} ⏰</span>`:""}</div></div>`}).join("");
 }
 function quip(){
   const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta).length;

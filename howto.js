@@ -18,7 +18,7 @@ window.HowTo = (() => {
       sections: [
         ["How to play", [["📸", "Watch the TV", "A face starts super zoomed in, then slowly zooms out."],
           ["⌨️", "Type who it is", "Right here on your phone. Only you see it."],
-          ["⏱️", "30 seconds", "Then 💥 the cannon fires and answers lock."]]],
+          ["⏱️", "30 seconds", "Then 💥 the cannon fires and answers lock."], ["⚠️", "Don't run out of time", "No answer in time = −250 points."]]],
         ["Points", [["✅", "Right answer", "1,000 points"],
           ["🔥", "Streak", "More points for answers in a row"],
           ["🍗", "The Feast", "The last round is worth ×3"]]],
@@ -135,6 +135,8 @@ window.HowTo = (() => {
     const kind = g && g.howto;
     if (!kind) { if (root) { root.remove(); root = null; key = ""; folded = false; } return; }
     const k = kind + ":" + (g.gid || "") + ":" + JSON.stringify(g.opts && g.opts.bets || 0);
+    // already tapped Got it: keep reminding the TV every few seconds (the TV clears the list each time the rules start)
+    if (root && folded && Date.now() - (sync.sent || 0) > 4000) { sync.sent = Date.now(); tellReady(kind); }
     if (root && k === key) return;
     if (!document.getElementById("howto-css")) { const st = document.createElement("style"); st.id = "howto-css"; st.textContent = CSS; document.head.appendChild(st); }
     if (!root) { root = document.createElement("div"); root.id = "howto"; root.setAttribute("role", "dialog"); root.setAttribute("aria-label", "How to play"); document.body.appendChild(root); folded = false; }

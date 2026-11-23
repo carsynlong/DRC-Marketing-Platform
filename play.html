@@ -202,6 +202,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
   font-weight:800;padding:8px 14px;border-radius:999px;box-shadow:0 0 0 2px var(--gold),0 6px 18px rgba(0,0,0,.5);animation:pop .5s both}
 .ask{display:grid;gap:8px;background:var(--night-2);border-radius:16px;padding:12px;box-shadow:0 0 0 2px var(--gold)}
 .ask input{font:inherit;font-size:1.05rem;font-weight:700;background:rgba(0,0,0,.3);color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:.6em;-webkit-user-select:text;user-select:text}
+.ppic{position:relative;height:30dvh;border-radius:16px;overflow:hidden;background:#07120d;box-shadow:0 0 0 3px var(--gold);flex:none}
+.ppic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform,filter}
+.ppic .ptag{position:absolute;left:8px;bottom:8px;z-index:3;background:rgba(42,28,5,.9);color:#ffe9a8;font-weight:800;font-size:.8rem;padding:.3em .8em;border-radius:999px}
+.pnight{position:absolute;inset:0;z-index:1;background:radial-gradient(circle,transparent 0 9%,rgba(0,0,0,.96) 17%);background-size:320% 320%;animation:twnight 6s ease-in-out infinite alternate}
+@keyframes twnight{0%{background-position:10% 20%}33%{background-position:85% 40%}66%{background-position:30% 90%}100%{background-position:70% 10%}}
+.pbee{position:absolute;z-index:2;font-size:44px;line-height:1;touch-action:manipulation;cursor:pointer;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6));transition:left 2.2s ease-in-out,top 2.2s ease-in-out;padding:8px;margin:-8px}
+.pbee.splat{transition:none;animation:splat .4s forwards}@keyframes splat{to{transform:scale(1.8);opacity:0}}
 </style>
 </head>
 <body>
@@ -436,6 +443,23 @@ function askBox(g,isWinner){
   return `<form class="ask" id="askf"><label class="eyebrow" for="askq">🎤 Ask ${esc(w.name)} a question</label><input id="askq" maxlength="140" autocomplete="off" placeholder="How did you know it was Grandad?"><button class="btn" type="submit">Send to the TV</button></form>`;
 }
 
+/* ---------- 🎲 twist faces: the photo on your phone, twisted like the TV, with bees in the way ---------- */
+let picStart=null;
+setInterval(()=>{
+  const g=D.game,im=$("#ppic"),box=$("#ppicbox");if(!im||!g||!g.pic){picStart=null;return}
+  const P=g.pic,key=g.gid+":"+g.qi;if(!picStart||picStart.k!==key)picStart={k:key,t:Date.now()-Math.max(0,(P.secs-(g.left??P.secs)))*1000};
+  const e=Math.min(1,(Date.now()-picStart.t)/1000/P.secs),p=P.twist==="freeze"?0:e,s=Math.pow(P.z,1-p*P.cap);
+  im.style.transformOrigin=`${P.fx*100}% ${P.fy*100}%`;
+  im.style.transform=`scale(${s})`+(P.twist==="flip"?" rotate(180deg)":"")+(P.twist==="mirror"?" scaleX(-1)":"");
+  im.style.filter=P.twist==="bw"?"grayscale(1) contrast(1.15)":P.twist==="smoke"?`blur(${((1-e)*16).toFixed(1)}px)`:P.twist==="venom"?`hue-rotate(${Math.round(e*P.secs*140)}deg) saturate(2.4)`:"";
+  // tracker jacker bees crawl over the photo: tap to swat them
+  const bees=box.querySelectorAll(".pbee:not(.splat)");
+  if(bees.length<4&&Math.random()<.35){const b=document.createElement("div");b.className="pbee";b.textContent="🐝";
+    b.style.left=Math.random()*80+"%";b.style.top=Math.random()*70+"%";
+    b.onpointerdown=ev=>{ev.preventDefault();b.classList.add("splat");b.textContent="💥";buzz(25);PFX.sfx("buzz");setTimeout(()=>b.remove(),420)};box.appendChild(b)}
+  bees.forEach(b=>{if(Math.random()<.07){b.style.left=Math.random()*80+"%";b.style.top=Math.random()*70+"%"}});
+},250);
+
 /* arena tips that rotate while you wait */
 const TIPS=["Sponsors love a confident tribute.","Never eat berries you can't name.","Tracker jackers hate being swatted. Swat them anyway.",
   "Find water first. Then find the cocoa.","The President is watching. Smile.","Camouflage tip: wear the ugly sweater.",
@@ -521,7 +545,8 @@ function view(){
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you answered. That costs 250 points. Be quicker next time!</p>","late"),"cannon"];
     if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:${k}" class="tile k${k}" data-ans="${esc(n)}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>`,"whistle"];
-    return [key+"type",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
+    return [key+"type"+(g.pic?"p":""),header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
+      ${g.pic?`<div class="ppic" id="ppicbox"><img id="ppic" src="${esc(g.pic.src)}" alt="The mystery face, with a Gamemaker twist">${g.pic.twist==="night"?'<div class="pnight"></div>':""}<div class="ptag">🎲 Twist! Swat the bees 🐝</div></div>`:""}
       <form class="typeit" id="typeit"><label class="eyebrow" for="guess">Who is it?</label>
       <input id="guess" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
       <button class="btn" type="submit">Lock it in</button></form>`,"whistle"];

@@ -472,7 +472,7 @@ function view(){
 }
 
 function render(){
-  if(window.HowTo)HowTo.sync(D.game);   // How to play cards while the TV shows them
+  if(window.HowTo)HowTo.sync(D.game,{me:D.me,answered:!!(D.myAnswer||(typeof pending!=="undefined"&&pending&&D.game&&pending.gid===D.game.gid&&pending.qi===D.game.qi))});   // How to play cards while the TV shows them
   const [k,html,fx]=view();
   const key=k+(offline>2?"off":"");
   if(key===lastKey)return;   // nothing changed: leave the screen alone (keeps your typing)

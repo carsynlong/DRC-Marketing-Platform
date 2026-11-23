@@ -478,3 +478,38 @@ window.LobbyMusic = (() => {
   function duck(v) { if (gain) gain.gain.setTargetAtTime(v, ac.currentTime, .1); }
   return { start, stop, duck, playing: () => !!src, has: game => !!TRACKS[game] };
 })();
+
+/* ⏰ The last 10 seconds to answer: a giant see-through countdown, red edges getting hotter, a heartbeat thump.
+   Hurry.show(secondsLeft, soundOn) every tick while answering; Hurry.hide() when answers lock. */
+window.Hurry = (() => {
+  const CSS = `
+#hurry{position:fixed;inset:0;z-index:2147482000;pointer-events:none;display:grid;place-items:center;
+  box-shadow:inset 0 0 calc(60px + var(--h)*140px) calc(8px + var(--h)*46px) rgba(227,35,44,calc(.3 + var(--h)*.5));animation:hu-throb 1s ease-in-out infinite}
+#hurry .hn{font:900 min(40vw,56vh)/1 system-ui,-apple-system,"Segoe UI",sans-serif;color:rgba(255,70,70,.26);-webkit-text-stroke:5px rgba(255,255,255,.4);animation:hu-in .9s ease-out both}
+#hurry .ht{position:absolute;top:3.5%;font:900 clamp(1.3rem,3.2vw,2.6rem)/1 system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff;background:#e3232c;padding:.25em .9em;border-radius:12px;
+  box-shadow:0 0 0 4px #ffc92e,0 10px 30px rgba(0,0,0,.4);letter-spacing:.04em;animation:hu-beat .5s ease-in-out infinite alternate}
+@keyframes hu-in{from{transform:scale(1.7);opacity:0}to{transform:none;opacity:1}}
+@keyframes hu-beat{to{transform:scale(1.08)}}
+@keyframes hu-throb{50%{opacity:.75}}
+@media (prefers-reduced-motion:reduce){#hurry,#hurry *{animation:none!important}}`;
+  let el = null, last = null, ac = null;
+  function thump(left) {
+    try {
+      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume();
+      const t = ac.currentTime + .01;
+      [0, .16].forEach((d, k) => { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(k ? 70 : 85, t + d); o.frequency.exponentialRampToValueAtTime(40, t + d + .18);
+        o.connect(g); g.connect(ac.destination); g.gain.setValueAtTime(.0001, t + d); g.gain.exponentialRampToValueAtTime(left <= 3 ? .9 : .6, t + d + .01); g.gain.exponentialRampToValueAtTime(.0001, t + d + .22); o.start(t + d); o.stop(t + d + .25); });
+    } catch (e) {}
+  }
+  function show(left, sound) {
+    if (left == null || left <= 0) return hide();
+    if (left === last) return; last = left;
+    if (!document.getElementById("hurry-css")) { const st = document.createElement("style"); st.id = "hurry-css"; st.textContent = CSS; document.head.appendChild(st); }
+    if (!el) { el = document.createElement("div"); el.id = "hurry"; el.setAttribute("aria-hidden", "true"); document.body.appendChild(el); }
+    el.style.setProperty("--h", Math.max(0, Math.min(1, (10 - left) / 9)).toFixed(2));
+    el.innerHTML = `<div class="ht">⏰ HURRY! Lock it in!</div><div class="hn">${left}</div>`;
+    if (sound) thump(left);
+  }
+  function hide() { if (el) el.remove(); el = null; last = null; }
+  return { show, hide };
+})();

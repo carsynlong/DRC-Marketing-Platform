@@ -272,7 +272,7 @@ function view(){
     if(!g.playing.includes(D.me))return [key+"out",header()+msg("📺","Watch the TV","<p>Ask the host to tap your name on the TV to join in.</p>")];
     if(mine)return [key+"lock:"+mine,header()+lockedCard(mine,"Your secret face-off vote. Wait for the count on the TV!"),"lock"];
     if(g.locked)return [key+"late",header()+msg("🗳️","Counting the votes…","<p>Watch the TV!</p>")];
-    return [key+"ask",header()+qcard(g,`⚡ Face-off ${g.round} · Vote in secret`)+`<div class="ask">Tap your pick</div>`+nameBtns(tied,"big")+`<p class="priv" style="text-align:center;margin:0">🔒 Nobody sees who you vote for.</p>`];
+    return [key+"ask",header()+ptimer(g)+qcard(g,`⚡ Face-off ${g.round} · Vote in secret`)+`<div class="ask">Tap your pick</div>`+nameBtns(tied,"big")+`<p class="priv" style="text-align:center;margin:0">🔒 Nobody sees who you vote for.</p>`];
   }
   if(g.kind==="faceoff"&&g.phase==="reveal"){
     const lead=g.lead||[],won=lead.length===1;
@@ -310,7 +310,7 @@ $("#rrow").addEventListener("click",e=>{
   post("/api/react",{name:D.me,e:b.dataset.emoji}).catch(()=>{});
 });
 function render(){
-  if(window.HowTo)HowTo.sync(D.game);   // How to play cards while the TV shows them
+  if(window.HowTo)HowTo.sync(D.game,{me:D.me,answered:!!(D.myAnswer||(typeof pending!=="undefined"&&pending&&D.game&&pending.gid===D.game.gid&&pending.qi===D.game.qi))});   // How to play cards while the TV shows them
   const showBar=!!(D.game&&D.me);document.body.classList.toggle("rb",showBar);$("#rbar").hidden=!showBar;
   const [k,html,fx]=view();
   const v=D.game&&D.me?((D.game.tally||{})[D.me]||0):null;

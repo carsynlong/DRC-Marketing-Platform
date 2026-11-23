@@ -163,6 +163,10 @@ function deal(){
   const opts=Array.from({length:CARDS.length},(_,i)=>i+1).filter(n=>n!==S.gm);let k=0;sfx("drumroll");
   const t=setInterval(()=>{S.gm=opts[Math.random()*opts.length|0];render();sfx("tick");if(++k>=16){clearInterval(t);save();S.gmBingo=lines(CARDS[S.gm-1]).length>0;sfx("reveal");render()}},110);
 }
+// Hidden tester: triple-click the "District Bingo" title, or press Shift+T, to preview a win (changes nothing)
+function testWin(){ensureAudio();const k=1+Math.floor(Math.random()*24);bigWin(`Card ${k}`,"Test run");XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}
+document.addEventListener("click",e=>{if(e.detail===3&&e.target.closest&&e.target.closest("h1.title"))testWin()});
+document.addEventListener("keydown",e=>{if(e.key==="T"&&e.shiftKey&&!(e.target.closest&&e.target.closest("input")))testWin()});
 document.addEventListener("keydown",e=>{if(e.key==="m"||e.key==="M"){if(!(e.target.closest&&e.target.closest("input")))XM.toggleSound()}});
 fetch("/xmas/bingo-cards.json",{cache:"no-cache"}).then(r=>r.json()).then(c=>{CARDS=c;if(S.gm&&!(S.gm<=CARDS.length))S.gm=null;S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;render()})
   .catch(()=>{document.getElementById("app").innerHTML=`<p style="margin-top:20vh;text-align:center">Couldn't load the bingo cards. Check the internet connection and refresh.</p>`});

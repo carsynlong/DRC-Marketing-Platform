@@ -387,13 +387,6 @@ const SLIDES=[
    enter(){setTimeout(()=>XM.sfx("thud"),700)}},
  tieSlide("bingo"),
 
- {id:"fallen",music:"stop",html:()=>{const P=[[-8,180,320],[5,590,295],[-4,1000,330],[7,1410,300],[-6,385,590],[4,1200,600]];
-   return `<div class="eb fd" style="position:absolute;top:70px;left:0;right:0;letter-spacing:.35em">IN LOVING MEMORY OF CHRISTMAS GAMES PAST</div>
-    <h1 class="title-l slam" ${d(.3)} style="position:absolute;top:118px;left:0;right:0">Fallen Tributes</h1>
-    ${P.map(([r,x,y],i)=>`<div class="pola drop" ${d(1+i*.6)} style="--r:${r}deg;left:${x}px;top:${y-60}px;transform:rotate(${r}deg)"><img src="/xmas/past/past${i+1}.jpg" alt=""></div>`).join("")}
-    <div class="motto fade" ${d(4.8)} style="position:absolute;bottom:60px;left:0;right:0;font-size:40px">The 2025 Christmas Games. Gone, but never forgotten.</div>
-    <button class="btn ghost pop" ${d(5)} id="memo" style="position:absolute;bottom:52px;right:70px;font-size:24px">🕯️ Slideshow</button>`},
-   enter(){XM.sfx("gong");for(let i=0;i<6;i++)setTimeout(()=>XM.sfx("thud"),1700+i*600)}},
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:260px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>

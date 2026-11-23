@@ -196,7 +196,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
   padding:9px max(16px,env(safe-area-inset-left,0px)) calc(9px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,var(--navy),#050d33);border-top:3px solid var(--gold)}
 body:has(.race){padding-bottom:64px}   /* room to scroll the buttons clear of the prize race strip */
 .race>b{font-family:var(--display);font-weight:400;color:var(--gold);flex:none;font-size:.95rem}
-.rl{display:flex;gap:16px;overflow:hidden;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.rl{display:flex;gap:16px;overflow:hidden;min-width:0;padding-right:6px}
+.rl.over{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
 .rc{display:inline-flex;align-items:center;gap:6px;font-weight:800;text-transform:uppercase;font-size:1rem}
 .rc img{width:28px;height:28px;border-radius:50%;object-fit:cover}
 .rc i{font-style:normal;font-family:var(--display);color:var(--gold)}
@@ -1187,7 +1188,7 @@ setInterval(()=>{push();if(document.hidden)return;
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
 
 document.addEventListener("keydown",e=>{
-  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(S.phase==="ballot"||S.phase==="cast")return; // never let a stray key cast or skip a secret vote
   if(e.target.closest&&e.target.closest("button,input,label"))return;
@@ -1196,7 +1197,7 @@ document.addEventListener("keydown",e=>{
 render();
 /* ⏭️ test button: straight to the final board, then the major award (Carsyn's champions song) */
 /* prize race strip: more players than fit glide back and forth so everyone gets seen */
-(()=>{let dir=1,wait=0;setInterval(()=>{const l=document.querySelector(".race .rl");if(!l)return;const max=l.scrollWidth-l.clientWidth;if(max<=4)return;
+(()=>{let dir=1,wait=0;setInterval(()=>{const l=document.querySelector(".race .rl");if(!l)return;const max=l.scrollWidth-l.clientWidth;l.classList.toggle("over",max>4&&l.scrollLeft<max-2);if(max<=4)return;
   if(wait>0){wait--;return}l.scrollLeft+=dir;if(l.scrollLeft>=max-1||l.scrollLeft<=0){dir=-dir;wait=60}},30)})();
 window.MusicPill&&MusicPill.add({on:()=>S.sound,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
 window.SkipEnd&&SkipEnd.add(()=>{clearTimers();stopSong();S.tie=null;

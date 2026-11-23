@@ -202,6 +202,7 @@ body:has(#rulesbtn) .app{padding-bottom:76px}
 #hosttools .ok{background:#2e7a52;color:#fff}#hosttools .no{background:#e7dcc4;color:#6b5233}
 /* the last 10 seconds, and TIME'S UP */
 .hurry{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--wax);color:#fff;border-radius:14px;padding:8px 12px;font-weight:800;font-size:1.05rem;box-shadow:0 0 0 2px var(--gold),0 0 24px rgba(255,40,40,.6);animation:hpulse .5s ease-in-out infinite alternate}
+body.hurrying #hurry{display:none}   /* the big red bar at the top is already counting down */
 .hurry b{font-family:var(--deco);font-size:2rem;line-height:1}
 @keyframes hpulse{to{transform:scale(1.04);box-shadow:0 0 0 2px var(--gold),0 0 40px rgba(255,40,40,.9)}}
 #tuflash{position:fixed;inset:0;z-index:12;pointer-events:none;display:grid;place-items:center;background:rgba(180,0,10,.7);color:#fff;font-family:var(--deco);font-size:2.6rem;text-align:center;animation:tuf 1.8s ease-in forwards}
@@ -657,7 +658,7 @@ function view(){
   if(g.ttl&&["question","reveal"].includes(g.phase)){   // 🤥 two truths and a lie
     const T=g.ttl,mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null),pickI=/^TTL([123])$/.exec(mine||"")?.[1];
     if(T.who===D.me){
-      if(g.phase==="reveal")return [key+"tro",header()+msg("🤥","Your lie is out!",g.fooled?`<p class="said">You fooled ${g.fooled}!</p><p>150 points each.</p>`:"<p>Nobody fell for it. Tough crowd!</p>",g.fooled?"right":"")+reactBar(),g.fooled?"right":""];
+      if(g.phase==="reveal")return [key+"tro",header()+msg("🤥","Your lie is out!",g.fooled?`<p class="said">You fooled ${g.fooled}!</p><p>${150*(g.mult||1)} points each.</p>`:"<p>Nobody fell for it. Tough crowd!</p>",g.fooled?"right":"")+reactBar(),g.fooled?"right":""];
       return [key+"trw",header()+msg("🤫","These are YOURS!","<p>Poker face! Everyone's hunting for your lie.</p>","")+reactBar(),"shh"];
     }
     if(g.phase==="reveal"){const right=(g.correct||[]).includes(D.me);
@@ -673,7 +674,7 @@ function view(){
   // 🕵️ the Gamemaker (Carsyn) knows the real secrets: she plays MOST WANTED, betting on who the room will wrongly accuse most. Bonus round: she guesses like everyone.
   if(D.me===HOST_NAME&&!g.bonus&&!mineSecret&&["question","interro","reveal"].includes(g.phase)){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null),pick=/^🕵️(.+)$/u.exec(mine||"")?.[1]||null;
-    if(g.phase==="reveal"){const top=g.wanted||[],hit=pick&&top.includes(pick),pts=400*(g.double?2:1);
+    if(g.phase==="reveal"){const top=g.wanted||[],hit=pick&&top.includes(pick),pts=400*(g.mult||(g.double?2:1));
       return [key+"gr"+pick+top.join(),header()+msg(hit?"🕵️":"🎙️",hit?"Most Wanted: nailed it!":pick?"Not this time":"No pick",
         `<p class="said">The room accused ${top.length?top.map(esc).join(" & "):"nobody"}${pick?` · you bet on ${esc(pick)}`:""}</p><p>${hit?`+${pts} points`:"Better luck on the next one!"}</p>`,hit?"right":"")+reactBar(),hit?"right":""];}
     if(g.phase==="interro")return [key+"gi",header()+msg("🕵️","The Interrogation","<p>You're the Gamemaker. Will they cave and accuse your Most Wanted?</p>")+reactBar()];
@@ -735,7 +736,7 @@ function view(){
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":`<p class="said">No guess sealed: −${NO_GUESS} points.</p><p>Get the next one!</p>`,"wrong"),"wrong"];
     return [key+"ask"+mineSecret+b+!!g.left+(g.hide||[]).length+myFrameNow()+!!moleTarget(g),header()+fileCard(g)+(!mineSecret?moleNote(g)+betPicker():"")+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>${framer(g)}`:"")+
-      (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${NO_GUESS}`}</div>`:"")+
+      (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${g.slowPen||NO_GUESS}`}</div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
       <button class="btn" type="submit">🔏 Seal my guess</button>${g.opts?.decoys?`<button class="btn" type="button" id="fakebtn" style="background:#2b1d12;box-shadow:0 4px 0 #000;min-height:52px;font-size:1.05rem">🃏 It's fake! Nobody said that</button>`:""}<p class="hint">Nobody else sees your guess.${mineSecret?"":` No guess before time's up: −${NO_GUESS}.`}</p></form>`,mineSecret?"shh":""];
@@ -773,7 +774,9 @@ function lockFlash(){
 }
 function render(){
   lockFlash();
-  if(window.HowTo)HowTo.sync(D.game,{me:D.me,answered:!!(D.myAnswer||(typeof pending!=="undefined"&&pending&&D.game&&pending.gid===D.game.gid&&pending.qi===D.game.qi))});   // How to play cards while the TV shows them
+  // the secret's owner and the Gamemaker (picking Most Wanted) can't lose points, so no "too slow" warning for them
+  const safe=!!(D.game&&D.me&&((D.game.own&&typeof ownTag==="function"&&D.game.own===ownTag(D.game.gid,D.game.qi,D.me))||(D.me===HOST_NAME&&!D.game.bonus)));
+  if(window.HowTo)HowTo.sync(D.game,{me:D.me,answered:safe||!!(D.myAnswer||(typeof pending!=="undefined"&&pending&&D.game&&pending.gid===D.game.gid&&pending.qi===D.game.qi))});   // How to play cards while the TV shows them
   const [k,html,fx]=view();
   const key=k+(offline>2?"off":"");
   if(key===lastKey)return;   // nothing changed: leave the screen alone (keeps your typing)
@@ -834,7 +837,7 @@ function render(){
     ty.closest(".pstep").scrollIntoView({block:"center",behavior:calm?"auto":"smooth"})}
   const s=meScore();if(s)shownScore=s.score;
   // floating secrets while you wait (never over the name list or the guess box)
-  const busy=document.querySelector("#g,[data-name],#secret,#t1,[data-ttl],[data-likely],[data-vote],#app figure")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
+  const busy=document.querySelector("#g,[data-name],#secret,#t1,[data-ttl],[data-likely],[data-vote],#app figure,#drawtap,.write")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
   if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
   else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:3,every:[2000,3400]});
 }

@@ -635,7 +635,7 @@ function wire(){
     const e=$("#snd");if(e){e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)}});
 }
 document.addEventListener("keydown",e=>{
-  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(e.target.closest&&e.target.closest("button,input"))return;
   e.preventDefault();primary();

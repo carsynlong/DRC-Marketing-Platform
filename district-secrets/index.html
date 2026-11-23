@@ -736,7 +736,7 @@ function snapshot(){
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:isDouble(S.qi),secs:qs(),opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:Q.filter(x=>!x.bonus&&!x.ttl).length,lightning:!!Q[S.qi]?.lightning,ttl:Q[S.qi]?.ttl?{who:Q[S.qi].a,opts:Q[S.qi].opts}:undefined,
     howto:window.Rules&&Rules.active()?"secrets":undefined,
-    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:1),
+    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:Q[S.qi]?.golden?3:1),mult:isDouble(S.qi)?2:Q[S.qi]?.golden?3:1,
     wanted:["reveal","story","board"].includes(S.phase)&&S.qi<Q.length&&gmPredicts()?wantedTop():undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.phase==="question"&&Q[S.qi].hide)g.hide=hiddenNow()}
   if(inGame&&["reveal","story","board"].includes(S.phase)&&Q[S.qi].golden)g.golden=true;
@@ -1051,10 +1051,13 @@ async function afterLock(){
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
   if(!S.opts?.interro||cur().lightning||cur().ttl)return reveal();
   stopSong();await poll();
-  const t={};Object.values(current()).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
+  const playing=new Set(active().map(p=>p.name)),t={};
+  Object.entries(current()).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
+    const n=NAMES.find(n=>matches(v,n));if(n&&playing.has(n))t[n]=(t[n]||0)+1});
   const max=Math.max(0,...Object.values(t));
   if(!max)return reveal();
-  S.hot=Object.keys(t).filter(n=>t[n]===max).slice(0,2);S.hotN=max;
+  const tied=Object.keys(t).filter(n=>t[n]===max).sort((a,b)=>(b===cur().a)-(a===cur().a));   // a tie: the real owner always gets a seat
+  S.hot=tied.slice(0,2);S.hotN=max;
   curtains(()=>{S.phase="interro";S.hotAt=Date.now();S.roomOpen=true;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500)},"🔦 The Interrogation Room");
 }
 const ROOM_SECS=30;   // how long the Interrogation Room stays open
@@ -1144,7 +1147,7 @@ function score(){
       p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
     else{p.streak=0;p.delta=0;
       // signed in on a phone but never sealed a guess: time ran out
-      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
+      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;if(p.delta<0)S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
       if(S.guesses?.[p.name]!=null&&(bet==="sure"||bet==="allin")){const loss=(bet==="allin"?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;const lost=-p.delta;p.note=(bet==="allin"?"💀 All in… and wrong":"🎯 Sure… and wrong")+(lost?` −${lost}`:" (no points to lose yet)")}}
   });
   accusations().forEach(([n,c])=>{const q=S.players.find(p=>p.name===n);if(q)q.accused+=c});
@@ -1544,11 +1547,11 @@ function wire(){
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
   on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
-    const e=$("#snd");e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)});
+    const e=$("#snd");if(e){e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)}});
   on("clearphones",async()=>{if(!confirm("Clear every phone sign-in? Everyone will need to tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
 }
 document.addEventListener("keydown",e=>{
-  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(e.target.closest&&e.target.closest("button,input"))return;
   e.preventDefault();primary();

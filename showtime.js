@@ -342,7 +342,8 @@ window.Ticker = (() => {
   box-shadow:0 -8px 24px rgba(0,0,0,.35);transform:translateY(110%);transition:transform .45s cubic-bezier(.2,1.2,.4,1)}
 #ticker.on{transform:none}
 #ticker>b{font-family:var(--tk-font);font-weight:400;color:var(--tk-accent);flex:none;font-size:1rem}
-#ticker .tk-l{display:flex;gap:18px;overflow:hidden;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+#ticker .tk-l{display:flex;gap:18px;overflow:hidden;min-width:0;padding-right:6px}
+#ticker .tk-l.over{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
 #ticker .tk-c{flex:none;display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:1rem;text-transform:uppercase;letter-spacing:.02em}
 #ticker .tk-c img{width:28px;height:28px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--tk-accent)}
 #ticker .tk-c i{font-style:normal;font-weight:800;color:var(--tk-accent);font-variant-numeric:tabular-nums}
@@ -385,7 +386,7 @@ body.has-ticker{padding-bottom:52px}
     // more players than fit: glide back and forth so everyone gets seen
     if (!start.glide) { let dir = 1, wait = 0; start.glide = setInterval(() => {
       const l = el && el.querySelector(".tk-l"); if (!l) return;
-      const max = l.scrollWidth - l.clientWidth; if (max <= 4) { l.scrollLeft = 0; return; }
+      const max = l.scrollWidth - l.clientWidth; l.classList.toggle("over", max > 4 && l.scrollLeft < max - 2); if (max <= 4) { l.scrollLeft = 0; return; }
       if (wait > 0) { wait--; return; }
       l.scrollLeft += dir; if (l.scrollLeft >= max - 1 || l.scrollLeft <= 0) { dir = -dir; wait = 60; }
     }, 30); }

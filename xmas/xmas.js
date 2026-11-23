@@ -11,7 +11,7 @@ XM.store=store;
 /* ================= DATA ================= */
 XM.TRIBUTES=[
  {d:1,name:"Jessie",weapon:"Shears in one hand, lash tweezers in the other",strategy:"Give everyone a fresh cut, then take them out",odds:"4 to 1"},
- {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Already knows where everyone is hiding",odds:"2 to 1"},
+ {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1"},
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Remodel the arena, then retreat to the lake",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"A motivational speech, live from JT Motivation",strategy:"Take a 45-minute shower, then post a pep talk about it",odds:"5 to 1"},

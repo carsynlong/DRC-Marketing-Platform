@@ -229,7 +229,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-23-7";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-9";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -287,18 +287,22 @@ const HOST_NAME="Carsyn";
 const NO_GUESS=200;
 const FAKE="🃏 FAKE";   // sealed when you call a secret fake (matches the TV)   // points lost for not sealing a guess in time (matches the TV)
 const hostKey=()=>store.get("ds-hostkey");
-const isHost=()=>D.me===HOST_NAME&&!!hostKey();
-let hostOpen=false,hostList=null,hostErr="",hostT=0;
+const isHost=()=>D.me===HOST_NAME;   // signed in as Carsyn on her own phone: that's all it takes
+let hostOpen=false,hostList=null,hostErr="",hostT=0,hostDecoys=[];
+async function hostDecoy(op,t){
+  try{await fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op,name:myName,pid,text:t})})}catch(e){}
+  sfx("tap");hostLoad();
+}
 async function hostLoad(){
-  try{const r=await fetch(`/api/ds?op=review&k=${encodeURIComponent(hostKey()||"")}`,{cache:"no-store"});
-    if(r.status===403){hostErr="The TV's host code changed. On the TV, open ⚙ → Host phone and scan it again.";hostList=null}
-    else{hostErr="";hostList=(await r.json()).list}
+  try{const r=await fetch(`/api/ds?op=review&name=${encodeURIComponent(myName||"")}&pid=${encodeURIComponent(pid)}`,{cache:"no-store"});
+    if(r.status===403){hostErr="Only Carsyn's own phone can approve. Sign in as Carsyn again.";hostList=null}
+    else{hostErr="";const d=await r.json();hostList=d.list;hostDecoys=d.decoys||[]}
   }catch(e){hostErr="No connection. Trying again…"}
   hostDraw();
 }
 async function hostDecide(id,ok){
   sfx("tap");buzz(15);
-  try{await fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"approve",k:hostKey(),id,ok})})}catch(e){}
+  try{await fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"approve",name:myName,pid,id,ok})})}catch(e){}
   hostLoad();
 }
 function hostDraw(){
@@ -310,14 +314,23 @@ function hostDraw(){
   if(!hostOpen){p?.remove();return}
   if(!p){p=document.createElement("div");p.id="hosttools";document.body.appendChild(p)}
   const n=(hostList||[]).filter(x=>x.status==="approved").length;
+  const dt=p.querySelector("#decoytext"),draft=dt?.value||"",dfoc=document.activeElement===dt;   // keep a half-typed decoy across refreshes
   p.innerHTML=`<div class="in"><div class="eyebrow">Host only · keep this to yourself</div><h2>📝 Bonus secrets</h2>
     <p style="margin:0;color:var(--muted)">Anonymous: you see the secret, never who wrote it. Approved ones play as a bonus round after the 8 secrets, and each writer earns +500. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
     ${hostErr?`<div class="offline" style="background:var(--wax);color:#fff">${esc(hostErr)}</div>`:""}
     ${hostList&&!hostList.length?`<p style="text-align:center;color:var(--muted)">Nothing yet. This updates by itself.</p>`:""}
     ${(hostList||[]).map((x,i)=>`<div class="hcard ${x.status}"><span class="tag">Secret ${i+1} · ${x.status}</span><div class="t">“${esc(x.text)}”</div>
-      <div class="row"><button class="ok" data-hok="${esc(x.id)}">✓ Approve</button><button class="no" data-hno="${esc(x.id)}">Skip</button></div></div>`).join("")}</div>`;
+      <div class="row"><button class="ok" data-hok="${esc(x.id)}">✓ Approve</button><button class="no" data-hno="${esc(x.id)}">Skip</button></div></div>`).join("")}
+    <h2 style="margin-top:14px">🃏 Decoy secrets</h2>
+    <p style="margin:0;color:var(--muted)">Made-up secrets that get shuffled in when the vault opens (3 per game). Yours go in first; the game has 8 built-in ones too. Write them in the same style as the real ones!</p>
+    ${hostDecoys.map(t=>`<div class="hcard"><div class="t">“${esc(t)}”</div><div class="row"><span></span><button class="no" data-undecoy="${esc(t)}">🗑 Remove</button></div></div>`).join("")}
+    <form id="decoyform" class="hcard" style="gap:8px"><textarea id="decoytext" maxlength="200" placeholder="I once…" style="font-family:var(--type);font-size:1.05rem;border:2px dashed #c9b385;border-radius:6px;background:rgba(255,255,255,.5);padding:8px;min-height:64px;color:var(--parch-ink)"></textarea>
+      <button class="ok" type="submit" style="padding:.75em;border-radius:10px;font-weight:800">🃏 Add this decoy</button></form></div>`;
   p.querySelectorAll("[data-hok]").forEach(x=>x.onclick=()=>hostDecide(x.dataset.hok,true));
   p.querySelectorAll("[data-hno]").forEach(x=>x.onclick=()=>hostDecide(x.dataset.hno,false));
+  const dt2=p.querySelector("#decoytext");if(dt2&&draft){dt2.value=draft;if(dfoc)dt2.focus()}
+  p.querySelectorAll("[data-undecoy]").forEach(x=>x.onclick=()=>hostDecoy("undecoy",x.dataset.undecoy));
+  const df2=p.querySelector("#decoyform");if(df2)df2.onsubmit=e=>{e.preventDefault();const t=p.querySelector("#decoytext").value.trim();if(t){p.querySelector("#decoytext").value="";hostDecoy("decoy",t)}};
 }
 /* the rules, short and grouped (matches the TV's order step for step) */
 function phoneRules(o){
@@ -330,7 +343,7 @@ function phoneRules(o){
   if(o.decoys)r.push(["Extras","🃏","Spot the fakes","Some secrets are made up. Think nobody said it? Tap 🃏 It's fake. Right = points!"]);
   if(o.bets)r.push(["Extras","🎲","Bet on it","🎯 Sure: +500 / −250  ·  💀 All in: ×2 / −500"]);
   if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
-  if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯"]);
+  if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯 🤔 😴 👎"]);
   if(o.redact)r.push(["Extras","🖤","Redacted files","Words are blacked out and uncovered one by one. Guess early = bigger bonus."]);
   if(o.golden)r.push(["Extras","✨","Golden file","One secret is secretly worth TRIPLE. Revealed at the end."]);
   if(o.frame)r.push(["Extras","🎯","Frame job","Your secret? Pick someone to frame. Room accuses them most = +400."]);
@@ -613,10 +626,10 @@ function view(){
     }
     if(st==="no"||st==="late")return [key+st,header()+msg(st==="late"?"⏰":"😱",st==="late"?`${esc(g.answer)} didn't answer`:`${esc(g.answer)} declined!`,mineS?`<p>That's −200 points.</p>`:"<p>Boo! No story this time.</p>",mineS?"wrong":"")+reactBar(),mineS?"wrong":""];
     if(st==="skip")return [key+st,header()+msg("🎭","Story skipped","<p>Eyes on the TV.</p>")+reactBar()];
-    if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!","<p class=\"said\">Tell everyone the story behind your secret.</p><p>+300 for taking the stage, and +100 for every vote.</p>","right"),"right"];
+    if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!","<p class=\"said\">Tell everyone the story behind your secret.</p><p>+300 for taking the stage, +100 for every good vote, −50 for every 😴 or 👎.</p>","right"),"right"];
     const k=`${g.gid}:${g.qi}`,v=myVote.key===k?myVote.v:null;
     return [key+"rate"+v,header()+`<section class="msg" style="flex:none"><div class="eyebrow">🎭 Story time</div><h1>🎤 ${esc(g.answer)}'s story</h1><p>How good is it? You can change your vote.</p></section>
-      <div class="rate">${[["fire","🔥","Hot"],["lol","😂","Hilarious"],["wow","🤯","Mind-blown"]].map(([x,e,l])=>`<button data-vote="${x}" aria-pressed="${v===x}"><span>${e}</span>${l}</button>`).join("")}</div>`+reactBar()];
+      <div class="rate" style="grid-template-columns:1fr 1fr">${[["fire","🔥","Hot"],["lol","😂","Hilarious"],["wow","🤯","Mind-blown"],["sense","🤔","Makes sense"],["boring","😴","Boring"],["sucks","👎","That sucks"]].map(([x,e,l])=>`<button data-vote="${x}" aria-pressed="${v===x}"><span>${e}</span>${l}</button>`).join("")}</div>`+reactBar()];
   }
   if(g.phase==="question"){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);

@@ -15,6 +15,7 @@
 //   GET  ?op=review&k=KEY                         every written secret: { id, text, status }
 //   POST { op: "approve", k, id, ok }             approve (true) or skip (false) one
 //   POST { op: "clearSecrets", k }                throw them all away
+//   POST { op: "decoy", text } / { op: "undecoy", text }   🃏 the host's own made-up secrets (shuffled in before the built-in ones)
 // TV:
 //   POST { op: "hostkey", k }                     the key the host phone must show
 //   GET  ?op=tv&qi=N                              bets + story votes for secret N, approved bonus secrets
@@ -22,9 +23,11 @@
 import { redis, hash, readGame, reply, text } from "../lib/redis.js";
 
 const P = "ds:";
-const BETS = ["hunch", "sure", "allin"], VOTES = ["fire", "lol", "wow"];
+const BETS = ["hunch", "sure", "allin"], VOTES = ["fire", "lol", "wow", "sense", "boring", "sucks"];
 const isPlayer = async (name, pid) => typeof name === "string" && !!pid && (await redis.hget(P + "players", name)) === pid;
-const isHost = async k => typeof k === "string" && k.length >= 8 && (await redis.get(P + "hostkey")) === k;
+const HOST_NAME = "Carsyn";   // the host approves bonus secrets on her own phone, signed in as herself
+const isHost = async q => (q.name === HOST_NAME && (await isPlayer(HOST_NAME, q.pid))) ||
+  (typeof q.k === "string" && q.k.length >= 8 && (await redis.get(P + "hostkey")) === q.k);
 const parse = s => { try { return JSON.parse(s); } catch { return null; } };
 // same as the TV and phones: lets the server check "this secret is yours" without knowing whose it is
 const ownTag = (gid, qi, name) => { let h = 5381; for (const c of `${gid}|${qi}|${name}`) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
@@ -47,14 +50,14 @@ export default async function handler(req, res) {
       Number.isInteger(duelRound) ? hash(`${P}duel:${duelRound}`) : {},
     ]);
     const approved = Object.keys(subs).filter(n => ok[n] === "1").map(n => ({ name: n, text: parse(subs[n])?.text })).filter(x => x.text);
-    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel });
+    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel, decoys: await redis.lrange(P + "decoys", 0, 49) });
   }
   if (req.method === "GET" && op === "review") {
-    if (!(await isHost(q.k))) return reply(res, 403, { error: "Wrong host key" });
+    if (!(await isHost(q))) return reply(res, 403, { error: "Only the host's phone can do that" });
     const [subs, ok] = await Promise.all([hash(P + "subs"), hash(P + "approved")]);
     const list = Object.keys(subs).map(n => { const x = parse(subs[n]) || {};
       return { id: x.id || "", text: x.text || "", t: x.t || 0, status: ok[n] === "1" ? "approved" : ok[n] === "0" ? "skipped" : "new" }; });
-    return reply(res, 200, { list: list.sort((a, b) => a.t - b.t) });
+    return reply(res, 200, { list: list.sort((a, b) => a.t - b.t), decoys: await redis.lrange(P + "decoys", 0, 49) });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "Unknown request" });
 
@@ -123,8 +126,15 @@ export default async function handler(req, res) {
     }
     return reply(res, 200, { ok: true });
   }
+  if (op === "decoy" || op === "undecoy") {
+    if (!(await isHost(q))) return reply(res, 403, { error: "Only the host's phone can do that" });
+    const t = text(q.text, 200);
+    if (!t) return reply(res, 400, { error: "Write something first" });
+    if (op === "decoy") await redis.rpush(P + "decoys", t); else await redis.lrem(P + "decoys", 0, t);
+    return reply(res, 200, { ok: true });
+  }
   if (op === "approve" || op === "clearSecrets") {
-    if (!(await isHost(q.k))) return reply(res, 403, { error: "Wrong host key" });
+    if (!(await isHost(q))) return reply(res, 403, { error: "Only the host's phone can do that" });
     if (op === "clearSecrets") await redis.del(P + "subs", P + "approved");
     else {
       const subs = await hash(P + "subs"), name = Object.keys(subs).find(n => parse(subs[n])?.id === q.id);

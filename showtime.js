@@ -134,14 +134,14 @@ window.Walkout = (() => {
 #walkout .wo-mug .wo-hgt{position:absolute;right:4px;top:10px;display:grid;gap:22px;font:800 .72rem/1 monospace;color:rgba(255,255,255,.55)}
 #walkout .wo-plac{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:#111;color:#fff;font:800 clamp(.75rem,1.4vw,1rem)/1.2 "Courier New",monospace;padding:.35em .9em;border-radius:3px;white-space:nowrap;letter-spacing:.06em}
 #walkout .wo-scanl{position:absolute;left:18px;right:18px;height:4px;top:18px;background:#5dff9b;box-shadow:0 0 18px 4px rgba(93,255,155,.8);opacity:0;animation:wo-scan 1.1s 1.7s ease-in-out both}
-#walkout .wo-match{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-8deg);font:900 clamp(1.2rem,2.6vw,2rem)/1 "Courier New",monospace;color:#5dff9b;background:rgba(0,0,0,.7);
+#walkout .wo-match{position:absolute;left:50%;top:84%;transform:translate(-50%,-50%) rotate(-8deg);font:900 clamp(1.2rem,2.6vw,2rem)/1 "Courier New",monospace;color:#5dff9b;background:rgba(0,0,0,.7);
   padding:.2em .5em;border:3px solid #5dff9b;border-radius:6px;white-space:nowrap;animation:wo-stamp .4s 2.85s cubic-bezier(.3,1.6,.5,1) both}
 #walkout .wo-file{position:relative;background:#efe2c4;color:#2b1d12;border-radius:4px;padding:16px 18px 18px;box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 40px rgba(120,80,30,.3);transform:rotate(1.5deg);
   font:700 clamp(.95rem,1.8vw,1.25rem)/1.45 "Special Elite","Courier New",monospace;animation:wo-pop .5s 1.3s both}
 #walkout .wo-fhead{font-size:.75em;letter-spacing:.12em;border-bottom:2px dashed rgba(80,50,20,.35);padding-bottom:6px;margin-bottom:6px;opacity:.8}
 #walkout .wo-tl{overflow:hidden;white-space:nowrap;width:0;animation:wo-type .9s var(--d) steps(28) both}
 #walkout .wo-red{background:#111;color:#111;border-radius:2px}
-#walkout .wo-sus{position:absolute;right:-14px;bottom:-16px;font:900 clamp(1.4rem,3vw,2.3rem)/1 "Courier New",monospace;color:#c11b2a;border:4px solid #c11b2a;padding:.1em .4em;border-radius:6px;
+#walkout .wo-sus{position:absolute;right:-16px;top:-20px;font:900 clamp(1.1rem,2.2vw,1.7rem)/1 "Courier New",monospace;color:#c11b2a;border:4px solid #c11b2a;padding:.1em .4em;border-radius:6px;
   transform:rotate(-12deg);background:rgba(239,226,196,.85);animation:wo-stamp .45s 3.3s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes wo-mugshot{from{filter:brightness(0) contrast(2)}to{filter:none}}
 @keyframes wo-scan{0%{opacity:1;top:18px}50%{top:calc(100% - 60px)}100%{opacity:0;top:18px}}

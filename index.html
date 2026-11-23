@@ -438,7 +438,7 @@ const cur=()=>Q[S.rounds[S.qi].qi];
 
 function setZoom(p){
   const im=$(".stage img.q");if(!im)return;const z=cur().zoom||{fx:.5,fy:.5,z:1.14,cap:1};
-  const s=Math.pow(z.z,1-Math.min(1,p)*z.cap);
+  const s=Math.pow(z.z,1-Math.min(1,Extras.zoomP(p))*z.cap);
   im.style.transformOrigin=`${z.fx*100}% ${z.fy*100}%`;im.style.transform=`scale(${s})`;Extras.zoomStyle(im);
 }
 function tick(last){

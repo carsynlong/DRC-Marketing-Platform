@@ -11,6 +11,14 @@ const Extras = (() => {
     bw: { icon: "🌫️", title: "Fog in the arena", text: "The photo is black and white." },
     flip: { icon: "🙃", title: "The arena flipped!", text: "The photo is upside down." },
     underdog: { icon: "🌹", title: "Underdog's chance", text: "The bottom 3 score double on this face!" },
+    mirror: { icon: "🪞", title: "Hall of mirrors", text: "The photo is flipped left to right." },
+    smoke: { icon: "💨", title: "Smoke bomb!", text: "The photo starts blurry and slowly clears." },
+    venom: { icon: "🐝", title: "Tracker jacker venom", text: "You're hallucinating. The colors are all wrong!" },
+    night: { icon: "🔦", title: "Night falls", text: "The arena goes dark. Only a flashlight shows the face." },
+    frenzy: { icon: "🎁", title: "Sponsor frenzy", text: "Everyone scores double on this face!" },
+    freeze: { icon: "🧊", title: "Frozen arena", text: "The photo never zooms out!" },
+    jackpot: { icon: "💰", title: "Capitol jackpot", text: "The fastest right answer wins +1,000 bonus!" },
+    nohint: { icon: "🤐", title: "Gamemaker's silence", text: "No hint on this face." },
   };
   const SPEED_MAX = 500, ROSE = 200, DD_LOSS = 500;
   const tw = () => S.rounds[S.qi]?.twist;
@@ -23,6 +31,9 @@ const Extras = (() => {
   .twcard b{font-family:var(--display);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:400}.twcard span{font-weight:700;font-size:clamp(1rem,2vw,1.3rem)}
   @keyframes twflip{from{transform:perspective(800px) rotateY(180deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
   .twtag{position:absolute;left:14px;bottom:14px;z-index:4;background:rgba(42,28,5,.9);color:#ffe9a8;font-weight:800;padding:.4em 1em;border-radius:999px;box-shadow:0 0 0 2px var(--gold)}
+  .twnight{position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(circle,transparent 0 8%,rgba(0,0,0,.96) 15%);
+    background-size:320% 320%;animation:twnight 7s ease-in-out infinite alternate}
+  @keyframes twnight{0%{background-position:10% 20%}33%{background-position:85% 40%}66%{background-position:30% 90%}100%{background-position:70% 10%}}
   .hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:4;background:rgba(13,31,24,.92);color:var(--ink);font-weight:800;font-size:clamp(1.1rem,2.4vw,1.7rem);
     padding:.45em 1.2em;border-radius:999px;box-shadow:0 0 0 3px var(--gold),0 0 30px rgba(232,176,75,.5);animation:pop .6s cubic-bezier(.2,1.5,.4,1) both;white-space:nowrap}
   .hint b{color:var(--gold);font-family:var(--display);font-weight:400}
@@ -38,8 +49,9 @@ const Extras = (() => {
 
   /* ---------- 🎲 twists ---------- */
   function deal() {
-    const keys = Object.keys(TWISTS), pool = shuffle(S.rounds.map((_, i) => i).filter(i => i >= 2 && i < FEAST && !DOUBLE.has(i)));
-    pool.slice(0, 5).forEach((qi, k) => { S.rounds[qi].twist = keys[k % keys.length]; });
+    // 7 different twists per game, on random faces (never the first two, the double-points faces or The Feast)
+    const keys = shuffle(Object.keys(TWISTS)), pool = shuffle(S.rounds.map((_, i) => i).filter(i => i >= 2 && i < FEAST && !DOUBLE.has(i)));
+    pool.slice(0, 7).forEach((qi, k) => { S.rounds[qi].twist = keys[k % keys.length]; });
   }
   function card() {
     const t = TWISTS[tw()]; if (!t) return "";
@@ -53,10 +65,14 @@ const Extras = (() => {
     S.qSecs = S.secs; S.hintShown = false; loadBuys(true);
   }
   function zoomStyle(im) {
-    const t = tw();
+    const t = tw(), e = S.phase === "question" ? Math.min(1, S.elapsed / (S.secs || 1)) : 1;
     if (t === "flip") im.style.transform += " rotate(180deg)";
-    im.style.filter = t === "bw" ? "grayscale(1) contrast(1.15)" : "";
+    if (t === "mirror") im.style.transform += " scaleX(-1)";
+    im.style.filter = t === "bw" ? "grayscale(1) contrast(1.15)"
+      : t === "smoke" ? `blur(${((1 - e) * 22).toFixed(1)}px)`
+      : t === "venom" ? `hue-rotate(${Math.round(S.elapsed * 140)}deg) saturate(2.4) contrast(1.2)` : "";
   }
+  const zoomP = p => tw() === "freeze" ? 0 : p;   // frozen arena: stays fully zoomed in
 
   /* ---------- 💡 hint at half time ---------- */
   function hintText() {
@@ -68,7 +84,7 @@ const Extras = (() => {
     return `From an <b>${d % 2 ? "odd" : "even"}-numbered district</b>`;
   }
   function tick() {
-    if (S.hintShown || S.phase !== "question" || S.locked || S.elapsed < S.secs / 2) return;
+    if (tw() === "nohint" || S.hintShown || S.phase !== "question" || S.locked || S.elapsed < S.secs / 2) return;
     S.hintShown = true; showHint();
     try { sfx("tap"); } catch (e) {}
   }
@@ -80,9 +96,19 @@ const Extras = (() => {
     if (S.phase === "question" && S.hintShown) showHint();
     if (S.phase === "question" && TWISTS[tw()]) {
       const st = document.querySelector(".stage");
+      if (st && tw() === "night" && !st.querySelector(".twnight")) st.insertAdjacentHTML("beforeend", '<div class="twnight"></div>');
       if (st && !st.querySelector(".twtag")) st.insertAdjacentHTML("beforeend", `<div class="twtag">${TWISTS[tw()].icon} ${TWISTS[tw()].title}</div>`);
     }
     if (S.phase === "interview") wireInterview();
+    // 🎵 music on/off, top-right on the winner and interview screens
+    let mb = document.getElementById("winmusic");
+    if (S.phase === "final" || S.phase === "interview") {
+      if (!mb) { mb = document.createElement("button"); mb.id = "winmusic"; mb.className = "btn";
+        mb.style.cssText = "position:fixed;top:14px;right:14px;z-index:50;padding:.6em 1.1em;font-size:1.05rem";
+        mb.onclick = () => { try { ensureAudio(); } catch (e) {} if (song) { stopSong(); } else { S.sound = true; playSong("lobby"); } label(); };
+        document.body.appendChild(mb); }
+      label();
+    } else if (mb) mb.remove();
     const iv = document.getElementById("interview"); if (iv) iv.onclick = () => { try { ensureAudio(); } catch (e) {} startInterview(); };
   }
 
@@ -115,6 +141,7 @@ const Extras = (() => {
 
   /* ---------- scoring: speed bonus, underdog, shop power-ups ---------- */
   let pre = {};
+  function jackpotWinner() { let best = null, t = Infinity; (S.correct || []).forEach(n => { const a = S.ansAt?.[n]; if (n !== HOST && a != null && a < t) { t = a; best = n; } }); return best; }
   function before() { pre = {}; S.players.forEach(p => { pre[p.name] = { score: p.score, streak: p.streak }; }); }
   function score(mult) {
     const ranks = Object.entries(pre).filter(([n]) => n !== HOST && S.players.find(p => p.name === n)?.on).sort((a, b) => a[1].score - b[1].score).slice(0, 3).map(([n]) => n);
@@ -126,6 +153,8 @@ const Extras = (() => {
         const t = S.ansAt?.[p.name];
         if (t != null) { p.speed = Math.max(0, Math.round(SPEED_MAX * (1 - t / ((S.qSecs || S.secs) * 1000)) / 10) * 10) * mult; p.delta += p.speed; p.score += p.speed; if (p.speed) p.notes.push(`⚡ +${p.speed}`); }
         if (tw() === "underdog" && ranks.includes(p.name)) { p.score += p.delta; p.delta *= 2; p.notes.push("🌹 underdog ×2"); }
+        if (tw() === "frenzy") { p.score += p.delta; p.delta *= 2; p.notes.push("🎁 frenzy ×2"); }
+        if (tw() === "jackpot" && p.name === jackpotWinner()) { p.score += 1000; p.delta += 1000; p.notes.push("💰 jackpot +1,000"); }
         if (has(p.name, "dd")) { p.score += p.delta; p.delta *= 2; p.notes.push("🎯 double down ×2"); }
       } else {
         if (has(p.name, "shield")) {
@@ -174,8 +203,10 @@ const Extras = (() => {
     if (b("ivagain")) b("ivagain").onclick = readQ;
     if (b("ivdone")) b("ivdone").onclick = () => { clearInterval(ivT); try { speechSynthesis.cancel(); } catch (e) {} S.phase = "final"; render(); };
   }
+  function label() { const mb = document.getElementById("winmusic"); if (mb) mb.textContent = song ? "🔇 Stop music" : "🎵 Play music"; }
+  setInterval(label, 700);
   function reset() { restore(); S.buys = {}; S.rosesShown = []; S.iv = null; S.hintShown = false; clearInterval(ivT); }
 
-  return { deal, card, start, restore, zoomStyle, tick, after, before, score, spy, loadBuys, startInterview, interviewView, nextQ, reset,
+  return { zoomP, deal, card, start, restore, zoomStyle, tick, after, before, score, spy, loadBuys, startInterview, interviewView, nextQ, reset,
     twist: () => TWISTS[tw()] || null, hint: () => S.hintShown ? hintText().replace(/<\/?b>/g, "") : null };
 })();

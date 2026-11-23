@@ -307,9 +307,8 @@ function fadeBegin(to,ms,done){clearInterval(beginFade);const from=BEGIN.volume,
   beginFade=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);BEGIN.volume=from+(to-from)*k;if(k>=1){clearInterval(beginFade);done&&done()}},40)}
 function beginTrack(id){
   if(id==="begin"){XM.stopSong();BEGIN.currentTime=0;BEGIN.volume=1;BEGIN.play().catch(()=>{});return}
-  // keep it going into the Game 1 title slide, fade it out after that
-  if(!BEGIN.paused&&!id.startsWith("game-"))fadeBegin(0,1500,()=>{BEGIN.pause();BEGIN.volume=1});
-  else if(!BEGIN.paused&&id.startsWith("game-")&&id!=="game-cookie")fadeBegin(0,1500,()=>{BEGIN.pause();BEGIN.volume=1});
+  // any other slide: quick fade out
+  if(!BEGIN.paused)fadeBegin(0,500,()=>{BEGIN.pause();BEGIN.volume=1});
 }
 {const set=XM.setSound;XM.setSound=on=>{set(on);BEGIN.muted=!on}}
 

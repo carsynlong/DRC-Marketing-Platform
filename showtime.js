@@ -117,7 +117,7 @@ window.Walkout = (() => {
 #walkout .wo-sheet{display:grid;gap:4px;margin-top:8px;font-weight:800;font-size:clamp(.95rem,1.8vw,1.25rem)}
 #walkout .wo-sheet div{animation:wo-pop .35s var(--d) both}
 #walkout .wo-sheet b{color:var(--wo-accent2)}
-#walkout .wo-chariot{position:absolute;bottom:6%;left:0;font-size:clamp(2.6rem,7vh,4rem);white-space:nowrap;display:flex;align-items:center;gap:4px;pointer-events:none;
+#walkout .wo-chariot{position:absolute;bottom:6%;left:-45vw;font-size:clamp(2.6rem,7vh,4rem);white-space:nowrap;display:flex;align-items:center;gap:4px;pointer-events:none;
   filter:drop-shadow(0 0 14px rgba(255,120,0,.9));animation:wo-ride 2.2s 2.7s linear both}
 #walkout .wo-chariot img{width:1.2em;height:1.2em;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #ffb02e}
 @keyframes wo-bowlout{to{opacity:0;transform:scale(.6) translateY(40px)}}
@@ -125,7 +125,7 @@ window.Walkout = (() => {
 @keyframes wo-dip{0%{transform:translate(-50%,-60px);opacity:0}25%{opacity:1}50%{transform:translate(-50%,60px)}100%{transform:translate(-50%,-40px)}}
 @keyframes wo-slipup{0%{transform:translate(-50%,90px) scaleY(.15);opacity:0}45%{transform:translate(-50%,-30px) scaleY(.15);opacity:1}75%{transform:translate(-50%,-40px) scaleY(1)}100%{transform:translate(-50%,-40px) scaleY(1)}}
 @keyframes wo-cardin{from{transform:perspective(900px) rotateY(90deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
-@keyframes wo-ride{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
+@keyframes wo-ride{from{transform:translateX(0)}to{transform:translateX(170vw)}}
 /* 🔏 LINEUP style (District Secrets): height chart, mugshot flash, fingerprint scan, typed case file, SUSPECT stamp */
 #walkout .wo-lineup{display:grid;grid-template-columns:auto minmax(0,420px);gap:clamp(16px,3vw,40px);align-items:center;text-align:left}
 #walkout .wo-mug{position:relative;padding:18px 18px 54px;border-radius:8px;
@@ -135,7 +135,7 @@ window.Walkout = (() => {
 #walkout .wo-plac{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:#111;color:#fff;font:800 clamp(.75rem,1.4vw,1rem)/1.2 "Courier New",monospace;padding:.35em .9em;border-radius:3px;white-space:nowrap;letter-spacing:.06em}
 #walkout .wo-scanl{position:absolute;left:18px;right:18px;height:4px;top:18px;background:#5dff9b;box-shadow:0 0 18px 4px rgba(93,255,155,.8);opacity:0;animation:wo-scan 1.1s 1.7s ease-in-out both}
 #walkout .wo-match{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-8deg);font:900 clamp(1.2rem,2.6vw,2rem)/1 "Courier New",monospace;color:#5dff9b;background:rgba(0,0,0,.7);
-  padding:.2em .5em;border:3px solid #5dff9b;border-radius:6px;animation:wo-stamp .4s 2.85s cubic-bezier(.3,1.6,.5,1) both}
+  padding:.2em .5em;border:3px solid #5dff9b;border-radius:6px;white-space:nowrap;animation:wo-stamp .4s 2.85s cubic-bezier(.3,1.6,.5,1) both}
 #walkout .wo-file{position:relative;background:#efe2c4;color:#2b1d12;border-radius:4px;padding:16px 18px 18px;box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 40px rgba(120,80,30,.3);transform:rotate(1.5deg);
   font:700 clamp(.95rem,1.8vw,1.25rem)/1.45 "Special Elite","Courier New",monospace;animation:wo-pop .5s 1.3s both}
 #walkout .wo-fhead{font-size:.75em;letter-spacing:.12em;border-bottom:2px dashed rgba(80,50,20,.35);padding-bottom:6px;margin-bottom:6px;opacity:.8}
@@ -304,7 +304,7 @@ window.Walkout = (() => {
         ${middle(o.style, n, dn, prop, stat, i)}
         <div class="wo-dots">${names.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
         <button class="wo-skip" type="button">Skip intros</button><div class="wo-hint">Space: skip</div></div>`;
-      if (o.style === "reaping" && !calm) root.insertAdjacentHTML("beforeend", `<div class="wo-chariot" aria-hidden="true">🔥🐎🐎<img src="${esc(o.photo ? o.photo(n) : "")}" alt="">🛞🔥🔥</div>`);
+      if (o.style === "reaping" && !calm) root.insertAdjacentHTML("beforeend", `<div class="wo-chariot" aria-hidden="true">🔥🔥🛞<img src="${esc(o.photo ? o.photo(n) : "")}" alt=""><span style="display:inline-block;transform:scaleX(-1)">🐎🐎</span></div>`);
       root.querySelector(".wo-skip").onclick = () => end();
       root.querySelector(".wo-back").onclick = () => end(true);
       // ~5 seconds each: drumroll → BAM (photo + name) → a funny sound and confetti → the prop drops on their head

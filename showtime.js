@@ -541,7 +541,7 @@ window.LobbyMusic = (() => {
     tribute: "/sfx/lobby-tribute.m4a",   // Caesar Flick, from 0:06.55 (the flashy host: presenting the tributes)
     feud: "/sfx/lobby-feud.m4a",         // track 2, from 0:13 (upbeat, game show)
     secrets: "/sfx/lobby-secrets.m4a",   // The Hanging Tree, from 1:34 (dark and haunting: the mystery game)
-    "secrets-win": "/sfx/winner-secrets.m4a?v=10s",   // "Can't Catch", from 0:10: the District Secrets winners screen
+    "secrets-win": "/sfx/winner-secrets.m4a?v=45s",   // "Can't Catch", from 0:45: the District Secrets winners screen
   };
   let ac = null, buf = null, bufFor = null, loading = null, src = null, gain = null, want = false, SRC = null;
   function load() {

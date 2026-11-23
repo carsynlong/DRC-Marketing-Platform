@@ -21,7 +21,7 @@ XM.TRIBUTES=[
  {d:9,name:"Kamdon",weapon:"Perfectly packed snowballs",strategy:"Stay quiet, then strike",odds:"5 to 1"},
  {d:10,name:"Brandon",weapon:"A Santa hat, for camouflage",strategy:"Blend in with the elves",odds:"6 to 1"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
- {d:12,name:"Kyle",weapon:"A pig disguise, apparently",strategy:"Nobody suspects the pig",odds:"12 to 1"},
+ {d:12,name:"Kyle",weapon:"Master of disguise",strategy:"Pull a Peeta. Become a rock and wait it out.",odds:"12 to 1"},
 ];
 XM.TRIBUTES.forEach(t=>{const k=String(t.d).padStart(2,"0");t.img=`/xmas/tributes/d${k}.jpg`;t.full=`/xmas/tributes/full/d${k}.jpg`});
 XM.NAMES=XM.TRIBUTES.map(t=>t.name);

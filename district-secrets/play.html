@@ -238,7 +238,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-23-11";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-12";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -346,6 +346,7 @@ function hostDraw(){
   const df2=p.querySelector("#decoyform");if(df2)df2.onsubmit=e=>{e.preventDefault();const t=p.querySelector("#decoytext").value.trim();if(t){p.querySelector("#decoytext").value="";hostDecoy("decoy",t)}};
 }
 /* ❓ the rules again, any time during the game: a little button bottom-left opens them */
+let lastSeen=null;   // which ⏳ last-chance screen this phone already reopened the cards for
 let rulesOpen=false;window.HOWTO_OWN_BUTTON=true;   // howto.js leaves its ❓ off this page
 function rulesDraw(){
   const g=D.game,want=g&&D.me&&!["lobby","howto"].includes(g.phase);
@@ -638,6 +639,12 @@ function view(){
     if(tapped)return [key+"dtap"+d.round,header()+msg("⚡","Tapped!","<p>Eyes on the TV…</p>")];
     return [key+"dtapper"+d.round+(d.state==="vs"||d.state==="again"),header()+`<section class="msg" style="flex:none"><div class="eyebrow">⚔️ Quick Draw vs ${esc(d.a===D.me?d.b:d.a)}</div><h1>Wait for DRAW on the TV…</h1><p>Then tap as fast as you can. Too soon and you lose!</p></section>
       <button id="drawtap" style="flex:1;min-height:52vh;border-radius:50%;aspect-ratio:1;justify-self:center;width:min(90vw,420px);margin:0 auto;background:radial-gradient(circle at 40% 35%,#ff5a4e,#a3182b 60%,#5e0a17);color:#fff;font-family:var(--deco);font-size:3rem;box-shadow:0 0 0 6px var(--gold),0 16px 40px rgba(0,0,0,.6)">TAP!</button>`,"gift"];
+  }
+  if(g.phase==="last"){   // ⏳ last chance before the vault opens: the cards come back, even if you said no thanks earlier
+    if(lastSeen!==g.lastId){lastSeen=g.lastId;if(!mySecret)declined=false;if(!myTTL)ttlNo=false}
+    const done=(!g.opts?.bonus||mySecret)&&(!g.opts?.ttl||myTTL);
+    return [key+"last"+editing+declined+mySecret+ttlEdit+ttlNo+JSON.stringify(myTTL),header()+`<section class="msg" style="flex:none;padding:4px 0 0"><div class="eyebrow">⏳ Before the vault opens</div><h1 style="font-size:1.7rem">Last chance for extra points!</h1>
+      <p>${done?"You're all set. Good luck! ✅":"Quick, before the countdown on the TV runs out."}</p></section>${writeCard()}${ttlCard()}${reactBar()}`,"welcome"];
   }
   if(g.phase==="lightcard")return [key,header()+msg("🌩️","Lightning round!","<p>3 secrets. <b>10 seconds</b> each. <b>Double points.</b> Fingers ready!</p>")+soundBtn(),"buzz"];
   if(g.phase==="ttlcard")return [key,header()+msg("🤥","Two truths & a lie","<p>Three statements about someone. Tap the one you think is the <b>lie</b>.</p>")+soundBtn()];

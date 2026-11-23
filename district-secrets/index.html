@@ -228,7 +228,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9;background:var(--wax);color:#fff;font-weight:800;padding:12px 20px;border-radius:14px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);text-align:center;max-width:min(92vw,560px)}
 /* emoji bursts sent from phones: a name tag pops up and a spray of little themed emojis flies out of it */
-.burst{position:fixed;z-index:7;pointer-events:none;width:0;height:0}
+.burst{position:fixed;z-index:2147483005;pointer-events:none;width:0;height:0}
 .burst .tag{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;white-space:nowrap;
   background:rgba(11,10,20,.88);border-radius:999px;padding:5px 14px 5px 5px;box-shadow:0 0 0 2px var(--gold),0 10px 24px rgba(0,0,0,.55);
   font-weight:800;font-size:clamp(1rem,1.6vw,1.3rem);animation:tagpop 2.6s cubic-bezier(.2,1.4,.4,1) forwards}
@@ -368,6 +368,38 @@ body.shake .app{animation:quake .5s}
 .room .how b{color:#fff}
 .switches{display:grid;gap:4px;font-family:var(--type);font-size:clamp(.95rem,1.6vw,1.15rem);animation:pop .6s 1.9s both}
 .switches .won{color:var(--good)}.switches .lost{color:var(--bad)}
+/* ---------- 🎭 Story time: a little theater stage ---------- */
+.stagex{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 60% 70% at 50% 35%,#2a1420,#0b0508 75%)}
+.stagex .valance{position:absolute;left:0;right:0;top:0;height:13vh;background:repeating-linear-gradient(90deg,#6e1426 0 28px,#8a1a30 28px 52px,#5a0f20 52px 70px);
+  -webkit-mask:radial-gradient(circle at 50% -40%,#000 72%,transparent 73%) 0 0/9vh 100% repeat-x;mask:radial-gradient(circle at 50% -40%,#000 72%,transparent 73%) 0 0/9vh 100% repeat-x;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.stagex .side{position:absolute;top:0;bottom:18vh;width:13vw;background:repeating-linear-gradient(90deg,#4a0d1c 0 18px,#7a1830 18px 34px,#3a0815 34px 50px);box-shadow:0 0 50px rgba(0,0,0,.8)}
+.stagex .side.l{left:0;border-radius:0 0 60% 0;transform-origin:top left}.stagex .side.r{right:0;border-radius:0 0 0 60%}
+.stagex .side::after{content:"";position:absolute;top:44%;width:2.4vw;height:6vh;border-radius:40%;background:linear-gradient(180deg,#f6dfa0,#b0872e)}
+.stagex .side.l::after{right:-1vw}.stagex .side.r::after{left:-1vw}
+.stagex .floor{position:absolute;left:0;right:0;bottom:0;height:20vh;background:repeating-linear-gradient(90deg,#5a3418 0 6vw,#6b3f1e 6vw 6.15vw,#4e2c14 6.15vw 12vw);box-shadow:inset 0 14px 24px rgba(0,0,0,.6);transform:perspective(500px) rotateX(28deg);transform-origin:bottom}
+.stagex .foot{position:absolute;left:8vw;right:8vw;bottom:17vh;display:flex;justify-content:space-between}
+.stagex .foot i{width:16px;height:10px;border-radius:50% 50% 0 0;background:#fff3c0;box-shadow:0 0 18px 8px rgba(255,220,140,.55)}
+.stagex .spot{position:absolute;left:30%;top:-5vh;width:40vw;height:100vh;margin-left:-20vw;background:linear-gradient(180deg,rgba(255,244,200,.32),rgba(255,244,200,.04) 80%);clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);transition:opacity .6s}
+.stagex.dark .spot{opacity:0}.stagex.dark .foot i{background:#5a4a30;box-shadow:none}
+.stage2{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:clamp(18px,3vw,44px);align-items:center;min-height:74vh;padding-top:8vh}
+.marquee{position:relative;display:inline-block;justify-self:start;font-family:var(--deco);font-weight:900;font-size:clamp(1.6rem,3.6vw,2.8rem);color:#2b1d12;background:linear-gradient(180deg,#fff3c0,#f6dfa0);padding:.25em .9em;border-radius:10px;
+  box-shadow:0 0 0 6px #a3182b,0 0 0 9px #f6dfa0,0 10px 30px rgba(0,0,0,.6);transform:rotate(-2deg)}
+.marquee::before{content:"";position:absolute;inset:-14px;border-radius:16px;background:radial-gradient(circle,#fff6c8 0 3px,transparent 4px) 0 0/18px 18px;animation:chase .6s steps(2) infinite;-webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0);padding:4px;opacity:.9;z-index:-1}
+@keyframes chase{to{background-position:9px 0}}
+.performer{position:relative;justify-self:center}
+.performer img{width:clamp(200px,26vw,330px);height:clamp(200px,26vw,330px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 70px 20px rgba(255,240,190,.3),0 20px 40px rgba(0,0,0,.6);transition:filter .6s}
+.stagex.dark ~ .stage2 .performer img,.performer.dim img{filter:brightness(.35) grayscale(.6)}
+.performer svg{position:absolute;right:-60px;bottom:-30px;width:110px;height:auto}
+.stage2 h1{font-family:var(--deco);font-size:clamp(2rem,4.4vw,3.4rem);color:var(--gold-hi);text-shadow:0 4px 0 var(--wax-d);margin:0}
+.stage2 .about{font-family:var(--type);color:var(--parch);font-size:clamp(1rem,1.8vw,1.3rem);margin:0}
+.stage2 .clock{font-family:var(--deco);font-size:2.4rem;color:var(--gold-hi)}
+.stage2 .stakes{font-weight:800;color:var(--muted)}.stage2 .stakes b{color:var(--good)}.stage2 .stakes i{font-style:normal;color:var(--bad)}
+.applause .lbl{font-family:var(--display);letter-spacing:.14em;color:var(--muted);font-size:.85rem;font-weight:900}
+.declined{font-family:var(--deco);font-size:clamp(2rem,4.6vw,3.6rem);color:var(--bad);text-shadow:0 4px 0 #3a0815;animation:slamtu .5s both}
+.waiting{display:flex;gap:8px}.waiting i{width:12px;height:12px;border-radius:50%;background:var(--gold-hi);animation:bob .6s ease-in-out infinite alternate}.waiting i:nth-child(2){animation-delay:.2s}.waiting i:nth-child(3){animation-delay:.4s}
+@media (max-width:860px){.stage2{grid-template-columns:1fr}}
+/* the leaderboard bar along the bottom never covers buttons: leave room for it */
+body:has(#ticker.on) .app{padding-bottom:84px}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
@@ -387,9 +419,8 @@ body.shake .app{animation:quake .5s}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-2";
+const BUILD="ds-build-2026-11-23-4";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
-const SLOW_PEN=200;                 // ⏰ signed in on a phone but didn't guess in time
 const HOST="Carsyn";               // runs the TV and knows every answer, so sits out by default
 const Q=[ /* the real fun facts the family sent in; edit wording here */
  {f:"I have a gorilla statue in my closet.",a:"Dash"},
@@ -571,6 +602,9 @@ function sfx(kind){
   if(kind==="click")noise(t,.02,.25,sfxBus,"bandpass",5000,8);
   if(kind==="dial"){for(let k=0;k<6;k++)noise(t+k*.06,.02,.25,sfxBus,"bandpass",4200+k*150,8);INST.taiko(t+.38,0,0,1.1)}
   if(kind==="stamp"){INST.taiko(t,0,0,1.4);noise(t,.15,.5,sfxBus,"lowpass",600)}
+  if(kind==="lights"){noise(t,.08,.5,sfxBus,"lowpass",500);osc("sine",55,t,.4,.3,sfxBus);[0,.12,.24].forEach(d=>noise(t+d,.06,.35,sfxBus,"bandpass",1200,2))}
+  if(kind==="applause"){for(let k=0;k<160;k++)noise(t+Math.random()*2.6,.03+Math.random()*.04,.05+Math.random()*.07,sfxBus,"bandpass",1200+Math.random()*2600,1.2)}
+  if(kind==="boo"){[0,.05,.1].forEach((d,k)=>osc("sawtooth",[147,131,165][k],t+d,1.6,.06,sfxBus,700,.15));noise(t,1.6,.12,sfxBus,"lowpass",500);osc("sawtooth",196,t,1.4,.04,sfxBus,900,.1)}
   if(kind==="curtain"){noise(t,1.1,.22,sfxBus,"lowpass",700);noise(t+.1,.9,.08,sfxBus,"bandpass",2400,.6)}
   if(kind==="clank"){noise(t,.25,.6,sfxBus,"lowpass",300);[220,331,447,612].forEach((f,k)=>osc("sine",f,t+.01,1.4-k*.2,.07,sfxBus));osc("sine",55,t,.6,.3,sfxBus)}
   if(kind==="swap"){osc("triangle",hz(76),t,.18,.12,sfxBus);osc("triangle",hz(71),t+.12,.3,.12,sfxBus);noise(t,.15,.12,sfxBus,"bandpass",3000,2)}
@@ -631,8 +665,9 @@ function snapshot(){
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:DOUBLE.has(S.qi),secs:S.secs,opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:BASE,
     howto:window.Rules&&Rules.active()?"secrets":undefined,
-    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:SLOW_PEN};   // How to play is on the TV: phones show it too (howto.js)
+    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(DOUBLE.has(S.qi)?2:1)};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a)}
+  if(S.phase==="story"){g.storyState=S.storyState;if(S.storyState==="ask")g.askLeft=Math.max(0,Math.ceil(STORY_ASK-(Date.now()-(S.askAt||Date.now()))/1000))}
   if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
   if(S.phase==="question"&&!S.locked){const left=Math.ceil(S.secs-S.elapsed);if(left<=10)g.left=left}
   if(S.phase==="howto")g.howI=howI;   // which rule the TV is reading, so phones show the same one
@@ -686,6 +721,7 @@ async function pollX(){
     const before=`${dsx.written}:${dsx.approved.length}`;dsx={...d,qi:S.qi};
     if(S.phase==="lobby"&&before!==`${dsx.written}:${dsx.approved.length}`)render();
     if(S.phase==="question")showBets();
+    if(S.phase==="story"&&S.storyState==="ask"&&curX().storyAns)storyDecide(curX().storyAns==="yes"?"on":"no");
     if(S.phase==="story")showVotes();
     if(S.phase==="interro")showSwitches();
   }catch(e){}
@@ -785,11 +821,12 @@ function howSteps(){
   const o=S.opts||{},st=[
     ["🤫","A <b>real secret</b> from someone in this room appears on the TV.","A real secret, from someone in this room, appears on the TV."],
     ["📱","On your phone, type <b>who you think it belongs to</b>. Your guess is sealed. Nobody else sees it.","On your phone, type who you think it belongs to. Your guess is sealed. Nobody else sees it."],
+    ["⏰","Seal a guess before time's up. <b>No guess: −200.</b>","Seal a guess before time is up. If you don't guess, you lose two hundred points."],
     ["⚡","A right guess scores <b>1,000 points</b>. Answer fast for a <b>speed bonus</b>, and keep a streak going for extra.","A right guess scores one thousand points. Answer fast for a speed bonus, and keep a streak going for even more."],
     ["🎭","If it's <b>your</b> secret, keep a straight face and type a <b>decoy</b>. You earn 150 for everyone you fool.","If it's your secret, keep a straight face, and type a decoy. You earn a hundred and fifty points for everyone you fool."]];
   if(o.bets)st.push(["🎲","Feeling sure? Place a <b>sponsor bet</b> before you seal: <b>Sure</b> or <b>All in</b>. Big risk, big reward.","Feeling sure? Place a sponsor bet before you seal your guess. Sure, or all in. Big risk. Big reward."]);
   if(o.interro)st.push(["🔦","Then the <b>Interrogation Room</b>: the most accused defends themselves, and you can <b>change your vote</b>. Switch to the right person: <b>+250</b>. Switch away from it: <b>−500</b>.","Then, the Interrogation Room. Whoever is accused most defends themselves, and you can change your vote. Switch to the right person for two hundred and fifty bonus points. But switch away from the right answer, and you lose five hundred."]);
-  if(o.story)st.push(["🎤","Then the owner tells the <b>story</b> behind their secret, and you rate it on your phone.","Then the owner tells the story behind their secret, and you rate it on your phone."]);
+  if(o.story)st.push(["🎤","<b>Story time:</b> the owner can accept (<b>+300</b>) and tell the story behind their secret, or decline (<b>−200</b>). Rate the story on your phone.","Then it's story time. The owner can accept, for three hundred points, and tell the story behind their secret. Or decline, and lose two hundred. Everyone rates the story on their phone."]);
   if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
   st.push(["👑","Most points wins the <b>major award</b>. The final secret counts <b>double</b>.","Most points wins the major award. The final secret counts double. And may the odds be ever in your favor."]);
@@ -842,7 +879,7 @@ function beginQuestion(){
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}
     sfx("dial");const d=$(".dial");if(d)d.outerHTML=dialHTML(S.count)},900);
 }
-function startQuestion(){clearInterval(readyT);S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};hostOpen=false;S.typed=0;playSong("count");render()}
+function startQuestion(){clearInterval(readyT);S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};S.storyState=null;hostOpen=false;S.typed=0;playSong("count");render()}
 function tick(last){
   cancelAnimationFrame(raf);
   const loop=now=>{
@@ -922,7 +959,17 @@ async function reveal(){
   if(fromRoom)curtains(go,"🔏 Opening the seal…");else go();
 }
 /* Story time: the secret's owner tells the story; phones rate it */
-function storyTime(){S.phase="story";S.storyAt=Date.now();stopSong();sfx("mic");render()}
+/* 🎤 Story time: the owner accepts (+300) or declines (−200) on their phone; the host can also start it or skip it (no penalty) */
+const STORY_YES=300,STORY_NO=200,STORY_ASK=15;
+const NO_GUESS=200;   // points lost for not sealing a guess in time (phone players only)   // 15 seconds to accept or decline; no answer counts as declining
+function storyTime(){S.phase="story";S.storyState="ask";S.storyAt=null;S.askAt=Date.now();stopSong();sfx("mic");render()}
+function storyDecide(state){
+  if(S.phase!=="story"||S.storyState!=="ask")return;
+  S.storyState=state;
+  if(state==="on"){S.storyAt=Date.now();sfx("lights");setTimeout(()=>sfx("applause"),300)}
+  else if(state==="no"||state==="late")sfx("boo");
+  render();
+}
 const VOTE=[["fire","🔥","Hot"],["lol","😂","Hilarious"],["wow","🤯","Mind-blown"]];
 function showVotes(){
   const v=curX().votes||{},c={fire:0,lol:0,wow:0};Object.values(v).forEach(x=>{if(c[x]!=null)c[x]++});
@@ -931,7 +978,9 @@ function showVotes(){
   const t=$("#votetotal");if(t){const n=Object.keys(v).length;t.textContent=n?`${n} vote${n>1?"s":""} in`:"Waiting for votes…"}
 }
 function score(){
-  if(S.phase==="story")S.votes={...(curX().votes||{})};else S.votes={};
+  const story=S.phase==="story"?S.storyState:null;
+  if(story==="on")S.votes={...(curX().votes||{})};else S.votes={};
+  const declined=story==="no"||story==="late";
   const name=cur().a,mult=DOUBLE.has(S.qi)?2:1,before=rankMap();
   const storyVotes=Object.keys(S.votes).filter(n=>n!==name).length;
   const fooled=fooledList().length;
@@ -943,8 +992,9 @@ function score(){
     if(!p.on){p.delta=0;return}
     if(p.name===name){
       const st=storyVotes*100*mult,bw=cur().bonus?BONUS_WRITER:0;   // writing a bonus secret that got played is worth points too
-      p.delta=fooled*150*mult+st+bw;p.score+=p.delta;p.fooled+=fooled;p.story=(p.story||0)+storyVotes;
-      p.note=[bw?`📝 Your bonus secret was played +${bw}`:"",fooled?`🎭 Fooled ${fooled} · +${150*mult} each`:"",storyVotes?`🎤 ${storyVotes} story vote${storyVotes>1?"s":""} +${st}`:""].filter(Boolean).join(" · ");return}
+      const sb=story==="on"?STORY_YES:0,sn=declined?Math.min(STORY_NO,p.score+fooled*150*mult+st+bw):0;   // took the stage, or declined it
+      p.delta=fooled*150*mult+st+bw+sb-sn;p.score+=p.delta;p.fooled+=fooled;p.story=(p.story||0)+storyVotes;
+      p.note=[sb?`🎤 Took the stage +${sb}`:"",sn?(story==="late"?`⏰ Didn't answer story time −${sn}`:`🙅 Declined story time −${sn}`):"",bw?`📝 Your bonus secret was played +${bw}`:"",fooled?`🎭 Fooled ${fooled} · +${150*mult} each`:"",storyVotes?`🎤 ${storyVotes} story vote${storyVotes>1?"s":""} +${st}`:""].filter(Boolean).join(" · ");return}
     const bet=S.opts?.bets?S.bets?.[p.name]:null;
     // changed their vote in the Interrogation Room
     const sw=S.switched?.[p.name]!=null,wasRight=sw&&matches(S.orig?.[p.name],name);
@@ -955,8 +1005,9 @@ function score(){
       if(bet==="allin"){d*=2;notes.push("💀 All in paid off: double!")}else if(bet==="sure"){d+=500*mult;notes.push(`🎯 Sure bet +${500*mult}`)}
       p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
     else{p.streak=0;p.delta=0;
-      if(S.guesses?.[p.name]!=null&&(bet==="sure"||bet==="allin")){const loss=(bet==="allin"?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;const lost=-p.delta;p.note=(bet==="allin"?"💀 All in… and wrong":"🎯 Sure… and wrong")+(lost?` −${lost}`:" (no points to lose yet)")}
-      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){const pen=Math.min(SLOW_PEN,p.score);p.delta=-pen;p.score-=pen;S.slow.push(p.name);p.note="⏰ Too slow: no guess"+(pen?` −${pen}`:" (no points to lose yet)")}}   // ⏰ too slow
+      // signed in on a phone but never sealed a guess: time ran out
+      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
+      if(S.guesses?.[p.name]!=null&&(bet==="sure"||bet==="allin")){const loss=(bet==="allin"?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;const lost=-p.delta;p.note=(bet==="allin"?"💀 All in… and wrong":"🎯 Sure… and wrong")+(lost?` −${lost}`:" (no points to lose yet)")}}
   });
   accusations().forEach(([n,c])=>{const q=S.players.find(p=>p.name===n);if(q)q.accused+=c});
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
@@ -981,7 +1032,8 @@ function render(){
     // tense music while the room is open; the drumroll builds over the last 8 seconds
     if(S.roomOpen)playSong("count");
     if(!drumT)drumT=setInterval(()=>{const left=ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000;if(left<=0){clearInterval(drumT);drumT=0;return}if(left<=8)sfx("roll",1-left/8)},90)}
-  if(S.phase==="story"){startClock(".story .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
+  if(S.phase==="story"&&S.storyState==="on"){startClock(".stage2 .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
+  if(S.phase==="story"&&S.storyState==="ask"&&$(".askclock"))startClock(".askclock",STORY_ASK,S.askAt||Date.now(),async()=>{await pollX();if(S.storyState==="ask"&&!curX().storyAns)storyDecide("late")});
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
   if(S.phase==="reveal")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".sus .bar").forEach(b=>b.style.width=b.dataset.w)));
   if(S.phase==="board"||S.phase==="final")requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w)));
@@ -1048,18 +1100,26 @@ function interroView(){
     <div class="ctl" style="justify-content:center"><span class="hint tiny" style="margin:0">Space: open the seal</span><button class="btn wax" id="reveal">Open the seal</button></div></section>`;
 }
 function storyView(){
-  const x=cur();
-  return `<section class="story">
-    <div class="mic"><img src="${RV(x.a)}" alt=""><span aria-hidden="true">🎤</span></div>
-    <div style="display:grid;gap:12px">
-      <div class="eyebrow">Story time</div>
+  const x=cur(),st=S.storyState||"ask",owner=S.players.find(p=>p.name===x.a),phone=hasPhone(x.a)&&owner?.on;
+  const deco=`<div class="stagex${st==="on"?"":" dark"}" aria-hidden="true"><div class="spot"></div><div class="valance"></div><div class="side l"></div><div class="side r"></div><div class="floor"></div><div class="foot">${"<i></i>".repeat(9)}</div></div>`;
+  const right=st==="ask"?`<div class="marquee">🎤 Story time?</div>
+      <h1>Will ${esc(x.a)} tell the story?</h1>
+      <p class="about">The story behind “${esc(x.f)}”</p>
+      <p class="stakes">${phone?`${esc(x.a)}, check your phone: accept <b>+${STORY_YES}</b> · decline or no answer <i>−${STORY_NO}</i>`:`No phone? Ask ${esc(x.a)} out loud.`}</p>
+      ${phone?`<div style="display:flex;gap:14px;align-items:center"><div class="clock askclock">${STORY_ASK}</div><div class="waiting" aria-label="Waiting"><i></i><i></i><i></i></div></div>`:""}
+      <div class="ctl" style="justify-content:flex-start"><button class="btn wax" id="storyyes">🎤 They'll tell it</button><button class="btn ghost" id="storyno">Skip</button><span class="hint tiny">Space: skip to scores</span></div>`
+    :st==="no"||st==="late"?`<div class="marquee">🎤 Story time</div><div class="declined">${st==="late"?`⏰ ${esc(x.a)} didn't answer in time!`:`😱 ${esc(x.a)} declined!`}</div>
+      <p class="about">No story tonight… −${STORY_NO} points.</p><div class="ctl" style="justify-content:flex-start"><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`
+    :st==="skip"?`<div class="marquee">🎤 Story time</div><h1>Story skipped</h1><div class="ctl" style="justify-content:flex-start"><button class="btn" id="score">Show scores</button></div>`
+    :`<div class="marquee">🎤 Story time</div>
       <h1>${esc(x.a)} has the floor</h1>
       <p class="about">The story behind “${esc(x.f)}”</p>
       <div class="clock">30</div>
-      <div class="votes">${VOTE.map(([k,e,l])=>`<div class="vote" data-v="${k}"><span class="e">${e}</span><span>${l}</span><div><div class="bar"></div></div><span class="c">0</span></div>`).join("")}</div>
+      <div class="votes applause"><div class="lbl">👏 APPLAUSE-O-METER · RATE IT ON YOUR PHONE</div>${VOTE.map(([k,e,l])=>`<div class="vote" data-v="${k}"><span class="e">${e}</span><span>${l}</span><div><div class="bar"></div></div><span class="c">0</span></div>`).join("")}</div>
       <div class="tiny" id="votetotal">Rate the story on your phone</div>
-      <div class="ctl"><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>
-    </div></section>`;
+      <div class="ctl"><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div>`;
+  return `${deco}<section class="stage2"><div class="performer${st==="on"?"":" dim"}"><img src="${RV(x.a)}" alt=""><svg viewBox="0 0 60 120" aria-hidden="true"><rect x="22" y="2" width="16" height="26" rx="8" fill="#9aa3ad" stroke="#3b4148" stroke-width="2"/><path d="M18 18c0 14 24 14 24 0" fill="none" stroke="#3b4148" stroke-width="3"/><rect x="28" y="30" width="4" height="78" fill="#2a2e33"/><path d="M14 116h32l-6-8H20z" fill="#2a2e33"/></svg></div>
+    <div style="display:grid;gap:12px">${right}</div></section>`;
 }
 function questionView(){
   const x=cur(),tot=guessers().length;
@@ -1170,7 +1230,7 @@ function primary(){
   if(S.phase==="question")return S.locked?afterLock():lock();
   if(S.phase==="interro")return reveal();
   if(S.phase==="reveal")return S.opts?.story?storyTime():score();
-  if(S.phase==="story")return score();
+  if(S.phase==="story")return S.storyState==="ask"?(S.storyState="skip",score()):score();
   if(S.phase==="board")return next();
 }
 function wire(){
@@ -1179,7 +1239,7 @@ function wire(){
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("score",score);on("next",next);on("again",newGame);
+  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
@@ -1248,10 +1308,10 @@ setInterval(async()=>{
 /* ---------- host menu: a faint ⚙ in the corner, easy to miss on purpose ---------- */
 (function hostMenu(){
   const b=document.createElement("button");b.textContent="⚙";b.title="Host menu";b.setAttribute("aria-label","Host menu");
-  b.style.cssText="position:fixed;left:6px;bottom:6px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--ink);opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
+  b.style.cssText="position:fixed;left:8px;top:50px;z-index:20;width:26px;height:26px;border-radius:50%;border:0;background:transparent;color:var(--ink);opacity:.18;font-size:15px;cursor:pointer;padding:0;transition:opacity .2s";
   b.onmouseenter=()=>b.style.opacity=".9";b.onmouseleave=()=>b.style.opacity=".18";
   const m=document.createElement("div");
-  m.style.cssText="position:fixed;left:8px;bottom:38px;z-index:21;background:var(--plum-2);border-radius:12px;padding:8px;display:none;gap:6px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);font:600 14px var(--body,system-ui),sans-serif";
+  m.style.cssText="position:fixed;left:8px;top:82px;z-index:21;background:var(--plum-2);border-radius:12px;padding:8px;display:none;gap:6px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);font:600 14px var(--body,system-ui),sans-serif";
   const item=(label,fn)=>{const x=document.createElement("button");x.textContent=label;
     x.style.cssText="background:transparent;color:var(--ink);border:0;text-align:left;padding:8px 12px;border-radius:8px;cursor:pointer;font:inherit";
     x.onmouseenter=()=>x.style.background="rgba(255,255,255,.08)";x.onmouseleave=()=>x.style.background="transparent";
@@ -1290,7 +1350,7 @@ function restartGame(ask=true){
 }
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
-  rows:()=>["lobby","howto","board","final","interro"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
+  rows:()=>["lobby","howto","board","final","interro","story"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 </body>
 </html>

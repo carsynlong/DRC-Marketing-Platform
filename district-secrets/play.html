@@ -222,7 +222,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-23-2";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-4";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -277,6 +277,7 @@ const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to pop it up on the
 /* 🔑 Host tools: the host's phone scanned the TV's host code once (host.html saves the key);
    when it's signed in as Carsyn, a button opens the bonus secrets to approve. Anonymous: text only, never who wrote it. */
 const HOST_NAME="Carsyn";
+const NO_GUESS=200;   // points lost for not sealing a guess in time (matches the TV)
 const hostKey=()=>store.get("ds-hostkey");
 const isHost=()=>D.me===HOST_NAME&&!!hostKey();
 let hostOpen=false,hostList=null,hostErr="",hostT=0;
@@ -314,11 +315,12 @@ function hostDraw(){
 function phoneRules(o){
   const r=[["The basics","🤫","A secret appears","A real secret from someone here pops up on the TV."],
     ["The basics","📱","You guess who","Type WHO it belongs to. Only you see your guess."],
+    ["Points","⏰","Don't run out of time","No guess sealed before time's up = −200."],
     ["Points","⚡","Be fast","Right = 1,000 points. Faster = more. Streaks = more."],
     ["Points","🎭","Your own secret?","Type a decoy. +150 for every person you fool."]];
   if(o.bets)r.push(["Extras","🎲","Bet on it","🎯 Sure: +500 / −250  ·  💀 All in: ×2 / −500"]);
   if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
-  if(o.story)r.push(["Extras","🎤","Story time","The owner tells the story. Rate it 🔥 😂 🤯"]);
+  if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
   r.push(["Have fun","👑","Winning","Most points wins the major award. Last secret = double!"]);
@@ -369,6 +371,12 @@ async function switchVote(){
     if(status===200){mySwitch.to=v;mySwitch.open=false;sfx("seal");buzz(40);lastKey="";render()}
     else toast(status===409?(data.error||"The room is closed."):"That didn't go through. Try again.");
   }catch(e){toast("No connection. Try again.")}
+}
+/* story time: accept or decline (the owner) */
+let myStory={key:"",ans:null};
+async function storyAnswer(yes){
+  const g=D.game;myStory={key:`${g.gid}:${g.qi}`,ans:yes?"yes":"no"};sfx(yes?"right":"wrong");buzz(yes?[30,50,30]:180);lastKey="";render();
+  try{const {status}=await post("/api/ds",{op:"story",name:myName,qi:g.qi,accept:yes});if(status===409)toast("Too late! The host already moved on.")}catch(e){toast("No connection. Tell the host out loud!")}
 }
 /* story votes */
 let myVote={key:"",v:null};
@@ -523,9 +531,23 @@ function view(){
         <p style="font-size:.82rem">Switch to the right person: <b>+250 bonus</b> · switch away from it: <b>−500</b> · switch and still wrong: <b>−250</b></p></div>`,""];
   }
   if(g.phase==="story"){
-    if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!","<p class=\"said\">Tell everyone the story behind your secret.</p><p>Everyone's rating it on their phones. Make it a good one!</p>","right"),"right"];
+    const st=g.storyState||"ask",mineS=g.answer===D.me;
+    if(st==="ask"){
+      if(mineS){const k=`${g.gid}:${g.qi}`,done=myStory.key===k?myStory.ans:null;
+        if(done)return [key+"asked"+done,header()+msg(done==="yes"?"🎤":"🙅",done==="yes"?"Get ready to tell it!":"You declined",done==="yes"?"<p>The lights are coming up…</p>":"<p>The crowd is not happy…</p>")];
+        return [key+"ask",header()+`<section class="msg" style="flex:none;padding-top:8px"><div class="eyebrow">🎭 Story time</div><h1>Will you tell the story?</h1>
+          <p class="said">The story behind your secret: “${esc(g.fact||"")}”</p>
+          <div class="hurry" id="askclock">⏱ Answer in <b>${g.askLeft??""}</b> seconds</div></section>
+          <div style="display:grid;gap:10px"><button class="btn" id="storyyes" style="min-height:70px;font-size:1.3rem">🎤 Accept · +300</button>
+          <button class="btn" id="storyno" style="min-height:60px;background:#e7dcc4;color:#6b5233;box-shadow:0 4px 0 #c9b385">🙅 Decline · −200</button>
+          <p style="text-align:center;color:var(--muted);font-size:.85rem;margin:0">No answer in time counts as declining.</p></div>`,"shh"];}
+      return [key+"wait",header()+msg("🎭",`Will ${esc(g.answer)} tell the story?`,"<p>Waiting for their answer…</p>")+reactBar()];
+    }
+    if(st==="no"||st==="late")return [key+st,header()+msg(st==="late"?"⏰":"😱",st==="late"?`${esc(g.answer)} didn't answer`:`${esc(g.answer)} declined!`,mineS?`<p>That's −200 points.</p>`:"<p>Boo! No story this time.</p>",mineS?"wrong":"")+reactBar(),mineS?"wrong":""];
+    if(st==="skip")return [key+st,header()+msg("🎭","Story skipped","<p>Eyes on the TV.</p>")+reactBar()];
+    if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!","<p class=\"said\">Tell everyone the story behind your secret.</p><p>+300 for taking the stage, and +100 for every vote.</p>","right"),"right"];
     const k=`${g.gid}:${g.qi}`,v=myVote.key===k?myVote.v:null;
-    return [key+"rate"+v,header()+`<section class="msg" style="flex:none"><div class="eyebrow">Story time</div><h1>🎤 ${esc(g.answer)}'s story</h1><p>How good is it? You can change your vote.</p></section>
+    return [key+"rate"+v,header()+`<section class="msg" style="flex:none"><div class="eyebrow">🎭 Story time</div><h1>🎤 ${esc(g.answer)}'s story</h1><p>How good is it? You can change your vote.</p></section>
       <div class="rate">${[["fire","🔥","Hot"],["lol","😂","Hilarious"],["wow","🤯","Mind-blown"]].map(([x,e,l])=>`<button data-vote="${x}" aria-pressed="${v===x}"><span>${e}</span>${l}</button>`).join("")}</div>`+reactBar()];
   }
   if(g.phase==="question"){
@@ -533,13 +555,13 @@ function view(){
     const b=betNow(),bl={sure:"🎯 Sure bet: +500 if right, −250 if wrong",allin:"💀 All in: double if right, −500 if wrong"}[b];
     if(mine)return [key+"sealed:"+mine+b,header()+`<section class="msg">${ENV}<h1>Sealed!</h1>
       <p class="said">${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b></p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p>${Memes.html("secrets",g.gid,g.qi)}</section>${reactBar()}`,"seal"];
-    if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you sealed a guess. Get the next one!</p>","wrong"),"wrong"];
+    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":`<p class="said">No guess sealed: −${NO_GUESS} points.</p><p>Get the next one!</p>`,"wrong"),"wrong"];
     return [key+"ask"+mineSecret+b+!!g.left,header()+fileCard(g)+(!mineSecret?betPicker():"")+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>`:"")+
-      (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left</div>`:"")+
+      (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${NO_GUESS}`}</div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
-      <button class="btn" type="submit">🔏 Seal my guess</button><p class="hint">Nobody else sees your guess.</p></form>`,mineSecret?"shh":""];
+      <button class="btn" type="submit">🔏 Seal my guess</button><p class="hint">Nobody else sees your guess.${mineSecret?"":` No guess before time's up: −${NO_GUESS}.`}</p></form>`,mineSecret?"shh":""];
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer;
@@ -597,6 +619,9 @@ function render(){
   const ds=$("#delsecret");if(ds)ds.onclick=deleteSecret;
   document.querySelectorAll("#nobonus").forEach(b=>b.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()});
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
+  const sy=$("#storyyes");if(sy)sy.onclick=()=>storyAnswer(true);
+  const sn=$("#storyno");if(sn)sn.onclick=()=>storyAnswer(false);
+  clearInterval(render.ac);if($("#askclock")&&D.game?.askLeft!=null){const end=Date.now()+D.game.askLeft*1000;render.ac=setInterval(()=>{const b=$("#askclock b");if(!b)return clearInterval(render.ac);b.textContent=Math.max(0,Math.ceil((end-Date.now())/1000))},200)}
   const cv=$("#changevote");if(cv)cv.onclick=()=>{sfx("tap");mySwitch.open=true;lastKey="";render();$("#sw")?.focus()};
   const kv=$("#keepvote");if(kv)kv.onclick=()=>{sfx("tap");buzz(15);toast("Kept. Your sealed guess stands.")};
   const sc=$("#swcancel");if(sc)sc.onclick=()=>{mySwitch.open=false;lastKey="";render()};

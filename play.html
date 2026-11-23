@@ -303,7 +303,7 @@ function hostScreen(g,key){
   if(g.phase==="reveal"){const n=(g.correct||[]).length,d=pick==null?null:Math.abs(+pick-n);
     return [key+"hr"+pick,header()+msg(d===0?"🔮":d===1?"✨":"🎙️",d===0?"Perfect prediction!":d===1?"So close!":pick==null?"No prediction":"Not this time",
       `<p class="said">${n} tribute${n===1?"":"s"} got it right${pick!=null?` · you said ${pick}`:""}</p><p>${d===0?"+500 points":d===1?"+200 points":"Points on the scoreboard."}</p>`,d!=null&&d<2?"right":"")+reactBar(),d===0?"right":""];}
-  if(pick!=null)return [key+"hp"+pick,header()+msg("🔮",`You predicted ${pick}`,"<p>Exactly right: +500. Off by one: +200. Eyes on the TV!</p>")+reactBar(),"lock"];
+  if(pick!=null)return [key+"hp"+pick,header()+msg("🔮",`You predicted ${pick}`,"<p>Exactly right: +500. Off by one: +200. Eyes on the TV!</p>"+Memes.html("tribute",g.gid,g.qi))+reactBar(),"lock"];
   if(g.locked)return [key+"hl",header()+msg("💥","Time's up!","<p>No prediction this time.</p>")];
   const n=(g.playing||[]).length;
   return [key+"ha",header()+`<section class="msg" style="flex:none"><div class="icon">🔮</div><h1>You're the Gamemaker</h1>

@@ -344,6 +344,10 @@ window.Rules = (() => {
 #rules .ru-again{background:rgba(255,255,255,.08);color:var(--ru-ink);box-shadow:inset 0 0 0 2px rgba(255,255,255,.3)}
 #rules button:focus-visible{outline:3px solid var(--ru-accent);outline-offset:3px}
 #rules .ru-hint{font-size:.85rem;opacity:.65}
+#rules .ru-ready{font-weight:800;font-size:clamp(1.1rem,2.2vw,1.5rem);color:var(--ru-accent)}
+#rules .ru-ready b{font-family:var(--ru-font);font-weight:400;font-size:1.5em;margin-right:.15em}
+#rules .ru-ready.all{animation:ru-throb 1.1s ease-in-out infinite}
+#rules .ru-ready small{display:block;font-weight:600;font-size:.7em;color:var(--ru-ink);opacity:.7;margin-top:2px}
 @keyframes ru-pop{from{transform:scale(.5);opacity:0}}
 @keyframes ru-throb{50%{transform:scale(1.06)}}
 @media (prefers-reduced-motion:reduce){#rules *{animation:none!important;transition:none!important}}
@@ -402,6 +406,7 @@ window.Rules = (() => {
     root.innerHTML = `<button class="ru-back" type="button">↩ Back to setup</button><div class="ru-in"><h1>${esc(title)}</h1>${o.sub ? `<div class="ru-sub">${esc(o.sub)}</div>` : ""}
       <ol>${steps.map(([ic, t]) => `<li><span class="ru-ic" aria-hidden="true">${ic}</span><span>${esc(t)}</span></li>`).join("")}</ol>
       <div class="ru-ctl"><button class="ru-again" type="button">🔊 Read it again</button><button class="ru-go" type="button">Ready! ▶</button></div>
+      <div class="ru-ready" aria-live="polite"></div>
       <div class="ru-hint">Space: Ready · Esc: back to setup</div></div>`;
     document.body.appendChild(root);
     root.querySelector(".ru-go").onclick = () => go();
@@ -409,6 +414,28 @@ window.Rules = (() => {
     root.querySelector(".ru-again").onclick = () => read(title, steps);
     window.addEventListener("keydown", onKey, true);
     read(title, steps);
+    watchReady(o.theme);
+  }
+  // how many phones tapped "Got it!" (shown under the buttons)
+  let readyT = 0;
+  function watchReady(theme) {
+    clearInterval(readyT);
+    const g = { secrets: "ds", feud: "df" }[theme] || "", word = theme === "tribute" ? "tributes" : "players";
+    const post = body => fetch("/api/host", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ g, ...body }) });
+    post({ action: "readyReset" }).catch(() => {});
+    const show = async () => {
+      if (!root) return clearInterval(readyT);
+      try {
+        const d = await (await fetch(`/api/host?ready=1${g ? "&g=" + g : ""}`, { cache: "no-store" })).json();
+        const players = d.players || [], ready = (d.ready || []).filter(n => players.includes(n)), el = root && root.querySelector(".ru-ready");
+        if (!el) return;
+        const waiting = players.filter(n => !ready.includes(n)), all = players.length && !waiting.length;
+        el.classList.toggle("all", !!all);
+        el.innerHTML = !players.length ? "" : all ? `✅ All <b>${players.length}</b> ${word} are ready!`
+          : `✅ <b>${ready.length}</b> of ${players.length} ${word} ready${waiting.length <= 4 ? `<small>Waiting on ${waiting.map(esc).join(", ")}</small>` : ""}`;
+      } catch (e) {}
+    };
+    setTimeout(show, 600); readyT = setInterval(show, 1500);
   }
   return { run, active: () => !!root, go };
 })();

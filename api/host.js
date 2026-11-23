@@ -14,7 +14,8 @@ export default async function handler(req, res) {
     const coins = req.query.coins ? await hash(p + "coins") : undefined;
     const react = req.query.react ? await redis.lrange(p + "reactlog", 0, 59) : undefined;   // recent emoji bursts (District Secrets)
     const mini = req.query.mini ? await hash(p + "mini") : undefined;     // tap race / tree climb counts (Who's That Tribute)
-    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, react, mini });
+    const ready = req.query.ready ? Object.keys(await hash(p + "ready")) : undefined;   // tapped Got it on How to play
+    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, react, mini , ready });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });
 
@@ -34,6 +35,10 @@ export default async function handler(req, res) {
   }
   if (action === "miniReset") {
     await redis.del(p + "mini");
+    return reply(res, 200, { ok: true });
+  }
+  if (action === "readyReset") {
+    await redis.del(p + "ready");
     return reply(res, 200, { ok: true });
   }
   if (action === "clearPlayers") {

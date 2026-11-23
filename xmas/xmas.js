@@ -264,7 +264,7 @@ XM.tiebreakerOpen=()=>!!T;
 XM.tiebreaker=function(opts={}){
   ensureAudio();
   const g=opts.game&&XM.TB[opts.game]?opts.game:null;
-  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,prevSong:XM.currentSong(),state:{}};
+  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,prevSong:XM.currentSong(),state:{}};
   let el=document.getElementById("xm-tb");if(!el){el=document.createElement("div");el.id="xm-tb";el.className="tb";el.setAttribute("role","dialog");el.setAttribute("aria-label","Tiebreaker");document.body.appendChild(el)}
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
@@ -308,8 +308,8 @@ const VIEWS={
   win:()=>`<div class="eyebrow" style="font-size:1rem">${esc(T.game?XM.GAMES[T.game].name:"Tiebreaker")} · the tie is broken</div>
     <div class="champ" style="display:grid;justify-items:center"><div class="crown">👑</div><img src="${XM.photo(T.winner)}" alt=""></div>
     <h1 class="big ttl" style="animation-delay:.6s">${esc(T.winner)}</h1>
-    <p class="who" style="font-size:clamp(1.6rem,3.4vw,2.8rem);color:var(--ink)">Go claim your major award!</p>
-    <div class="row">${T.game?`<button class="btn" id="tb-save">🏆 Save as ${esc(XM.GAMES[T.game].name)} victor</button>`:""}<button class="btn ghost" id="tb-done">Done</button></div>`,
+    <p class="who" style="font-size:clamp(1.6rem,3.4vw,2.8rem);color:var(--ink)">${T.noSave?"Wins the face-off and moves on!":"Go claim your major award!"}</p>
+    <div class="row">${T.game&&!T.noSave?`<button class="btn" id="tb-save">🏆 Save as ${esc(XM.GAMES[T.game].name)} victor</button>`:""}<button class="btn ghost" id="tb-done">Done</button></div>`,
 };
 function suggest(){
   if(T.round===1&&T.game)return T.game;
@@ -322,7 +322,7 @@ function startTB(k){
   if(XM.TB[k].song)setTimeout(()=>{if(T&&T.tb===k)XM.playSong(XM.TB[k].song)},900);
 }
 function winner(n){
-  clearT();XM.stopSong();T.winner=n;view("win");XM.sfx("fanfare");XM.confetti(220,true);
+  clearT();XM.stopSong();T.winner=n;if(T.onWinner)T.onWinner(n);view("win");XM.sfx("fanfare");XM.confetti(220,true);
   setTimeout(()=>{if(T&&T.view==="win")XM.playSong("lobby")},2600);
 }
 const WIRE={

@@ -99,10 +99,15 @@ const COLORS=["#b8322a","#e8b04b","#3e8a52","#2f6fb3","#c8412f","#d79a1f","#1f6b
 NAMES.forEach(n=>{const i=new Image();i.src=AV(n)});
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 
-let S={phase:"setup",game:(location.hash.slice(1) in GAMES)?location.hash.slice(1):"cookie",
+let S={phase:"setup",history:[],game:(location.hash.slice(1) in GAMES)?location.hash.slice(1):"cookie",
   present:XM.store.get("xmas-present",Object.fromEntries(NAMES.map(n=>[n,true]))),round:1,pool:[],matches:[],bye:null,pick:null,spinning:false,rot:0,last:null,champ:null};
 NAMES.forEach(n=>{if(S.present[n]===undefined)S.present[n]=true});
 const G=()=>GAMES[S.game];
+// Keep each game's bracket on this laptop so a refresh doesn't lose it
+const SKEY=g=>"xmas-wheel-"+g;
+function saveS(){const c={...S,spinning:false};XM.store.set(SKEY(S.game),c.phase==="setup"?null:c)}
+function loadS(g){const v=XM.store.get(SKEY(g),null);if(v&&v.phase&&v.phase!=="setup"){S={...S,...v,game:g,spinning:false,history:v.history||[]};return true}return false}
+loadS(S.game);
 
 /* ---------- wheel ---------- */
 function drawWheel(){
@@ -156,24 +161,30 @@ function versus(i){
     <div class="top"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} · Round ${S.round} · Face-off ${i+1}</div></div>
     <div class="row3">${f(m.a,"L")}<div class="VS">VS</div>${f(m.b,"R")}</div>
     <div class="ctl"><button class="btn red" id="vs-timer" style="font-size:1.2rem">⏱ Start the ${G().timer}s timer</button>
-      <button class="btn" id="vs-close" style="font-size:1.2rem">${S.phase==="spin"?"🎡 Back to the wheel":"✅ All matched up"}</button></div></div>`;
+      <button class="btn ghost" id="vs-close" style="font-size:1.2rem">${S.phase==="spin"?"🎡 Back to the wheel":"✅ Back to the matchups"}</button></div>
+    <div class="ctl" style="animation-delay:1.4s"><span class="eyebrow" style="align-self:center;font-size:.95rem">Who won?</span>
+      <button class="btn" data-vswin="a" style="font-size:1.2rem">👑 ${esc(m.a)}</button><button class="btn" data-vswin="b" style="font-size:1.2rem">👑 ${esc(m.b)}</button>
+      <button class="btn ghost" id="vs-tie" style="font-size:1.1rem">⚔️ It's a tie</button></div></div>`;
   document.body.appendChild(ov);
   sfx("whoosh");setTimeout(()=>{sfx("cannon");confetti(140)},700);
   const close=()=>{ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
   ov.querySelector("#vs-timer").onclick=()=>{ov.remove();openTimer(i)};
+  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{m.win=m[b.dataset.vswin];sfx("fanfare");confetti(160);ov.remove();render();if(S.phase==="play")playSong("board")});
+  ov.querySelector("#vs-tie").onclick=()=>{ov.remove();tiebreak([m.a,m.b],m)};
 }
 
 /* ---------- flow ---------- */
 function start(){
   const ps=NAMES.filter(n=>S.present[n]);if(ps.length<2)return;
-  S.round=1;newRound(shuffle(ps));
+  S.round=1;S.history=[];newRound(shuffle(ps));
 }
 function newRound(names){
   S.pool=names;S.matches=[];S.bye=null;S.pick=null;S.last=null;S.phase="spin";S.rot=Math.random()*6.28;sfx("gong");playSong("lobby");render();
 }
 function nextRound(){
   const w=S.matches.map(m=>m.win).concat(S.bye?[S.bye]:[]);
+  S.history.push({round:S.round,matches:S.matches.map(m=>({a:m.a,b:m.b,win:m.win})),bye:S.bye});
   if(w.length===1){S.champ=w[0];S.phase="champ";stopSong();sfx("fanfare");confetti(240,true);setTimeout(()=>S.phase==="champ"&&playSong("lobby"),2600);render();return}
   S.round++;newRound(shuffle(w));
 }
@@ -184,22 +195,25 @@ function openTimer(i){
   ov.innerHTML=`<div class="inner"><div class="eyebrow">${esc(G().verb)}</div>
     <div style="display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap"><img src="${AV(m.a)}" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)">
     <h2 style="font-size:clamp(1.6rem,4vw,2.8rem)">${esc(m.a)} <span style="color:var(--red)">vs</span> ${esc(m.b)}</h2><img src="${AV(m.b)}" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)"></div>
-    <div class="timer" id="tnum">${left}</div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="tgo">Go!</button><button class="btn ghost" id="tclose">Close</button></div></div>`;
+    <div class="timer" id="tnum">${left}</div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="tgo">Go!</button><button class="btn ghost" id="tclose">Close</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center"><span class="eyebrow">Who won?</span><button class="btn" data-twin="a">👑 ${esc(m.a)}</button><button class="btn" data-twin="b">👑 ${esc(m.b)}</button><button class="btn ghost" id="ttie">⚔️ It's a tie</button></div></div>`;
   document.body.appendChild(ov);
   const close=()=>{clearInterval(tId);ov.remove();stopSong();playSong("board")};
   ov.querySelector("#tclose").onclick=close;
+  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{clearInterval(tId);m.win=m[b.dataset.twin];ov.remove();stopSong();sfx("fanfare");confetti(160);render();if(S.phase==="play")playSong("board")});
+  ov.querySelector("#ttie").onclick=()=>{clearInterval(tId);ov.remove();tiebreak([m.a,m.b],m)};
   ov.querySelector("#tgo").onclick=e=>{e.target.disabled=true;sfx("go");playSong("count");
     tId=setInterval(()=>{left--;const el=document.getElementById("tnum");if(el)el.textContent=left;
       if(left<=5&&left>0)sfx("tock");if(left<=0){clearInterval(tId);stopSong();sfx("cannon");if(el)el.textContent="Time!"}},1000)};
 }
-function tiebreak(names){
-  stopSong();XM.tiebreaker({game:S.game,tied:names||[],onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
+function tiebreak(names,match){
+  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render()}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
 }
 
 /* ---------- views ---------- */
 const topBtns=()=>`<button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button><button class="btn ghost" id="tb">⚔️ Tiebreaker</button><button class="btn ghost" id="back">← Back to the show</button>`;
 function render(){
-  document.getElementById("app").innerHTML=S.phase==="setup"?setup():S.phase==="champ"?champ():arena();wire();drawWheel();
+  document.getElementById("app").innerHTML=S.phase==="setup"?setup():S.phase==="champ"?champ():arena();wire();drawWheel();saveS();
 }
 function setup(){
   return `<div class="bar" style="justify-content:flex-end">${topBtns()}</div>
@@ -225,15 +239,25 @@ function arena(){
     <div class="side">
       <div class="panel now" aria-live="polite">${now}</div>
       ${S.phase==="spin"?`<button class="btn red" id="spin" style="font-size:1.4rem;padding:1em" ${S.spinning?"disabled":""}>${S.spinning?"Spinning…":"🎡 SPIN"}</button><div class="tiny" style="text-align:center">Space: spin · ${S.pool.length} left on the wheel</div>`:""}
-      ${S.matches.length||S.bye?`<div class="panel"><div class="eyebrow">Round ${S.round} matchups${playing?" · tap the winner":""}</div>
+      ${S.matches.length||S.bye?`<div class="panel"><div class="eyebrow">Round ${S.round} matchups · tap the winner</div>
         ${S.matches.map((m,i)=>`<div class="mrow"><div class="match">
-          <button class="who ${m.win&&m.win!==m.a?"lost":""}" data-win="${i}|a" aria-pressed="${m.win===m.a}" ${playing?"":"disabled"}><img src="${AV(m.a)}" alt="">${esc(m.a)}</button><span class="v">vs</span>
-          <button class="who ${m.win&&m.win!==m.b?"lost":""}" data-win="${i}|b" aria-pressed="${m.win===m.b}" ${playing?"":"disabled"}><img src="${AV(m.b)}" alt="">${esc(m.b)}</button></div>
-          <div class="tools"><span>${m.win?"🏆 "+esc(m.win)+" advances":playing?"Who won?":""}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="mini-btn" data-vs="${i}">🆚 Show</button>${playing?`<button class="mini-btn" data-timer="${i}">⏱ ${g.timer}s timer</button><button class="mini-btn" data-tie="${i}">⚔️ Tie?</button>`:""}</span></div></div>`).join("")}
+          <button class="who ${m.win&&m.win!==m.a?"lost":""}" data-win="${i}|a" aria-pressed="${m.win===m.a}"><img src="${AV(m.a)}" alt="">${esc(m.a)}</button><span class="v">vs</span>
+          <button class="who ${m.win&&m.win!==m.b?"lost":""}" data-win="${i}|b" aria-pressed="${m.win===m.b}"><img src="${AV(m.b)}" alt="">${esc(m.b)}</button></div>
+          <div class="tools"><span>${m.win?"🏆 "+esc(m.win)+" advances":"Who won? Tap their name"}</span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="mini-btn" data-vs="${i}">🆚 Show</button><button class="mini-btn" data-timer="${i}">⏱ ${g.timer}s timer</button><button class="mini-btn" data-tie="${i}">⚔️ Tie?</button></span></div></div>`).join("")}
         ${S.bye?`<div class="bye">🍀 ${esc(S.bye)} gets a free pass to the next round</div>`:""}</div>`:""}
       ${playing?`<button class="btn" id="nextr" ${done?"":"disabled"}>${done?(S.matches.length===1&&!S.bye?"👑 Crown the champion":"🎡 Winners back on the wheel"):`${remaining} matchup${remaining===1?"":"s"} left`}</button>`:""}
       <div class="tiny" style="text-align:center">${esc(g.rule)}</div>
+      ${scoreboard()}
     </div></div>`;
+}
+function scoreboard(){
+  const wins={};const add=n=>{if(n)wins[n]=(wins[n]||0)+1};
+  S.history.forEach(r=>r.matches.forEach(m=>add(m.win)));S.matches.forEach(m=>add(m.win));
+  const rows=Object.entries(wins).sort((a,b)=>b[1]-a[1]);
+  if(!rows.length&&!S.history.length)return "";
+  return `<div class="panel"><div class="eyebrow">🏆 Scoreboard · face-offs won</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">${rows.map(([n,c])=>`<span class="chip" style="cursor:default"><img src="${AV(n)}" alt="">${esc(n)} <b style="color:var(--gold)">${"🏆".repeat(c)}</b></span>`).join("")}</div>
+    ${S.history.map(r=>`<div class="tiny">Round ${r.round}: ${r.matches.map(m=>`<b style="color:var(--ink)">${esc(m.win)}</b> beat ${esc(m.win===m.a?m.b:m.a)}`).join(" · ")}${r.bye?` · ${esc(r.bye)} had a free pass`:""}</div>`).join("")}</div>`;
 }
 function champ(){
   return `<div class="overlay" style="position:relative;background:none;min-height:85vh"><div class="inner champ"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} champion</div>
@@ -246,16 +270,16 @@ function champ(){
 function backToShow(){if(window.opener&&!window.opener.closed){window.close()}location.href="/show"}
 function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
-  document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");render()});
+  document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");loadS(S.game);render()});
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{S.present[b.dataset.here]=!S.present[b.dataset.here];XM.store.set("xmas-present",S.present);sfx(S.present[b.dataset.here]?"tap":"untap");render()});
   document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];sfx(m.win?"pop":"untap");if(m.win)confetti(40);render()});
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
   document.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{ensureAudio();versus(+b.dataset.vs)});
-  document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b])});
+  document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b],m)});
   document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>XM.toggleSound());
   on("start",start);on("spin",spin);on("nextr",nextRound);on("tb",()=>tiebreak());on("back",backToShow);
   on("save",e=>{XM.setVictor(S.game,S.champ);e.textContent="✅ Saved to The Capitol Has Spoken";e.disabled=true;sfx("reveal")});
-  on("reset",()=>{S.phase="setup";stopSong();render()});
+  on("reset",()=>{S.phase="setup";S.history=[];XM.store.set(SKEY(S.game),null);stopSong();render()});
   on("music",()=>{stopSong();playSong("lobby")});
 }
 document.addEventListener("keydown",e=>{

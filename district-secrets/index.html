@@ -890,7 +890,7 @@ function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
   // District Secrets reads its own How to Play first (howTo, above: it also covers the extras), so Ready goes straight to the walk-outs
-  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",sound:()=>musicOn,onDone:newGame});
+  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",style:"lineup",sound:()=>musicOn,onDone:newGame});
 }
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});

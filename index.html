@@ -389,7 +389,7 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud

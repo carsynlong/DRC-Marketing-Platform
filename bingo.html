@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>District Bingo</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="/xmas/xmas.css">
+<style>
+.app{position:relative;z-index:1;min-height:100%;display:flex;flex-direction:column;gap:14px;max-width:1400px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:44px 20px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@keyframes pop{from{transform:scale(.4) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
+h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d);line-height:1}
+.layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr);gap:28px;align-items:start}
+.ballzone{display:grid;justify-items:center;gap:14px;text-align:center}
+.ball{width:min(34vw,320px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;align-content:center;background:radial-gradient(circle at 35% 30%,#fff 0 8%,var(--bc,#b8322a) 60%,#3a0c09);box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 -10px 30px rgba(0,0,0,.35);animation:pop .7s cubic-bezier(.2,1.5,.4,1)}
+.ball .face{width:62%;aspect-ratio:1;border-radius:50%;background:#fbf6ea;color:#13271f;display:grid;place-items:center;align-content:center;line-height:.9}
+.ball .l{font-family:var(--display);font-size:clamp(1.6rem,4vw,3rem);color:var(--bc,#b8322a)}
+.ball .n{font-weight:800;font-size:clamp(3rem,9vw,6.4rem);font-variant-numeric:tabular-nums}
+.board{display:grid;grid-template-columns:3.2em repeat(15,minmax(0,1fr));gap:4px}
+.board .L{font-family:var(--display);color:#fff;border-radius:8px;display:grid;place-items:center;font-size:1.3rem}
+.board .c{aspect-ratio:1;border-radius:6px;display:grid;place-items:center;font-weight:800;font-size:clamp(.75rem,1.25vw,1.05rem);background:rgba(255,255,255,.06);color:rgba(251,246,234,.5);font-variant-numeric:tabular-nums;transition:transform .12s}
+.board .c:hover{transform:scale(1.12);box-shadow:inset 0 0 0 2px var(--gold);color:var(--ink)}
+.board .c.on{background:var(--gold);color:#2a1c05;box-shadow:0 0 12px rgba(232,176,75,.5)}
+.board .c.new{background:#fbf6ea;color:var(--red);transform:scale(1.15)}
+.panel{background:var(--night-2);border-radius:16px;padding:14px 16px;box-shadow:0 0 0 1px var(--line);display:grid;gap:10px}
+.check{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.check input{font:inherit;font-weight:800;font-size:1.1rem;width:5.5em;background:rgba(0,0,0,.3);color:var(--ink);border:2px solid var(--line);border-radius:10px;padding:.4em .6em}
+.mini{display:grid;grid-template-columns:repeat(5,2.8em);gap:4px;margin-top:6px}
+.mini .h{font-family:var(--display);text-align:center;color:var(--gold)}
+.mini div:not(.h){aspect-ratio:1;border-radius:6px;display:grid;place-items:center;font-weight:800;background:rgba(255,255,255,.06)}
+.mini .hit{background:var(--gold);color:#2a1c05}.mini .win{background:var(--good);color:#06210f}
+.verdict{font-family:var(--display);font-size:1.6rem}
+.last{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.last span{padding:.25em .6em;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800;font-size:.9rem}
+.gm{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.gm.bingo{box-shadow:0 0 0 3px var(--good),0 0 30px rgba(111,211,138,.4)}
+.bigwin{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(6,16,12,.93);text-align:center;padding:20px}
+.bigwin h1{font-size:clamp(3rem,10vw,8rem);color:var(--gold);text-shadow:0 6px 0 var(--red-d);animation:slam .8s cubic-bezier(.2,1.4,.4,1) both}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.board{grid-template-columns:2.4em repeat(15,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="lights"></div>
+<div class="app" id="app"><p style="margin-top:20vh;text-align:center">Loading the bingo cards…</p></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<script src="/xmas/xmas.js"></script>
+<script>
+/* District Bingo board. Numbers come out of the real bingo cage; the Gamemaker taps each one here.
+   Card checks use /xmas/bingo-cards.json: the exact numbers on the 24 printed cards.
+   Each card is 5 columns (B, I, N, G, O) of 5 numbers, top to bottom. The middle square is FREE on the printed cards. */
+document.getElementById("lights").outerHTML=XM.lights(26);
+XM.snow(document.getElementById("snow"));
+const {esc,sfx,playSong,stopSong,ensureAudio}=XM;
+let CARDS=[];
+const LET="BINGO",LC=["#b8322a","#1f6b4a","#c8921f","#2f6fb3","#7a3fb0"];
+const letterOf=n=>Math.floor((n-1)/15);
+let S={called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:XM.store.get("xmas-bingo-gm",null),gmBingo:false};
+const save=()=>{XM.store.set("xmas-bingo-called",S.called);XM.store.set("xmas-bingo-gm",S.gm)};
+
+function call(n){
+  ensureAudio();
+  const i=S.called.indexOf(n);
+  if(i>=0){ // tapped a called number again: take it back
+    if(n!==S.called[S.called.length-1]&&!confirm(`Un-call ${LET[letterOf(n)]} ${n}?`))return;
+    S.called.splice(i,1);sfx("untap");
+  }else{S.called.push(n);sfx("reveal")}
+  S.checked=null;save();render();gmCheck(i<0);
+}
+function lines(card){const has=(c,r)=>(c===2&&r===2)||S.called.includes(card[c][r]);const out=[];
+  for(let r=0;r<5;r++)if([0,1,2,3,4].every(c=>has(c,r)))out.push([0,1,2,3,4].map(c=>[c,r]));
+  for(let c=0;c<5;c++)if([0,1,2,3,4].every(r=>has(c,r)))out.push([0,1,2,3,4].map(r=>[c,r]));
+  if([0,1,2,3,4].every(i=>has(i,i)))out.push([0,1,2,3,4].map(i=>[i,i]));
+  if([0,1,2,3,4].every(i=>has(i,4-i)))out.push([0,1,2,3,4].map(i=>[i,4-i]));return out}
+function check(){const k=+document.getElementById("cardno").value;if(!(k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
+  const ln=lines(CARDS[k-1]);S.checked={k,ln};if(ln.length){sfx("fanfare");XM.confetti(220,true);bigWin(`Card ${k}`)}else sfx("cannon");render();}
+function gmCheck(justCalled){
+  if(!S.gm)return;const has=lines(CARDS[S.gm-1]).length>0;
+  if(has&&!S.gmBingo&&justCalled){sfx("fanfare");XM.confetti(200,true);bigWin("The Gamemaker",`Card ${S.gm}`)}
+  S.gmBingo=has;render();
+}
+function bigWin(who,sub=""){
+  const o=document.createElement("div");o.className="bigwin";
+  o.innerHTML=`<div style="display:grid;gap:16px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(sub)}</div><h1>BINGO!</h1>
+    <p style="font-family:var(--display);font-size:clamp(1.5rem,4vw,3rem);margin:0">${esc(who)} wins a major award!</p><p class="tiny" style="font-size:1.1rem">Every bingo wins a major award. Keep playing!</p>
+    <button class="btn" style="font-size:1.2rem">Keep playing</button></div>`;
+  document.body.appendChild(o);o.querySelector("button").onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};
+}
+function miniCard(card,winSet,big){
+  let g=LET.split("").map(l=>`<div class="h">${l}</div>`).join("");
+  for(let r=0;r<5;r++)for(let c=0;c<5;c++){const free=c===2&&r===2,n=card[c][r],hit=free||S.called.includes(n);g+=`<div class="${winSet.has(c+","+r)?"win":hit?"hit":""}">${free?"★":n}</div>`}
+  return `<div class="mini" ${big?'style="grid-template-columns:repeat(5,3.2em)"':""}>${g}</div>`;
+}
+function render(){
+  const last=S.called[S.called.length-1];
+  const ball=last?`<div class="ball" style="--bc:${LC[letterOf(last)]}" key="${last}"><div class="face"><span class="l">${LET[letterOf(last)]}</span><span class="n">${last}</span></div></div>`
+    :`<div class="ball" style="--bc:#1f6b4a"><div class="face"><span class="l" style="font-size:1.6rem">Ready?</span></div></div>`;
+  let board="";for(let l=0;l<5;l++){board+=`<div class="L" style="background:${LC[l]}">${LET[l]}</div>`;for(let i=1;i<=15;i++){const n=l*15+i;board+=`<button class="c ${n===last?"new":S.called.includes(n)?"on":""}" data-n="${n}" aria-label="${LET[l]} ${n}${S.called.includes(n)?", called":""}">${n}</button>`}}
+  let res="";const C=S.checked;
+  if(C&&C.err)res=`<div class="verdict" style="color:#ff8a7a">Cards go from 1 to ${CARDS.length}.</div>`;
+  else if(C){const win=new Set(C.ln.flat().map(p=>p.join()));
+    res=`<div class="verdict" style="color:${C.ln.length?"var(--good)":"#ff8a7a"}">${C.ln.length?"🎉 BINGO! Card "+C.k+" wins a major award!":"🪦 Not yet, Card "+C.k+". Keep playing."}</div>${miniCard(CARDS[C.k-1],win)}`}
+  let gm="";
+  if(S.gm){const ln=lines(CARDS[S.gm-1]),win=new Set(ln.flat().map(p=>p.join()));
+    gm=`<div class="panel gm ${ln.length?"bingo":""}"><div style="display:grid;gap:8px"><div class="eyebrow">Gamemaker's card</div><div class="verdict" style="font-size:1.3rem">Card #${S.gm}</div>
+      <div class="tiny">${ln.length?"🎉 You have BINGO!":"Grab printed card "+S.gm+". It's marked here as numbers are called."}</div><button class="btn ghost" id="gmnew" style="font-size:.9rem">Deal a different card</button></div>${miniCard(CARDS[S.gm-1],win,true)}</div>`}
+  else gm=`<div class="panel"><div class="eyebrow">Gamemaker playing too?</div><button class="btn ghost" id="gmdeal">🎲 Deal the Gamemaker a random card</button></div>`;
+  document.getElementById("app").innerHTML=`<div class="bar"><div><div class="eyebrow">The 2026 Christmas Games · Game 8</div><h1 class="title">District Bingo</h1></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button><button class="btn ghost" id="music">🔔 Music</button><button class="btn ghost" id="tb">⚔️ Tiebreaker</button><button class="btn ghost" id="reset">New game</button><button class="btn ghost" id="back">← Back to the show</button></div></div>
+  <div class="layout"><div class="ballzone">${ball}
+    <div class="tiny" style="font-size:1rem">Tap each number on the board as it comes out of the cage.<br>${S.called.length} called · ${75-S.called.length} left</div>
+    <div class="last">${S.called.slice(-6,-1).reverse().map(n=>`<span>${LET[letterOf(n)]} ${n}</span>`).join("")}</div>
+    ${last?`<button class="btn ghost" id="undo" style="font-size:.9rem">↩ Undo ${LET[letterOf(last)]} ${last}</button>`:""}
+    ${gm}</div>
+    <div style="display:grid;gap:14px"><div class="board">${board}</div>
+      <div class="panel"><div class="eyebrow">Someone yelled BINGO? Check their card</div>
+      <div class="check"><input id="cardno" type="number" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res}
+      <div class="tiny">Every bingo wins a major award. No limit.</div></div></div></div>`;
+  wire();
+}
+function wire(){const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
+  document.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>call(+b.dataset.n));
+  on("chk",check);on("undo",()=>{S.called.pop();S.checked=null;sfx("untap");save();S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;render()});
+  {const r=document.getElementById("reset");r.onclick=()=>{if(r.dataset.sure){S.called=[];S.checked=null;S.gmBingo=false;save();render()}else{r.dataset.sure=1;r.textContent="Tap again to clear";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="New game"}},3000)}}}
+  on("music",()=>{if(XM.currentSong())stopSong();else playSong("lobby")});
+  on("tb",()=>{stopSong();XM.tiebreaker({game:"bingo"})});
+  on("back",()=>{if(window.opener&&!window.opener.closed)window.close();location.href="/show"});
+  on("gmdeal",deal);on("gmnew",deal);
+  document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>XM.toggleSound());
+  const i=document.getElementById("cardno");if(i)i.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();check()}};}
+function deal(){
+  const opts=Array.from({length:CARDS.length},(_,i)=>i+1).filter(n=>n!==S.gm);let k=0;sfx("drumroll");
+  const t=setInterval(()=>{S.gm=opts[Math.random()*opts.length|0];render();sfx("tick");if(++k>=16){clearInterval(t);save();S.gmBingo=lines(CARDS[S.gm-1]).length>0;sfx("reveal");render()}},110);
+}
+document.addEventListener("keydown",e=>{if(e.key==="m"||e.key==="M"){if(!(e.target.closest&&e.target.closest("input")))XM.toggleSound()}});
+fetch("/xmas/bingo-cards.json",{cache:"no-cache"}).then(r=>r.json()).then(c=>{CARDS=c;if(S.gm&&!(S.gm<=CARDS.length))S.gm=null;S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;render()})
+  .catch(()=>{document.getElementById("app").innerHTML=`<p style="margin-top:20vh;text-align:center">Couldn't load the bingo cards. Check the internet connection and refresh.</p>`});
+</script>
+</body>
+</html>

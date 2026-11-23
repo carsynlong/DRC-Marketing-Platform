@@ -18,7 +18,7 @@ window.HowTo = (() => {
       sections: [
         ["How to play", [["📸", "Watch the TV", "A face starts super zoomed in, then slowly zooms out."],
           ["⌨️", "Type who it is", "Right here on your phone. Only you see it."],
-          ["⏱️", "30 seconds", "Then 💥 the cannon fires and answers lock."], ["⚠️", "Don't run out of time", "No answer in time = −250 points."]]],
+          ["⏱️", `${(g && g.secs) || 30} seconds`, "Then 💥 the cannon fires and answers lock."], ["⚠️", "Don't run out of time", "No answer in time = −250 points."]]],
         ["Points", [["✅", "Right answer", "1,000 points"],
           ["🔥", "Streak", "More points for answers in a row"],
           ["🍗", "The Feast", "The last round is worth ×3"]]],
@@ -55,13 +55,15 @@ window.HowTo = (() => {
       sections: [
         ["How to play", [["📋", "Read the question", "It appears on the TV."],
           ["👆", "Tap a face", "Right here on your phone."],
-          ["⏱️", "30 seconds", "Then Survey says…!"]]],
+          ["⏱️", "30 seconds", "Then Survey says…!"],
+          ["⚠️", "Don't run out of time", "No guess in time = −1 point."]]],
         ["Points", [["✅", "Called it", "+1 point"],
           ["⚡", "Fast", "Lock in within 10 seconds: +1 more"],
           ["🔥", "3 in a row", "You're on fire: +1 more each time"],
           ["🏆", "You're the #1 answer", "Your votes count for you too!"]]],
-        ["Bonuses", [["⚔️", "Ties", "Go to a secret face-off vote on your phone."],
-          ...(g.host ? [["🎯", `${g.host} plays Stump the Room`, "She knows the answers, so she bets on someone to miss. Call it anyway and you steal +1!"]] : []),
+        ["Bonuses", [["👑", "Fan Favorite", "Most cheers during the intros: +1 point"],
+          ["⚔️", "Ties", "Go to a secret face-off vote on your phone."],
+          ...(g.host && g.hostIn !== false ? [["🎯", `${g.host} plays Stump the Room`, "She knows the answers, so she bets on someone to miss. Call it anyway and you steal +1!"]] : []),
           ["💰", "Last question", "Counts ×2"],
           ["🎉", "Emojis", "Tap them to send them up the TV."]]],
       ],
@@ -118,7 +120,7 @@ window.HowTo = (() => {
       return;
     }
     const c = content(kind, g); let i = 0;
-    const row = ([e, b, s]) => (kind === "tribute" && b === "30 seconds" && g && g.secs && (b = `${g.secs} seconds`), `<li style="--i:${i++}"><span class="e" aria-hidden="true">${e}</span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></li>`);
+    const row = ([e, b, s]) => `<li style="--i:${i++}"><span class="e" aria-hidden="true">${e}</span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></li>`;
     root.innerHTML = `<div class="ht-wrap">
       <div class="ht-top"><small>${esc(T.name)}</small><h1>How to play</h1></div>
       <div class="ht-goal"><span class="e" aria-hidden="true">${c.goal[0]}</span><div><b>${esc(c.goal[1])}</b><span>${esc(c.goal[2])}</span></div></div>
@@ -199,7 +201,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
   function rulesButton(show) {
     if (window.HOWTO_OWN_BUTTON) return;   // District Secrets has its own How to play button (with every twist that's on)
     let b = document.getElementById("rulesbtn");
-    if (!show) { if (b) b.remove(); return; }
+    if (!show) { if (b) { b.remove(); document.body.style.paddingBottom = ""; } return; }
     if (b) return lift(b);
     b = document.createElement("button"); b.id = "rulesbtn"; b.type = "button"; b.textContent = "❓"; b.setAttribute("aria-label", "How to play");
     b.style.cssText = "position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:2147482400;width:40px;height:40px;border-radius:50%;border:0;" +
@@ -218,9 +220,11 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
       b.style.visibility = "hidden";
       let el = document.elementFromPoint(24, innerHeight - 6), up = 0;
       while (el && el !== document.body) { const cs = getComputedStyle(el); if (cs.position === "fixed" || cs.position === "sticky") { up = Math.max(0, innerHeight - el.getBoundingClientRect().top); break; } el = el.parentElement; }
-      // inside the bar's label row, left of the label (smaller there so it never covers an emoji)
+      // in a bar pinned to the bottom (Feud's emoji bar): tuck into its label row, smaller so it never covers an emoji
       b.style.bottom = up ? `${up - 29}px` : "max(10px,env(safe-area-inset-bottom))";
       b.style.width = b.style.height = up ? "26px" : "40px"; b.style.fontSize = up ? "13px" : "20px";
+      if (b.dataset.pb == null) b.dataset.pb = getComputedStyle(document.body).paddingBottom || "0px";
+      if (!up) document.body.style.paddingBottom = `calc(${b.dataset.pb} + 56px)`;   // room to scroll the last item clear of the ❓
     } catch (e) {} finally { b.style.visibility = ""; }
   }
   function sync(g, o) {

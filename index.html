@@ -71,6 +71,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .timer .n{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:1.5rem;font-variant-numeric:tabular-nums}
 .timer.hurry{animation:shake .5s infinite}
 @keyframes shake{25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+body.has-ticker .stage{max-height:42vh}
 .stage{position:relative;border-radius:18px;overflow:hidden;background:#07120d;aspect-ratio:16/9;max-height:50vh;width:100%;margin-inline:auto;
   box-shadow:0 0 0 4px var(--gold),0 0 0 9px var(--red),0 14px 40px rgba(0,0,0,.5)}
 .stage .blur{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) brightness(.4)}
@@ -160,7 +161,6 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .whoin span.in{background:var(--gold);color:#2a1c05;box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(232,176,75,.6);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .answers+.phoneprompt{padding:.3em 1em;font-size:clamp(1.1rem,2.6vw,1.7rem)}
 .stage:has(~.answers){max-height:42vh}
-body.has-ticker .stage{max-height:calc(50vh - 60px)}
 @media (max-width:620px){.answers{grid-template-columns:1fr}.stage{aspect-ratio:4/3}.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -395,7 +395,7 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
@@ -485,7 +485,7 @@ function score(){
     if(S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
     else if(p.name!==HOST&&Sync.hasPhone(p.name)&&answering().includes(p)&&!String(S.typed[p.name]||"").trim()){
       // signed in but no guess before the cannon: lose points (never below 0)
-      p.streak=0;p.delta=-Math.min(NO_ANSWER,p.score);p.score+=p.delta;p.missed=true;S.slow.push(p.name)}
+      p.streak=0;p.delta=-Math.min(NO_ANSWER,p.score);p.score+=p.delta;p.missed=true;if(p.delta<0)S.slow.push(p.name)}   // nothing to lose yet: no "−250" pop-up
     else{p.delta=0;p.streak=0}
   });
   Extras.score(mult);   // speed bonus, underdog twist, shop power-ups
@@ -636,11 +636,11 @@ function wire(){
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];m&&playSong(m)}
-    const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
+  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];if(S.phase==="final"){song=null;playWinner()}else if(m)playSong(m)}   // the winner screen goes back to the winner song
+    const e=$("#snd");if(e){e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)}});
 }
 document.addEventListener("keydown",e=>{
-  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(e.target.closest&&e.target.closest("button,input"))return;
   e.preventDefault();primary();

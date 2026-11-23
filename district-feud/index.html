@@ -194,8 +194,10 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 /* prize race ticker */
 .race{position:fixed;left:0;right:0;bottom:0;z-index:3;display:flex;align-items:center;gap:14px;overflow:hidden;white-space:nowrap;
   padding:9px max(16px,env(safe-area-inset-left,0px)) calc(9px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,var(--navy),#050d33);border-top:3px solid var(--gold)}
+body:has(.race){padding-bottom:64px}   /* room to scroll the buttons clear of the prize race strip */
 .race>b{font-family:var(--display);font-weight:400;color:var(--gold);flex:none;font-size:.95rem}
-.rl{display:flex;gap:16px;overflow:hidden;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
+.rl{display:flex;gap:16px;overflow:hidden;min-width:0;padding-right:6px}
+.rl.over{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent)}
 .rc{display:inline-flex;align-items:center;gap:6px;font-weight:800;text-transform:uppercase;font-size:1rem}
 .rc img{width:28px;height:28px;border-radius:50%;object-fit:cover}
 .rc i{font-style:normal;font-family:var(--display);color:var(--gold)}
@@ -654,14 +656,14 @@ const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan 
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
-  S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
+  forgetGame();S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
   if(!window.Rules)return startIntro();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
   Rules.run({theme:"feud",photo:AV,title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
     ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
-    ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone.`],
+    ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone. No guess in time? You lose ${SLOW_PEN} point.`],
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
     ["🏆","If you're the number one answer, your votes go into the prize race too."],
     ["⚡","Ties go to a secret face-off vote."],
@@ -846,7 +848,7 @@ function packageReveal(){
   later(()=>{stopSong();drumroll(2.3)},tFinal);
   later(()=>flipAt(0),tFinal+2350);
   later(()=>{const P=S.pkg,max=rows[0][1];P.lead=rows.filter(r=>r[1]===max).map(r=>r[0]);P.done=true;
-    if(P.lead.length===1){P.winner=P.lead[0];giftFx()}else{sfx("buzz");shake()}
+    if(P.lead.length===1){P.winner=P.lead[0];forgetGame();giftFx()}else{sfx("buzz");shake()}
     render()},tFinal+3500);
 }
 function prizeFaceoff(){   // tied for the major award: a face-off vote decides it (no random spin)
@@ -856,11 +858,11 @@ function prizeFaceoff(){   // tied for the major award: a face-off vote decides 
 }
 function pkgFate(){
   const P=S.pkg;S.phase="pkgfate";stopSong();render();
-  spin(P.lead,w=>{P.winner=w;P.fate=true;S.phase="pkg";giftFx();render()});
+  spin(P.lead,w=>{P.winner=w;P.fate=true;forgetGame();S.phase="pkg";giftFx();render()});
 }
 
 /* the gift box shakes, the lid flies off, the winner pops out */
-function giftFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
+function giftFx(){forgetGame();drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
 /* ---------- views ---------- */
@@ -871,10 +873,10 @@ function logo(small){
   const word=w=>anim?[...w].map(c=>`<span class="lt" style="--d:${(.15+(k++)*.07).toFixed(2)}s">${c}</span>`).join(""):w;
   return `<div class="bulbs logo-frame ${small?"small":""}"><div class="logo"><div class="l1">The Christmas</div><div class="l2">${word("District")}</div><div class="l2 l3">${word("Feud")}</div><div class="ribbon">★ The Survey Show ★</div></div></div>`;
 }
-function tile({n,v,state="",num=1,id="",delay=0,count="",myst=false}){
+function tile({n,v,state="",num=1,id="",delay=0,count="",myst=false,unit="vote"}){
   const pts=count?`<b class="cu" ${count==="auto"?"data-auto":""} data-to="${v}" data-delay="${Math.round((delay+.6)*1000)}">0</b>`:v;
   return `<div class="slot"><div class="card ${state}" ${id?`id="${id}"`:""} style="animation-delay:${delay}s"><div class="face front ${myst?"myst":""}">${myst?'<span class="mq">?</span><span class="mlabel">The #1 answer</span>':`<span class="num">${num}</span>`}</div>
-    <div class="face back">${n?`<img src="${AV(n)}" alt=""><span class="nm">${esc(n)}</span><span class="pts">${pts}<small>${v===1?"vote":"votes"}</small></span>`:""}</div></div></div>`;
+    <div class="face back">${n?`<img src="${AV(n)}" alt=""><span class="nm">${esc(n)}</span><span class="pts">${pts}<small>${v===1?unit:unit+"s"}</small></span>`:""}</div></div></div>`;
 }
 const words=q=>esc(q).split(" ").map((w,i)=>`<span class="w" style="--d:${(.55+i*.07).toFixed(2)}s">${w}</span>`).join(" ");
 const board=(q,tiles="",eyebrow="We surveyed the district",cls="",wrap="",anim=false)=>`<div class="bulbs boardwrap ${wrap}"><div class="board"><div class="cane"></div><div class="eyebrow">${eyebrow}</div><div class="bq">${anim?words(q):esc(q)}</div><div class="slots ${cls}">${tiles}</div><div class="cane"></div></div></div>`;
@@ -893,7 +895,7 @@ function render(){
   if(window.Hurry&&!["question","tb"].includes(S.phase))Hurry.hide();
   $("#app").innerHTML=v()+home;S.bump={};wire();countUps();
 }
-function goSetup(){clearTimers();stopSong();forgetGame();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
+function goSetup(){forgetGame();clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
   const letters=[...n].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
@@ -1030,14 +1032,14 @@ function end(){
 }
 function pkgView(){
   const P=S.pkg,open=P.done,compact=P.rows.length>4?"compact":"";
-  const tiles=P.rows.map(([n,v],i)=>tile({n,v,num:i+1,id:"pk"+i,state:open?"open":"",count:open?"":"manual"})).join("");
+  const tiles=P.rows.map(([n,v],i)=>tile({n,v,num:i+1,id:"pk"+i,state:open?"open":"",count:open?"":"manual",unit:"point"})).join("");
   const b=board("Final totals",tiles,"Votes + correct guesses · highest total wins the major award",compact);
   if(!open) return `<section class="center"><h1 class="ptitle">🎁 Prize Round</h1>${b}</section>`;
   if(!P.winner) return `<section class="center"><div class="tieban late" style="--d:0s">${strike(.15)}Tied for the prize!</div>
     ${podiums(P.lead,n=>S.tally[n])}
     <p class="sub late" style="--d:.8s">Sudden death! Everyone else votes in secret on one more question.</p>
     <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">⚡ Sudden-death face-off</button></div><div class="hint">Space: continue</div>${b}</section>`;
-  const list=board("Final totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Votes + correct guesses","compact one");
+  const list=board("Final totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open",unit:"point"})).join(""),"Votes + correct guesses","compact one");
   return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🏆 Major award winner</h1>
     <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":P.faceoff?"Won the sudden-death face-off":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"point")}</div>
     <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
@@ -1060,7 +1062,7 @@ function primary(){
   if(p==="end")return packageReveal();
   if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return prizeFaceoff();
 }
-const musicFor=()=>({intro:"strut",half:"half",lobby:"lobby",question:"think",tb:"faceoff",reveal:S.order.length&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
+const musicFor=()=>({intro:"strut",half:"half",lobby:"lobby",question:"think",tb:"faceoff",reveal:cur()&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
 function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{const n=b.dataset.here;S.present[n]=!S.present[n];render()});
@@ -1091,7 +1093,7 @@ function curQi(){const p=S.phase;if(["tb","ballot","cast","tbsuspense","tbresult
 const phoneAnswers=()=>answersQi===curQi()?answers:{};
 function snapshot(){
   const p=S.phase,g={gid,view:p,names:NAMES,playing:NAMES.filter(n=>S.present[n]),num:S.k+1,total:S.order.length,phase:p==="lobby"?"lobby":"watch",locked:true,mode:"choice",tally:S.tally};
-  g.host=HOST;
+  g.host=HOST;g.hostIn=!!S.present[HOST];   // phone rules only mention Stump the Room when she is playing
   if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,stump:stumpOn()?stumpable():undefined,locked:p!=="question",ends:p==="question"?S.ends:0,
     hurry:p==="question"&&S.ends&&S.ends-Date.now()<=10500?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
   if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,stumped:S.stump||undefined,mult:S.mult||1,slow:S.slow,slowPen:SLOW_PEN});
@@ -1099,7 +1101,7 @@ function snapshot(){
   if(p==="fanfav")g.fan=S.fan;
   if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
-  if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p==="tbsuspense"?0:S.tie.ends||0,hostPlays:!S.tie.names.includes(HOST)});   // the host votes in face-offs too, so she gets the hurry warning
+  if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p!=="tbsuspense"&&S.tie.ends&&S.tie.ends-Date.now()<=5500?S.tie.ends:0,hostPlays:!S.tie.names.includes(HOST)});   // the host votes in face-offs too, so she gets the hurry warning
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:S.tie.prize?"The major award":cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
   if(["end","pkg","pkgfate"].includes(p)){g.phase="final";if(p==="pkg"&&S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
   return JSON.stringify(g);
@@ -1186,7 +1188,7 @@ setInterval(()=>{push();if(document.hidden)return;
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
 
 document.addEventListener("keydown",e=>{
-  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(S.phase==="ballot"||S.phase==="cast")return; // never let a stray key cast or skip a secret vote
   if(e.target.closest&&e.target.closest("button,input,label"))return;
@@ -1194,6 +1196,9 @@ document.addEventListener("keydown",e=>{
 });
 render();
 /* ⏭️ test button: straight to the final board, then the major award (Carsyn's champions song) */
+/* prize race strip: more players than fit glide back and forth so everyone gets seen */
+(()=>{let dir=1,wait=0;setInterval(()=>{const l=document.querySelector(".race .rl");if(!l)return;const max=l.scrollWidth-l.clientWidth;l.classList.toggle("over",max>4&&l.scrollLeft<max-2);if(max<=4)return;
+  if(wait>0){wait--;return}l.scrollLeft+=dir;if(l.scrollLeft>=max-1||l.scrollLeft<=0){dir=-dir;wait=60}},30)})();
 window.MusicPill&&MusicPill.add({on:()=>S.sound,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
 window.SkipEnd&&SkipEnd.add(()=>{clearTimers();stopSong();S.tie=null;
   if(!Object.keys(S.tally||{}).length){const who=NAMES.filter(n=>S.present[n]).slice(0,4);S.tally=Object.fromEntries(who.map((n,i)=>[n,8-i*2]))}

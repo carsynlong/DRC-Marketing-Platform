@@ -446,7 +446,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-11";
+const BUILD="ds-build-2026-11-23-12";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -736,7 +736,7 @@ function snapshot(){
   const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:isDouble(S.qi),secs:qs(),opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:Q.filter(x=>!x.bonus&&!x.ttl).length,lightning:!!Q[S.qi]?.lightning,ttl:Q[S.qi]?.ttl?{who:Q[S.qi].a,opts:Q[S.qi].opts}:undefined,
     howto:window.Rules&&Rules.active()?"secrets":undefined,
-    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:1),
+    hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*(isDouble(S.qi)?2:Q[S.qi]?.golden?3:1),mult:isDouble(S.qi)?2:Q[S.qi]?.golden?3:1,
     wanted:["reveal","story","board"].includes(S.phase)&&S.qi<Q.length&&gmPredicts()?wantedTop():undefined};   // How to play is on the TV: phones show it too (howto.js)
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.phase==="question"&&Q[S.qi].hide)g.hide=hiddenNow()}
   if(inGame&&["reveal","story","board"].includes(S.phase)&&Q[S.qi].golden)g.golden=true;
@@ -747,6 +747,7 @@ function snapshot(){
   if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
   if(S.phase==="question"&&!S.locked){const left=Math.ceil(qs()-S.elapsed);if(left<=10)g.left=left}
   if(S.phase==="howto")g.howI=howI;
+  if(S.phase==="last")g.lastId=S.lastAt;
   if(S.phase==="likely"&&S.likely)g.likely={round:S.likely.round,q:S.likely.q,show:!!S.likely.show};   // which rule the TV is reading, so phones show the same one
   if(inGame&&S.phase==="reveal")g.fooled=fooledList().length;
   if(S.phase==="final")g.awards=awards().map(a=>({t:a.t,ic:a.ic,name:a.name,why:a.why}));
@@ -803,6 +804,7 @@ async function pollX(){
     if(S.phase==="interro")showSwitches();
     if(S.phase==="interro"&&S.roomOpen&&curX().fifth&&!S.fifthBy)pleadFifth(curX().fifth);
     if(S.phase==="showdown")checkDuel(d.duel||{});
+    if(S.phase==="last"){const c=$("#lastcount"),nb=d.written||0,nt=Object.keys(d.ttl||{}).length;if(c)c.textContent=[S.opts?.bonus?`📝 ${nb} bonus secret${nb===1?"":"s"} written`:"",S.opts?.ttl?`🤥 ${nt} two truths & a lie`:""].filter(Boolean).join(" · ")}
     if(S.phase==="likely"){const c=$("#likelycount"),n=Object.keys(d.likely||{}).length;if(c)c.textContent=`${n} vote${n===1?"":"s"} in · vote on your phone`;if(n&&n>=active().length&&!S.likely.show)likelyResults()}
   }catch(e){}
   pollingX=false;
@@ -965,9 +967,23 @@ function howView(){
 /* 🎤 walk-out introductions before the vault opens (showtime.js) */
 function showIntro(){
   const who=active().map(p=>p.name);
-  if(!who.length||!window.Walkout)return newGame();
+  if(!who.length||!window.Walkout)return lastChance();
   // District Secrets reads its own How to Play first (howTo, above: it also covers the extras), so Ready goes straight to the walk-outs
-  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",style:"lineup",sound:()=>musicOn,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
+  Walkout.run({names:who,district:n=>NAMES.indexOf(n)+1,photo:AV,theme:"secrets",style:"lineup",sound:()=>musicOn,onDone:lastChance,hypeFor:n=>n===HOST?"🔮 The Gamemaker!":null});
+}
+/* ⏳ Last chance: right after the walk-outs, one more shot at writing a bonus secret or two truths and a lie (extra points) */
+const LAST_SECS=45;
+function lastChance(){
+  if(!S.opts?.bonus&&!S.opts?.ttl)return newGame();
+  S.phase="last";S.lastAt=Date.now();stopSong();sfx("gong");playSong("board");render();
+}
+function lastView(){
+  const nb=dsx.written||0,nt=Object.keys(dsx.ttl||{}).length;
+  return `<section class="center" style="gap:12px">${EMBLEM}<div class="num">⏳ BEFORE THE VAULT OPENS</div><h1>Last chance for extra points!</h1>
+    <p>Grab your phone. ${S.opts?.bonus?"Write a <b>bonus secret</b>: if it gets played, <b>+500</b>. ":""}${S.opts?.ttl?"Write <b>two truths and a lie</b>: <b>+150</b> for every person you fool.":""}</p>
+    <div class="clock lastclock" style="font-family:var(--deco);font-size:clamp(3rem,8vw,5.5rem);color:var(--gold-hi)">${LAST_SECS}</div>
+    <div class="tiny" id="lastcount">${S.opts?.bonus?`📝 ${nb} bonus secret${nb===1?"":"s"} written`:""}${S.opts?.bonus&&S.opts?.ttl?" · ":""}${S.opts?.ttl?`🤥 ${nt} two truths & a lie`:""}</div>
+    <div class="ctl" style="justify-content:center"><span class="hint tiny">Space: open the vault now</span><button class="btn wax" id="lastgo">Open the vault</button></div></section>`;
 }
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
@@ -1035,10 +1051,13 @@ async function afterLock(){
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
   if(!S.opts?.interro||cur().lightning||cur().ttl)return reveal();
   stopSong();await poll();
-  const t={};Object.values(current()).forEach(v=>{const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
+  const playing=new Set(active().map(p=>p.name)),t={};
+  Object.entries(current()).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
+    const n=NAMES.find(n=>matches(v,n));if(n&&playing.has(n))t[n]=(t[n]||0)+1});
   const max=Math.max(0,...Object.values(t));
   if(!max)return reveal();
-  S.hot=Object.keys(t).filter(n=>t[n]===max).slice(0,2);S.hotN=max;
+  const tied=Object.keys(t).filter(n=>t[n]===max).sort((a,b)=>(b===cur().a)-(a===cur().a));   // a tie: the real owner always gets a seat
+  S.hot=tied.slice(0,2);S.hotN=max;
   curtains(()=>{S.phase="interro";S.hotAt=Date.now();S.roomOpen=true;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500)},"🔦 The Interrogation Room");
 }
 const ROOM_SECS=30;   // how long the Interrogation Room stays open
@@ -1128,7 +1147,7 @@ function score(){
       p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
     else{p.streak=0;p.delta=0;
       // signed in on a phone but never sealed a guess: time ran out
-      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
+      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;if(p.delta<0)S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
       if(S.guesses?.[p.name]!=null&&(bet==="sure"||bet==="allin")){const loss=(bet==="allin"?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;const lost=-p.delta;p.note=(bet==="allin"?"💀 All in… and wrong":"🎯 Sure… and wrong")+(lost?` −${lost}`:" (no points to lose yet)")}}
   });
   accusations().forEach(([n,c])=>{const q=S.players.find(p=>p.name===n);if(q)q.accused+=c});
@@ -1144,7 +1163,7 @@ function score(){
     S.extra=dsx.approved.map(x=>({f:x.text,a:x.name,bonus:true}));Q.push(...S.extra);S.bonusDone=true}
   S.phase=S.qi===Q.length-1?"final":"board";
   if(S.phase==="final"&&showdownDue())return startShowdown();
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("winner"),300)}else playSong("board");
+  if(S.phase==="final"){stopSong();confetti(260,true);playSong("winner")}else playSong("board");
   render();
 }
 /* 🎯 Frame job: the owner names someone; it works if that person is (one of) the most accused */
@@ -1184,7 +1203,7 @@ function checkDuel(taps){
 function duelEnd(n){const d=S.duel;clearTimeout(duelT);clearInterval(duelPoll);d.state="done";S.champ=n;stopSong();sfx("fanfare");confetti(220,true);render()}
 function finishShowdown(){   // breaking the tie: the champion finishes on top
   const c=S.players.find(p=>p.name===S.champ);if(c){c.delta=500;c.score+=500;c.note="⚔️ Won the Quick Draw +500"}
-  S.phase="final";stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("winner"),300);render();
+  S.phase="final";stopSong();confetti(260,true);playSong("winner");render();
 }
 function duelView(){
   const d=S.duel,f=(n,c)=>`<div class="f ${c}${d.state==="vs"?" in":""}${S.champ?(S.champ===n?" win":" lose"):""}"><img src="${AV(n)}" alt="">${esc(n)}</div>`;
@@ -1266,13 +1285,14 @@ function render(){
   cancelAnimationFrame(raf);clearInterval(typeT);clearInterval(clockT);
   if(S.phase!=="interro"){clearInterval(drumT);drumT=0}
   if(S.phase!=="question"||S.locked)clearRedzone();
-  const v={likely:likelyView,lightcard:lightView,ttlcard:ttlCardView,showdown:duelView,howto:howView,lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
+  const v={last:lastView,likely:likelyView,lightcard:lightView,ttlcard:ttlCardView,showdown:duelView,howto:howView,lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
   if(S.phase==="interro"){startClock(".room .clock",ROOM_SECS,S.hotAt||Date.now(),closeRoom);showSwitches();
     // tense music while the room is open; the drumroll builds over the last 8 seconds
     if(S.roomOpen)playSong("count");
     if(!drumT)drumT=setInterval(()=>{const left=ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000;if(left<=0){clearInterval(drumT);drumT=0;return}if(left<=8)sfx("roll",1-left/8)},90)}
   if(S.phase==="likely"&&!S.likely?.show)startClock(".likelyclock",LIKELY_SECS,S.likely.at,likelyResults);
+  if(S.phase==="last")startClock(".lastclock",LAST_SECS,S.lastAt||Date.now(),()=>setTimeout(()=>S.phase==="last"&&newGame(),1200));
   if(S.phase==="story"&&S.storyState==="on"){startClock(".stage2 .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
   if(S.phase==="story"&&S.storyState==="ask"&&$(".askclock"))startClock(".askclock",STORY_ASK,S.askAt||Date.now(),async()=>{await pollX();if(S.storyState==="ask"&&!curX().storyAns)storyDecide(hasPhone(cur().a)?"late":"skip")});
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
@@ -1507,6 +1527,7 @@ function primary(){
   if(S.phase==="howto")return readyGo();
   if(["roundcard","bonuscard","lightcard","ttlcard"].includes(S.phase))return beginQuestion();
   if(S.phase==="likely")return S.likely?.show?proceed():likelyResults();
+  if(S.phase==="last")return newGame();
   if(S.phase==="ready")return (clearInterval(readyT),sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?afterLock():lock();
   if(S.phase==="interro")return reveal();
@@ -1521,16 +1542,16 @@ function wire(){
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
-  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("likelyshow",likelyResults);on("likelynext",proceed);on("duelgo",duelGo);on("duelfinal",finishShowdown);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
+  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("likelyshow",likelyResults);on("lastgo",newGame);on("likelynext",proceed);on("duelgo",duelGo);on("duelfinal",finishShowdown);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
   on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
-    const e=$("#snd");e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)});
+    const e=$("#snd");if(e){e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)}});
   on("clearphones",async()=>{if(!confirm("Clear every phone sign-in? Everyone will need to tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
 }
 document.addEventListener("keydown",e=>{
-  if(e.key==="m"||e.key==="M"){$("#snd")?.click();return}
+  if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
   if(e.target.closest&&e.target.closest("button,input"))return;
   e.preventDefault();primary();
@@ -1617,7 +1638,7 @@ function skipToEnd(asked){
   if(!asked&&!confirm("Skip to the winners screen? The game ends here with the scores as they are. (Good for testing the music.)"))return;
   ensureAudio();clearInterval(readyT);clearInterval(clockT);clearRedzone?.();stopReading?.();
   if(S.qi==null||S.qi<0)S.qi=0;S.locked=true;S.duel=null;
-  S.phase="final";stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("winner"),300);render();
+  S.phase="final";stopSong();confetti(260,true);playSong("winner");render();
 }
 // A QR code for the host's own phone: it lists the bonus secrets people wrote (anonymous) to approve or skip.
 // Scanning it once also marks that phone as the host's, so signing in as Carsyn there shows 🔑 Host tools.
@@ -1643,7 +1664,7 @@ function restartGame(ask=true){
 }
 /* 🏆 live leaderboard along the bottom during the game (showtime.js) */
 if(window.Ticker)Ticker.start({theme:"secrets",label:"🏆 Leaderboard",photo:AV,
-  rows:()=>["lobby","howto","board","final","interro","story","showdown","likely","lightcard","ttlcard"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
+  rows:()=>["lobby","howto","last","board","final","interro","story","showdown","likely","lightcard","ttlcard"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 /* ⏭️ test button (showtime.js): straight to the winners screen and its song */
 window.MusicPill&&MusicPill.add({on:()=>musicOn,toggle:()=>{ensureAudio();window.toggleMusic&&toggleMusic();render()}});
 window.SkipEnd&&SkipEnd.add(()=>skipToEnd(true));

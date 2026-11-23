@@ -1073,7 +1073,8 @@ function wire(){
   on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("faceoff");render()});
   on("lobby",goSetup);
   on("replay",()=>{if(S.phase==="end"&&!confirm("Start the show over? The prize race goes back to zero."))return;clearTimers();stopSong();startGame()});
-  on("home",()=>{if(confirm("Stop this game and go back to setup? The prize race goes back to zero."))goSetup()});
+  on("home",async()=>{if(!confirm("Stop this game and go back to setup? The prize race goes back to zero, and every phone goes back to picking their name."))return;
+    try{await post({action:"clearPlayers"})}catch(e){}phones=[];goSetup()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("clearphones",async()=>{if(!confirm("Clear every phone's name? Everyone will need to scan and tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
   on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m=musicFor();m&&playSong(m)}

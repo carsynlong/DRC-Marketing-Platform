@@ -403,7 +403,7 @@ window.Rules = (() => {
     feud: { font: '"Bungee", Impact, sans-serif', ink: "#ffffff", accent: "#ffc92e", accent2: "#e3232c", bg1: "#1846c4", bg2: "#060b26", btnInk: "#3a2000" },
   };
   const CSS = `
-#rules{position:fixed;inset:0;z-index:2147483001;display:grid;place-items:center;overflow:auto;color:var(--ru-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+#rules{position:fixed;inset:0;z-index:2147483001;display:grid;place-items:safe center;overflow:auto;color:var(--ru-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
   background:radial-gradient(ellipse at 50% 30%,var(--ru-bg1),var(--ru-bg2) 75%);padding:24px 16px;box-sizing:border-box}
 #rules .ru-in{width:100%;max-width:980px;display:grid;gap:clamp(8px,1.5vh,16px);justify-items:center;text-align:center}
 #rules h1{margin:0;font-family:var(--ru-font);font-weight:400;font-size:clamp(2rem,min(5.5vw,8vh),4.2rem);line-height:1;color:var(--ru-accent);text-shadow:0 4px 0 var(--ru-accent2);animation:ru-pop .6s cubic-bezier(.2,1.5,.4,1) both}

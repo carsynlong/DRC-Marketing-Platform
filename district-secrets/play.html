@@ -122,6 +122,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .lead{display:flex;align-items:center;gap:8px;justify-content:center;margin-top:-6px;font-weight:800;font-size:.88rem;color:var(--muted)}
 .lead img{width:24px;height:24px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--gold)}
 .lead b{color:var(--gold-hi)}
+.lead{max-width:100%;flex-wrap:wrap}
+body.hurrying .hurry{display:none}   /* the red bar at the top already counts down */
 .lead.mine{color:var(--gold-hi);animation:bump 1.2s ease-in-out infinite alternate}
 .mini{display:grid;gap:6px;background:rgba(27,19,40,.85);border-radius:16px;padding:10px 12px;box-shadow:inset 0 0 0 1px var(--line);animation:rise .5s .2s both}
 .mini .lbl{text-align:center;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800}
@@ -325,7 +327,7 @@ function hostDraw(){
   const n=(hostList||[]).filter(x=>x.status==="approved").length;
   const dt=p.querySelector("#decoytext"),draft=dt?.value||"",dfoc=document.activeElement===dt;   // keep a half-typed decoy across refreshes
   p.innerHTML=`<div class="in"><div class="eyebrow">Host only · keep this to yourself</div><h2>📝 Bonus secrets</h2>
-    <p style="margin:0;color:var(--muted)">Anonymous: you see the secret, never who wrote it. Approved ones play as a bonus round after the 8 secrets, and each writer earns +500. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
+    <p style="margin:0;color:var(--muted)">Anonymous: you see the secret, never who wrote it. Approved ones play as a bonus round after the main secrets, and each writer earns +500. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
     ${hostErr?`<div class="offline" style="background:var(--wax);color:#fff">${esc(hostErr)}</div>`:""}
     ${hostList&&!hostList.length?`<p style="text-align:center;color:var(--muted)">Nothing yet. This updates by itself.</p>`:""}
     ${(hostList||[]).map((x,i)=>`<div class="hcard ${x.status}"><span class="tag">Secret ${i+1} · ${x.status}</span><div class="t">“${esc(x.text)}”</div>
@@ -450,11 +452,11 @@ async function likelyVote(n){
 const moleTarget=g=>{if(!g.mole||g.mole.tag!==ownTag(g.gid,g.qi,"mole:"+D.me))return null;try{return decodeURIComponent(escape(atob(g.mole.t)))}catch(e){return null}};
 const moleNote=g=>{const t=moleTarget(g);return t?`<div class="mine" style="background:#2b1d12;color:#f4ecdb;border-color:#d9b25f"><b>🐀 You're the MOLE!</b><span>Secret mission: get people to guess <span style="color:var(--gold-hi);font-weight:800;font-size:1.15em">${esc(t)}</span>. Drop hints, act suspicious, point fingers. +150 for every person who does! Your own guess still counts as normal.</span></div>`:""};
 /* sponsor bet for this secret */
-let myBet={key:"",bet:"hunch"};
+let myBet=(()=>{try{return JSON.parse(localStorage.getItem("ds-bet"))||{key:"",bet:"hunch"}}catch(e){return {key:"",bet:"hunch"}}})();   // survives a reload
 const BETS=[["hunch","🪶","Hunch","normal"],["sure","🎯","Sure","+500 / −250"],["allin","💀","All in","×2 / −500"]];
 function betNow(){const g=D.game,k=`${g.gid}:${g.qi}`;if(myBet.key!==k)myBet={key:k,bet:"hunch"};return myBet.bet}
 async function pickBet(b){
-  const g=D.game;betNow();myBet.bet=b;sfx("tap");buzz(10);lastKey="";render();
+  const g=D.game;betNow();myBet.bet=b;try{localStorage.setItem("ds-bet",JSON.stringify(myBet))}catch(e){}sfx("tap");buzz(10);lastKey="";render();
   try{const {status}=await post("/api/ds",{op:"bet",name:myName,qi:g.qi,bet:b});if(status===409)toast("Too late! Guesses are locked.")}catch(e){}
 }
 const betPicker=()=>!D.game?.opts?.bets?"":`<div class="bet"><div class="lbl">🎲 Sponsor bet · how sure are you?</div>${BETS.map(([k,e,l,h])=>`<button type="button" class="${k}" data-bet="${k}" aria-pressed="${betNow()===k}"><span>${e}</span>${l}<small>${h}</small></button>`).join("")}</div>`;
@@ -504,6 +506,10 @@ async function vote(v){
   try{await post("/api/ds",{op:"vote",name:myName,qi:g.qi,v})}catch(e){}
 }
 async function leave(){try{await post("/api/join",{leave:true})}catch(e){}myName=null;store.set("ds-name",null);poll()}
+// typed a name but never tapped Seal? seal it just before time runs out
+setInterval(()=>{const g=D.game,i=document.getElementById("g");
+  if(!g||g.phase!=="question"||!g.hurry||pending||D.myAnswer||!i||!i.value.trim())return;
+  if(Date.now()>g.hurry-900){i.blur();send(i.value)}},250);
 async function send(text){
   const g=D.game;text=String(text||"").trim();if(!text||!g)return;
   pending={gid:g.gid,qi:g.qi,answer:text};render();

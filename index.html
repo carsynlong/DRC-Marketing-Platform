@@ -47,6 +47,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 /* Lobby + interstitials */
 .lobby{display:grid;gap:20px;text-align:center;justify-items:center;padding-block:1vh}
 .lobby h1{font-size:clamp(2.6rem,8vw,5.6rem);color:var(--gold);line-height:1;text-shadow:0 3px 0 var(--red-d),0 0 30px rgba(232,176,75,.35)}
+@media (max-height:860px){.lobby{gap:12px}.lobby .emblem{width:84px}.lobby h1{font-size:clamp(2rem,5vw,3.4rem)}}
 .lobby p{max-width:62ch;margin:0;color:var(--muted);line-height:1.5}
 .chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:900px}
 .chip{padding:.55em 1em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:600;display:inline-flex;gap:.5em;align-items:center;background:rgba(13,31,24,.6)}
@@ -159,6 +160,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .whoin span.in{background:var(--gold);color:#2a1c05;box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(232,176,75,.6);animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
 .answers+.phoneprompt{padding:.3em 1em;font-size:clamp(1.1rem,2.6vw,1.7rem)}
 .stage:has(~.answers){max-height:42vh}
+body.has-ticker .stage{max-height:calc(50vh - 60px)}
 @media (max-width:620px){.answers{grid-template-columns:1fr}.stage{aspect-ratio:4/3}.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -400,7 +402,7 @@ function showIntro(){
   Rules.run({theme:"tribute",photo:AV,title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
     ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
     ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
-    ["⏱️","You have 30 seconds before the cannon fires. No answer in time? You lose 250 points!"],
+    ["⏱️",`You have ${S.secs} seconds before the cannon fires. No answer in time? You lose ${NO_ANSWER} points!`],
     ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
     ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
     ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
@@ -426,7 +428,9 @@ function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready"
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
 function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
-const giftTag=()=>S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
+const isTb=()=>!!S.rounds[S.qi]?.tb;
+const faceLbl=()=>isTb()?"⚔️ Showdown face":`Face ${S.qi+1} of ${Q.length}`;
+const giftTag=()=>isTb()?`<span class="gift">⚔️ Fastest right answer wins</span>`:S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
 const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt"],
   "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
@@ -472,7 +476,7 @@ function reveal(){
   Sync.fillAnswers();
   if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
-function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}m[p.name]=rank});return m}
+function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(rs(p)!==prev){rank=i+1;prev=rs(p)}m[p.name]=rank});return m}
 function score(){
   if(S.rounds[S.qi]?.tb)return Party.scoreTiebreak();
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();S.slow=[];Extras.before();
@@ -531,7 +535,7 @@ function lobbyView(){
   </section>`;
 }
 function readyView(){
-  return `<section class="ready"><div class="eyebrow">Face ${S.qi+1} of ${S.rounds.length}</div>${giftTag()}${Extras.card()}<div class="big">${S.count}</div><div class="quip">Tributes, eyes on the screen.</div></section>`;
+  return `<section class="ready"><div class="eyebrow">${faceLbl()}</div>${giftTag()}${Extras.card()}<div class="big">${S.count}</div><div class="quip">Tributes, eyes on the screen.</div></section>`;
 }
 function roundView(){
   const r=ROUNDS.find(r=>r.at===S.qi);
@@ -548,7 +552,7 @@ function questionView(){
     <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=false;
       return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own face\"":""}>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}${own?' <span class="d">their face</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
   const img=rev?src(x.r):src(x.q);
-  return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">Face ${S.qi+1} of ${S.rounds.length}</div></div>${giftTag()}
+  return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">${faceLbl()}</div></div>${giftTag()}
     ${rev?sndBtn():`<div class="timer" aria-label="Seconds left"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="6"/><circle class="arc" cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="176 176"/></svg><div class="n">${S.secs}</div></div>`}</div>
   <div class="stage"><div class="blur" style="background-image:url('${img}')"></div>
     <img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(x.a):"Mystery tribute, zoomed in"}">
@@ -568,13 +572,15 @@ function typedView(x,rev){
   return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
   <div class="typed">${boxes}</div>`;
 }
-function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}
+// the Gamemaker knows every face: if she ties a tribute, the tribute ranks ahead
+function rs(p){return p.score-(p.name===HOST?.5:0)}
+function ranked(){return active().slice().sort((a,b)=>rs(b)-rs(a)||a.name.localeCompare(b.name))}
 function boardRows(){
   const r=ranked(),max=Math.max(1,...r.map(p=>p.score));let rank=0,prev=null;
-  return r.map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}
+  return r.map((p,i)=>{if(rs(p)!==prev){rank=i+1;prev=rs(p)}
     return `<div class="row"><div class="fill" data-w="${(p.score/max*100).toFixed(1)}%"></div><div class="rk">${rank}</div><img class="av" src="${AV(p.name)}" alt="">
       <div class="nm">${esc(p.name)}${p.move>0?`<span class="mv up">▲${p.move}</span>`:p.move<0?`<span class="mv dn">▼${-p.move}</span>`:""}${p.streak>1?`<span class="streak">🔥 ${p.streak} in a row</span>`:""}</div>
-      <div class="pts">${p.score.toLocaleString()}${p.delta>0?`<span class="delta">+${p.delta.toLocaleString()}</span>`:p.delta<0?`<span class="delta" style="color:#ff8a7a">−${(-p.delta).toLocaleString()} ⏰</span>`:""}</div></div>`}).join("");
+      <div class="pts">${p.score.toLocaleString()}${p.delta>0?`<span class="delta">+${p.delta.toLocaleString()}</span>`:p.delta<0?`<span class="delta" style="color:#ff8a7a">−${(-p.delta).toLocaleString()}${(S.slow||[]).includes(p.name)?" ⏰":""}</span>`:""}</div></div>`}).join("");
 }
 function quip(){
   const r=ranked();if(!r.length)return"";const lead=r[0].name,last=r[r.length-1].name,hot=r.find(p=>p.streak>=3),got=r.filter(p=>p.delta>0).length;
@@ -591,7 +597,7 @@ function boardView(){
   <div class="ctl"><span class="hint tiny">Space: ${nextRound?"on to "+nextRound.name:"next face"}</span><button class="btn" id="next">${nextRound?"On to "+nextRound.name:"Next face"}</button></div>`;
 }
 function finalView(){
-  const r=ranked(),top=r[0]?.score??0,tied=r.filter(p=>p.score===top&&top>0);
+  const r=ranked(),top=r[0]?rs(r[0]):0,tied=r.filter(p=>rs(p)===top&&top>0);
   const pod=[r[1],r[0],r[2]].map((p,i)=>p?`<div class="pod p${[2,1,3][i]}">${i===1?'<div class="crown">👑</div>':""}<img class="av" src="${AV(p.name)}" alt=""><div class="nm">${esc(p.name)}</div><div class="pts">${p.score.toLocaleString()} pts</div><div class="blk">${[2,1,3][i]}</div></div>`:`<div></div>`).join("");
   return `<section class="lobby" style="gap:16px">
     <div class="eyebrow">The Capitol has spoken</div>

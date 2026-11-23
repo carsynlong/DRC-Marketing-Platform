@@ -29,7 +29,7 @@ window.HowTo = (() => {
       end: "Highest score wins!",
     };
     if (kind === "secrets") return {
-      goal: ["🎯", "Guess whose secret it is", "Every secret is true, and from someone in this room."],
+      goal: ["🎯", "Guess whose secret it is", g.opts && g.opts.decoys ? "Secrets come from people in this room, but watch out for fakes!" : "Every secret is true, and from someone in this room."],
       sections: [
         ["How to play", [["🔏", "Read the secret", "It appears on the TV."],
           ["⌨️", "Type a name", "Your guess is sealed. Nobody sees it."]]],
@@ -39,6 +39,12 @@ window.HowTo = (() => {
           ["💰", "Last secret", "Counts ×2"]]],
         ["If it's YOUR secret", [["🤫", "Keep a straight face", "Type a decoy name instead."],
           ["🎭", "Fool people", "+150 for everyone who guesses wrong"]]],
+        ["Twists", (o => [o.decoys && ["🃏", "Fakes", "Some secrets are made up. Call them out!"],
+          o.frame && ["🎯", "Frame someone", "Your secret? Frame a person. If the room accuses them most: +400"],
+          o.interro && ["🔦", "Interrogation Room", "Change your vote. Switch to the right person: +250"],
+          o.fifth && ["🤐", "Plead the Fifth", "In the hot seat, once per game. Costs 100."],
+          o.story && ["🎤", "Story time", "Tell the story behind your secret: +300"],
+          o.mole && ["🐀", "The mole", "One of you secretly pushes a wrong name. Trust no one!"]].filter(Boolean))(g.opts || {})],
         ["Bonuses", [...(g.opts && g.opts.bets ? [["🎲", "Sponsor bets", "Bet on your guess. Win big or lose points!"]] : []),
           ["🎉", "Emojis", "Tap them to send them up the TV."]]],
       ],
@@ -112,11 +118,11 @@ window.HowTo = (() => {
       return;
     }
     const c = content(kind, g); let i = 0;
-    const row = ([e, b, s]) => `<li style="--i:${i++}"><span class="e" aria-hidden="true">${e}</span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></li>`;
+    const row = ([e, b, s]) => (kind === "tribute" && b === "30 seconds" && g && g.secs && (b = `${g.secs} seconds`), `<li style="--i:${i++}"><span class="e" aria-hidden="true">${e}</span><div><b>${esc(b)}</b><span>${esc(s)}</span></div></li>`);
     root.innerHTML = `<div class="ht-wrap">
       <div class="ht-top"><small>${esc(T.name)}</small><h1>How to play</h1></div>
       <div class="ht-goal"><span class="e" aria-hidden="true">${c.goal[0]}</span><div><b>${esc(c.goal[1])}</b><span>${esc(c.goal[2])}</span></div></div>
-      ${c.sections.map(([h, rows]) => `<h2>${esc(h)}</h2><ul>${rows.map(row).join("")}</ul>`).join("")}
+      ${c.sections.filter(([h, rows]) => rows.length).map(([h, rows]) => `<h2>${esc(h)}</h2><ul>${rows.map(row).join("")}</ul>`).join("")}
       <div class="ht-end">${esc(c.end)}</div></div>
       <div class="ht-bar"><button type="button" class="ht-ok">Got it! ✅</button></div>`;
     root.querySelector(".ht-ok").onclick = () => {
@@ -143,8 +149,7 @@ window.HowTo = (() => {
 #hurrybar b{font-size:2.6rem;line-height:1;font-weight:900;min-width:1.4em;text-align:center;font-variant-numeric:tabular-nums;animation:hb-pop .4s cubic-bezier(.2,1.8,.4,1) both}
 #hurrybar span{font-weight:900;font-size:1.05rem;line-height:1.15;letter-spacing:.02em}
 #hurrybar small{display:block;font-weight:700;font-size:.8rem;opacity:.9}
-body.hurrying{padding-top:84px!important}
-body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
+body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
 #slowtoast{position:fixed;left:16px;right:16px;top:calc(16px + env(safe-area-inset-top,0px));z-index:2147482600;background:#1b1b1b;color:#fff;font:800 1.15rem/1.3 system-ui,-apple-system,sans-serif;
   border-radius:16px;padding:16px;text-align:center;box-shadow:0 0 0 3px #ff2d37,0 10px 30px rgba(0,0,0,.5);animation:hb-in .4s cubic-bezier(.2,1.5,.4,1) both}
 @keyframes hb-in{from{transform:translateY(-120%)}}
@@ -182,7 +187,8 @@ body.hurry-shake{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     if (ends && !o.answered && !exempt && Date.now() < ends) startHurry(ends); else stopHurry();
     if (g && me && g.slow && g.slow.includes(me)) {
       const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;
-      if (k !== slowKey) { slowKey = k; slowToast(`⏰ Too slow! You didn't answer in time${g.slowPen ? `: −${g.slowPen}` : ""}`); }
+      if (k !== slowKey) { slowKey = k; const mine = (g.scores || []).find(s => s.name === me), pen = mine ? Math.max(0, -(mine.delta || 0)) : g.slowPen;
+        slowToast(`⏰ Too slow! You didn't answer in time${pen ? `: −${pen}` : ""}`); }
     }
   }
 

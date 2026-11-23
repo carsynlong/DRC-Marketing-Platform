@@ -1326,7 +1326,7 @@ function readyView(){
 }
 function bonusView(){
   return `<section class="center">${EMBLEM}<div class="num">LATE ADDITIONS TO THE ARCHIVE</div><h1>Bonus Round</h1>
-    <p>${Q.length-BASE} fresh secret${Q.length-BASE>1?"s":""}, written tonight by someone in this room. Each writer earns <b>+500 points</b> when theirs comes up, so keep a straight face.</p>
+    <p>${Q.filter(x=>x.bonus).length} fresh secret${Q.filter(x=>x.bonus).length>1?"s":""}, written tonight by someone in this room. Each writer earns <b>+500 points</b> when theirs comes up, so keep a straight face.</p>
     <button class="btn wax" id="begin">Open the new files</button><div class="tiny">Space to begin</div></section>`;
 }
 function interroView(){
@@ -1535,13 +1535,14 @@ document.addEventListener("keydown",e=>{
   if(e.target.closest&&e.target.closest("button,input"))return;
   e.preventDefault();primary();
 });
-/* a TV reload mid-question picks up with the guesses locked */
+/* a TV reload mid-question picks up where it left off */
 S=saved()||freshState();
 S.opts={...freshState().opts,...(S.opts||{})};S.extra=S.extra||[];S.players.forEach(p=>p.story=p.story||0);
 if(S.deck?.length)Q.splice(0,Q.length,...S.deck);  // a reload mid game keeps the same decoys in the same places
 if(S.extra.length)Q.push(...S.extra);               // a reload mid bonus round keeps the bonus secrets
 if(S.phase==="interro")S.phase="question";
-if(S.phase==="question")S.locked=true;
+// still guessing: the clock picks up where it was (with at least 8 seconds left) so nobody loses points to a refresh
+if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,qs()-8))}
 /* the host phone (approving bonus secrets) proves itself with this key */
 S.hostKey=S.hostKey||(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):Math.random().toString(36).slice(2)+Date.now().toString(36));
 dsPost({op:"hostkey",k:S.hostKey}).catch(()=>{});

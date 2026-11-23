@@ -67,7 +67,7 @@ const {esc,sfx,playSong,stopSong,ensureAudio}=XM;
 let CARDS=[];
 const LET="BINGO",LC=["#b8322a","#1f6b4a","#c8921f","#2f6fb3","#7a3fb0"];
 const letterOf=n=>Math.floor((n-1)/15);
-let S={mode:XM.store.get("xmas-bingo-mode","line"),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:XM.store.get("xmas-bingo-gm",null),gmBingo:false};
+let S={mode:XM.store.get("xmas-bingo-mode","line"),called:XM.store.get("xmas-bingo-called",[]),checked:null,gm:null,gmBingo:false};
 const save=()=>{XM.store.set("xmas-bingo-called",S.called);XM.store.set("xmas-bingo-gm",S.gm)};
 
 function call(n){
@@ -139,7 +139,7 @@ function render(){
     <div class="tiny" style="font-size:1rem">Tap each number on the board as it comes out of the cage.<br>${S.called.length} called · ${75-S.called.length} left</div>
     <div class="last">${S.called.slice(-6,-1).reverse().map(n=>`<span>${LET[letterOf(n)]} ${n}</span>`).join("")}</div>
     ${last?`<button class="btn ghost" id="undo" style="font-size:.9rem">↩ Undo ${LET[letterOf(last)]} ${last}</button>`:""}
-    ${gm}</div>
+    </div>
     <div style="display:grid;gap:14px">
       <div class="panel"><div class="eyebrow">Game type · pick before you start</div><div class="modes">${Object.entries(MODES).map(([k,m])=>`<button data-mode="${k}" aria-pressed="${S.mode===k}" title="${m.desc}">${shapeMini(k)}${m.name}</button>`).join("")}</div></div>
       <div class="board">${board}</div>

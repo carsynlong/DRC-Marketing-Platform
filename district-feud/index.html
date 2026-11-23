@@ -259,11 +259,20 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 @keyframes plusup{0%{opacity:0;transform:translateY(10px)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
 /* 🎤 meet the contestants */
 .introsec{display:grid;justify-items:center;gap:12px;text-align:center}
+.introsec.cheering{gap:8px}.introsec.cheering .iav{width:clamp(140px,22vh,240px)}.introsec.cheering .iname{font-size:clamp(2.6rem,7vw,5rem)}
 .iav{width:clamp(190px,30vh,300px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 8px var(--gold),0 0 0 16px var(--red),0 0 120px rgba(255,230,150,.75);animation:zoomin .7s cubic-bezier(.2,1.4,.4,1) both}
 @keyframes zoomin{from{transform:scale(.15) rotate(-25deg);opacity:0}}
 .ifrom{font-family:var(--display);color:var(--gold2);font-size:clamp(1.1rem,2.8vw,1.9rem);animation:pop .45s .25s both}
 .iname{font-family:var(--display);font-size:clamp(3rem,9vw,6.4rem);color:#fff;text-shadow:0 5px 0 var(--red),0 9px 0 var(--red-d),0 0 40px rgba(255,201,46,.5);line-height:1;text-transform:uppercase;animation:ltdrop .65s .5s cubic-bezier(.2,1.5,.4,1) both}
-.ihype{font-size:clamp(1.2rem,2.6vw,1.8rem);color:var(--gold2);font-weight:800;animation:pop .45s .95s both}
+.ihype{font-size:clamp(1.2rem,2.6vw,1.8rem);color:#fff;font-weight:800;background:rgba(6,11,38,.82);padding:.25em .9em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--gold);animation:pop .45s .95s both}
+.meter{display:grid;grid-template-columns:auto minmax(160px,420px) auto;gap:12px;align-items:center;background:rgba(6,11,38,.82);padding:10px 16px;border-radius:16px;box-shadow:inset 0 0 0 2px var(--gold);animation:pop .45s 1.1s both}
+.meter .mlab{font-family:var(--display);color:var(--gold);font-size:clamp(.9rem,1.6vw,1.15rem);white-space:nowrap}
+.mbar{height:26px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.2)}
+.mbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#19a35a,var(--gold),var(--red));transition:width .35s cubic-bezier(.2,1.4,.4,1);border-radius:999px}
+.mbar.max i{animation:pulse .3s ease-in-out infinite alternate}
+.meter b{font-family:var(--display);font-weight:400;color:#fff;font-size:1.4rem;min-width:2.2ch;text-align:right}
+.cheerhint{font-weight:800;color:var(--gold2);font-size:clamp(1rem,1.8vw,1.25rem);animation:pop .45s 1.2s both}
+.fanrow{display:flex;gap:28px;justify-content:center;flex-wrap:wrap}
 .idots{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}.idots i{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25)}.idots i.on{background:var(--gold)}
 /* 💰 double points */
 .dbl{font-family:var(--display);font-size:clamp(3rem,11vw,8rem);line-height:.95;color:var(--gold);text-shadow:0 6px 0 var(--red),0 10px 0 var(--red-d),0 0 60px rgba(255,201,46,.85);
@@ -613,16 +622,31 @@ function announce(t){try{if(!S.sound||!window.speechSynthesis)return;speechSynth
 function startIntro(){
   clearTimers();const who=NAMES.filter(n=>S.present[n]);if(!who.length)return goQuestion();
   const hype=HYPE.slice().sort(()=>Math.random()-.5);
-  S.intro={who,i:-1,hype};S.phase="intro";playSong("strut");introStep();
+  S.intro={who,i:-1,hype,meter:{}};S.phase="intro";playSong("strut");introStep();
 }
 function introStep(){
   const I=S.intro;if(S.phase!=="intro")return;I.i++;
-  if(I.i>=I.who.length){later(goQuestion,600);return}
+  if(I.i>=I.who.length){later(fanFavorite,600);return}
   render();const n=I.who[I.i];sfx("whoosh");later(()=>{sfx("cheer");flash()},500);
   announce(`From District ${NAMES.indexOf(n)+1}… ${n}!`);
-  later(introStep,2300);
+  later(introStep,phones.length?4300:2300);   // phones get time to cheer
 }
-function finishIntro(){clearTimers();try{speechSynthesis.cancel()}catch(e){}goQuestion()}
+const METER_MAX=20;   // cheers that fill the crowd meter
+function cheer(r){   // a phone's emoji during someone's walk-out fills their crowd meter
+  const I=S.intro;if(S.phase!=="intro"||!I)return;const n=I.who[I.i];if(!n||r.name===n)return;
+  I.meter[n]=(I.meter[n]||0)+1;const v=I.meter[n];
+  const f=$("#mfill"),b=$("#mnum"),bar=$(".mbar");if(f)f.style.width=Math.min(100,v/METER_MAX*100).toFixed(0)+"%";if(b)b.textContent=v;if(bar)bar.classList.toggle("max",v>=METER_MAX);
+  if(v===METER_MAX){sfx("cheer");flash()}
+}
+/* 🎉 the loudest crowd wins Fan Favorite and starts with +1 */
+function fanFavorite(){
+  const m=S.intro?.meter||{},max=Math.max(0,...Object.values(m));
+  if(!max){goQuestion();return}
+  S.fan=Object.keys(m).filter(n=>m[n]===max);S.fan.forEach(n=>addVotes(n,1));
+  S.phase="fanfav";stopSong();sfx("fanfare");sfx("applause");confetti(180,true);fireworks(4);applause(3500);render();
+  later(()=>S.phase==="fanfav"&&goQuestion(),6000);
+}
+function finishIntro(){clearTimers();try{speechSynthesis.cancel()}catch(e){}if(S.phase==="intro")fanFavorite();else goQuestion()}
 const isFinal=()=>S.order.length>=3&&S.k===S.order.length-1;
 /* 💰 the last question is double points, with a big intro */
 function goQuestion(){
@@ -778,7 +802,7 @@ function raceBar(){
     :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the major award</span>'}</div></div>`;
 }
 function render(){
-  const v={intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
+  const v={fanfav:fanView,intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
   const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup">↩ <span>Back to setup</span></button>`;
   document.body.classList.toggle("focus",["suspense","tbsuspense"].includes(S.phase));
   if(window.Hurry&&!["question","tb"].includes(S.phase))Hurry.hide();
@@ -787,10 +811,18 @@ function render(){
 function goSetup(){clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
-  return `<div class="rays" style="--d:0s"></div><section class="center introsec"><span class="qtag">🎤 Meet the contestants</span>
+  return `<div class="rays" style="--d:0s"></div><section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>
     <img class="iav" src="${AV(n)}" alt=""><div class="ifrom">From District ${NAMES.indexOf(n)+1}…</div><div class="iname">${esc(n)}</div><div class="ihype">${esc(I.hype[I.i%I.hype.length])}</div>
+    ${phones.length?`<div class="meter"><span class="mlab">📣 Crowd meter</span><div class="mbar ${(I.meter[n]||0)>=METER_MAX?"max":""}"><i id="mfill" style="width:${Math.min(100,(I.meter[n]||0)/METER_MAX*100).toFixed(0)}%"></i></div><b id="mnum">${I.meter[n]||0}</b></div>
+    <div class="cheerhint">👏 Everyone else: tap emojis on your phone to cheer for ${esc(n)}!</div>`:""}
     <div class="idots">${I.who.map((_,k)=>`<i class="${k<=I.i?"on":""}"></i>`).join("")}</div>
     <div class="ctl"><button class="btn ghost" id="skipintro">Skip intros</button></div><div class="hint">Space: skip</div></section>`;
+}
+function fanView(){
+  const m=S.intro?.meter||{};
+  return `<div class="rays" style="--d:0s"></div><section class="center"><span class="qtag">📣 The crowd has spoken</span><h1 class="ptitle">🎉 Fan Favorite!</h1>
+    <div class="fanrow">${(S.fan||[]).map(n=>`<div class="win late"><div class="crown">👑</div><img class="av" src="${AV(n)}" alt=""><div class="nm">${esc(n)}</div><div class="votes">${m[n]} cheers · +1 point</div></div>`).join("")}</div>
+    <p class="sub">The loudest crowd starts the game with a bonus point!</p><div class="ctl"><button class="btn red" id="fango">Let's play!</button></div></section>${raceBar()}`;
 }
 function doubleView(){
   return `<div class="alarm"></div><div class="rays" style="--d:.3s"></div><section class="center"><span class="qtag">Final question</span>
@@ -916,6 +948,7 @@ function primary(){
   const p=S.phase;
   if(p==="lobby")return startGame();
   if(p==="intro")return finishIntro();
+  if(p==="fanfav")return goQuestion();
   if(p==="double")return showQuestion();
   if(p==="half")return goQuestion();
   if(p==="question")return surveySays();
@@ -931,7 +964,7 @@ function wire(){
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{const n=b.dataset.here;S.present[n]=!S.present[n];render()});
   document.querySelectorAll("[data-vote]").forEach(b=>b.onclick=()=>openBallot(b.dataset.vote));
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>castVote(b.dataset.pick));
-  on("skipintro",finishIntro);on("dblgo",showQuestion);on("half2",goQuestion);
+  on("skipintro",finishIntro);on("fango",goQuestion);on("dblgo",showQuestion);on("half2",goQuestion);
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
   on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",pkgFate);
   on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("faceoff");render()});
@@ -957,7 +990,8 @@ function snapshot(){
   if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,locked:p!=="question",ends:p==="question"?S.ends:0,
     hurry:p==="question"&&S.ends&&S.ends-Date.now()<=10500?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
   if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,mult:S.mult||1,slow:S.slow,slowPen:SLOW_PEN});
-  if(p==="intro"&&S.intro)g.spot=S.intro.who[S.intro.i]||null;
+  if(p==="intro"&&S.intro){g.spot=S.intro.who[S.intro.i]||null;g.cheer=!!phones.length}
+  if(p==="fanfav")g.fan=S.fan;
   if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p==="tbsuspense"?0:S.tie.ends||0});
@@ -996,6 +1030,7 @@ async function poll(){
 }
 /* a tap on a phone sends a little burst of emojis up the TV with the sender's name */
 function showReact(r){
+  cheer(r);
   if(calm)return;let L=$("#reacts");if(!L){L=document.createElement("div");L.id="reacts";L.setAttribute("aria-hidden","true");document.body.appendChild(L)}
   if(L.childElementCount>140)return;
   const x=5+Math.random()*82;

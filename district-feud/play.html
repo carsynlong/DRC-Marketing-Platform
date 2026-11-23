@@ -286,8 +286,13 @@ function view(){
     return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most votes?</p>")+soundBtn()];
   }
   if(g.view==="intro"){
-    if(g.spot===D.me)return [key+"spot",header()+msg("🎤","That's YOU on the TV!","<p>Take a bow! The crowd goes wild! 👏</p>","win"),"win"];
+    if(g.spot===D.me)return [key+"spot",header()+msg("🎤","That's YOU on the TV!",`<p>Take a bow! ${g.cheer?"Everyone's cheering for you. Watch your crowd meter! 📣":"The crowd goes wild! 👏"}</p>`,"win"),"win"];
+    if(g.cheer&&g.spot)return [key+"cheer"+g.spot,header()+msg("📣",`Cheer for ${esc(g.spot)}!`,"<p>Tap the emojis below as fast as you can to fill the <b>crowd meter</b> on the TV. Loudest crowd wins <b>Fan Favorite</b>!</p>")];
     return [key+"intro",header()+msg("🎤","Meet the contestants!","<p>Watch the TV. Your walk-out is coming up!</p>")];
+  }
+  if(g.view==="fanfav"){
+    if((g.fan||[]).includes(D.me))return [key+"fan",header()+msg("🎉","You're the Fan Favorite!","<p>The loudest crowd! You start with <b>+1 point</b>.</p>","win"),"win"];
+    return [key+"fan",header()+msg("📣","Fan Favorite!",`<p>${(g.fan||[]).map(esc).join(" & ")} had the loudest crowd!</p>`)];
   }
   if(g.view==="double")return [key,header()+msg("💰","Double points!","<p>Final question! Everything counts twice: votes, correct guesses and speed bonuses.</p>","win"),"win"];
   if(g.view==="half"){

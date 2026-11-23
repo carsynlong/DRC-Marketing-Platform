@@ -19,7 +19,10 @@ const Sync = (() => {
   /* ---- what phones see. Never the photos, and never the right answer before the reveal. ---- */
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
-    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, hostPick: S.phase === "reveal" || S.phase === "board" ? S.hostPick || null : undefined,
+    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, hostPlays: true,
+      twist: (S.phase === "ready" || S.phase === "question") && typeof Extras !== "undefined" ? Extras.twist() || undefined : undefined,
+      hint: S.phase === "question" && !S.locked && typeof Extras !== "undefined" ? Extras.hint() || undefined : undefined,
+      spy: typeof Extras !== "undefined" ? Extras.spy() : undefined, hostPick: S.phase === "reveal" || S.phase === "board" ? S.hostPick || null : undefined,
       playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
       tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
         results: S.mini.results, all: S.mini.all } : undefined,
@@ -33,7 +36,7 @@ const Sync = (() => {
     if (inGame) {
       let rank = 0, prev = null;
       g.scores = ranked().map((p, i) => { if (p.score !== prev) { rank = i + 1; prev = p.score }
-        return { name: p.name, score: p.score, delta: p.delta, streak: p.streak, rank }; });
+        return { name: p.name, score: p.score, delta: p.delta, streak: p.streak, rank, speed: p.speed || 0, notes: p.notes && p.notes.length ? p.notes : undefined }; });
     }
     return JSON.stringify(g);
   }
@@ -247,6 +250,7 @@ const Sync = (() => {
     try { clearInterval(readyT); } catch (e) {}
     try { stopSong(); } catch (e) {}
     S.players.forEach(p => { p.score = 0; p.streak = 0; p.delta = 0; p.move = 0; });
+    try { Extras.reset(); } catch (e) {}
     Object.assign(S, { phase: "lobby", qi: 0, rounds: [], locked: false, correct: [], typed: {}, elapsed: 0, fallen: [] });
     reset(); render();
   }

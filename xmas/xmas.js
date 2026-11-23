@@ -15,7 +15,7 @@ XM.TRIBUTES=[
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Remodel the arena, then retreat to the lake",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"A motivational speech, live from JT Motivation",strategy:"Take a 45-minute shower, then post a pep talk about it",odds:"5 to 1"},
- {d:6,name:"Carsyn",weapon:"The clicker (and a mask)",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},
+ {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},
  {d:7,name:"Tinsley",weapon:"Tinsel. It's literally in the name.",strategy:"Sparkle until everyone gives up",odds:"3 to 1"},
  {d:8,name:"Natalie",weapon:"A wooden spoon",strategy:"Smile sweetly, strike fast",odds:"4 to 1"},
  {d:9,name:"Kamdon",weapon:"Perfectly packed snowballs",strategy:"Stay quiet, then strike",odds:"5 to 1"},

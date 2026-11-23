@@ -128,7 +128,7 @@ body{cursor:default}
 .ochip img{width:48px;height:48px;border-radius:50%;object-fit:cover}
 .ochip[aria-pressed="false"]{opacity:.35;text-decoration:line-through}
 .ogrid{display:grid;grid-template-columns:repeat(6,220px);gap:22px;justify-content:center}
-.oslot{position:relative;display:grid;justify-items:center;gap:8px;padding:18px 10px;border-radius:24px}
+.oslot{position:relative;cursor:default;display:grid;justify-items:center;gap:8px;padding:18px 10px;border-radius:24px}
 .oslot img{width:140px;height:140px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)}
 .oslot b{font-size:28px;font-weight:800}
 .oslot .num{position:absolute;top:4px;left:18px;width:62px;height:62px;border-radius:50%;background:var(--red);color:#fff;font-family:var(--display);font-size:34px;display:grid;place-items:center;box-shadow:0 4px 0 var(--red-d);z-index:1}
@@ -172,13 +172,15 @@ const victorLabel=g=>{const v=XM.victors()[g];return v?`🏆 Victor: ${esc(v)}`:
 const tbBtn=g=>`<div class="corner">${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
 const openBtn=(url,label,cls="")=>`<a class="btn bigbtn ${cls}" href="${url}" target="_blank" rel="noopener">${label}</a>`;
 
+// st(): like setTimeout, but skipped if the presenter has already moved to another slide
+function st(fn,ms){const el=curEl;return setTimeout(()=>{if(curEl===el)fn()},ms)}
 /* ---------- slide builders ---------- */
 function gameTitle(k){
   const g=GAMES[k];
-  return {id:"game-"+k,music:"hh_"+k,enter(el){XM.sfx("gong");setTimeout(()=>XM.sfx("stinger"),500);setTimeout(()=>XM.confetti(90),900);
+  return {id:"game-"+k,music:"hh_"+k,enter(el){XM.sfx("gong");st(()=>XM.sfx("stinger"),500);st(()=>XM.confetti(90),900);
       // excited announcer: "Game three! ... Mitten Mayhem!"
       announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;
-      setTimeout(()=>ok()&&announcer.say(`Game ${NUM[g.n]}!`,()=>setTimeout(()=>ok()&&announcer.say(`${g.name.replace("?","")}!`,null,{pitch:1.35,rate:1.12,female:true}),200),{pitch:1.3,rate:1.1,female:true,fallback:700}),900)},
+      st(()=>ok()&&announcer.say(`Game ${NUM[g.n]}!`,()=>st(()=>ok()&&announcer.say(`${g.name.replace("?","")}!`,null,{pitch:1.35,rate:1.12,female:true}),200),{pitch:1.3,rate:1.1,female:true,fallback:700}),900)},
     html:()=>`<div class="burst" style="--gc:${g.color}"></div><div class="vign"></div>${tbBtn(k)}
     <div style="position:relative;display:grid;justify-items:center;gap:34px">
       <span class="pill drop" ${d(.1)}>GAME ${g.n}</span>
@@ -211,7 +213,7 @@ function wheelSlide(k){
       <div class="fade" ${d(1.4)} style="font-size:24px;opacity:.8">Opens ${esc(g.name)} on the wheel in a new tab. Close it to come back.</div>
     </div></div>`,
     enter(el){const w=el.querySelector("#wimg");XM.sfx("whoosh");w.animate([{transform:"rotate(0)"},{transform:"rotate(1440deg)"}],{duration:3500,easing:"cubic-bezier(.1,.7,.2,1)",fill:"forwards"});
-      let n=0;const t=setInterval(()=>{XM.sfx("tick");if(++n>18)clearInterval(t)},90+n*4);setTimeout(()=>clearInterval(t),3000)}};
+      let n=0;const t=setInterval(()=>{if(curEl!==el){clearInterval(t);return}XM.sfx("tick");if(++n>18)clearInterval(t)},90+n*4);st(()=>clearInterval(t),3000)}};
 }
 const VIDNAME={cookie:"smart-cookie-showdown",scoop:"blind-snowball-scoop",lrc:"left-right-capitol"};
 function videoSlide(k){
@@ -233,7 +235,7 @@ function tieSlide(k){
       <div style="font-size:34px;line-height:1.3">${esc(t.rules)}</div></div>
     <div class="pop" ${d(1.6)} style="display:flex;gap:30px"><button class="btn red bigbtn" data-tb="${k}">⚔️ Yes, there's a tie</button><button class="btn bigbtn" data-skip>No tie, skip ▶</button></div>
     <div class="fade" ${d(1.9)} style="font-size:24px;opacity:.8">Yes: tap who tied and the tie-breaking starts. No: on to the next slide.</div></div>`,
-    enter(){setTimeout(()=>XM.sfx("thud"),400)}};
+    enter(){st(()=>XM.sfx("thud"),400)}};
 }
 // "HOW TO PLAY... IDK. ASK ___." joke slide (Mitten Mayhem, Left Right Capitol)
 function idkSlide(k,img,who,spoken){
@@ -242,15 +244,15 @@ function idkSlide(k,img,who,spoken){
     <div class="pola zoom" ${d(.7)} style="position:relative;--r:-3deg;transform:rotate(-3deg);padding:16px 16px 16px"><img src="${img}" alt="" style="width:auto;height:560px;max-width:900px;object-fit:cover"></div>
     <h1 class="title-xl slam" ${d(2.2)} style="font-size:150px">IDK. ASK ${who}.</h1></div>`,
    enter(el){announcer.stop();const my=announcer.gen();const ok=()=>my===announcer.gen()&&curEl===el;
-     setTimeout(()=>ok()&&announcer.say("How to play...",null,{pitch:.3,rate:.75}),300);
-     setTimeout(()=>{if(!ok())return;XM.sfx("thud");shake();announcer.say(`I don't know. Ask ${spoken}.`,()=>ok()&&XM.sfx("trombone"),{pitch:.2,rate:.8,fallback:400})},2600)}};
+     st(()=>ok()&&announcer.say("How to play...",null,{pitch:.3,rate:.75}),300);
+     st(()=>{if(!ok())return;XM.sfx("thud");shake();announcer.say(`I don't know. Ask ${spoken}.`,()=>ok()&&XM.sfx("trombone"),{pitch:.2,rate:.8,fallback:400})},2600)}};
 }
 function orderSlide(k,blurb){
   const g=GAMES[k];
   return {id:"order-"+k,music:null,html:()=>`${tbBtn(k)}<div style="display:grid;justify-items:center;gap:28px;width:100%">
       <div class="eb fd">${esc(g.name)}</div><h1 class="title-l slam" ${d(.15)}>Who Goes First?</h1>
       <div id="oarea" style="display:grid;justify-items:center;gap:26px;width:100%"></div></div>`,
-    enter(el){orderView(k,el.querySelector("#oarea"),blurb)}};
+    enter(el){orderView(k,el.querySelector("#oarea"),blurb,el)}};
 }
 
 /* ---------- deep-voice announcer for the tribute profiles ---------- */
@@ -269,10 +271,10 @@ const announcer=(()=>{
     // say text, then call done(). Falls back to a timer when muted or no voice.
     say(text,done,{pitch=.1,rate=.78,fallback=1600,female=false}={}){
       const my=gen;let fired=false;const fin=()=>{if(fired||my!==gen)return;fired=true;done&&done()};
-      if(!synth||!XM.sound){setTimeout(fin,fallback);return}
+      if(!synth||!XM.sound){st(fin,fallback);return}
       const u=new SpeechSynthesisUtterance(text);const v=female?(pickFemale()||pickVoice()):pickVoice();if(v)u.voice=v;u.pitch=pitch;u.rate=rate;u.volume=1;
       u.onend=fin;u.onerror=fin;synth.speak(u);
-      setTimeout(fin,Math.max(fallback,text.length*120+2500)); // safety net if the voice never reports "done"
+      st(fin,Math.max(fallback,text.length*120+2500)); // safety net if the voice never reports "done"
     },
     gen:()=>gen
   };
@@ -284,10 +286,10 @@ function announce(t,el){
   const lines=[`Weapon of choice. ${t.weapon}`,`Survival strategy. ${t.strategy}`,`Capitol odds. ${t.odds==="Gamemaker"?"Gamemaker. Obviously.":t.odds}`];
   XM.duck(true);
   const step=i=>{if(!ok())return;if(i>=stats.length){XM.duck(false);return}
-    setTimeout(()=>{if(!ok())return;const s=stats[i];s.style.opacity="";s.classList.add("fr");XM.sfx("tap");
+    st(()=>{if(!ok())return;const s=stats[i];s.style.opacity="";s.classList.add("fr");XM.sfx("tap");
       announcer.say(lines[i],()=>step(i+1),{pitch:.3,rate:.85,fallback:1900})},i===0?900:500)};
-  setTimeout(()=>{if(!ok())return;
-    announcer.say(`District ${NUM[t.d]}.`,()=>{if(!ok())return;setTimeout(()=>ok()&&announcer.say(`${spoken}!`,()=>step(0),{pitch:.05,rate:.7,fallback:1200}),350)},{pitch:.1,rate:.8,fallback:700});
+  st(()=>{if(!ok())return;
+    announcer.say(`District ${NUM[t.d]}.`,()=>{if(!ok())return;st(()=>ok()&&announcer.say(`${spoken}!`,()=>step(0),{pitch:.05,rate:.7,fallback:1200}),350)},{pitch:.1,rate:.8,fallback:700});
   },900);
 }
 // Rules and How to Play: the announcer reads each item as it pops in, one at a time
@@ -296,9 +298,9 @@ function narrate(el,intro){
   const items=[...el.querySelectorAll("[data-say]")];
   const show=n=>{n.style.opacity="";n.classList.add(n.dataset.anim||"pop");n.querySelectorAll(".spin").forEach(c=>{c.style.animation="none";void c.offsetWidth;c.style.animation=""});XM.sfx("whoosh")};
   const step=i=>{if(!ok())return;if(i>=items.length){XM.duck(false);XM.sfx("sparkle");return}
-    setTimeout(()=>{if(!ok())return;show(items[i]);announcer.say(items[i].dataset.say,()=>step(i+1),{pitch:1.05,rate:.95,fallback:2200,female:true})},450)};
+    st(()=>{if(!ok())return;show(items[i]);announcer.say(items[i].dataset.say,()=>step(i+1),{pitch:1.05,rate:.95,fallback:2200,female:true})},450)};
   XM.duck(true);
-  setTimeout(()=>ok()&&announcer.say(intro,()=>step(0),{pitch:1,rate:.9,fallback:900,female:true}),900);
+  st(()=>ok()&&announcer.say(intro,()=>step(0),{pitch:1,rate:.9,fallback:900,female:true}),900);
 }
 /* ---------- "Let the Games BEGIN!" song (your track, starting at 2:25, looping) ---------- */
 const BEGIN=new Audio("/xmas/sfx/lets-begin.m4a");BEGIN.loop=true;BEGIN.preload="auto";BEGIN.muted=!XM.sound;
@@ -306,7 +308,7 @@ let beginFade=0;
 function fadeBegin(to,ms,done){clearInterval(beginFade);const from=BEGIN.volume,t0=performance.now();
   beginFade=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);BEGIN.volume=from+(to-from)*k;if(k>=1){clearInterval(beginFade);done&&done()}},40)}
 function beginTrack(id){
-  if(id==="begin"){XM.stopSong();BEGIN.currentTime=0;BEGIN.volume=1;BEGIN.play().catch(()=>{});return}
+  if(id==="begin"){clearInterval(beginFade);XM.stopSong();BEGIN.currentTime=0;BEGIN.volume=1;BEGIN.play().catch(()=>{});return}
   // any other slide: quick fade out
   if(!BEGIN.paused)fadeBegin(0,500,()=>{BEGIN.pause();BEGIN.volume=1});
 }
@@ -320,11 +322,11 @@ const SLIDES=[
     <h1 class="title-xl slam" ${d(1.1)} style="font-size:170px">CHRISTMAS GAMES</h1>
     <span class="pill pop" ${d(1.8)} style="font-size:38px">Thanksmas Edition</span>
     <div class="motto fade" ${d(2.3)}>May the odds be ever in your favor</div></div>`,
-   enter(el){setTimeout(()=>XM.confetti(200,true),1300);
+   enter(el){st(()=>XM.confetti(200,true),1300);
      announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;
      const L=[["Ladies and gentlemen...",{pitch:.1,rate:.75}],["Welcome to this year's Christmas Games!",{pitch:.1,rate:.8}],["The Thanksmas Edition.",{pitch:.15,rate:.8}],["May the odds... be ever in your favor.",{pitch:.05,rate:.72}]];
-     const go=i=>{if(!ok())return;if(i>=L.length){XM.duck(false);return}setTimeout(()=>ok()&&announcer.say(L[i][0],()=>go(i+1),{...L[i][1],fallback:1200}),i?450:0)};
-     setTimeout(()=>{if(!ok())return;XM.duck(true);go(0)},1500)}},
+     const go=i=>{if(!ok())return;if(i>=L.length){XM.duck(false);return}st(()=>ok()&&announcer.say(L[i][0],()=>go(i+1),{...L[i][1],fallback:1200}),i?450:0)};
+     st(()=>{if(!ok())return;XM.duck(true);go(0)},1500)}},
  {id:"welcome",music:"stop",html:()=>`<div style="display:grid;grid-template-columns:520px 1fr;gap:90px;align-items:center;text-align:left">
     <div class="card spin" style="padding:44px 36px;display:grid;justify-items:center;gap:14px;box-shadow:0 0 0 4px var(--gold),0 30px 70px rgba(0,0,0,.6);background:linear-gradient(170deg,#1d3b32,#0d1f18)">
       <div class="eb" style="letter-spacing:.4em;color:var(--gold)">CAPITOL ID</div>
@@ -339,11 +341,11 @@ const SLIDES=[
       <p class="fr" ${d(1.2)} style="font-size:38px;line-height:1.35;margin:0">Welcome to the 2026 Christmas Games, where the turkey is digested, the stakes are high, and the pie counts as a sponsor gift.</p>
       <p class="fr" ${d(1.6)} style="font-size:38px;line-height:1.35;margin:0">Twelve tributes. Eight games. A pile of major awards made of real lost mail that nobody has seen inside. Not even me.</p>
       <p class="fr" ${d(2)} style="font-size:38px;line-height:1.35;margin:0">Play fair, trash talk responsibly, and remember: what happens at Thanksmas stays at Thanksmas.</p>
-    </div></div>`,enter(){XM.sfx("whoosh");setTimeout(()=>XM.sfx("thud"),1000)}},
+    </div></div>`,enter(){XM.sfx("whoosh");st(()=>XM.sfx("thud"),1000)}},
  {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","Every game you win earns you a major award. Win three games? Take home three."],
     ["lock","#3e8a52","What's inside? No idea","They're real unclaimed mail. Nobody knows what's inside. Not even the Gamemaker."],
     ["cannon","#2f6fb3","Tie? Sudden death","Tied tributes face off again until only one is left standing."],
-    ["mitten-w","#d79a1f","Mitten Mayhem pays","That game is its own prize. Whatever you unwrap, you keep."]];
+    ["mitten-w","#d79a1f","Mitten Mayhem pays","That game is its own major award. Whatever you unwrap, you keep."]];
    return `<div style="display:grid;gap:50px;width:100%"><h1 class="title-l slam">Rules of the Arena</h1>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:36px">${R.map(([ic,c,h,t],i)=>`<div class="card" data-say="${h}. ${t}" data-anim="${i%2?"fr":"fl"}" style="opacity:0;display:flex;gap:34px;align-items:center;padding:36px;text-align:left">
       <div style="width:150px;height:150px;border-radius:30px;background:${c};display:grid;place-items:center;flex:none;box-shadow:0 8px 0 rgba(0,0,0,.35)"><img src="${ICON(ic)}" alt="" style="width:62%"></div>
@@ -353,27 +355,27 @@ const SLIDES=[
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:30px">${Object.entries(GAMES).map(([k,g],i)=>`<div class="${i%2?"fd":"fu"}" ${d(.5+i*.15)} style="background:${g.color};border-radius:28px;padding:30px;text-align:left;display:grid;gap:12px;box-shadow:0 10px 0 rgba(0,0,0,.35),0 20px 40px rgba(0,0,0,.4);min-height:290px">
       <div style="display:flex;justify-content:space-between;align-items:start"><span style="font-family:var(--display);font-size:72px;line-height:1">${g.n}</span><img src="${ICON(k+"-w")}" alt="" style="width:96px"></div>
       <div style="font-size:38px;font-weight:800;line-height:1.1">${esc(g.name)}</div><div style="font-weight:800;letter-spacing:.2em;font-size:20px;opacity:.85">${g.kind}</div></div>`).join("")}</div></div>`,
-   enter(){for(let i=0;i<8;i++)setTimeout(()=>XM.sfx("pop"),500+i*150)}},
+   enter(){for(let i=0;i<8;i++)st(()=>XM.sfx("pop"),500+i*150)}},
  {id:"tributes",music:"march",html:()=>`<div style="display:grid;gap:44px;width:100%"><h1 class="title-l slam">Meet the Tributes</h1>
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:34px 20px">${TRIBUTES.map((t,i)=>`<div class="pop" ${d(.5+i*.12)} style="display:grid;justify-items:center;gap:10px;position:relative">
       <img src="${t.img}" alt="" class="ring" style="width:190px;height:190px;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red),0 14px 30px rgba(0,0,0,.5)">
       <span style="position:absolute;top:-6px;left:22px;background:var(--red);font-family:var(--display);font-size:24px;padding:2px 12px;border-radius:8px;transform:rotate(-10deg)">D${t.d}</span>
       <b style="font-size:30px">${esc(t.name)}</b></div>`).join("")}</div></div>`,
-   enter(){for(let i=0;i<12;i++)setTimeout(()=>XM.sfx("pop"),500+i*120)}},
+   enter(){for(let i=0;i<12;i++)st(()=>XM.sfx("pop"),500+i*120)}},
  ...TRIBUTES.map(t=>({id:"d"+t.d,music:"march",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><img src="${t.full}" alt="" style="max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"><span class="dtag" style="top:0;left:-20px">DISTRICT ${t.d}</span></div>
     <div style="display:grid;gap:26px">
       <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.label||"TRIBUTE PROFILE"}</div>
       <h1 class="title-xl slam" ${d(.7)} style="font-size:${t.name.length>8?118:150}px">${esc(t.name)}</h1>
       ${[["canes","WEAPON OF CHOICE",t.weapon],["snowflake","SURVIVAL STRATEGY",t.strategy],["coins","CAPITOL ODDS",t.odds]].map(([ic,k,v],i)=>`<div class="card stat" data-stat="${i}" style="opacity:0"><img src="${ICON(ic)}" alt=""><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></div>`).join("")}
-    </div></div>`,enter(el){XM.sfx("whoosh");setTimeout(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
+    </div></div>`,enter(el){XM.sfx("whoosh");st(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
  {id:"begin",music:"stop",big:true,html:()=>`<div class="burst" style="--gc:#a32820;opacity:.6"></div><div class="vign"></div>
     <div style="position:relative;display:grid;justify-items:center;gap:20px">
       <img src="${ICON("cannon")}" alt="" class="fl" style="width:260px" id="cannon">
       <h2 class="title-l fd" ${d(.9)} style="font-size:110px;color:#fff">Let the Games</h2>
       <h1 class="title-xl slam" ${d(1.4)} style="font-size:260px">BEGIN!</h1>
       <div class="fade" ${d(2)} style="font-size:44px">Tributes, take your positions</div></div>`,
-   enter(el){setTimeout(()=>{XM.sfx("cannon");shake();el.querySelector("#cannon").animate([{transform:"translateX(0)"},{transform:"translateX(-40px) rotate(-6deg)"},{transform:"translateX(0)"}],{duration:400})},800);setTimeout(()=>XM.confetti(220,true),1500)}},
+   enter(el){st(()=>{XM.sfx("cannon");shake();el.querySelector("#cannon").animate([{transform:"translateX(0)"},{transform:"translateX(-40px) rotate(-6deg)"},{transform:"translateX(0)"}],{duration:400})},800);st(()=>XM.confetti(220,true),1500)}},
 
  // GAME 1
  gameTitle("cookie"),
@@ -409,13 +411,13 @@ const SLIDES=[
       <p class="fr" ${d(1)} style="font-size:38px;line-height:1.3;margin:0;max-width:26ch">Tap each number as it comes out of the cage. Someone yells BINGO? Check their card, 1 to 24, right on the TV.</p>
       <div class="pop" ${d(1.4)}>${openBtn("/bingo","🎱 Open the Bingo Board","red")}</div>
       <div class="fade" ${d(1.6)} style="font-size:24px;opacity:.8">Opens in a new tab. Close it to come back.</div></div></div>`,
-   enter(){setTimeout(()=>XM.sfx("thud"),700)}},
+   enter(){st(()=>XM.sfx("thud"),700)}},
  tieSlide("bingo"),
 
  {id:"victors",music:"board",big:true,html:()=>`<div style="display:grid;gap:22px;width:100%"><div><h1 class="title-l slam">The Capitol Has Spoken</h1>
     <div class="fade" ${d(.5)} style="font-size:22px;color:var(--muted);margin-top:8px">Tap a game to change its victor. Saved on this laptop.</div></div>
     <div id="vgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 30px"></div><div id="ult" style="min-height:10px;display:grid;justify-items:center"></div></div>`,
-   enter(el){drawVictors(el.querySelector("#vgrid"),true);setTimeout(()=>XM.sfx("fanfare"),400);setTimeout(()=>XM.confetti(160,true),900);revealUltimate(el)}},
+   enter(el){drawVictors(el.querySelector("#vgrid"),true);st(()=>XM.sfx("fanfare"),400);st(()=>XM.confetti(160,true),900);revealUltimate(el)}},
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:260px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
@@ -423,10 +425,10 @@ const SLIDES=[
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
     <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div>`,
    enter(el){SNOW.set(3.2);
-     setTimeout(()=>{if(curEl!==el)return;XM.sfx("boom");setTimeout(()=>XM.sfx("boom"),380);setTimeout(()=>XM.sfx("cheer"),600);setTimeout(()=>XM.sfx("applause"),1800);
-       [1200,1800,2400,3100,3800,4600].forEach(t=>setTimeout(()=>curEl===el&&XM.sfx("firework"),t));XM.confetti(260,true);setTimeout(()=>curEl===el&&XM.confetti(220,true),2500)},1000);
+     st(()=>{if(curEl!==el)return;XM.sfx("boom");st(()=>XM.sfx("boom"),380);st(()=>XM.sfx("cheer"),600);st(()=>XM.sfx("applause"),1800);
+       [1200,1800,2400,3100,3800,4600].forEach(t=>st(()=>curEl===el&&XM.sfx("firework"),t));XM.confetti(260,true);st(()=>curEl===el&&XM.confetti(220,true),2500)},1000);
      announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;XM.duck(true);
-     setTimeout(()=>ok()&&announcer.say("Congratulations to all of our victors!",()=>setTimeout(()=>ok()&&announcer.say("Merry Christmas, tributes!",()=>XM.duck(false),{pitch:.15,rate:.85}),400),{pitch:.1,rate:.82}),1300)},
+     st(()=>ok()&&announcer.say("Congratulations to all of our victors!",()=>st(()=>ok()&&announcer.say("Merry Christmas, tributes!",()=>XM.duck(false),{pitch:.15,rate:.85}),400),{pitch:.1,rate:.82}),1300)},
    leave(){SNOW.set(1)}},
 ];
 
@@ -453,7 +455,7 @@ function go(i){
   wireSlide(el);
 }
 function wireSlide(el){
-  el.querySelectorAll("[data-tb]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.tiebreaker({game:b.dataset.tb,onClose:()=>{const s=SLIDES[cur];if(s.music&&s.music!=="stop")XM.playSong(s.music,true)}})});
+  el.querySelectorAll("[data-tb]").forEach(b=>b.onclick=e=>{e.stopPropagation();const prev=XM.currentSong();XM.tiebreaker({game:b.dataset.tb,onClose:()=>{const s=SLIDES[cur];const m=prev||(s.music&&s.music!=="stop"?s.music:null);if(m)XM.playSong(m,true)}})});
   el.querySelectorAll("a[target]").forEach(a=>a.addEventListener("click",()=>{XM.stopSong();XM.sfx("go")}));
   el.querySelectorAll("[data-victor]").forEach(b=>b.onclick=e=>{e.stopPropagation();pickVictor(b.dataset.victor)});
   el.querySelectorAll("[data-skip]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.sfx("whoosh");next()});
@@ -474,6 +476,7 @@ document.getElementById("mute").onclick=e=>{e.stopPropagation();XM.toggleSound()
 document.getElementById("fs").onclick=e=>{e.stopPropagation();toggleFS()};
 XM.setSound(XM.sound);
 function toggleFS(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("button,a");if(b)setTimeout(()=>b.blur(),0)},true);
 const busy=()=>XM.tiebreakerOpen()||document.querySelector(".memorial,.vpick");
 document.addEventListener("click",e=>{
   if(!started||busy())return;
@@ -486,19 +489,20 @@ document.addEventListener("keydown",e=>{
   if(e.target.closest&&e.target.closest("input,textarea"))return;
   const k=e.key;
   if(["ArrowRight","ArrowDown","PageDown"," ","Enter"].includes(k)){
-    if((k===" "||k==="Enter")&&e.target.closest&&e.target.closest("button,a"))return; // let focused buttons work
+    if(document.activeElement&&document.activeElement.blur)document.activeElement.blur(); // never re-press a clicked button
     e.preventDefault();next()}
   else if(["ArrowLeft","ArrowUp","PageUp","Backspace"].includes(k)){e.preventDefault();prev()}
   else if(k==="f"||k==="F"){toggleFS()}
   else if(k==="m"||k==="M"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}
   else if(k==="Home")go(0);else if(k==="End")go(SLIDES.length-1);
 });
+addEventListener("hashchange",()=>{const i=SLIDES.findIndex(x=>x.id===location.hash.slice(1));if(i>=0&&i!==cur&&started)go(i)});
 document.addEventListener("xmas-victors",()=>{const g=document.getElementById("vgrid");if(g)drawVictors(g)});
 addEventListener("storage",e=>{if(e.key==="xmas-victors"){const g=document.getElementById("vgrid");if(g)drawVictors(g)}});
 
 /* ---------- record a game's victor from its slides ---------- */
 function pickVictor(g){
-  XM.ensureAudio();const cur=XM.victors()[g];const ov=document.createElement("div");ov.className="vpick";
+  if(document.querySelector(".vpick"))return;XM.ensureAudio();const cur=XM.victors()[g];const ov=document.createElement("div");ov.className="vpick";
   ov.innerHTML=`<div style="display:grid;gap:20px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(GAMES[g].name)}</div>
     <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">Who won?</h1>
     <div class="faces">${TRIBUTES.map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
@@ -513,16 +517,16 @@ function pickVictor(g){
   ov.onclick=e=>e.stopPropagation();
 }
 function refreshCorners(){document.querySelectorAll("[data-victor]").forEach(b=>{const g=b.dataset.victor;b.innerHTML=victorLabel(g);b.classList.toggle("ghost",!XM.victors()[g])});
-  const g=document.getElementById("vgrid");if(g)drawVictors(g)}
+  const g=document.getElementById("vgrid");if(g){drawVictors(g);const u=document.getElementById("ult");if(u&&!u.querySelector(".ultimate")){u.innerHTML="";revealUltimate(curEl)}}}
 document.addEventListener("xmas-victors",refreshCorners);
 /* Ultimate Victor: whoever won the most games (2 or more) */
 function ultimateList(){const c={};Object.entries(XM.victors()).forEach(([g,n])=>{if(g==="mitten"||!n)return;const m=XM.NAMES.find(x=>x.toLowerCase()===n.toLowerCase())||n;c[m]=(c[m]||0)+1});
   const max=Math.max(0,...Object.values(c));return max>=2?{max,names:Object.keys(c).filter(n=>c[n]===max)}:null}
 function revealUltimate(el){
-  const box=el.querySelector("#ult");const u=ultimateList();if(!u){box.innerHTML="";return}
+  const box=el.querySelector("#ult");if(!box)return;const u0=ultimateList();if(!u0){box.innerHTML="";return}if(box.querySelector(".ultimate,#ult-go"))return;
   box.innerHTML=`<button class="btn red bigbtn pop" ${d(1.6)} id="ult-go" style="font-size:32px">👑 Reveal the Ultimate Victor</button>`;
   box.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
-  box.querySelector("#ult-go").onclick=e=>{e.stopPropagation();XM.stopSong();XM.sfx("drumroll");box.innerHTML=`<div class="title-m" style="animation:pulse .4s infinite alternate">🥁 And the Ultimate Victor is...</div>`;
+  box.querySelector("#ult-go").onclick=e=>{e.stopPropagation();const u=ultimateList();if(!u){box.innerHTML="";return}XM.stopSong();XM.sfx("drumroll");box.innerHTML=`<div class="title-m" style="animation:pulse .4s infinite alternate">🥁 And the Ultimate Victor is...</div>`;
     announcer.say("And the ultimate victor is...",null,{pitch:.1,rate:.75});
     setTimeout(()=>{if(!box.isConnected)return;const one=u.names.length===1;
       box.innerHTML=`<div class="ultimate pop">${u.names.map(n=>`<img src="${XM.photo(n)||"/xmas/emblem.png"}" alt="">`).join("")}
@@ -531,10 +535,10 @@ function revealUltimate(el){
         <div style="font-size:28px;font-weight:800">${u.max} games won</div></div>
         ${one?"":`<button class="btn" id="ult-tb" style="font-size:24px">⚔️ Settle it with a tiebreaker</button>`}</div>`;
       if(one)XM.celebrate(u.names[0],{intro:"Your ultimate victor"});else{XM.celebrate("",{line:`It's a tie! ${u.names.map(XM.spoken).join(" and ")}!`});
-        box.querySelector("#ult-tb").onclick=ev=>{ev.stopPropagation();XM.tiebreaker({tied:u.names})}}},3200)};
+        box.querySelector("#ult-tb").onclick=ev=>{ev.stopPropagation();XM.tiebreaker({tied:u.names,onClose:()=>XM.playSong("board",true)})}}},3200)};
 }
 /* ---------- victors board ---------- */
-let editing=null;
+let editing=null,curSave=null;
 function drawVictors(grid,anim){
   const V=XM.victors();
   grid.innerHTML=Object.entries(GAMES).map(([k,g],i)=>{
@@ -545,17 +549,23 @@ function drawVictors(grid,anim){
         :`<div class="vn"><span class="lab">Victor:</span>${ph?`<img src="${ph}" alt="">`:""}<span>${esc(v)}</span></div>`}</div></div>`}).join("")+
     `<datalist id="tnames">${XM.NAMES.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
   grid.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
-  grid.querySelectorAll("[data-v]").forEach(c=>c.onclick=e=>{e.stopPropagation();const k=c.dataset.v;if(k==="mitten"){XM.confetti(80);XM.sfx("sparkle");return}if(editing===k)return;editing=k;XM.sfx("tap");drawVictors(grid)});
+  grid.querySelectorAll("[data-v]").forEach(c=>{
+    // keep the open name box from losing focus on press, so the click lands on this card
+    c.onmousedown=e=>{if(!e.target.closest("input"))e.preventDefault()};
+    c.onclick=e=>{e.stopPropagation();const k=c.dataset.v;if(editing===k)return;if(curSave)curSave();
+      if(k==="mitten"){XM.confetti(80);XM.sfx("sparkle");return}editing=k;XM.sfx("tap");drawVictors(grid)}});
   const inp=grid.querySelector("#vin");
   if(inp){inp.focus();inp.select();
-    const save=()=>{if(editing===null)return;const k=editing;editing=null;let val=inp.value.trim();const match=XM.NAMES.find(n=>n.toLowerCase()===val.toLowerCase());if(match)val=match;
-      const was=XM.victors()[k]||"";XM.setVictor(k,val);drawVictors(grid);if(val&&val!==was){XM.sfx("fanfare");XM.confetti(120)}};
-    inp.onkeydown=e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();save()}if(e.key==="Escape"){editing=null;drawVictors(grid)}};
-    inp.onblur=()=>setTimeout(save,120);inp.onclick=e=>e.stopPropagation();}
+    const k=editing;let done=false;curSave=()=>save();
+    const save=()=>{if(done)return;done=true;curSave=null;if(editing===k)editing=null;let val=inp.value.trim();const match=XM.NAMES.find(n=>n.toLowerCase()===val.toLowerCase());if(match)val=match;
+      const was=XM.victors()[k]||"";XM.setVictor(k,val);drawVictors(grid);{const u=document.getElementById("ult");if(u&&!u.querySelector(".ultimate")){u.innerHTML="";revealUltimate(curEl)}}if(val&&val!==was){XM.sfx("fanfare");XM.confetti(120)}};
+    inp.onkeydown=e=>{e.stopPropagation();if(e.key==="Enter"){e.preventDefault();save()}if(e.key==="Escape"){done=true;editing=null;drawVictors(grid)}};
+    inp.onblur=()=>save();inp.onclick=e=>e.stopPropagation();}
 }
 
 /* ---------- who goes first (Mitten Mayhem, Left Right Capitol) ---------- */
-function orderView(k,area,blurb){
+function orderView(k,area,blurb,slideEl){
+  const here=()=>curEl===slideEl;area.classList.add("noadv");
   const key="xmas-order-"+k,saved=XM.store.get(key,null);
   const present=XM.store.get("xmas-present",Object.fromEntries(XM.NAMES.map(n=>[n,true])));
   const draw=(order,reveal)=>{draw0(order,reveal);area.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"))};
@@ -578,12 +588,12 @@ function orderView(k,area,blurb){
     const names=XM.NAMES.filter(n=>present[n]!==false);if(names.length<2){XM.sfx("untap");return}
     const fin=names.slice();for(let i=fin.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[fin[i],fin[j]]=[fin[j],fin[i]]}
     XM.playSong("count");let n=0;
-    const spin=setInterval(()=>{const tmp=names.slice().sort(()=>Math.random()-.5);draw(tmp,true);area.querySelectorAll(".oslot").forEach(s=>s.classList.add("blur"));
+    const spin=setInterval(()=>{if(!here()){clearInterval(spin);return}const tmp=names.slice().sort(()=>Math.random()-.5);draw(tmp,true);area.querySelectorAll(".oslot").forEach(s=>s.classList.add("blur"));
       area.querySelectorAll("button").forEach(b=>b.disabled=true);XM.sfx("tick");
       if(++n>=22){clearInterval(spin);XM.stopSong();XM.store.set(key,fin);draw(fin,true);
         const slots=[...area.querySelectorAll(".oslot")];slots.forEach(s=>{s.style.opacity=0});
-        slots.forEach((s,i)=>setTimeout(()=>{s.style.opacity=1;s.animate([{transform:"scale(0) rotate(-30deg)"},{transform:"scale(1.2)"},{transform:"none"}],{duration:450,easing:"cubic-bezier(.2,1.4,.4,1)"});XM.sfx(i===0?"thud":"pop");if(i===0)shake()},300+i*260));
-        setTimeout(()=>{XM.sfx("fanfare");XM.confetti(140)},300+slots.length*260)}},120);
+        slots.forEach((s,i)=>setTimeout(()=>{if(!here())return;s.style.opacity=1;s.animate([{transform:"scale(0) rotate(-30deg)"},{transform:"scale(1.2)"},{transform:"none"}],{duration:450,easing:"cubic-bezier(.2,1.4,.4,1)"});XM.sfx(i===0?"thud":"pop");if(i===0)shake()},300+i*260));
+        setTimeout(()=>{if(here()){XM.sfx("fanfare");XM.confetti(140)}},300+slots.length*260)}},120);
   };
   draw(saved,false);
 }

@@ -197,6 +197,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 @keyframes hpulse{to{transform:scale(1.04);box-shadow:0 0 0 2px var(--gold),0 0 40px rgba(255,40,40,.9)}}
 #tuflash{position:fixed;inset:0;z-index:12;pointer-events:none;display:grid;place-items:center;background:rgba(180,0,10,.7);color:#fff;font-family:var(--deco);font-size:2.6rem;text-align:center;animation:tuf 1.8s ease-in forwards}
 @keyframes tuf{0%,60%{opacity:1}100%{opacity:0}}
+.file .rd{background:#111;color:transparent;border-radius:2px}
+.redtag{display:inline-block;background:#111;color:#f6dfa0;font-family:var(--type);font-size:.75rem;letter-spacing:.1em;padding:.2em .6em;margin-top:6px}
+.framer{display:grid;gap:8px;background:rgba(27,19,40,.9);border-radius:14px;padding:10px 12px;box-shadow:inset 0 0 0 2px var(--wax-hi)}
+.framer b{color:var(--gold-hi)}.framer .chips{display:flex;flex-wrap:wrap;gap:6px}
+.framer .chips button{padding:.4em .8em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:800;font-size:.9rem}
+.framer .chips button[aria-pressed="true"]{background:var(--wax);box-shadow:inset 0 0 0 2px var(--gold)}
+.goldnote{text-align:center;font-family:var(--deco);font-weight:900;color:#2b1d12;background:linear-gradient(90deg,#b0872e,#fff3c0,#d9b25f);border-radius:8px;padding:.35em .8em}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -222,7 +229,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-23-6";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-7";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -324,6 +331,11 @@ function phoneRules(o){
   if(o.bets)r.push(["Extras","🎲","Bet on it","🎯 Sure: +500 / −250  ·  💀 All in: ×2 / −500"]);
   if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
   if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯"]);
+  if(o.redact)r.push(["Extras","🖤","Redacted files","Words are blacked out and uncovered one by one. Guess early = bigger bonus."]);
+  if(o.golden)r.push(["Extras","✨","Golden file","One secret is secretly worth TRIPLE. Revealed at the end."]);
+  if(o.frame)r.push(["Extras","🎯","Frame job","Your secret? Pick someone to frame. Room accuses them most = +400."]);
+  if(o.fifth)r.push(["Extras","🤐","Plead the Fifth","In the hot seat? End it once per game. Costs 100."]);
+  if(o.showdown)r.push(["Extras","⚔️","Final showdown","Top two close at the end? First to remember whose secret it was wins!"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
   if(gmOn)r.push(["Have fun","🕵️","Most Wanted",`${HOST_NAME} knows the secrets, so she bets on who you'll wrongly accuse most. Nail it: +400. Bonus round: she guesses too!`]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
@@ -375,6 +387,28 @@ async function switchVote(){
     if(status===200){mySwitch.to=v;mySwitch.open=false;sfx("seal");buzz(40);lastKey="";render()}
     else toast(status===409?(data.error||"The room is closed."):"That didn't go through. Try again.");
   }catch(e){toast("No connection. Try again.")}
+}
+/* 🎯 Frame job: on your own secret, pick someone to frame */
+let myFrame={key:"",to:null};
+const myFrameNow=()=>{const g=D.game;return g&&myFrame.key===`${g.gid}:${g.qi}`?myFrame.to||"":""};
+const framer=g=>!g.opts?.frame?"":`<div class="framer"><b>🎯 Frame someone</b><span style="font-size:.85rem;color:var(--muted)">If the room accuses them the most, you get +400.</span>
+  <div class="chips">${(g.playing||[]).filter(n=>n!==D.me).map(n=>`<button type="button" data-frame="${esc(n)}" aria-pressed="${myFrameNow()===n}">${esc(n)}</button>`).join("")}</div></div>`;
+async function frameSomeone(n){
+  const g=D.game;myFrame={key:`${g.gid}:${g.qi}`,to:n};sfx("tap");buzz(15);lastKey="";render();
+  try{const {status}=await post("/api/ds",{op:"frame",name:myName,qi:g.qi,target:n});if(status===409)toast("Too late! Guesses are locked.")}catch(e){}
+}
+/* 🤐 Plead the Fifth (once per game) */
+const fifthUsed=()=>store.get("ds-fifth")===String(D.game?.gid);
+async function pleadFifth(){
+  if(!confirm("Plead the Fifth? The interrogation ends now, and it costs 100 points. Once per game."))return;
+  const g=D.game;try{const {status,data}=await post("/api/ds",{op:"fifth",name:myName,qi:g.qi});
+    if(status===200){store.set("ds-fifth",String(g.gid));sfx("seal");lastKey="";render()}else toast(data.error||"Not now.")}catch(e){toast("No connection.")}
+}
+/* ⚔️ Final showdown answer */
+let myDuel={key:"",g:null};
+async function duelAnswer(){
+  const v=$("#dg")?.value.trim();if(!v){$("#dg")?.focus();return}const d=D.game.duel;myDuel={key:`${D.game.gid}:${d.round}`,g:v};lastKey="";render();
+  try{await post("/api/ds",{op:"duel",name:myName,round:d.round,guess:v})}catch(e){toast("No connection. Shout it!")}
 }
 /* story time: accept or decline (the owner) */
 let myStory={key:"",ans:null};
@@ -478,7 +512,8 @@ function header(){
 }
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
-const fileCard=g=>`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${esc(g.fact||"")}”</p></div>`;
+const factHTML=g=>{const f=g.fact||"";if(!g.hide?.length)return esc(f);const h=new Set(g.hide);return f.split(" ").map((w,i)=>h.has(i)?`<span class="rd">${esc(w)}</span>`:esc(w)).join(" ")};
+const fileCard=g=>`<div class="file"><div class="hdr"><span>FILE No. ${pad(g.qi+1)} of ${pad(g.total)}</span>${g.double?'<span class="gift">🎁 Double</span>':"<span>TOP SECRET</span>"}</div><p>“${factHTML(g)}”</p>${g.hide?'<div class="redtag">🖤 REDACTED · guess early for a bigger bonus</div>':""}</div>`;
 
 function view(){
   const g=D.game;
@@ -515,6 +550,16 @@ function view(){
   if(g.phase==="roundcard")return [key,header()+msg("🗝️","The vault opens","<p>Eyes on the TV. You'll type your guesses here.</p>")+soundBtn()];
   if(g.phase==="ready")return [key,header()+msg("",`<span class="big">🔐</span>`,`<div class="eyebrow">Secret ${g.qi+1} of ${g.total}</div>${g.double?'<span class="gift">🎁 Double points</span>':""}<p>Unlocking the next file…</p>`)];
 
+  if(g.phase==="showdown"&&g.duel){
+    const d=g.duel,me=[d.a,d.b].includes(D.me),k=`${g.gid}:${d.round}`,mine=myDuel.key===k?myDuel.g:null;
+    if(d.winner)return [key+"dw"+d.winner,header()+msg(d.winner===D.me?"⚔️":"👑",d.winner===D.me?"You won the showdown!":`${esc(d.winner)} wins the showdown!`,d.winner===D.me?"<p>The major award is yours!</p>":"<p>What a finish!</p>",d.winner===D.me?"win":"")+reactBar(),d.winner===D.me?"win":"right"];
+    if(!me)return [key+"dwatch"+d.round+d.open,header()+msg("⚔️","Final Showdown",`<p class="said">${esc(d.a)} vs ${esc(d.b)}</p><p>Cheer them on!</p>`)+reactBar()];
+    if(!d.open)return [key+"dready"+d.round,header()+msg("⚔️","You're in the Final Showdown!",`<p>vs ${esc(d.a===D.me?d.b:d.a)}. When the secret appears, type whose it was. First right answer wins!</p>`,"right"),"gift"];
+    if(mine)return [key+"dlock"+d.round+mine,header()+msg("🔒",`Locked in: ${esc(mine)}`,"<p>Eyes on the TV!</p>")];
+    return [key+"dask"+d.round,header()+`<div class="file"><div class="hdr"><span>⚔️ FINAL SHOWDOWN</span><span>ROUND ${d.round}</span></div><p>“${esc(d.fact||"")}”</p></div>
+      <form class="guess" id="duelform"><label for="dg">Whose secret was it?</label><input id="dg" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Type a name">
+      <button class="btn" type="submit">⚔️ Lock it in</button><p class="hint">First right answer wins. Wrong answers are out for this round.</p></form>`,"gift"];
+  }
   if(g.phase==="bonuscard")return [key,header()+msg("📝","Bonus round!","<p>Fresh secrets, written tonight by people in this room. Eyes on the TV.</p>")+soundBtn()];
   const mineSecret=g.own&&g.own===ownTag(g.gid,g.qi,D.me);
   // 🕵️ the Gamemaker (Carsyn) knows the real secrets: she plays MOST WANTED, betting on who the room will wrongly accuse most. Bonus round: she guesses like everyone.
@@ -539,12 +584,13 @@ function view(){
     const top=`<section class="msg" style="flex:none;padding:6px 0 0"><div class="eyebrow">🔦 The Interrogation Room</div>
       ${hot?`<img class="hot" src="${pic(D.me)}" alt="" style="width:min(40%,150px)"><h1 style="font-size:1.6rem">You're in the hot seat!</h1><p class="said">Defend yourself, out loud!</p>`
         :`<h1 style="font-size:1.5rem">${(g.hot||[]).map(esc).join(" & ")} ${g.hot?.length>1?"are":"is"} in the hot seat</h1>`}
-      ${g.roomOpen?`<div class="hurry" id="roomclock">⏱ Room closes in <b>${g.roomLeft||""}</b></div>`:""}</section>`;
-    if(mineSecret)return [key+"own"+g.roomOpen,header()+top+msg("🤫","They're trying to crack YOU","<p>Keep a straight face… or point the finger at someone else!</p>")+reactBar(),"shh"];
+      ${g.roomOpen?`<div class="hurry" id="roomclock">⏱ Room closes in <b>${g.roomLeft||""}</b></div>`:""}
+      ${hot&&g.roomOpen&&g.fifthOk&&!fifthUsed()?`<button class="btn" id="fifth" style="background:#2b1d12;box-shadow:0 4px 0 #000;margin-top:6px">🤐 Plead the Fifth · −100 · once per game</button>`:""}</section>`;
+    if(mineSecret)return [key+"own"+g.roomOpen+fifthUsed(),header()+top+msg("🤫","They're trying to crack YOU","<p>Keep a straight face… or point the finger at someone else!</p>")+reactBar(),"shh"];
     if(!mine)return [key+"none"+g.roomOpen,header()+top+msg("","You didn't seal a guess","<p>Sit back and watch the interrogation.</p>")+reactBar()];
     if(!g.roomOpen)return [key+"closed"+mySwitch.to,header()+top+msg("🔒","Votes are final",`<p class="said">Your vote: <b>${esc(mySwitch.to||mine)}</b></p><p>Eyes on the TV for the reveal.</p>`)+reactBar(),"tap"];
     const now=mySwitch.to||mine;
-    return [key+"room"+now+mySwitch.open,header()+top+`<div class="write" style="transform:none">
+    return [key+"room"+now+mySwitch.open+fifthUsed(),header()+top+`<div class="write" style="transform:none">
         <b>${mySwitch.to?"🔄 You changed your vote":"Your sealed guess"}</b><div class="done" style="font-size:1.4rem">“${esc(now)}”</div>
         ${mySwitch.to?`<p>Was: ${esc(mine)}</p>`:""}
         ${mySwitch.open?`<form id="swform" style="display:grid;gap:8px"><input id="sw" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Who is it really?" style="font-family:var(--type);font-size:1.3rem;padding:.5em;border-radius:10px;border:2px dashed #c9b385;background:rgba(255,255,255,.5);color:var(--parch-ink);text-align:center">
@@ -575,11 +621,11 @@ function view(){
   if(g.phase==="question"){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
     const b=betNow(),bl={sure:"🎯 Sure bet: +500 if right, −250 if wrong",allin:"💀 All in: double if right, −500 if wrong"}[b];
-    if(mine)return [key+"sealed:"+mine+b,header()+`<section class="msg">${ENV}<h1>Sealed!</h1>
+    if(mine)return [key+"sealed:"+mine+b+myFrameNow(),header()+(mineSecret?framer(g):"")+`<section class="msg">${ENV}<h1>Sealed!</h1>
       <p class="said">${mine===FAKE?"You called it: <b>🃏 FAKE</b>":`${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b>`}</p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p>${Memes.html("secrets",g.gid,g.qi)}</section>${reactBar()}`,"seal"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":`<p class="said">No guess sealed: −${NO_GUESS} points.</p><p>Get the next one!</p>`,"wrong"),"wrong"];
-    return [key+"ask"+mineSecret+b+!!g.left,header()+fileCard(g)+(!mineSecret?betPicker():"")+(mineSecret
-      ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>`:"")+
+    return [key+"ask"+mineSecret+b+!!g.left+(g.hide||[]).length+myFrameNow(),header()+fileCard(g)+(!mineSecret?betPicker():"")+(mineSecret
+      ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>${framer(g)}`:"")+
       (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${NO_GUESS}`}</div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
@@ -588,10 +634,10 @@ function view(){
   if(g.phase==="reveal"){
     const mine=D.myAnswer;
     if(g.answer===D.me)return [key+"own",header()+(g.bonus?`<p class="note" style="text-align:center;margin:0">📝 Your bonus secret was played: +500 points!</p>`:"")+msg("🎭","Your secret is out!",g.fooled?`<p class="said">You fooled ${g.fooled} tribute${g.fooled>1?"s":""}!</p><p>That's 150 points each, coming up on the scoreboard.</p>`:`<p>Nobody was fooled, ${esc(D.me)}. They know you too well.</p>`,"right")+reactBar(),"right"];
-    const right=(g.correct||[]).includes(D.me);
+    const right=(g.correct||[]).includes(D.me),gold=g.golden?`<div class="goldnote">✨ GOLDEN FILE · TRIPLE POINTS ✨</div>`:"";
     if(g.fake)return [key+"fake"+right,header()+(right?msg("🃏","You spotted the fake!","<p class=\"said\">Nobody here said that. Nice work.</p>","right")
       :msg("🃏","It was FAKE!",`<p class="said">Nobody here said that.</p><p>${mine?`You said ${esc(mine)}.`:"You didn't seal a guess."}</p>`,"wrong"))+reactBar(),right?"right":"wrong"];
-    return [key+right+mine,header()+(right
+    return [key+right+mine,header()+gold+(right
       ?msg("🗝️","You cracked it!",`<p class="said">It's ${esc(g.answer)}!</p>`,"right")
       :msg("🔒","Not this time",`<p class="said">It's ${esc(g.answer)}.</p><p>${mine?`You guessed ${esc(mine)}.`:"You didn't seal a guess."}</p>`,"wrong"))+reactBar(),right?"right":"wrong"];
   }
@@ -643,6 +689,9 @@ function render(){
   const ds=$("#delsecret");if(ds)ds.onclick=deleteSecret;
   document.querySelectorAll("#nobonus").forEach(b=>b.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()});
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
+  document.querySelectorAll("[data-frame]").forEach(b=>b.onclick=()=>frameSomeone(b.dataset.frame));
+  const ff=$("#fifth");if(ff)ff.onclick=pleadFifth;
+  const df=$("#duelform");if(df)df.onsubmit=e=>{e.preventDefault();$("#dg")?.blur();duelAnswer()};
   const sy=$("#storyyes");if(sy)sy.onclick=()=>storyAnswer(true);
   const sn=$("#storyno");if(sn)sn.onclick=()=>storyAnswer(false);
   clearInterval(render.ac);if($("#askclock")&&D.game?.askLeft!=null){const end=Date.now()+D.game.askLeft*1000;render.ac=setInterval(()=>{const b=$("#askclock b");if(!b)return clearInterval(render.ac);b.textContent=Math.max(0,Math.ceil((end-Date.now())/1000))},200)}

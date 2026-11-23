@@ -8,6 +8,9 @@
 //   POST { op: "vote",   pid, name, qi, v }       rate the story: fire | lol | wow (during story time)
 //   POST { op: "switch", pid, name, qi, guess }   change your vote in the Interrogation Room (while it's open; needs a sealed guess)
 //   POST { op: "story",  pid, name, qi, accept }  the secret's owner accepts (true) or declines (false) story time
+//   POST { op: "frame",  pid, name, qi, target }  🎯 the secret's owner frames someone (while guessing is open)
+//   POST { op: "fifth",  pid, name, qi }          🤐 the person in the hot seat pleads the Fifth (once per game)
+//   POST { op: "duel",   pid, name, round, guess } ⚔️ a finalist's answer in the Final Showdown (first right answer wins)
 // Host phone (needs the key the TV shows in its host menu). Anonymous: the host sees the text, never who wrote it.
 //   GET  ?op=review&k=KEY                         every written secret: { id, text, status }
 //   POST { op: "approve", k, id, ok }             approve (true) or skip (false) one
@@ -23,6 +26,8 @@ const BETS = ["hunch", "sure", "allin"], VOTES = ["fire", "lol", "wow"];
 const isPlayer = async (name, pid) => typeof name === "string" && !!pid && (await redis.hget(P + "players", name)) === pid;
 const isHost = async k => typeof k === "string" && k.length >= 8 && (await redis.get(P + "hostkey")) === k;
 const parse = s => { try { return JSON.parse(s); } catch { return null; } };
+// same as the TV and phones: lets the server check "this secret is yours" without knowing whose it is
+const ownTag = (gid, qi, name) => { let h = 5381; for (const c of `${gid}|${qi}|${name}`) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
 
 export default async function handler(req, res) {
   const q = req.method === "GET" ? req.query : req.body || {};
@@ -30,15 +35,19 @@ export default async function handler(req, res) {
 
   if (req.method === "GET" && op === "tv") {
     const qi = Number.parseInt(q.qi, 10);
-    const [bets, votes, subs, ok, switches, storyAns] = await Promise.all([
+    const duelRound = Number.parseInt(q.duel, 10);
+    const [bets, votes, subs, ok, switches, storyAns, frames, fifth, duel] = await Promise.all([
       Number.isInteger(qi) ? hash(`${P}bets:${qi}`) : {},
       Number.isInteger(qi) ? hash(`${P}story:${qi}`) : {},
       hash(P + "subs"), hash(P + "approved"),
       Number.isInteger(qi) ? hash(`${P}switch:${qi}`) : {},
       Number.isInteger(qi) ? redis.get(`${P}storyans:${qi}`) : null,
+      Number.isInteger(qi) ? hash(`${P}frame:${qi}`) : {},
+      Number.isInteger(qi) ? redis.get(`${P}fifth:${qi}`) : null,
+      Number.isInteger(duelRound) ? hash(`${P}duel:${duelRound}`) : {},
     ]);
     const approved = Object.keys(subs).filter(n => ok[n] === "1").map(n => ({ name: n, text: parse(subs[n])?.text })).filter(x => x.text);
-    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns });
+    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel });
   }
   if (req.method === "GET" && op === "review") {
     if (!(await isHost(q.k))) return reply(res, 403, { error: "Wrong host key" });
@@ -70,6 +79,26 @@ export default async function handler(req, res) {
     if (!game || game.qi !== qi || game.phase !== "interro" || !game.roomOpen) return reply(res, 409, { error: "The room is closed" });
     if (!(await redis.hget(`${P}answers:${qi}`, q.name))) return reply(res, 409, { error: "No sealed guess to change" });
     await redis.hset(`${P}switch:${qi}`, { [q.name]: guess });
+    return reply(res, 200, { ok: true });
+  }
+  if (op === "frame" || op === "fifth" || op === "duel") {
+    const game = await readGame(P);
+    if (!(await isPlayer(q.name, q.pid))) return reply(res, 403, { error: "Not your name" });
+    if (!game) return reply(res, 409, { error: "Not now" });
+    if (op === "frame") {
+      const target = text(q.target, 40);
+      if (game.qi !== q.qi || game.phase !== "question" || game.locked || !target || target === q.name) return reply(res, 409, { error: "Not now" });
+      if (ownTag(game.gid, q.qi, q.name) !== game.own) return reply(res, 403, { error: "Only the secret's owner can frame someone" });
+      await redis.hset(`${P}frame:${q.qi}`, { [q.name]: target });
+    } else if (op === "fifth") {
+      if (game.qi !== q.qi || game.phase !== "interro" || !game.roomOpen || !(game.hot || []).includes(q.name)) return reply(res, 409, { error: "Not now" });
+      if (!(await redis.hsetnx(P + "fifthused", q.name, String(q.qi)))) return reply(res, 409, { error: "You already pleaded the Fifth this game" });
+      await redis.set(`${P}fifth:${q.qi}`, q.name);
+    } else {
+      const d = game.duel || {}, guess = text(q.guess, 40);
+      if (game.phase !== "showdown" || !d.open || d.round !== q.round || ![d.a, d.b].includes(q.name) || !guess) return reply(res, 409, { error: "Not now" });
+      await redis.hsetnx(`${P}duel:${q.round}`, q.name, JSON.stringify({ g: guess, t: Date.now() }));   // first answer counts, stamped by the server
+    }
     return reply(res, 200, { ok: true });
   }
   if (op === "story") {
@@ -112,7 +141,7 @@ export default async function handler(req, res) {
   }
   if (op === "reset") {
     const total = Math.min(Math.max(Number(q.total) || 0, 1), 100);
-    await redis.del(...Array.from({ length: total }, (_, i) => [`${P}bets:${i}`, `${P}story:${i}`, `${P}switch:${i}`, `${P}storyans:${i}`]).flat());
+    await redis.del(...Array.from({ length: total }, (_, i) => [`${P}bets:${i}`, `${P}story:${i}`, `${P}switch:${i}`, `${P}storyans:${i}`, `${P}frame:${i}`, `${P}fifth:${i}`, `${P}duel:${i}`]).flat(), P + "fifthused");
     return reply(res, 200, { ok: true });
   }
   reply(res, 400, { error: "Unknown op" });

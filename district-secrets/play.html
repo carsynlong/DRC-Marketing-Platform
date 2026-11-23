@@ -229,7 +229,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-23-9";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-23-10";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -348,7 +348,7 @@ function phoneRules(o){
   if(o.golden)r.push(["Extras","✨","Golden file","One secret is secretly worth TRIPLE. Revealed at the end."]);
   if(o.frame)r.push(["Extras","🎯","Frame job","Your secret? Pick someone to frame. Room accuses them most = +400."]);
   if(o.fifth)r.push(["Extras","🤐","Plead the Fifth","In the hot seat? End it once per game. Costs 100."]);
-  if(o.showdown)r.push(["Extras","⚔️","Final showdown","Top two close at the end? First to remember whose secret it was wins!"]);
+  if(o.showdown)r.push(["Extras","⚔️","Quick Draw","Tied at the end? When the TV says DRAW, first tap wins. Too soon = you lose!"]);
   if(o.bonus)r.push(["Extras","📝","Bonus secret","Write one. If it's played: +500 points for you!"]);
   if(gmOn)r.push(["Have fun","🕵️","Most Wanted",`${HOST_NAME} knows the secrets, so she bets on who you'll wrongly accuse most. Nail it: +400. Bonus round: she guesses too!`]);
   r.push(["Have fun","😂","Emojis","Tap them to pop up on the TV with your name."]);
@@ -417,11 +417,12 @@ async function pleadFifth(){
   const g=D.game;try{const {status,data}=await post("/api/ds",{op:"fifth",name:myName,qi:g.qi});
     if(status===200){store.set("ds-fifth",String(g.gid));sfx("seal");lastKey="";render()}else toast(data.error||"Not now.")}catch(e){toast("No connection.")}
 }
-/* ⚔️ Final showdown answer */
+/* ⚔️ Quick Draw tap: sent the instant you touch it */
 let myDuel={key:"",g:null};
-async function duelAnswer(){
-  const v=$("#dg")?.value.trim();if(!v){$("#dg")?.focus();return}const d=D.game.duel;myDuel={key:`${D.game.gid}:${d.round}`,g:v};lastKey="";render();
-  try{await post("/api/ds",{op:"duel",name:myName,round:d.round,guess:v})}catch(e){toast("No connection. Shout it!")}
+function drawTap(){
+  const d=D.game.duel;if(myDuel.key===`${D.game.gid}:${d.round}`)return;
+  post("/api/ds",{op:"duel",name:myName,round:d.round}).catch(()=>toast("No connection!"));   // fire first, draw after
+  myDuel={key:`${D.game.gid}:${d.round}`,g:"tap"};buzz(60);sfx("tap");lastKey="";render();
 }
 /* story time: accept or decline (the owner) */
 let myStory={key:"",ans:null};
@@ -563,15 +564,13 @@ function view(){
   if(g.phase==="roundcard")return [key,header()+msg("🗝️","The vault opens","<p>Eyes on the TV. You'll type your guesses here.</p>")+soundBtn()];
   if(g.phase==="ready")return [key,header()+msg("",`<span class="big">🔐</span>`,`<div class="eyebrow">Secret ${g.qi+1} of ${g.total}</div>${g.double?'<span class="gift">🎁 Double points</span>':""}<p>Unlocking the next file…</p>`)];
 
-  if(g.phase==="showdown"&&g.duel){
-    const d=g.duel,me=[d.a,d.b].includes(D.me),k=`${g.gid}:${d.round}`,mine=myDuel.key===k?myDuel.g:null;
-    if(d.winner)return [key+"dw"+d.winner,header()+msg(d.winner===D.me?"⚔️":"👑",d.winner===D.me?"You won the showdown!":`${esc(d.winner)} wins the showdown!`,d.winner===D.me?"<p>The major award is yours!</p>":"<p>What a finish!</p>",d.winner===D.me?"win":"")+reactBar(),d.winner===D.me?"win":"right"];
-    if(!me)return [key+"dwatch"+d.round+d.open,header()+msg("⚔️","Final Showdown",`<p class="said">${esc(d.a)} vs ${esc(d.b)}</p><p>Cheer them on!</p>`)+reactBar()];
-    if(!d.open)return [key+"dready"+d.round,header()+msg("⚔️","You're in the Final Showdown!",`<p>vs ${esc(d.a===D.me?d.b:d.a)}. When the secret appears, type whose it was. First right answer wins!</p>`,"right"),"gift"];
-    if(mine)return [key+"dlock"+d.round+mine,header()+msg("🔒",`Locked in: ${esc(mine)}`,"<p>Eyes on the TV!</p>")];
-    return [key+"dask"+d.round,header()+`<div class="file"><div class="hdr"><span>⚔️ FINAL SHOWDOWN</span><span>ROUND ${d.round}</span></div><p>“${esc(d.fact||"")}”</p></div>
-      <form class="guess" id="duelform"><label for="dg">Whose secret was it?</label><input id="dg" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" maxlength="40" placeholder="Type a name">
-      <button class="btn" type="submit">⚔️ Lock it in</button><p class="hint">First right answer wins. Wrong answers are out for this round.</p></form>`,"gift"];
+  if(g.phase==="showdown"&&g.duel){   // ⚔️ Quick Draw
+    const d=g.duel,me=[d.a,d.b].includes(D.me),k=`${g.gid}:${d.round}`,tapped=myDuel.key===k;
+    if(d.winner)return [key+"dw"+d.winner,header()+msg(d.winner===D.me?"⚔️":"👑",d.winner===D.me?"You won the Quick Draw!":`${esc(d.winner)} wins!`,d.winner===D.me?"<p>The major award is yours!</p>":"<p>What a finish!</p>",d.winner===D.me?"win":"")+reactBar(),d.winner===D.me?"win":"right"];
+    if(!me)return [key+"dwatch"+d.round+d.state,header()+msg("⚔️","Quick Draw!",`<p class="said">${esc(d.a)} vs ${esc(d.b)}</p><p>Cheer them on!</p>`)+reactBar()];
+    if(tapped)return [key+"dtap"+d.round,header()+msg("⚡","Tapped!","<p>Eyes on the TV…</p>")];
+    return [key+"dtapper"+d.round+(d.state==="vs"||d.state==="again"),header()+`<section class="msg" style="flex:none"><div class="eyebrow">⚔️ Quick Draw vs ${esc(d.a===D.me?d.b:d.a)}</div><h1>Wait for DRAW on the TV…</h1><p>Then tap as fast as you can. Too soon and you lose!</p></section>
+      <button id="drawtap" style="flex:1;min-height:52vh;border-radius:50%;aspect-ratio:1;justify-self:center;width:min(90vw,420px);margin:0 auto;background:radial-gradient(circle at 40% 35%,#ff5a4e,#a3182b 60%,#5e0a17);color:#fff;font-family:var(--deco);font-size:3rem;box-shadow:0 0 0 6px var(--gold),0 16px 40px rgba(0,0,0,.6)">TAP!</button>`,"gift"];
   }
   if(g.phase==="bonuscard")return [key,header()+msg("📝","Bonus round!","<p>Fresh secrets, written tonight by people in this room. Eyes on the TV.</p>")+soundBtn()];
   const mineSecret=g.own&&g.own===ownTag(g.gid,g.qi,D.me);
@@ -704,7 +703,7 @@ function render(){
   const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
   document.querySelectorAll("[data-frame]").forEach(b=>b.onclick=()=>frameSomeone(b.dataset.frame));
   const ff=$("#fifth");if(ff)ff.onclick=pleadFifth;
-  const df=$("#duelform");if(df)df.onsubmit=e=>{e.preventDefault();$("#dg")?.blur();duelAnswer()};
+  const dt3=$("#drawtap");if(dt3){dt3.onpointerdown=e=>{e.preventDefault();drawTap()}}
   const sy=$("#storyyes");if(sy)sy.onclick=()=>storyAnswer(true);
   const sn=$("#storyno");if(sn)sn.onclick=()=>storyAnswer(false);
   clearInterval(render.ac);if($("#askclock")&&D.game?.askLeft!=null){const end=Date.now()+D.game.askLeft*1000;render.ac=setInterval(()=>{const b=$("#askclock b");if(!b)return clearInterval(render.ac);b.textContent=Math.max(0,Math.ceil((end-Date.now())/1000))},200)}

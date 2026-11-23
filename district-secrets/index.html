@@ -421,7 +421,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 .duel .vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(16px,4vw,60px)}
 .duel .f{display:grid;justify-items:center;gap:8px;font-family:var(--deco);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--ink)}
 .duel .f img{width:clamp(140px,20vw,240px);height:clamp(140px,20vw,240px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 50px rgba(217,178,95,.4)}
-.duel .f.l img{animation:fromL .8s cubic-bezier(.2,1.3,.4,1) both}.duel .f.r img{animation:fromR .8s cubic-bezier(.2,1.3,.4,1) both}
+.duel .f.l.in img{animation:fromL .8s cubic-bezier(.2,1.3,.4,1) both}.duel .f.r.in img{animation:fromR .8s cubic-bezier(.2,1.3,.4,1) both}
 .duel .f.win img{box-shadow:0 0 0 8px var(--gold-hi),0 0 90px 20px rgba(246,223,160,.6)}.duel .f.lose{opacity:.35;filter:grayscale(1)}
 .duel .x{font-family:var(--deco);font-size:clamp(3rem,7vw,6rem);color:var(--wax-hi);text-shadow:0 0 30px rgba(216,57,63,.6);animation:pop .6s .6s both}
 .duel .q{font-family:var(--type);background:var(--parch);color:var(--parch-ink);font-size:clamp(1.3rem,3vw,2.2rem);padding:.6em 1em;max-width:min(92vw,1000px);transform:rotate(-1deg);box-shadow:0 14px 30px rgba(0,0,0,.6)}
@@ -446,7 +446,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-9";
+const BUILD="ds-build-2026-11-23-10";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -737,7 +737,7 @@ function snapshot(){
   if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.phase==="question"&&Q[S.qi].hide)g.hide=hiddenNow()}
   if(inGame&&["reveal","story","board"].includes(S.phase)&&Q[S.qi].golden)g.golden=true;
   if(S.phase==="interro")g.fifthOk=!!S.opts?.fifth;
-  if(S.phase==="showdown"&&S.duel)g.duel={a:S.duel.a,b:S.duel.b,round:S.duel.round,open:!!S.duel.open,fact:S.duel.open?S.duel.f:null,winner:S.champ||null};
+  if(S.phase==="showdown"&&S.duel)g.duel={a:S.duel.a,b:S.duel.b,round:S.duel.round,state:S.duel.state,winner:S.champ||null};
   if(S.phase==="story"){g.storyState=S.storyState;if(S.storyState==="ask")g.askLeft=Math.max(0,Math.ceil(STORY_ASK-(Date.now()-(S.askAt||Date.now()))/1000))}
   if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
   if(S.phase==="question"&&!S.locked){const left=Math.ceil(S.secs-S.elapsed);if(left<=10)g.left=left}
@@ -796,7 +796,7 @@ async function pollX(){
     if(S.phase==="story")showVotes();
     if(S.phase==="interro")showSwitches();
     if(S.phase==="interro"&&S.roomOpen&&curX().fifth&&!S.fifthBy)pleadFifth(curX().fifth);
-    if(S.phase==="showdown"&&S.duel?.open)checkDuel(d.duel||{});
+    if(S.phase==="showdown")checkDuel(d.duel||{});
   }catch(e){}
   pollingX=false;
 }
@@ -916,7 +916,7 @@ function howSteps(){
   if(o.golden)st.push(["✨","One secret is secretly a <b>GOLDEN FILE</b> worth <b>triple</b>. Nobody knows which until the reveal.","One secret is secretly a golden file, worth triple points. Nobody knows which one, until the reveal."]);
   if(o.frame)st.push(["🎯","Your secret? <b>Frame someone</b> on your phone. If the room accuses them most, you get <b>+400</b>.","If it's your secret, you can frame someone on your phone. If the room accuses them the most, you get four hundred points."]);
   if(o.fifth)st.push(["🤐","In the hot seat, you can <b>plead the Fifth</b> once per game. It ends the interrogation, but costs <b>100</b>.","In the hot seat, you can plead the Fifth, once per game. It ends the interrogation, but costs you a hundred points."]);
-  if(o.showdown)st.push(["⚔️","If the top two are close at the end: a <b>Final Showdown</b>. First to remember whose secret it was wins the major award.","If the top two are close at the end, there's a final showdown. The first to remember whose secret it was, wins the major award."]);
+  if(o.showdown)st.push(["⚔️","Tied at the end? <b>Quick Draw</b>: when the TV says DRAW, first to tap their phone wins. Too soon and you lose!","Tied at the end? It's a quick draw. When the TV says draw, the first to tap their phone wins. Tap too soon, and you lose."]);
   if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
   if(active().some(p=>p.name===HOST))st.push(["🕵️",`<b>${HOST} is the Gamemaker.</b> She knows the secrets, so she plays <b>Most Wanted</b>: she bets on who you'll wrongly accuse the most. Nail it: <b>+400</b>. In the bonus round, she guesses too!`,`${HOST} is the Gamemaker. She knows the secrets, so she plays Most Wanted. She bets on who you will wrongly accuse the most. If she nails it, four hundred points. In the bonus round, she guesses too.`]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
@@ -1132,41 +1132,44 @@ function pleadFifth(n){
   S.fifthBy=n;S.fifthUsed[n]=true;sfx("stamp");sfx("boo");closeRoom();
   const f=document.createElement("div");f.className="fifth";f.innerHTML=`<div>🤐 ${esc(n)} pleads the Fifth!<small>NO COMMENT · −100</small></div>`;document.body.appendChild(f);setTimeout(()=>f.remove(),3100);
 }
-/* ⚔️ Final showdown: the top two (within 1,000 points) race to name whose secret it was. First right answer wins. */
-const SHOWDOWN_GAP=1000,DUEL_SECS=20;
-function showdownDue(){if(!S.opts?.showdown||S.champ||S.duelDone)return false;const r=ranked();return r.length>1&&r[0].score>0&&r[0].score-r[1].score<SHOWDOWN_GAP}
+/* ⚔️ Quick Draw: if the top two are TIED at the end, they face off. Ready… Steady… DRAW! First tap on their phone wins.
+   Tap before DRAW and you lose. The server stamps DRAW and every tap, so it's fair. */
+function showdownDue(){if(!S.opts?.showdown||S.champ||S.duelDone)return false;const r=ranked();return r.length>1&&r[0].score>0&&r[0].score===r[1].score}
 function startShowdown(){
-  const r=ranked(),a=r[0].name,b=r[1].name;
-  const pool=Q.filter((x,i)=>i<=S.qi&&!x.fake&&!x.bonus&&x.a&&x.a!==a&&x.a!==b).map(x=>({f:x.f,a:x.a})).sort(()=>Math.random()-.5);
-  S.duel={a,b,round:1,open:false,pool,f:null,ans:null};S.phase="showdown";S.duelDone=true;stopSong();sfx("gong");render();
+  const r=ranked();S.duel={a:r[0].name,b:r[1].name,round:1,state:"vs"};S.phase="showdown";S.duelDone=true;stopSong();sfx("gong");render();
 }
-function duelGo(){
-  const d=S.duel;if(!d||d.open)return;const x=d.pool.shift();if(!x){duelEnd(null);return}
-  Object.assign(d,{open:true,f:x.f,ans:x.a,at:Date.now(),miss:{}});sfx("go");playSong("count");render();
+let duelT=0,duelPoll=0;
+function duelGo(){   // Ready… Steady… (a random 2–5 seconds) … DRAW!
+  const d=S.duel;if(!d||d.state==="steady"||d.state==="draw")return;
+  d.state="steady";d.round=d.round||1;render();sfx("heart");clearTimeout(duelT);clearInterval(duelPoll);
+  duelPoll=setInterval(()=>pollX(),300);   // quick looks at the phones until there's a winner
+  duelT=setTimeout(()=>{if(S.phase!=="showdown"||d.state!=="steady")return;
+    dsPost({op:"draw",round:d.round}).catch(()=>{});d.state="draw";sfx("cannon");render();
+    if(!calm){const f=document.createElement("div");f.style.cssText="position:fixed;inset:0;z-index:9;pointer-events:none;background:rgba(255,40,30,.55);transition:opacity .6s";document.body.appendChild(f);requestAnimationFrame(()=>requestAnimationFrame(()=>f.style.opacity="0"));setTimeout(()=>f.remove(),700)}},2000+Math.random()*3000);
 }
-function checkDuel(ans){
-  const d=S.duel;if(!d?.open)return;
-  const got=Object.entries(ans).map(([n,v])=>{try{return {n,...JSON.parse(v)}}catch(e){return null}}).filter(Boolean).sort((x,y)=>x.t-y.t);
-  const win=got.find(x=>matches(x.g,d.ans));
-  if(win)return duelEnd(win.n);
-  got.forEach(x=>{if(!d.miss[x.n]){d.miss[x.n]=x.g;sfx("wrong");render()}});
-  if(got.length>=2)duelNext();   // both answered, both wrong
+function checkDuel(taps){
+  const d=S.duel;if(!d||!["steady","draw"].includes(d.state))return;
+  const t=Object.entries(taps).map(([n,v])=>{try{return {n,...JSON.parse(v)}}catch(e){return null}}).filter(x=>x&&[d.a,d.b].includes(x.n));
+  const early=t.filter(x=>x.early).map(x=>x.n);
+  if(early.length===2){d.state="again";d.note="Both of you jumped the gun!";d.round++;clearTimeout(duelT);clearInterval(duelPoll);sfx("boo");render();return}
+  if(early.length===1){const w=early[0]===d.a?d.b:d.a;d.note=`${early[0]} tapped too soon!`;return duelEnd(w)}
+  const ok=t.filter(x=>!x.early).sort((x,y)=>x.t-y.t);
+  if(ok.length){d.ms=ok[0].t;duelEnd(ok[0].n)}
 }
-function duelNext(){const d=S.duel;d.open=false;d.round++;stopSong();sfx("boo");render()}
-function duelEnd(n){const d=S.duel;d.open=false;stopSong();
-  if(!n){const r=ranked();n=r[0].name}   // out of secrets: the leader keeps it
-  S.champ=n;sfx("fanfare");confetti(220,true);render();}
-function finishShowdown(){   // the champion gets enough to finish on top
-  const c=S.players.find(p=>p.name===S.champ);if(c){const top=Math.max(...active().map(p=>p.score));c.delta=Math.max(1000,top-c.score+500);c.score+=c.delta;c.note=`⚔️ Won the final showdown +${c.delta}`}
+function duelEnd(n){const d=S.duel;clearTimeout(duelT);clearInterval(duelPoll);d.state="done";S.champ=n;stopSong();sfx("fanfare");confetti(220,true);render()}
+function finishShowdown(){   // breaking the tie: the champion finishes on top
+  const c=S.players.find(p=>p.name===S.champ);if(c){c.delta=500;c.score+=500;c.note="⚔️ Won the Quick Draw +500"}
   S.phase="final";stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),3200);render();
 }
 function duelView(){
-  const d=S.duel,f=(n,c)=>`<div class="f ${c}${S.champ?(S.champ===n?" win":" lose"):""}"><img src="${AV(n)}" alt="">${esc(n)}${d.miss?.[n]?`<small style="font-family:var(--type);font-size:.5em;color:var(--bad)">said ${esc(d.miss[n])} ✗</small>`:""}</div>`;
-  return `<section class="duel"><div class="eyebrow">The top two are neck and neck</div><h1>${S.champ?`⚔️ ${esc(S.champ)} wins!`:"⚔️ Final Showdown"}</h1>
-    <div class="vs">${f(d.a,"l")}<div class="x">VS</div>${f(d.b,"r")}</div>
-    ${S.champ?`<p class="quip">Remembered it first. The major award is theirs!</p><div class="ctl" style="justify-content:center"><button class="btn" id="duelfinal">Final results</button></div>`
-      :d.open?`<div class="q">“${esc(d.f)}”</div><div class="eyebrow">Whose secret was this? First right answer on your phone wins!</div><div class="clock duelclock">${DUEL_SECS}</div>`
-      :`<p class="quip">${d.round>1?"Nobody got that one. Next secret!":"Remember whose secret it was? First to name them on their phone wins the major award."}</p><div class="ctl" style="justify-content:center"><button class="btn wax" id="duelgo">${d.round>1?"Next secret":"Start the showdown"}</button></div>`}
+  const d=S.duel,f=(n,c)=>`<div class="f ${c}${d.state==="vs"?" in":""}${S.champ?(S.champ===n?" win":" lose"):""}"><img src="${AV(n)}" alt="">${esc(n)}</div>`;
+  const mid=d.state==="draw"?`<div class="x" style="font-size:clamp(4rem,10vw,8rem);color:#fff;text-shadow:0 0 40px #ff3a2a,0 0 80px #ff3a2a;animation:none">DRAW!</div>`:`<div class="x">VS</div>`;
+  return `<section class="duel"><div class="eyebrow">Tied at the top</div><h1>${S.champ?`⚔️ ${esc(S.champ)} wins!`:"⚔️ Quick Draw"}</h1>
+    <div class="vs">${f(d.a,"l")}${mid}${f(d.b,"r")}</div>
+    ${S.champ?`<p class="quip">${d.note?esc(d.note)+" ":""}${d.ms!=null?`Tapped in ${(d.ms/1000).toFixed(2)} seconds. `:""}The major award is theirs!</p><div class="ctl" style="justify-content:center"><button class="btn" id="duelfinal">Final results</button></div>`
+      :d.state==="steady"?`<div class="q" style="font-size:clamp(2rem,5vw,3.6rem)">Ready… Steady…</div><div class="eyebrow">Fingers on your phones. Don't tap yet!</div>`
+      :d.state==="draw"?`<div class="eyebrow" style="font-size:1.4rem;color:#fff">TAP YOUR PHONE NOW!</div>`
+      :`<p class="quip">${d.note?esc(d.note)+" ":""}When the TV says <b>DRAW!</b>, tap your phone. First tap wins the major award. Tap too soon and you lose!</p><div class="ctl" style="justify-content:center"><button class="btn wax" id="duelgo">${d.state==="again"?"Try again":"Ready!"}</button></div>`}
   </section>`;
 }
 function next(){S.qi++;if(Q[S.qi]?.bonus&&!Q[S.qi-1]?.bonus){S.phase="bonuscard";stopSong();sfx("gong");render();return}beginQuestion()}
@@ -1183,7 +1186,6 @@ function render(){
     // tense music while the room is open; the drumroll builds over the last 8 seconds
     if(S.roomOpen)playSong("count");
     if(!drumT)drumT=setInterval(()=>{const left=ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000;if(left<=0){clearInterval(drumT);drumT=0;return}if(left<=8)sfx("roll",1-left/8)},90)}
-  if(S.phase==="showdown"&&S.duel?.open)startClock(".duelclock",DUEL_SECS,S.duel.at,()=>{if(S.duel?.open)duelNext()});
   if(S.phase==="story"&&S.storyState==="on"){startClock(".stage2 .clock",30,S.storyAt||Date.now(),()=>sfx("gong"));showVotes()}
   if(S.phase==="story"&&S.storyState==="ask"&&$(".askclock"))startClock(".askclock",STORY_ASK,S.askAt||Date.now(),async()=>{await pollX();if(S.storyState==="ask"&&!curX().storyAns)storyDecide(hasPhone(cur().a)?"late":"skip")});
   if(S.phase==="question"){drawTimer();typeFact();if(!S.locked)tick(performance.now());showSealed()}
@@ -1213,7 +1215,7 @@ function lobbyView(){
           ${ph?'<span class="seal" aria-hidden="true">🔏</span>':""}<img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${!p.on?"sitting out":p.name===HOST?"🔮 gamemaker":ph?"signed in":"waiting"}</small></button>`}).join("")}</div>
       <div class="tiny" style="text-align:center">Host: tap someone to sit them out. No phone? They can whisper their guess to the host.</div>
       <div class="eyebrow" style="text-align:center">Extras · tap to switch on or off</div>
-      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"],["redact","🖤 Redacted files"],["golden","✨ Golden file"],["frame","🎯 Frame job"],["fifth","🤐 Plead the Fifth"],["showdown","⚔️ Final showdown"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
+      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"],["redact","🖤 Redacted files"],["golden","✨ Golden file"],["frame","🎯 Frame job"],["fifth","🤐 Plead the Fifth"],["showdown","⚔️ Quick Draw tiebreaker"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
       ${S.opts?.decoys?`<div class="bonusnote">🃏 ${DECOY_COUNT} decoys get shuffled in when the vault opens${dsx.decoys?.length?` · ${dsx.decoys.length} written by the host`:""}</div>`:""}
       ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved · +500 points each if it's played`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
@@ -1401,7 +1403,7 @@ function finalView(){
   return `<section class="center" style="min-height:0;gap:14px">
     <div class="eyebrow">The vault is empty</div>
     <h1 style="font-size:clamp(2rem,6vw,4.4rem)">${S.champ?"⚔️ "+esc(S.champ)+" wins the showdown! ⚔️":tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" knows all! 🎄"}</h1>
-    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Sudden death: the host reads one more secret out loud.`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
+    <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Settle it with rock, paper, scissors!`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
     <div class="podium">${pod}</div>
     ${awards().length?`<div class="eyebrow" style="margin-top:8px">The Capitol's special honors</div><div class="awards">${awards().map((a,i)=>`<div class="award" style="animation-delay:${.6+i*.25}s"><div class="ic">${a.ic}</div><div class="t">${a.t}</div><img src="${AV(a.av)}" alt=""><div class="nm">${esc(a.name)}</div><div class="why">${a.why}</div></div>`).join("")}</div>`:""}
     <div class="ledger">${rows()}</div>
@@ -1418,7 +1420,7 @@ function primary(){
   if(S.phase==="question")return S.locked?afterLock():lock();
   if(S.phase==="interro")return reveal();
   if(S.phase==="reveal")return S.opts?.story&&!cur().fake?storyTime():score();
-  if(S.phase==="showdown")return S.champ?finishShowdown():S.duel?.open?null:duelGo();
+  if(S.phase==="showdown")return S.champ?finishShowdown():duelGo();
   if(S.phase==="story")return S.storyState==="ask"?(S.storyState="skip",score()):score();
   if(S.phase==="board")return next();
 }

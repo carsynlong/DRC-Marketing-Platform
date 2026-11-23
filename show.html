@@ -351,11 +351,9 @@ const SLIDES=[
       <h1 class="title-xl slam" ${d(.6)} style="font-size:120px">Christmas Games</h1>
       <span class="pill pop" ${d(1.1)}>Thanksmas Edition</span>
       <div class="fade" ${d(1.4)} style="font-size:44px;font-weight:600">The Games begin soon. Find your seat, tributes.</div>
-      <div class="card fade" ${d(1.8)} style="padding:22px 30px;font-size:30px;max-width:900px;min-height:120px" id="lobbyfact"></div>
     </div></div>`,
-   enter(el){const cards=[...el.querySelectorAll(".lc")],fact=el.querySelector("#lobbyfact");let i=0;
-     const show=()=>{cards.forEach((c,j)=>c.classList.toggle("on",j===i));const t=TRIBUTES[i];
-       fact.innerHTML=`<span class="eb" style="color:var(--gold)">${t.name==="Carsyn"?"YOUR GAMEMAKER":"DISTRICT "+t.d+" WEAPON OF CHOICE"}</span><br>${esc(t.weapon)}`};
+   enter(el){const cards=[...el.querySelectorAll(".lc")];let i=0;
+     const show=()=>{cards.forEach((c,j)=>c.classList.toggle("on",j===i))};
      show();const iv=setInterval(()=>{if(curEl!==el){clearInterval(iv);return}i=(i+1)%cards.length;show()},4500)}},
  {id:"title",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:20px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:330px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">

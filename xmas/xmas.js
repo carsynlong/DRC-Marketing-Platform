@@ -14,7 +14,7 @@ XM.TRIBUTES=[
  {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1"},
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Invite everyone to the lake house, then hand them a hammer",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
- {d:5,name:"Jonny",weapon:"A motivational speech, live from JT Motivation",strategy:"Take a 45-minute shower, then post a pep talk about it",odds:"5 to 1"},
+ {d:5,name:"Jonny",weapon:"A pep talk so good you forget you're competing",strategy:"Hype up every tribute, then win anyway",odds:"5 to 1"},
  {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},
  {d:7,name:"Tinsley",weapon:"A perfectly timed meme reference",strategy:"Make everyone laugh till they drop",odds:"3 to 1"},
  {d:8,name:"Natalie",weapon:"A rolling pin and a fresh batch of cookies",strategy:"Bribe the whole arena with baked goods",odds:"4 to 1"},

@@ -95,6 +95,41 @@ body{cursor:default}
 .fly .bb{display:grid;place-items:center;width:1em;height:1em;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 7%,var(--bc) 55%,#1a1a1a)}
 .fly .bb .f{font-size:.19em;width:3.2em;height:3.2em;border-radius:50%;background:#fbf6ea;color:#13271f;display:grid;place-items:center;align-content:center;font-weight:800;line-height:.95;font-family:var(--body)}
 @keyframes melt{0%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-30%) scaleY(1.15)}}
+.inter .clock{font-family:var(--display);font-size:min(20vh,16vw);color:var(--gold);line-height:1;text-shadow:0 8px 0 var(--red-d);font-variant-numeric:tabular-nums}
+.inter .clock.done{color:#ff6b5e;animation:pulse .5s infinite alternate}
+.inter .fact{max-width:1000px;min-height:5.5em;font-size:clamp(1.1rem,2.2vw,1.7rem);font-weight:600;transition:opacity .6s}
+.inter .row .btn{font-size:1.2rem}
+.inter .row .btn[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--ink)}
+/* keep the Play buttons above flying effects */
+.slide a.bigbtn{position:relative;z-index:5}
+/* on fire tribute frames */
+.fire{position:absolute;inset:-110px -80px -40px;pointer-events:none;z-index:-1}
+.fire span{position:absolute;bottom:0;width:var(--w);height:var(--h);margin-left:calc(var(--w)/-2);border-radius:50% 50% 30% 30%/60% 60% 40% 40%;
+  background:radial-gradient(circle at 50% 78%,#fff7b0 0 10%,#ffc21a 28%,#ff6a1a 50%,rgba(255,40,0,0) 70%);filter:blur(3px);mix-blend-mode:screen;transform-origin:50% 100%;
+  animation:flame var(--s) ease-in-out var(--d) infinite alternate}
+.fire span.side{bottom:auto;top:var(--top)}
+@keyframes flame{0%{transform:scale(1,.75) translateY(0);opacity:.85}100%{transform:scale(.8,1.25) translateY(-14px);opacity:1}}
+.fire .spark{position:absolute;bottom:10%;width:8px;height:8px;border-radius:50%;background:#ffd36b;box-shadow:0 0 10px #ff9a1a;animation:spark var(--s) linear var(--d) infinite}
+@keyframes spark{from{transform:translate(0,0);opacity:1}to{transform:translate(var(--dx),-600px);opacity:0}}
+.qcrown{position:absolute;left:50%;top:-110px;font-size:150px;transform:translateX(-50%);z-index:3;animation:crownIn 1.2s .6s cubic-bezier(.2,1.5,.4,1) both;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6))}
+@keyframes crownIn{from{transform:translate(-50%,-900px) rotate(-40deg)}to{transform:translateX(-50%)}}
+.chute{position:fixed;left:50%;top:0;z-index:54;display:grid;justify-items:center;animation:chuteDown 3s cubic-bezier(.3,.6,.4,1) both;pointer-events:none}
+.chute .canopy{width:300px;height:150px;border-radius:150px 150px 20px 20px;background:repeating-linear-gradient(90deg,#f4f6f8 0 40px,#c9d1d9 40px 80px);box-shadow:inset 0 -12px 20px rgba(0,0,0,.2),0 10px 30px rgba(0,0,0,.5)}
+.chute .lines{width:240px;height:130px;background:linear-gradient(to bottom right,transparent 49%,#ddd 50%,transparent 51%),linear-gradient(to bottom left,transparent 49%,#ddd 50%,transparent 51%)}
+.chute .pod{width:120px;height:110px;border-radius:18px;background:linear-gradient(160deg,#eef2f5,#9aa6b2);box-shadow:0 0 0 4px var(--gold),0 10px 30px rgba(0,0,0,.6);display:grid;place-items:center;font-size:56px}
+@keyframes chuteDown{0%{transform:translate(-50%,-110%) rotate(-6deg)}40%{transform:translate(-55%,6vh) rotate(5deg)}70%{transform:translate(-46%,10vh) rotate(-4deg)}100%{transform:translate(-50%,12vh) rotate(0)}}
+.live{position:fixed;inset:0;z-index:53;background:#000;display:grid;place-items:center}
+.live video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.live .tag{position:absolute;top:44px;left:30px;background:#c41e1e;color:#fff;font-weight:800;font-size:clamp(1rem,2vw,1.6rem);padding:.3em .8em;border-radius:8px;letter-spacing:.08em;animation:blinkTag 1.2s infinite}
+@keyframes blinkTag{50%{opacity:.6}}
+.live .logo{position:absolute;top:40px;right:30px;width:clamp(70px,9vw,130px);filter:drop-shadow(0 4px 10px rgba(0,0,0,.7))}
+.live .lower{position:absolute;left:0;right:0;bottom:0}
+.live .lower .bar{background:linear-gradient(90deg,var(--red),#7a1712);color:#fff;font-family:var(--display);font-size:clamp(1.4rem,3.2vw,2.8rem);padding:.25em 1em;display:flex;justify-content:space-between;align-items:center}
+.live .ticker{background:#0d1f18;color:var(--gold);font-weight:800;font-size:clamp(1rem,2vw,1.6rem);white-space:nowrap;overflow:hidden;padding:.45em 0;border-top:3px solid var(--gold)}
+.live .ticker span{display:inline-block;padding-left:100%;animation:tick 70s linear infinite}
+@keyframes tick{to{transform:translateX(-100%)}}
+.live .x{position:absolute;top:44px;left:50%;transform:translateX(-50%)}
+.interview .q{font-size:clamp(1.8rem,4.2vw,3.6rem);font-weight:800;max-width:26ch;line-height:1.2;min-height:2.5em}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:700px}
 .lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
@@ -195,7 +230,7 @@ body{cursor:default}
 <div id="lights"></div>
 <div id="stage" aria-live="polite"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
-<div class="hud bl"><button id="capbtn" aria-label="Capitol Interruption" title="Capitol Interruption (C)">⚡</button><button data-mute id="mute" aria-label="Mute sound" title="Mute (M)">🔊</button><button id="fs" aria-label="Fullscreen" title="Fullscreen (F)">⛶</button></div>
+<div class="hud bl"><button id="intbtn" aria-label="Intermission" title="Intermission (I)">☕</button><button id="chutebtn" aria-label="Sponsor gift" title="Sponsor gift (P)">🪂</button><button id="livebtn" aria-label="Live broadcast" title="Live broadcast (W)">🎥</button><button id="capbtn" aria-label="Capitol Interruption" title="Capitol Interruption (C)">⚡</button><button data-mute id="mute" aria-label="Mute sound" title="Mute (M)">🔊</button><button id="fs" aria-label="Fullscreen" title="Fullscreen (F)">⛶</button></div>
 <div class="hud br"><button id="prev" aria-label="Previous slide">◀</button><span id="count">1 / 1</span><button id="next" aria-label="Next slide">▶</button></div>
 <div id="start" role="button" tabindex="0" aria-label="Start the show">
   <div><img src="/xmas/emblem.png" alt=""><h1>The 2026 Christmas Games</h1><p>Gamemaker, click anywhere to start the show (sound on).</p>
@@ -215,7 +250,7 @@ const d=s=>`data-d="${s}"`;
 const victorLabel=g=>{const v=XM.victors()[g];return v?`🏆 Victor: ${esc(v)}`:"🏆 Record victor"};
 const AWARD={treasure:"💎",mystery:"❓",junk:"🗑️"};
 const awards=()=>XM.store.get("xmas-awards",{});
-const tbBtn=g=>`<div class="corner" data-corner="${g}">${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-unbox="${g}">🎁 ${awards()[g]?AWARD[awards()[g]]+" Unboxed":"Unbox"}</button>`:""}${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
+const tbBtn=g=>`<div class="corner" data-corner="${g}">${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-interview="${g}" title="Victor's interview">🎤</button>`:""}${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-unbox="${g}">🎁 ${awards()[g]?AWARD[awards()[g]]+" Unboxed":"Unbox"}</button>`:""}${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
 const openBtn=(url,label,cls="")=>`<a class="btn bigbtn ${cls}" href="${url}" target="_blank" rel="noopener">${label}</a>`;
 
 // st(): like setTimeout, but skipped if the presenter has already moved to another slide
@@ -301,6 +336,12 @@ function orderSlide(k,blurb){
     enter(el){orderView(k,el.querySelector("#oarea"),blurb,el)}};
 }
 
+// flames around a tribute's photo, like the chariot parade
+function fireHTML(){const R=(a,b)=>a+Math.random()*(b-a);let h="";
+  for(let k=0;k<20;k++)h+=`<span style="left:${k/19*100}%;--w:${R(110,180)}px;--h:${R(200,340)}px;--s:${R(.35,.7)}s;--d:${-R(0,.7)}s"></span>`;
+  for(let k=0;k<12;k++){const left=k%2?R(94,104):R(-4,6);h+=`<span class="side" style="left:${left}%;--top:${R(0,75)}%;--w:${R(90,140)}px;--h:${R(160,260)}px;--s:${R(.35,.7)}s;--d:${-R(0,.7)}s"></span>`}
+  for(let k=0;k<12;k++)h+=`<i class="spark" style="left:${R(5,95)}%;--dx:${R(-120,120)}px;--s:${R(1.4,2.8)}s;--d:${-R(0,2.8)}s"></i>`;
+  return `<div class="fire">${h}</div>`}
 /* ---------- deep-voice announcer for the tribute profiles ---------- */
 // Uses the laptop's built-in speech voice, pitched way down. Names are spelled for the voice the way they're said.
 const SAY=XM.SAY;
@@ -458,12 +499,12 @@ const SLIDES=[
       <b style="font-size:30px">${esc(t.name)}</b></div>`).join("")}</div></div>`,
    enter(){for(let i=0;i<12;i++)st(()=>XM.sfx("pop"),500+i*120)}},
  ...TRIBUTES.map(t=>({id:"d"+t.d,music:"march",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
-    <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><img src="${t.full}" alt="" style="max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"><span class="dtag" style="top:0;left:-20px">DISTRICT ${t.d}</span></div>
+    <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${fireHTML()}${t.d===11?`<div class="qcrown">👑</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">DISTRICT ${t.d}</span></div>
     <div style="display:grid;gap:26px">
       <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.label||"TRIBUTE PROFILE"}</div>
       <h1 class="title-xl slam" ${d(.7)} style="font-size:${t.name.length>8?118:150}px">${esc(t.name)}</h1>
       ${[["canes","WEAPON OF CHOICE",t.weapon],["snowflake","SURVIVAL STRATEGY",t.strategy],["coins","CAPITOL ODDS",t.odds]].map(([ic,k,v],i)=>`<div class="card stat" data-stat="${i}" style="opacity:0"><img src="${ICON(ic)}" alt=""><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></div>`).join("")}
-    </div></div>`,enter(el){XM.sfx("whoosh");st(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
+    </div></div>`,enter(el){XM.sfx("whoosh");XM.sfx("cheer");if(t.d===11){st(()=>XM.sfx("fanfare"),700);st(()=>XM.sfx("fanfare"),1500)}st(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
  {id:"begin",music:"stop",big:true,html:()=>`<div class="burst" style="--gc:#a32820;opacity:.6"></div><div class="vign"></div>
     <div style="position:relative;display:grid;justify-items:center;gap:20px">
       <img src="${ICON("cannon")}" alt="" class="fl" style="width:260px" id="cannon">
@@ -568,6 +609,9 @@ function go(i){
   if(s.id.endsWith("-cookie"))cookieStorm(el,s.id==="game-cookie");
   if(s.id.endsWith("-scoop"))snowballFight(el,s.id==="game-scoop");
   const light=s.id.startsWith("order-");
+  if(s.id==="game-tribute")emojiStorm(el,true,()=>"🔍",true);
+  if(s.id==="game-feud")emojiStorm(el,true,()=>"🏆",true);
+  if(s.id==="game-secrets")emojiStorm(el,true,()=>"🕵️",true);
   if(s.id.endsWith("-mitten"))emojiStorm(el,s.id==="game-mitten",()=>`<img src="/xmas/icons/mitten.png" alt="" style="width:1em;height:1em;display:block;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 2px #fff)">`,light);
   if(s.id.endsWith("-lrc"))emojiStorm(el,s.id==="game-lrc",()=>"🎲",light);
   if(s.id.includes("bingo"))emojiStorm(el,s.id==="game-bingo",()=>{const n=1+Math.floor(Math.random()*75),l=Math.floor((n-1)/15);
@@ -605,6 +649,7 @@ function wireSlide(el){
   el.querySelectorAll("a[target]").forEach(a=>a.addEventListener("click",()=>{XM.stopSong();XM.sfx("go")}));
   el.querySelectorAll("[data-victor]").forEach(b=>b.onclick=e=>{e.stopPropagation();pickVictor(b.dataset.victor)});
   el.querySelectorAll("[data-unbox]").forEach(b=>b.onclick=e=>{e.stopPropagation();unbox(b.dataset.unbox)});
+  el.querySelectorAll("[data-interview]").forEach(b=>b.onclick=e=>{e.stopPropagation();interview(b.dataset.interview)});
   const ph=el.querySelector("#photo");if(ph)ph.onclick=e=>{e.stopPropagation();photoCountdown()};
   el.querySelectorAll("[data-skip]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.sfx("whoosh");next()});
   const m=el.querySelector("#memo");if(m)m.onclick=e=>{e.stopPropagation();memorial()};
@@ -620,6 +665,9 @@ go(startI);
 document.getElementById("start").addEventListener("click",e=>{e.stopPropagation();begin()});
 document.getElementById("next").onclick=e=>{e.stopPropagation();next()};
 document.getElementById("prev").onclick=e=>{e.stopPropagation();prev()};
+document.getElementById("chutebtn").onclick=e=>{e.stopPropagation();if(started)sponsorGift()};
+document.getElementById("livebtn").onclick=e=>{e.stopPropagation();if(started)liveBroadcast()};
+document.getElementById("intbtn").onclick=e=>{e.stopPropagation();if(started)intermission()};
 document.getElementById("capbtn").onclick=e=>{e.stopPropagation();if(started)capitolInterruption()};
 document.getElementById("mute").onclick=e=>{e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()};
 document.getElementById("fs").onclick=e=>{e.stopPropagation();toggleFS()};
@@ -643,6 +691,9 @@ document.addEventListener("keydown",e=>{
   else if(["ArrowLeft","ArrowUp","PageUp","Backspace"].includes(k)){e.preventDefault();prev()}
   else if(k==="f"||k==="F"){toggleFS()}
   else if(k==="c"||k==="C"){capitolInterruption()}
+  else if(k==="i"||k==="I"){intermission()}
+  else if(k==="p"||k==="P"){sponsorGift()}
+  else if(k==="w"||k==="W"){liveBroadcast()}
   else if(k==="m"||k==="M"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}
   else if(k==="Home")go(0);else if(k==="End")go(SLIDES.length-1);
 });
@@ -723,6 +774,120 @@ function capitolInterruption(){
     m.querySelector("#c-x").onclick=e=>{e.stopPropagation();close()};
   };
   run();
+}
+
+/* ---------- Intermission: bathroom and drink break ---------- */
+function intermission(){
+  if(busy())return;XM.ensureAudio();const prev=XM.currentSong();XM.stopSong();announcer.stop();
+  const m=document.createElement("div");m.className="moment inter";document.body.appendChild(m);let alive=true,left=0,end=0,iv=0;
+  const mix=a=>a.slice().sort(()=>Math.random()-.5);const facts=[];const hg=mix(HG_FACTS),xm=mix(XMAS_FACTS);
+  for(let k=0;k<Math.max(hg.length,xm.length);k++){if(hg[k])facts.push(["🏹 HUNGER GAMES FUN FACT",hg[k]]);if(xm[k])facts.push(["🎄 CHRISTMAS FUN FACT",xm[k]])}let f=0;
+  m.innerHTML=`<div class="inner" style="gap:clamp(6px,1.4vh,16px)">
+    <h1>☕ Intermission</h1><div style="font-size:clamp(1.2rem,2.6vw,2rem);font-weight:600">Grab a drink. Take a break. The Games will resume shortly.</div>
+    <div class="clock" id="iclock">☕</div><div id="imsg" style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--gold);min-height:1.2em"></div>
+    <div class="row" id="ipick"><span class="eb" style="align-self:center">Timer:</span>${[5,10,15].map(n=>`<button class="btn ghost" data-min="${n}">${n} min</button>`).join("")}<button class="btn ghost" data-min="0">No timer</button></div>
+    <div class="row" id="iadj" style="display:none"><button class="btn ghost" id="iminus">−1 min</button><button class="btn ghost" id="iplus">+1 min</button></div>
+    <div class="card fact" id="ifact" style="padding:16px 24px"></div>
+    <button class="btn red" id="iresume" style="font-size:1.4rem;padding:.8em 2em">▶ Resume the Games (Esc)</button></div>`;
+  const clock=m.querySelector("#iclock"),msg=m.querySelector("#imsg"),fact=m.querySelector("#ifact");
+  const showFact=()=>{fact.style.opacity=0;setTimeout(()=>{if(!alive)return;const [l,t]=facts[f%facts.length];f++;
+    fact.innerHTML=`<div class="eb" style="color:${l.startsWith("🎄")?"#6fe38e":"var(--gold)"}">${l}</div><div style="margin-top:6px">${esc(t)}</div>`;fact.style.opacity=1},600)};
+  showFact();const fiv=setInterval(()=>alive&&showFact(),9000);
+  const fmt=sec=>Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
+  const tick=()=>{if(!alive)return;left=Math.max(0,Math.round((end-Date.now())/1000));clock.textContent=fmt(left);
+    if(left===60&&!m.dataset.warned){m.dataset.warned=1;XM.sfx("sparkle");announcer.say("One minute left in the intermission!",null,{pitch:.15,rate:.88})}
+    if(left<=0){clearInterval(iv);iv=0;clock.classList.add("done");clock.textContent="0:00";msg.textContent="Tributes, return to your seats!";
+      XM.stopSong();XM.sfx("gong");setTimeout(()=>alive&&XM.sfx("fanfare"),700);XM.confetti(160,true);
+      announcer.say("Tributes, return to your seats! The Games resume!",null,{pitch:.1,rate:.82})}};
+  const start=min=>{clearInterval(iv);iv=0;clock.classList.remove("done");msg.textContent="";delete m.dataset.warned;
+    m.querySelectorAll("[data-min]").forEach(b=>b.setAttribute("aria-pressed",String(+b.dataset.min===min)));
+    if(!min){clock.textContent="☕";m.querySelector("#iadj").style.display="none";return}
+    m.querySelector("#iadj").style.display="";end=Date.now()+min*60000;tick();iv=setInterval(tick,250);XM.playSong("hh_lounge")};
+  const adj=d=>{if(!iv&&!clock.classList.contains("done"))return;if(!iv){end=Date.now();clock.classList.remove("done");msg.textContent="";iv=setInterval(tick,250);XM.playSong("hh_lounge")}
+    end=Math.max(Date.now()+1000,end+d*60000);delete m.dataset.warned;tick()};
+  const close=()=>{alive=false;clearInterval(iv);clearInterval(fiv);m.remove();announcer.stop();XM.stopSong();document.removeEventListener("keydown",key,true);
+    const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter","i","I","c","C"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
+  document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
+  m.querySelectorAll("[data-min]").forEach(b=>b.onclick=e=>{e.stopPropagation();start(+b.dataset.min)});
+  m.querySelector("#iplus").onclick=e=>{e.stopPropagation();adj(1)};m.querySelector("#iminus").onclick=e=>{e.stopPropagation();adj(-1)};
+  m.querySelector("#iresume").onclick=e=>{e.stopPropagation();close()};
+  XM.playSong("hh_lounge");XM.sfx("gong");
+  announcer.say("Intermission! Grab a drink, take a break. The Games will resume shortly.",null,{pitch:.15,rate:.88});
+}
+
+/* shared helper for full-screen moments */
+function openMoment(cls,{stopMusic=true}={}){
+  XM.ensureAudio();const prev=XM.currentSong();if(stopMusic)XM.stopSong();announcer.stop();
+  const m=document.createElement("div");m.className="moment "+cls;document.body.appendChild(m);const timers=[];let alive=true;
+  const T=(f,ms)=>{timers.push(setTimeout(()=>alive&&f(),ms))};
+  const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)||/^[a-zA-Z]$/.test(e.key)){e.preventDefault();e.stopPropagation()}};
+  const close=()=>{if(!alive)return;alive=false;timers.forEach(clearTimeout);m.remove();announcer.stop();document.removeEventListener("keydown",key,true);if(m.onClose)m.onClose();
+    if(stopMusic){const s=SLIDES[cur];const mu=prev||(s.music&&s.music!=="stop"?s.music:null);if(mu)XM.playSong(mu,true)}};
+  document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
+  return {m,T,close};
+}
+
+/* ---------- Sponsor gifts: silver parachutes ---------- */
+const PERKS=["Skip your turn once in Left, Right, Capitol","Steal one chip from anyone in Left, Right, Capitol","You pick who goes first in the next game",
+ "Immunity from the next Capitol Interruption","Choose who you face first on the Matchup Wheel","Get a 5-second head start in your next face-off",
+ "Pick the music for the next game","Swap seats with anyone, right now","Give a Capitol Interruption to anyone you choose","First pick of the snacks",
+ "One free re-roll in Left, Right, Capitol","Make someone else keep the blindfold on 5 extra seconds","You get to read the next bingo number out loud",
+ "A free hint from the Gamemaker in the next screen game"];
+let perkBag=[];const nextPerk=()=>{if(!perkBag.length)perkBag=PERKS.slice().sort(()=>Math.random()-.5);return perkBag.pop()};
+function sponsorGift(){
+  if(busy())return;const {m,T,close}=openMoment("giftm");m.style.background="radial-gradient(circle at 50% 30%,rgba(60,90,120,.6),rgba(6,14,22,.96) 70%)";
+  const who=TRIBUTES[Math.random()*12|0].name,perk=nextPerk();
+  m.innerHTML=`<div class="chute"><div class="canopy"></div><div class="lines"></div><div class="pod">🎁</div></div>
+    <div class="inner" style="margin-top:38vh;gap:12px"><div class="eb" style="color:#cfe3ff;font-size:1rem">A SPONSOR HAS SENT A GIFT</div>
+    <div id="gv" style="visibility:hidden;display:flex;align-items:center;gap:18px"><img src="${XM.photo(who)}" alt="" style="width:clamp(90px,13vh,150px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold)"><b style="font-family:var(--display);font-weight:400;font-size:clamp(1.8rem,4vw,3rem);color:#fff">${esc(who)}</b></div>
+    <div id="gp" style="font-size:clamp(1.5rem,3.2vw,2.6rem);font-weight:800;max-width:26ch;min-height:2.4em"></div>
+    <div class="row" id="gr" style="visibility:hidden"><button class="btn" id="g-again">🪂 Another gift</button><button class="btn ghost" id="g-x">Done (Esc)</button></div></div>`;
+  XM.sfx("whoosh");announcer.say("A sponsor has sent a gift!",null,{pitch:.15,rate:.88});
+  T(()=>{XM.sfx("sparkle");XM.sfx("reveal");m.querySelector(".pod").textContent="✨";m.querySelector("#gv").style.visibility="visible";
+    m.querySelector("#gp").textContent=perk;m.querySelector("#gr").style.visibility="visible";XM.confetti(120);
+    announcer.say(`For ${XM.spoken(who)}... ${perk}!`,null,{pitch:.15,rate:.88})},3100);
+  m.querySelector("#g-again").onclick=e=>{e.stopPropagation();close();setTimeout(sponsorGift,50)};
+  m.querySelector("#g-x").onclick=e=>{e.stopPropagation();close()};
+}
+
+/* ---------- Victor's interview (Caesar Flickerman style) ---------- */
+const QUESTIONS=["Who did you fear most in the arena?","Thank your sponsors. Go.","What was your secret strategy?","Describe your victory in three words.",
+ "Who do you want to thank? You have ten seconds.","Who was robbed tonight?","What will you do with your major award?","Give us your best victory pose.",
+ "Who are you coming for next game?","On a scale of 1 to 10, how rigged was that?","What would you say to the tributes you defeated?",
+ "Was it skill or luck? Be honest.","What's your walk-up song?","Say something nice about your toughest opponent.","Any words for the Gamemaker?"];
+function interview(g){
+  if(busy())return;const who=XM.victors()[g]||"Victor";const {m,T,close}=openMoment("interview");
+  const qs=QUESTIONS.slice().sort(()=>Math.random()-.5);let i=0;
+  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · VICTOR'S INTERVIEW</div><h1>🎤 Caesar asks...</h1>
+    ${XM.photo(who)?`<img src="${XM.photo(who)}" alt="" style="width:clamp(130px,20vh,200px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red)">`:""}
+    <div style="font-family:var(--display);font-size:clamp(1.8rem,4vw,3rem);color:var(--gold)">${esc(who)}</div>
+    <div class="q" id="iq"></div><div class="row"><button class="btn" id="i-next">🎤 Next question</button><button class="btn ghost" id="i-x">Done (Esc)</button></div></div>`;
+  const ask=()=>{const q=qs[i++%qs.length];const el=m.querySelector("#iq");el.textContent=q;el.animate([{transform:"scale(.6)",opacity:0},{transform:"scale(1)",opacity:1}],{duration:400,easing:"cubic-bezier(.2,1.4,.4,1)"});
+    XM.sfx("pop");announcer.stop();announcer.say(`${XM.spoken(who)}... ${q}`,null,{pitch:.3,rate:.95})};
+  XM.sfx("applause");T(ask,700);
+  m.querySelector("#i-next").onclick=e=>{e.stopPropagation();ask()};m.querySelector("#i-x").onclick=e=>{e.stopPropagation();close()};
+}
+
+/* ---------- Live "Capitol broadcast" from the laptop camera ---------- */
+const TICKER=["BREAKING: QUEEN MOTHER favored to win, odds 1 to 1, obviously","Capitol officials investigate suspicious cookie crumbs","Sponsors report record pie consumption in the living room",
+ "Weather: 100% chance of trash talk","Grandad spotted fixing something. Nobody knows what.","Kamdon has already calculated your odds. They are not good.",
+ "Tinsley's memes reach the Capitol","Natalie breaks into song mid-broadcast","Brandon has not sat down in 3 hours","Gamemaker denies all rigging allegations. Probably.",
+ "Kyle rushes the arena like it's pledge week","Jessie offers free trims to anyone who surrenders","Elisha seen out-planking a tribute","Jonny posts a pep talk. Morale soars.",
+ "Dash spotted running. Reason unknown.","May the odds be ever in your favor"];
+function liveBroadcast(){
+  if(busy())return;const {m,close}=openMoment("live",{stopMusic:false});let stream=null;
+  m.innerHTML=`<video autoplay playsinline muted></video><div class="tag">🔴 LIVE FROM THE ARENA</div><img class="logo" src="/xmas/emblem.png" alt="">
+    <button class="btn ghost x" id="l-x">✕ End broadcast (Esc)</button>
+    <div class="lower"><div class="bar"><span>The 2026 Christmas Games</span><span style="font-family:var(--body);font-weight:800;font-size:.6em">THANKSMAS EDITION · CAPITOL TV</span></div>
+    <div class="ticker"><span>${TICKER.slice().sort(()=>Math.random()-.5).map(esc).join("   ★   ")}</span></div></div>`;
+  m.onClose=()=>{if(stream)stream.getTracks().forEach(t=>t.stop())};
+  m.querySelector("#l-x").onclick=e=>{e.stopPropagation();close()};
+  XM.sfx("stinger");announcer.say("We now go live to the arena!",null,{pitch:.15,rate:.88});
+  const noCam=()=>{const v=m.querySelector("video");if(v)v.outerHTML=`<div style="color:var(--ink);text-align:center;font-size:1.6rem;max-width:30ch">📷 The Capitol can't see the arena.<br><span class="tiny" style="font-size:1rem">Chrome needs permission to use the camera: click the camera icon in the address bar, choose Allow, then press 🎥 again.</span></div>`};
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){noCam();return}
+  navigator.mediaDevices.getUserMedia({video:{width:{ideal:1920},height:{ideal:1080}},audio:false})
+    .then(st=>{stream=st;if(!m.isConnected){st.getTracks().forEach(t=>t.stop());return}m.querySelector("video").srcObject=st}).catch(noCam);
 }
 
 /* ---------- Major award unboxing ---------- */

@@ -71,6 +71,10 @@ h1.title{font-size:clamp(2rem,5vw,3.6rem);color:var(--gold);text-shadow:0 3px 0 
 @keyframes inR{from{transform:translateX(80vw) rotate(30deg)}}
 @keyframes crownDrop{from{transform:translateY(-60vh) rotate(-40deg)}}
 @keyframes bob{to{transform:translateY(-6px) rotate(4deg)}}
+.fallen{position:fixed;left:6vw;bottom:6vh;z-index:60;display:grid;justify-items:center;gap:6px;pointer-events:none;animation:ascend 5s ease-in both}
+.fallen img{width:min(18vh,160px);aspect-ratio:1;border-radius:50%;object-fit:cover;filter:grayscale(1) brightness(1.2);box-shadow:0 0 30px rgba(255,255,255,.6)}
+.fallen b{font-family:var(--display);font-weight:400;color:#e8eef0;font-size:1.4rem;text-shadow:0 2px 6px #000}
+@keyframes ascend{0%{transform:translateY(0) scale(.6);opacity:0}15%{opacity:.95;transform:translateY(-4vh) scale(1)}100%{transform:translateY(-75vh) scale(.7);opacity:0}}
 @media (max-width:860px){.layout{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 </style>
@@ -176,7 +180,7 @@ function versus(i){
   const close=()=>{XM.hush();ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
   ov.querySelector("#vs-timer").onclick=()=>{XM.hush();ov.remove();openTimer(i)};
-  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{XM.hush();m.win=m[b.dataset.vswin];ov.remove();render();stopSong();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
+  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{XM.hush();m.win=m[b.dataset.vswin];ov.remove();render();stopSong();XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
   ov.querySelector("#vs-tie").onclick=()=>{XM.hush();ov.remove();tiebreak([m.a,m.b],m)};
 }
 
@@ -187,6 +191,13 @@ function booms(ov){
     const v=ov.querySelector(".VS");if(v)v.animate([{transform:"scale(1)"},{transform:`scale(${1.35+k*.15})`,filter:"brightness(1.8)"},{transform:"scale(1)"}],{duration:420,easing:"cubic-bezier(.2,1.4,.4,1)"});
     ov.querySelectorAll(".fighter img").forEach(i=>i.animate([{transform:"scale(1)"},{transform:"scale(1.06)"},{transform:"scale(1)"}],{duration:300}));
     if(k===2)confetti(120)},d));
+}
+
+// The losing tribute gets the cannon and fades up into the sky, like in the books
+function fallen(name){
+  if(!name)return;sfx("cannon");
+  const f=document.createElement("div");f.className="fallen";
+  f.innerHTML=`<img src="${AV(name)}" alt=""><b>${esc(name)}</b>`;document.body.appendChild(f);setTimeout(()=>f.remove(),5200);
 }
 
 /* ---------- flow ---------- */
@@ -217,7 +228,7 @@ function openTimer(i){
   const stop=()=>{clearInterval(iv);clearTimeout(to);iv=0;to=0;XM.hush()};
   const close=()=>{stop();ov.remove();stopSong();if(S.phase==="play")playSong("board")};
   ov.querySelector("#tclose").onclick=close;
-  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{stop();m.win=m[b.dataset.twin];ov.remove();stopSong();render();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
+  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{stop();m.win=m[b.dataset.twin];ov.remove();stopSong();render();XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
   ov.querySelector("#ttie").onclick=()=>{stop();ov.remove();tiebreak([m.a,m.b],m)};
   const word=["zero","one","two","three","four","five"];
   const num=(t,hot)=>{const el=ov.querySelector("#tnum");if(!el)return;el.textContent=t;el.style.color=hot?"#ff6b5e":"";el.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350,easing:"cubic-bezier(.2,1.4,.4,1)"})};
@@ -237,7 +248,7 @@ function openTimer(i){
     },1000)};
 }
 function tiebreak(names,match){
-  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,lock:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render()}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
+  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,lock:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render();setTimeout(()=>fallen(w===match.a?match.b:match.a),300)}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
 }
 
 /* ---------- views ---------- */
@@ -302,7 +313,7 @@ function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
   document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");loadS(S.game);render()});
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{S.present[b.dataset.here]=!S.present[b.dataset.here];XM.store.set("xmas-present",S.present);sfx(S.present[b.dataset.here]?"tap":"untap");render()});
-  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];render();if(m.win)XM.celebrate(m.win);else sfx("untap")});
+  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];render();if(m.win){XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a)}else sfx("untap")});
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
   document.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{ensureAudio();versus(+b.dataset.vs)});
   document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b],m)});

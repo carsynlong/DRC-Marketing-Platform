@@ -346,7 +346,7 @@ function hostDraw(){
   const df2=p.querySelector("#decoyform");if(df2)df2.onsubmit=e=>{e.preventDefault();const t=p.querySelector("#decoytext").value.trim();if(t){p.querySelector("#decoytext").value="";hostDecoy("decoy",t)}};
 }
 /* ❓ the rules again, any time during the game: a little button bottom-left opens them */
-let rulesOpen=false;
+let rulesOpen=false;window.HOWTO_OWN_BUTTON=true;   // howto.js leaves its ❓ off this page
 function rulesDraw(){
   const g=D.game,want=g&&D.me&&!["lobby","howto"].includes(g.phase);
   let b=$("#rulesbtn"),box=$("#rulesbox");

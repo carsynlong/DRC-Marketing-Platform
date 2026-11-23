@@ -338,7 +338,10 @@ function playSong(name){
     }
   },25);
 }
-function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop()}
+function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop();window.Track&&Track.stop()}
+/* 🏆 Who's That Tribute's winner song (Carsyn's track, starting at 0:09), the instant the winner is revealed */
+const WIN_TRACK="/sfx/winner-tribute.m4a";
+function playWinner(){if(song&&song.win)return;stopSong();S.sound=true;song={win:1};try{ensureAudio()}catch(e){}if(window.Track)Track.play(WIN_TRACK)}
 function sfx(kind){
   if(!S.sound||!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")osc("square",1320,t,.06,.08,sfxBus);
@@ -405,7 +408,8 @@ function showIntro(){
     ["🎉","Tap the emojis on your phone to send them up the TV. Highest score wins!"]]});
 }
 function newGame(){
-  Sync.reset();Party.reset();S.mode="type";
+  Sync.reset();Party.reset();S.mode="type";if(window.Track)Track.preload(WIN_TRACK);   // winner song ready ahead of time
+
   // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
   S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
@@ -488,7 +492,7 @@ function score(){
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
   if(S.phase==="final"&&Party.tie())return;   // tied at the top: showdown first
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),2600)}else playSong("board");
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);playWinner()}else playSong("board");   // winner music starts right away
   render();
 }
 function next(){S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();}
@@ -647,4 +651,14 @@ if(window.Ticker)Ticker.start({theme:"tribute",label:"🏆 Leaderboard",photo:AV
   rows:()=>["lobby","board","final"].includes(S.phase)?null:active().map(p=>({name:p.name,score:p.score}))});
 </script>
 
+<script>
+/* 🎵 lobby music as soon as the page opens. Browsers hold sound back until the first click or key press,
+   so if it's blocked it starts on your first click anywhere. */
+(function autoLobby(){
+  const go=()=>{try{if(!S||S.phase!=="lobby"||!S.sound)return;ensureAudio();if(!song)playSong("lobby")}catch(e){}};
+  setTimeout(go,300);
+  const first=()=>{removeEventListener("pointerdown",first,true);removeEventListener("keydown",first,true);setTimeout(go,0)};
+  addEventListener("pointerdown",first,true);addEventListener("keydown",first,true);
+})();
+</script>
 </body></html>

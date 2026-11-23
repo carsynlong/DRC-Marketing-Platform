@@ -39,6 +39,8 @@ const Extras = (() => {
   .hint b{color:var(--gold);font-family:var(--display);font-weight:400}
   .shoptoast{position:fixed;left:50%;top:14vh;transform:translateX(-50%);z-index:9;background:#2a0f12;color:#fff;font-weight:800;font-size:clamp(1rem,2.2vw,1.5rem);
     padding:.6em 1.4em;border-radius:16px;box-shadow:0 0 0 3px #e0233a,0 10px 30px rgba(0,0,0,.5);animation:pop .6s cubic-bezier(.2,1.5,.4,1) both}
+  body.winbg{background:linear-gradient(rgba(13,31,24,.55),rgba(13,31,24,.82)),url(img/winner-bg.jpg) center 25%/cover fixed!important;animation:winbg 1.2s ease-out}
+  @keyframes winbg{from{background-size:auto,140%}}
   .iv{display:grid;gap:16px;justify-items:center;text-align:center;padding-block:2vh}
   .iv .av{width:clamp(120px,16vw,200px);height:clamp(120px,16vw,200px);box-shadow:0 0 0 5px var(--gold),0 0 60px rgba(232,176,75,.6)}
   .iv h1{font-size:clamp(2rem,5vw,3.6rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d)}
@@ -100,12 +102,14 @@ const Extras = (() => {
       if (st && !st.querySelector(".twtag")) st.insertAdjacentHTML("beforeend", `<div class="twtag">${TWISTS[tw()].icon} ${TWISTS[tw()].title}</div>`);
     }
     if (S.phase === "interview") wireInterview();
+    // 🏆 winner background (Carsyn's pick) while the winner song plays
+    document.body.classList.toggle("winbg", S.phase === "final" || S.phase === "interview");
     // 🎵 music on/off, top-right on the winner and interview screens
     let mb = document.getElementById("winmusic");
     if (S.phase === "final" || S.phase === "interview") {
       if (!mb) { mb = document.createElement("button"); mb.id = "winmusic"; mb.className = "btn";
         mb.style.cssText = "position:fixed;top:14px;right:14px;z-index:50;padding:.6em 1.1em;font-size:1.05rem";
-        mb.onclick = () => { try { ensureAudio(); } catch (e) {} if (song) { stopSong(); } else { S.sound = true; playSong("lobby"); } label(); };
+        mb.onclick = () => { try { ensureAudio(); } catch (e) {} if (song) { stopSong(); } else { playWinner(); } label(); };
         document.body.appendChild(mb); }
       label();
     } else if (mb) mb.remove();

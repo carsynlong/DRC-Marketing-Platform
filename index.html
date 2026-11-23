@@ -488,7 +488,7 @@ function score(){
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
   if(S.phase==="final"&&Party.tie())return;   // tied at the top: showdown first
-  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);setTimeout(()=>S.phase==="final"&&playSong("lobby"),300)}else playSong("board");
+  if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);S.sound=true;playSong("lobby")}else playSong("board");   // winner music starts right away
   render();
 }
 function next(){S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();}

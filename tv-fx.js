@@ -150,7 +150,7 @@
       if (now.phase === "question") swoop();
       if (now.phase === "reveal") spotlights();
       // the winner's music always plays: sound switched on, music right after the fanfare
-      if (now.phase === "final" && prev.phase !== "interview") { S.sound = true; setTimeout(() => { if (S.phase === "final") { try { ensureAudio(); playSong("lobby"); } catch (e) {} } }, 2800); }
+      if (now.phase === "final" && prev.phase !== "interview") { S.sound = true; setTimeout(() => { if (S.phase === "final") { try { ensureAudio(); playSong("lobby"); } catch (e) {} } }, 300); }
       if (now.phase === "final") { fireworks(12); setTimeout(finale, 300); }
       if (now.phase === "roundcard" && S.qi >= FEAST) setTimeout(feastCard, 50);
       if ((now.phase === "board" || now.phase === "final") && prev.phase === "reveal" && !S.correct.length) sky();

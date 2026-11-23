@@ -41,12 +41,12 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 @keyframes tbIn{from{opacity:0;transform:scale(1.04)}}
 .tb .tb-top{position:fixed;top:44px;left:0;right:0;display:flex;justify-content:space-between;padding:0 max(16px,2vw);pointer-events:none;z-index:2}
 .tb .tb-top>*{pointer-events:auto}
-.tb .inner{width:min(1500px,100%);display:flex;flex-direction:column;align-items:center;gap:clamp(10px,2vh,22px);margin:auto 0}
-.tb h1.big{font-size:clamp(2.4rem,7vw,6.4rem);color:var(--gold);text-shadow:0 5px 0 var(--red-d);line-height:1}
-.tb .rules{font-size:clamp(1.1rem,2.2vw,1.9rem);max-width:46ch;line-height:1.3}
+.tb .inner{width:min(1500px,100%);display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.6vh,20px);margin:auto 0}
+.tb h1.big{font-size:clamp(2rem,min(6vw,9vh),6rem);color:var(--gold);text-shadow:0 5px 0 var(--red-d);line-height:1}
+.tb .rules{margin:0;font-size:clamp(1.05rem,min(2.2vw,3vh),1.9rem);max-width:46ch;line-height:1.3}
 .tb .faces{display:flex;flex-wrap:wrap;gap:clamp(8px,1.4vw,18px);justify-content:center}
 .tb .face{display:grid;justify-items:center;gap:6px;padding:8px;border-radius:18px;transition:transform .15s,opacity .2s;position:relative}
-.tb .face img{width:clamp(70px,9vw,140px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line);transition:box-shadow .15s}
+.tb .face img{width:clamp(56px,min(8vw,12vh),140px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line);transition:box-shadow .15s}
 .tb .face b{font-weight:800;font-size:clamp(.9rem,1.4vw,1.25rem)}
 .tb .face .d{font-size:.75rem;color:var(--muted);letter-spacing:.1em}
 .tb .face:hover{transform:translateY(-3px)}
@@ -63,13 +63,13 @@ button:focus-visible,a:focus-visible{outline:3px solid var(--gold);outline-offse
 .tb .opt b{font-family:var(--display);font-weight:400;font-size:1.3rem;color:var(--gold)}
 .tb .opt span{font-size:.92rem;color:var(--muted)}
 .tb .opt.fate{background:linear-gradient(160deg,#4a1712,#16302a);box-shadow:inset 0 0 0 3px var(--red)}
-.tb .clock{font-family:var(--display);font-size:clamp(5rem,15vw,12rem);color:var(--gold);line-height:1;text-shadow:0 6px 0 var(--red-d);font-variant-numeric:tabular-nums}
+.tb .clock{font-family:var(--display);font-size:clamp(3.5rem,min(13vw,15vh),11rem);color:var(--gold);line-height:1;text-shadow:0 6px 0 var(--red-d);font-variant-numeric:tabular-nums}
 .tb .clock.hot{color:#ff6b5e;animation:pulse .5s infinite alternate}
 @keyframes pulse{to{transform:scale(1.06)}}
 .tb .panel{background:var(--night-2);border-radius:20px;padding:clamp(12px,2vw,22px);box-shadow:0 0 0 1px var(--line);width:min(1100px,100%)}
 .tb .who{font-family:var(--display);font-size:clamp(1.3rem,2.4vw,2rem);color:var(--gold)}
 .tb .ttl{animation:slam .7s cubic-bezier(.2,1.4,.4,1) both}
-.tb .ic-big{font-size:clamp(3rem,7vw,6rem);animation:spinIn .9s cubic-bezier(.2,1.2,.4,1) both;display:inline-block}
+.tb .ic-big{font-size:clamp(2.2rem,min(6vw,8vh),5.5rem);animation:spinIn .9s cubic-bezier(.2,1.2,.4,1) both;display:inline-block}
 .tb .dice{display:flex;flex-wrap:wrap;gap:18px;justify-content:center}
 .tb .die-card{display:grid;justify-items:center;gap:8px;padding:12px;border-radius:18px;background:rgba(0,0,0,.25);min-width:140px}
 .tb .die-card img{width:72px;height:72px;border-radius:50%;object-fit:cover}

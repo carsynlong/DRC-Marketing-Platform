@@ -101,6 +101,11 @@ const INST={
   timp:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(hz(m)*1.5,t);o.frequency.exponentialRampToValueAtTime(hz(m),t+.08);
     o.connect(g);g.connect(musicBus);env(g,t,.004,v*.6,1.2);o.start(t);o.stop(t+1.3);noise(t,.15,v*.12,musicBus,"lowpass",500)},
   snare:(t,m,d,v)=>noise(t,.12,v*.16,musicBus,"bandpass",2200,.8),
+  taiko:(t,m,d,v)=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(38,t+.25);
+    o.connect(g);g.connect(musicBus);env(g,t,.003,v*.9,.5);o.start(t);o.stop(t+.6);noise(t,.12,v*.22,musicBus,"lowpass",700)},
+  brass:(t,m,d,v)=>{[-6,6].forEach(det=>{const o=AC.createOscillator(),f=AC.createBiquadFilter(),g=AC.createGain();o.type="sawtooth";o.frequency.value=hz(m);o.detune.value=det;
+    f.type="lowpass";f.frequency.setValueAtTime(600,t);f.frequency.linearRampToValueAtTime(2200,t+.08);f.frequency.linearRampToValueAtTime(900,t+d);
+    o.connect(f);f.connect(g);g.connect(musicBus);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v*.07,t+.04);g.gain.setValueAtTime(v*.07,t+d*.8);g.gain.linearRampToValueAtTime(.0001,t+d);o.start(t);o.stop(t+d+.05)})},
 };
 function seq(mel,inst,vol=1){let b=0;const ev=[];mel.forEach(([m,d])=>{if(m)ev.push([b,inst,m,d,vol]);b+=d});return ev}
 function mkJingle(){ // "Jingle Bells" chorus (1857, public domain)
@@ -146,7 +151,21 @@ function mkDirge(){ // "O Come, O Come, Emmanuel" (15th c. plainchant): slow, dr
   roots.forEach((r,i)=>{ev.push([i*3,"pad",r+12,3,1],[i*3,"pad",r+19,3,.7],[i*3,"bass",r,3,.6]);if(i%2===0)ev.push([i*3,"timp",r,1,.8])});
   return {bpm:66,len:48,ev};
 }
-const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge()};
+function mkMarch(){ // "God Rest Ye Merry Gentlemen" (traditional English carol): war-drum tribute parade in E minor
+  const L1=[[64,1],[64,1],[71,1],[71,1],[69,1],[67,1],[66,1],[64,1],[62,1],[64,1],[66,1],[67,1],[69,1],[71,3]];
+  const L2=[[71,1],[72,1],[71,1],[69,1],[67,1],[66,1],[64,1],[66,1],[67,1],[69,1],[71,1],[69,1],[67,1],[66,1],[64,2]];
+  const ev=seq([...L1,...L1,...L2],"brass").map(e=>(e[2]+=12,e));
+  const roots=[40,40,47,40,40,40,47,40,47,45,43,40]; // one per bar of 4 beats
+  roots.forEach((r,i)=>{const b=i*4;
+    [0,.75,1.5,2,2.5,3,3.5].forEach((x,k)=>ev.push([b+x,"taiko",0,1,k===0?1.1:k===3?.9:.55]));
+    ev.push([b+1,"snare",0,1,.9],[b+3,"snare",0,1,.9],[b,"timp",r,1,1]);
+    for(let k=0;k<8;k++)ev.push([b+k/2,"bass",r,.5,k%2?.6:1]);
+    ev.push([b,"brass",r+12,1.5,.8],[b,"brass",r+19,1.5,.6]);
+    for(let k=0;k<8;k++)ev.push([b+k/2,"hat",0,.5,k%2?.4:.7]);});
+  return {bpm:128,len:48,ev};
+}
+const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge(),march:mkMarch()};
+XM.duck=on=>{if(musicBus)musicBus.gain.setTargetAtTime(on?.16:.5,AC.currentTime,.15)};
 XM.playSong=function(name,force){
   if(songName===name&&!force)return;
   XM.stopSong();if(!ensureAudio())return;
@@ -190,6 +209,20 @@ XM.sfx=function(kind){
   if(kind==="trombone"){[[58,0,.45],[57,.5,.45],[56,1,.45],[55,1.5,1.4]].forEach(([m,d,len])=>{const o=osc("sawtooth",hz(m-12),t+d,len,.16,sfxBus,1300);
     if(len>1){const l=AC.createOscillator(),lg=AC.createGain();l.frequency.value=6;lg.gain.value=8;l.connect(lg);lg.connect(o.frequency);l.start(t+d);l.stop(t+d+len)}})}
   if(kind==="sparkle"){for(let k=0;k<6;k++)osc("sine",hz(84+k*2),t+k*.05,.3,.06,sfxBus)}
+  // crowd reactions
+  if(kind==="applause"){for(let k=0;k<70;k++){const d=Math.random()*2.2;noise(t+d,.03,.06+Math.random()*.1*(1-d/2.6),sfxBus,"bandpass",1200+Math.random()*2500,1.2)}}
+  if(kind==="cheer"){XM.sfx("applause");const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf;s.loop=true;f.type="bandpass";f.frequency.value=900;f.Q.value=.7;
+    s.connect(f);f.connect(g);g.connect(sfxBus);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.35,t+.4);g.gain.linearRampToValueAtTime(.0001,t+2.4);s.start(t);s.stop(t+2.5);
+    [0,.5].forEach(d=>{const o=osc("sine",1800,t+.3+d,.5,.08,sfxBus);o.frequency.setValueAtTime(1800,t+.3+d);o.frequency.linearRampToValueAtTime(2600,t+.55+d)});}
+  if(kind==="gasp"){const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=noiseBuf;f.type="bandpass";f.Q.value=2;f.frequency.setValueAtTime(700,t);f.frequency.linearRampToValueAtTime(1600,t+.35);
+    s.connect(f);f.connect(g);g.connect(sfxBus);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(.5,t+.12);g.gain.linearRampToValueAtTime(.0001,t+.6);s.start(t);s.stop(t+.7)}
+  if(kind==="laugh"){for(let k=0;k<7;k++){const tt=t+k*.17+Math.random()*.03,f0=260-k*12;const o=osc("sawtooth",f0,tt,.12,.12,sfxBus,1400);noise(tt,.1,.12,sfxBus,"bandpass",1100,2)}
+    for(let k=0;k<6;k++){const tt=t+.08+k*.2;osc("sawtooth",330-k*10,tt,.1,.07,sfxBus,1600)}}
+  if(kind==="airhorn"){[0,.32,.64].forEach((d,k)=>{const len=k===2?.9:.25;[466,470,587].forEach(f=>osc("sawtooth",f,t+d,len,.07,sfxBus,3000))})}
+  if(kind==="rimshot"){osc("triangle",220,t,.12,.3,sfxBus);noise(t,.1,.3,sfxBus,"bandpass",2500,1);osc("triangle",160,t+.22,.15,.3,sfxBus);noise(t+.22,.1,.25,sfxBus,"bandpass",2000,1);
+    noise(t+.5,1.2,.28,sfxBus,"highpass",6000)}
+  if(kind==="chirp"){[0,.18,.36].forEach(d=>{const o=osc("sine",2200,t+d,.12,.12,sfxBus);o.frequency.setValueAtTime(2200,t+d);o.frequency.exponentialRampToValueAtTime(3600,t+d+.1)})}
+  if(kind==="thwip"){const o=osc("sine",1800,t,.18,.15,sfxBus);o.frequency.exponentialRampToValueAtTime(300,t+.18);noise(t,.15,.15,sfxBus,"highpass",3000);INST.kick(t+.22,0,0,1);noise(t+.22,.08,.3,sfxBus,"bandpass",900,1)}
 };
 
 /* ================= SNOW ================= */
@@ -232,11 +265,11 @@ XM.tiebreaker=function(opts={}){
   ensureAudio();
   const g=opts.game&&XM.TB[opts.game]?opts.game:null;
   T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,prevSong:XM.currentSong(),state:{}};
-  let el=document.getElementById("tb");if(!el){el=document.createElement("div");el.id="tb";el.className="tb";el.setAttribute("role","dialog");el.setAttribute("aria-label","Tiebreaker");document.body.appendChild(el)}
+  let el=document.getElementById("xm-tb");if(!el){el=document.createElement("div");el.id="xm-tb";el.className="tb";el.setAttribute("role","dialog");el.setAttribute("aria-label","Tiebreaker");document.body.appendChild(el)}
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
 };
-function closeTB(){clearT();const el=document.getElementById("tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
+function closeTB(){clearT();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
 XM.closeTiebreaker=closeTB;
 const tied=()=>XM.NAMES.filter(n=>T.picked.has(n));
 const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">DISTRICT ${t.d}</span></button>`};
@@ -246,7 +279,7 @@ function shell(inner){
     <span class="row"><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button><button class="btn ghost" id="tb-x">✕ Close</button></span></div><div class="inner">${inner}</div>`;
 }
 function view(name){
-  clearT();const el=document.getElementById("tb");if(!el)return;T.view=name;
+  clearT();const el=document.getElementById("xm-tb");if(!el)return;T.view=name;
   el.innerHTML=shell(VIEWS[name]());el.scrollTop=0;
   el.querySelector("#tb-x").onclick=()=>{XM.sfx("untap");closeTB()};
   el.querySelector("[data-mute]").onclick=()=>XM.toggleSound();
@@ -315,7 +348,7 @@ const WIRE={
 function toggleOut(n){
   const s=T.state;s.out=s.out||new Set();
   if(s.out.has(n))s.out.delete(n);else{s.out.add(n);XM.sfx("thud")}
-  document.querySelectorAll("#tb [data-win]").forEach(b=>b.classList.toggle("out",s.out.has(b.dataset.win)));
+  document.querySelectorAll("#xm-tb [data-win]").forEach(b=>b.classList.toggle("out",s.out.has(b.dataset.win)));
   const left=tied().filter(x=>!s.out.has(x));
   if(left.length===1){XM.sfx("tap");setTimeout(()=>{if(T&&T.view==="play")winner(left[0])},700)}
 }

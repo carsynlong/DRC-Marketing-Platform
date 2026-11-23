@@ -85,6 +85,16 @@ body{cursor:default}
 @keyframes fall{to{transform:translate(var(--dx),1400px) rotate(var(--r))}}
 @keyframes across{to{transform:translate(2400px,var(--dy)) rotate(var(--r))}}
 @keyframes boomOut{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}80%{opacity:1}100%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1.1);opacity:0}}
+.fly .sb{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 30%,#e4edf6 60%,#a9bfd4 100%);box-shadow:0 8px 16px rgba(0,0,0,.35)}
+.fly .sb.arc{animation:arc var(--t) cubic-bezier(.3,.1,.7,.9) var(--d) infinite}
+@keyframes arc{0%{transform:translate(0,0)}50%{transform:translate(calc(var(--dx)*.5),var(--up))}100%{transform:translate(var(--dx),var(--down))}}
+.fly .sb.hit{animation:hit .55s cubic-bezier(.5,0,1,.6) both}
+@keyframes hit{from{transform:translate(-50%,-50%) scale(.15)}to{transform:translate(-50%,-50%) scale(1)}}
+.fly .splat{position:absolute;transform:translate(-50%,-50%);animation:melt 2.6s ease-in both}
+.fly .splat i{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff 0 55%,#eef4fa 70%,rgba(238,244,250,0) 72%)}
+.fly .bb{display:grid;place-items:center;width:1em;height:1em;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 7%,var(--bc) 55%,#1a1a1a)}
+.fly .bb .f{font-size:.19em;width:3.2em;height:3.2em;border-radius:50%;background:#fbf6ea;color:#13271f;display:grid;place-items:center;align-content:center;font-weight:800;line-height:.95;font-family:var(--body)}
+@keyframes melt{0%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-30%) scaleY(1.15)}}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:700px}
 .lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
@@ -556,13 +566,38 @@ function go(i){
   }
   wireSlide(el);
   if(s.id.endsWith("-cookie"))cookieStorm(el,s.id==="game-cookie");
+  if(s.id.endsWith("-scoop"))snowballFight(el,s.id==="game-scoop");
+  const light=s.id.startsWith("order-");
+  if(s.id.endsWith("-mitten"))emojiStorm(el,s.id==="game-mitten",()=>`<img src="/xmas/icons/mitten.png" alt="" style="width:1em;height:1em;display:block;filter:drop-shadow(0 0 3px #fff) drop-shadow(0 0 2px #fff)">`,light);
+  if(s.id.endsWith("-lrc"))emojiStorm(el,s.id==="game-lrc",()=>"🎲",light);
+  if(s.id.includes("bingo"))emojiStorm(el,s.id==="game-bingo",()=>{const n=1+Math.floor(Math.random()*75),l=Math.floor((n-1)/15);
+    return `<b class="bb" style="--bc:${["#b8322a","#1f6b4a","#c8921f","#2f6fb3","#7a3fb0"][l]}"><span class="f">${"BINGO"[l]}<br>${n}</span></b>`});
+}
+// ❄️ snowballs thrown everywhere: arcs across the screen, plus hits that splat on the "glass" and melt
+function snowballFight(el,big){
+  const R=(a,b)=>a+Math.random()*(b-a);let h="";
+  for(let k=0;k<14;k++){const fromLeft=k%2===0,size=R(40,90),y=R(250,950);
+    h+=`<span class="sb arc" style="width:${size}px;height:${size}px;top:${y}px;left:${fromLeft?-120:1960}px;--dx:${fromLeft?2200:-2200}px;--up:${-R(250,600)}px;--down:${R(-150,250)}px;--t:${R(2.2,4)}s;--d:${-R(0,4)}s"></span>`}
+  if(big)for(let k=0;k<34;k++){const a=Math.random()*6.283,dist=R(500,1300),size=R(40,110);
+    h+=`<span class="sb boomsb" style="width:${size}px;height:${size}px;left:50%;top:45%;animation:boomOut 1.5s cubic-bezier(.15,.8,.3,1) ${R(0,.3)}s both;--x:${Math.cos(a)*dist}px;--y:${Math.sin(a)*dist*.7}px;--r:0deg"></span>`}
+  const f=document.createElement("div");f.className="fly";f.innerHTML=h;el.appendChild(f);
+  const hit=()=>{if(curEl!==el||!f.isConnected){clearInterval(iv);return}
+    const x=R(150,1770),y=R(150,930),size=R(120,220);
+    const b=document.createElement("span");b.className="sb hit";Object.assign(b.style,{left:x+"px",top:y+"px",width:size+"px",height:size+"px"});f.appendChild(b);
+    setTimeout(()=>{b.remove();if(curEl!==el)return;XM.sfx("thud");
+      const sp=document.createElement("div");sp.className="splat";sp.style.left=x+"px";sp.style.top=y+"px";
+      let g="";for(let k=0;k<9;k++){const r=k?R(size*.12,size*.3):size*.55,a=Math.random()*6.283,d=k?R(size*.35,size*.75):0;
+        g+=`<i style="width:${r*2}px;height:${r*2}px;left:${Math.cos(a)*d-r}px;top:${Math.sin(a)*d-r}px"></i>`}
+      sp.innerHTML=g;f.appendChild(sp);setTimeout(()=>sp.remove(),2700)},550)};
+  const iv=setInterval(hit,big?700:1100);setTimeout(hit,big?600:300);
 }
 // 🍪 cookies raining, spinning and flying across the screen
-function cookieStorm(el,big){
-  const R=(a,b)=>a+Math.random()*(b-a);let h="";
-  for(let k=0;k<22;k++)h+=`<i class="fall" style="left:${R(0,1880)}px;font-size:${R(50,120)}px;--t:${R(4,8)}s;--d:${-R(0,8)}s;--dx:${R(-200,200)}px;--r:${R(-720,720)}deg">🍪</i>`;
-  for(let k=0;k<6;k++)h+=`<i class="across" style="top:${R(80,980)}px;font-size:${R(70,140)}px;--t:${R(5,9)}s;--d:${-R(0,9)}s;--dy:${R(-300,300)}px;--r:${R(360,1440)}deg">🍪</i>`;
-  if(big)for(let k=0;k<40;k++){const a=Math.random()*6.283,dist=R(500,1300);h+=`<i class="boom" style="font-size:${R(60,150)}px;--d:${R(0,.3)}s;--x:${Math.cos(a)*dist}px;--y:${Math.sin(a)*dist*.7}px;--r:${R(-900,900)}deg">🍪</i>`}
+function cookieStorm(el,big){emojiStorm(el,big,()=>"🍪")}
+function emojiStorm(el,big,item,light){
+  const R=(a,b)=>a+Math.random()*(b-a);let h="";const nf=light?7:22,na=light?1:6,sz=light?.6:1;
+  for(let k=0;k<nf;k++)h+=`<i class="fall" style="left:${R(0,1880)}px;font-size:${R(50,120)*sz}px;--t:${R(4,8)}s;--d:${-R(0,8)}s;--dx:${R(-200,200)}px;--r:${R(-720,720)}deg">${item()}</i>`;
+  for(let k=0;k<na;k++)h+=`<i class="across" style="top:${R(80,980)}px;font-size:${R(70,140)*sz}px;--t:${R(5,9)}s;--d:${-R(0,9)}s;--dy:${R(-300,300)}px;--r:${R(360,1440)}deg">${item()}</i>`;
+  if(big)for(let k=0;k<40;k++){const a=Math.random()*6.283,dist=R(500,1300);h+=`<i class="boom" style="font-size:${R(60,150)}px;--d:${R(0,.3)}s;--x:${Math.cos(a)*dist}px;--y:${Math.sin(a)*dist*.7}px;--r:${R(-900,900)}deg">${item()}</i>`}
   const f=document.createElement("div");f.className="fly";f.innerHTML=h;el.appendChild(f);
 }
 function wireSlide(el){

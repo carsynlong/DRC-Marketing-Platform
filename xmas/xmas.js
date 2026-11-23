@@ -363,7 +363,7 @@ XM.tiebreakerOpen=()=>!!T;
 XM.tiebreaker=function(opts={}){
   ensureAudio();
   const g=opts.game&&XM.TB[opts.game]?opts.game:null;
-  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,prevSong:XM.currentSong(),state:{}};
+  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,lock:!!opts.lock,prevSong:XM.currentSong(),state:{}};
   let el=document.getElementById("xm-tb");if(!el){el=document.createElement("div");el.id="xm-tb";el.className="tb";el.setAttribute("role","dialog");el.setAttribute("aria-label","Tiebreaker");document.body.appendChild(el)}
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
@@ -394,7 +394,7 @@ const VIEWS={
     <p class="rules">${fate?"Three rounds and still tied. Try another, or let fate decide.":T.round>1?"Try another tiebreaker.":"Here's the suggested one, or pick any other."}</p>
     ${fate?`<button class="opt fate" data-tb="fate" style="width:min(640px,100%);text-align:center"><span class="ic">🎡</span><b style="font-size:2rem;color:#ffd9d4">Let fate decide</b><span style="color:var(--ink)">A dramatic spinner picks one of the tied tributes at random.</span></button>`:""}
     <div class="opts">${XM.TB_ORDER.map(k=>{const t=XM.TB[k];return `<button class="opt ${k===sug?"sug":""}" data-tb="${k}"><span class="ic">${t.ic}</span><b>${esc(t.title)}</b><span>${k===sug?"⭐ Suggested · ":""}${esc(t.rules)}</span></button>`}).join("")}</div>
-    <div class="row"><span class="tiny">Tied: ${tied().map(esc).join(", ")}</span><button class="btn ghost" id="tb-who">Change who's tied</button></div>`},
+    <div class="row"><span class="tiny">Tied: ${tied().map(esc).join(", ")}</span>${T.lock?"":`<button class="btn ghost" id="tb-who">Change who's tied</button>`}</div>`},
   play:()=>{const t=XM.TB[T.tb];
     return `<div class="ic-big">${t.ic}</div><h1 class="big ttl">${esc(t.title)}</h1><p class="rules">${esc(t.rules)}</p>
     <div id="tb-tool" style="display:grid;justify-items:center;gap:14px;width:100%">${TOOLS[t.tool].html(t)}</div>
@@ -427,7 +427,7 @@ function winner(n){
 const WIRE={
   pick(el){el.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{const n=b.dataset.pick;T.picked.has(n)?T.picked.delete(n):T.picked.add(n);XM.sfx(T.picked.has(n)?"tap":"untap");view("pick")});
     const go=el.querySelector("#tb-go");go.onclick=()=>{if(T.picked.size>=2)startTB(suggest())}},
-  choose(el){el.querySelectorAll("[data-tb]").forEach(b=>b.onclick=()=>startTB(b.dataset.tb));el.querySelector("#tb-who").onclick=()=>view("pick")},
+  choose(el){el.querySelectorAll("[data-tb]").forEach(b=>b.onclick=()=>startTB(b.dataset.tb));const who=el.querySelector("#tb-who");if(who)who.onclick=()=>view("pick")},
   play(el){
     el.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const t=XM.TB[T.tb];
       if(t.tool==="elim"){toggleOut(b.dataset.win);return}

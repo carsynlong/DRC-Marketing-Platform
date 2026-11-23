@@ -105,8 +105,8 @@ NAMES.forEach(n=>{if(S.present[n]===undefined)S.present[n]=true});
 const G=()=>GAMES[S.game];
 // Keep each game's bracket on this laptop so a refresh doesn't lose it
 const SKEY=g=>"xmas-wheel-"+g;
-function saveS(){const c={...S,spinning:false};XM.store.set(SKEY(S.game),c.phase==="setup"?null:c)}
-function loadS(g){const v=XM.store.get(SKEY(g),null);if(v&&v.phase&&v.phase!=="setup"){S={...S,...v,game:g,spinning:false,history:v.history||[]};return true}return false}
+function saveS(){const c={...S,spinning:false};delete c.present;XM.store.set(SKEY(S.game),c.phase==="setup"?null:c)}
+function loadS(g){const v=XM.store.get(SKEY(g),null);if(v&&v.phase&&v.phase!=="setup"){const keep=S.present;S={...S,...v,game:g,spinning:false,history:v.history||[],present:keep};return true}return false}
 loadS(S.game);
 
 /* ---------- wheel ---------- */
@@ -118,7 +118,7 @@ function drawWheel(){
   x.rotate(S.rot);const sl=2*Math.PI/n;
   for(let i=0;i<n;i++){
     x.beginPath();x.moveTo(0,0);x.arc(0,0,R,i*sl,(i+1)*sl);x.closePath();
-    x.fillStyle=n===1?COLORS[0]:COLORS[i%(n%COLORS.length===1?COLORS.length-1:COLORS.length)];x.fill();
+    x.fillStyle=n===1?COLORS[0]:COLORS[i%(n%COLORS.length===1?COLORS.length-1:COLORS.length)];x.fill();if(S.pool[i]===S.flash){x.fillStyle="rgba(255,236,170,.55)";x.fill()}
     x.strokeStyle="rgba(251,246,234,.6)";x.lineWidth=3;x.stroke();
     x.save();x.rotate(i*sl+sl/2);x.textAlign="right";x.textBaseline="middle";
     const name=S.pool[i];let fs=Math.min(46,Math.max(22,sl*R*.42));x.font=`800 ${fs}px Outfit, system-ui, sans-serif`;
@@ -142,6 +142,10 @@ function spin(){
   requestAnimationFrame(step);
 }
 function land(name){
+  // keep the landed slice glowing under the pointer for a moment so the room sees it
+  S.flash=name;drawWheel();sfx("thud");setTimeout(()=>{S.flash=null;land2(name)},1100);
+}
+function land2(name){
   stopSong();S.spinning=false;S.pool=S.pool.filter(n=>n!==name);
   let showVs=null;
   if(!S.pick){S.pick=name;S.last=null;sfx("reveal");XM.say(XM.spoken(name)+"!",null,{pitch:.1,rate:.8,interrupt:true})}
@@ -167,13 +171,13 @@ function versus(i){
       <button class="btn ghost" id="vs-tie" style="font-size:1.1rem">⚔️ It's a tie</button></div></div>`;
   document.body.appendChild(ov);
   sfx("whoosh");setTimeout(()=>{sfx("cannon");confetti(140)},700);
-  setTimeout(()=>{if(!document.getElementById("vsov"))return;XM.say(XM.spoken(m.a)+"...",()=>{if(!document.getElementById("vsov"))return;
-    XM.say("versus...",()=>{if(document.getElementById("vsov"))XM.say(XM.spoken(m.b)+"!",()=>booms(ov),{pitch:.05,rate:.75})},{pitch:.1,rate:.7})},{pitch:.05,rate:.75,interrupt:true})},900);
+  setTimeout(()=>{if(!ov.isConnected)return;XM.say(XM.spoken(m.a)+"...",()=>{if(!ov.isConnected)return;
+    XM.say("versus...",()=>{if(ov.isConnected)XM.say(XM.spoken(m.b)+"!",()=>booms(ov),{pitch:.05,rate:.75})},{pitch:.1,rate:.7})},{pitch:.05,rate:.75,interrupt:true})},900);
   const close=()=>{XM.hush();ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
   ov.querySelector("#vs-timer").onclick=()=>{XM.hush();ov.remove();openTimer(i)};
   ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{XM.hush();m.win=m[b.dataset.vswin];ov.remove();render();stopSong();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
-  ov.querySelector("#vs-tie").onclick=()=>{ov.remove();tiebreak([m.a,m.b],m)};
+  ov.querySelector("#vs-tie").onclick=()=>{XM.hush();ov.remove();tiebreak([m.a,m.b],m)};
 }
 
 // BOOM. BOOM. BOOM. after the announcer calls the matchup
@@ -199,9 +203,9 @@ function nextRound(){
   if(w.length===1){S.champ=w[0];S.phase="champ";stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>S.phase==="champ"&&playSong("lobby"),4500);return}
   S.round++;newRound(shuffle(w));
 }
-let tId=0;
 function openTimer(i){
-  const m=S.matches[i];let left=G().timer;
+  const m=S.matches[i];const total=G().timer;let left=total,iv=0,to=0;
+  document.getElementById("tov")?.remove();
   const ov=document.createElement("div");ov.className="overlay";ov.id="tov";
   ov.innerHTML=`<div class="inner"><div class="eyebrow">${esc(G().verb)}</div>
     <div style="display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap"><img src="${AV(m.a)}" alt="" style="width:110px;height:110px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)">
@@ -209,28 +213,31 @@ function openTimer(i){
     <div class="timer" id="tnum">${left}</div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="tgo">Go!</button><button class="btn ghost" id="tclose">Close</button></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center"><span class="eyebrow">Who won?</span><button class="btn" data-twin="a">👑 ${esc(m.a)}</button><button class="btn" data-twin="b">👑 ${esc(m.b)}</button><button class="btn ghost" id="ttie">⚔️ It's a tie</button></div></div>`;
   document.body.appendChild(ov);
-  const close=()=>{clearInterval(tId);XM.hush();ov.remove();stopSong();playSong("board")};
+  const live=()=>ov.isConnected;
+  const stop=()=>{clearInterval(iv);clearTimeout(to);iv=0;to=0;XM.hush()};
+  const close=()=>{stop();ov.remove();stopSong();if(S.phase==="play")playSong("board")};
   ov.querySelector("#tclose").onclick=close;
-  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{clearInterval(tId);XM.hush();m.win=m[b.dataset.twin];ov.remove();stopSong();render();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
-  ov.querySelector("#ttie").onclick=()=>{clearInterval(tId);ov.remove();tiebreak([m.a,m.b],m)};
+  ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{stop();m.win=m[b.dataset.twin];ov.remove();stopSong();render();XM.celebrate(m.win);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
+  ov.querySelector("#ttie").onclick=()=>{stop();ov.remove();tiebreak([m.a,m.b],m)};
   const word=["zero","one","two","three","four","five"];
-  const num=(t,hot)=>{const el=document.getElementById("tnum");if(!el)return;el.textContent=t;el.style.color=hot?"#ff6b5e":"";el.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350,easing:"cubic-bezier(.2,1.4,.4,1)"})};
-  ov.querySelector("#tgo").onclick=e=>{e.target.disabled=true;stopSong();playSong("battle");
+  const num=(t,hot)=>{const el=ov.querySelector("#tnum");if(!el)return;el.textContent=t;el.style.color=hot?"#ff6b5e":"";el.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350,easing:"cubic-bezier(.2,1.4,.4,1)"})};
+  const go=ov.querySelector("#tgo");
+  go.onclick=()=>{stop();go.disabled=true;left=total;stopSong();playSong("battle");
     // 5, 4, 3, 2, 1 ... BOOM, then the clock runs
     let c=5;num(c,true);sfx("drum");XM.say("Five",null,{pitch:.1,rate:1,interrupt:true});
-    tId=setInterval(()=>{c--;
+    iv=setInterval(()=>{if(!live())return stop();c--;
       if(c>0){num(c,true);sfx(c===1?"thud":"drum");XM.say(word[c],null,{pitch:.1,rate:1,interrupt:true});return}
-      clearInterval(tId);num("GO!",true);sfx("cannon");sfx("go");confetti(160);XM.say("Go!",null,{pitch:.3,rate:1,interrupt:true});
-      const box=document.getElementById("tov");if(box)box.animate([{transform:"translate(-14px,6px)"},{transform:"translate(12px,-6px)"},{transform:"none"}],{duration:350});
-      setTimeout(()=>{if(!document.getElementById("tov"))return;num(left,false);
-        tId=setInterval(()=>{left--;
+      clearInterval(iv);num("GO!",true);sfx("cannon");sfx("go");confetti(160);XM.say("Go!",null,{pitch:.3,rate:1,interrupt:true});
+      ov.animate([{transform:"translate(-14px,6px)"},{transform:"translate(12px,-6px)"},{transform:"none"}],{duration:350});
+      to=setTimeout(()=>{if(!live())return;num(left,false);
+        iv=setInterval(()=>{if(!live())return stop();left--;
           if(left>0&&left<=5){num(left,true);sfx("tock");XM.say(word[left],null,{pitch:.1,rate:1,interrupt:true})}
           else if(left>0)num(left,false);
-          if(left<=0){clearInterval(tId);stopSong();sfx("cannon");num("TIME!",true);XM.say("Time!",null,{pitch:.05,rate:.8,interrupt:true});confetti(120)}},1000)},900);
+          if(left<=0){clearInterval(iv);iv=0;stopSong();sfx("cannon");num("TIME!",true);XM.say("Time!",null,{pitch:.05,rate:.8,interrupt:true});confetti(120);go.disabled=false;go.textContent="Run it again"}},1000)},900);
     },1000)};
 }
 function tiebreak(names,match){
-  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render()}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
+  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,lock:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render()}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
 }
 
 /* ---------- views ---------- */
@@ -299,10 +306,12 @@ function wire(){
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
   document.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{ensureAudio();versus(+b.dataset.vs)});
   document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b],m)});
-  document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>XM.toggleSound());
+  document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>{XM.toggleSound();b.blur()});
   on("start",start);on("spin",spin);on("nextr",nextRound);on("tb",()=>tiebreak());on("back",backToShow);
   on("save",e=>{XM.setVictor(S.game,S.champ);e.textContent="✅ Saved to The Capitol Has Spoken";e.disabled=true;sfx("reveal")});
-  on("reset",()=>{S.phase="setup";S.history=[];XM.store.set(SKEY(S.game),null);stopSong();render()});
+  {const r=document.getElementById("reset");if(r)r.onclick=()=>{ensureAudio();
+    if(S.phase==="champ"||r.dataset.sure){S.phase="setup";S.history=[];XM.store.set(SKEY(S.game),null);stopSong();render();return}
+    r.dataset.sure=1;r.textContent="Tap again to erase this bracket";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="Start over"}},3000)}}
   on("music",()=>{stopSong();playSong("lobby")});
 }
 document.addEventListener("keydown",e=>{

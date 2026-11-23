@@ -61,7 +61,11 @@ const Extras = (() => {
   /* ---------- 💡 hint at half time ---------- */
   function hintText() {
     const a = cur().a, d = DISTRICT[a];
-    return S.qi % 2 ? `Starts with <b>${esc(a[0])}</b>` : `From <b>District ${d <= 6 ? "1–6" : "7–12"}</b>`;
+    // never letters: those give the name away
+    const k = S.qi % 3;
+    if (k === 0) return `It's one of the <b>${groupOf(a) === "girls" ? "girls" : "guys"}</b>`;
+    if (k === 1) return `From <b>District ${d <= 6 ? "1–6" : "7–12"}</b>`;
+    return `From an <b>${d % 2 ? "odd" : "even"}-numbered district</b>`;
   }
   function tick() {
     if (S.hintShown || S.phase !== "question" || S.locked || S.elapsed < S.secs / 2) return;
@@ -104,7 +108,9 @@ const Extras = (() => {
   // spyglass buyers get the first letter on their phone (sent in the game snapshot)
   function spy() {
     if (!(S.phase === "question" && !S.locked && S.buys)) return undefined;
-    const out = {}; for (const n in S.buys) if (S.buys[n].spy) out[n] = cur().a[0]; return Object.keys(out).length ? out : undefined;
+    // spyglass: 4 possible names (the right one + 3 decoys from the same group), never a letter
+    const four = (S.rounds[S.qi]?.choices || []).join(", ");
+    const out = {}; for (const n in S.buys) if (S.buys[n].spy) out[n] = four; return Object.keys(out).length ? out : undefined;
   }
 
   /* ---------- scoring: speed bonus, underdog, shop power-ups ---------- */

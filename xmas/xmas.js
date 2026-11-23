@@ -21,7 +21,7 @@ XM.TRIBUTES=[
  {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)"},
  {d:10,name:"Brandon",weapon:"The 5 D's: dodge, duck, dip, dive and dodge",strategy:"Never sit still. Will mow the lawn mid-game.",odds:"6 to 1"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
- {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Rush the arena like it's pledge week",odds:"12 to 1"},
+ {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Fixes your car, fixes your boat, hands you a beer. Never sends a bill.",odds:"12 to 1"},
 ];
 XM.TRIBUTES.forEach(t=>{const k=String(t.d).padStart(2,"0");t.img=`/xmas/tributes/d${k}.jpg`;t.full=`/xmas/tributes/full/d${k}.jpg`});
 XM.NAMES=XM.TRIBUTES.map(t=>t.name);

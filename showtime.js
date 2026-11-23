@@ -15,6 +15,7 @@
      sound:    () => true/false          the game's music/sound switch
      onDone:   () => {}                  called once, after the last walk-out or when skipped
      hypeFor:  name => line or null      optional: a special line for someone (e.g. the host)
+     style:    "reaping" | "lineup"      optional: Who's That Tribute draws names from the reaping bowl; District Secrets puts suspects in a lineup
    })
    Space, Enter or the Skip button ends it early. While it runs, it sits on top of the game's lobby. */
 window.Walkout = (() => {
@@ -43,6 +44,10 @@ window.Walkout = (() => {
   const STATS = ["🍪 Cookies eaten today: 14", "🤫 Secrets kept: 2 (allegedly)", "🎄 Ugly sweater rating: 11/10", "🦌 Reindeer games won: 3", "😴 Naps taken this week: 9",
     "🎁 Gifts peeked at early: ALL of them", "☕ Hot cocoa level: dangerous", "🕺 Dance moves: questionable", "🏹 Trash talk level: elite", "🧦 Socks received: 37 pairs",
     "📺 Hallmark movies watched: 22", "🍬 Candy canes hidden in pockets: 6", "🎶 Times sang Mariah this week: 40", "🛷 Sled crashes: undefeated"];
+  const WEAPONS = ["Wrapping paper", "A candy cane", "Tangled Christmas lights", "A fruitcake", "An ugly sweater", "Snowballs", "A rolling pin", "Jingle bells", "Scalding hot cocoa", "A nutcracker", "Tinsel", "A gingerbread shield"];
+  const ODDS = ["Ever in their favor", "Excellent", "Questionable", "50/50", "The sponsors are nervous", "Better than Santa's diet", "Suspiciously good", "Ask again after dessert"];
+  const ALIASES = ["The Cookie Bandit", "Sticky Fingers", "The Tinsel Thief", "Agent Eggnog", "The Silent Night", "The Candy Cane Kid", "The Re-Gifter", "The Midnight Snacker", "Agent Mistletoe", "The Gift Peeker", "Frosty Fingers", "The Fruitcake Fence"];
+  const SEEN = ["near the cookie jar", "under the mistletoe", "behind the Christmas tree", "in the gift-wrap aisle", "at the dessert table", "by the fireplace", "in the Capitol archives", "on the naughty list"];
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -93,6 +98,55 @@ window.Walkout = (() => {
 @property --x{syntax:"<percentage>";inherits:false;initial-value:50%}
 #walkout .wo-search{animation:wo-hunt2 1.2s ease-in-out both}
 @keyframes wo-hunt2{0%{--x:15%;opacity:0}20%{opacity:1}50%{--x:80%}80%{--x:50%;opacity:1}100%{--x:50%;opacity:0}}
+/* 🏹 REAPING style (Who's That Tribute): a slip is drawn from the bowl, then their tribute card, then a flaming chariot */
+#walkout .wo-stage{display:grid;place-items:center}
+#walkout .wo-stage>*{grid-area:1/1}
+#walkout .wo-bowl{position:relative;width:clamp(220px,30vh,320px);height:clamp(200px,28vh,290px);animation:wo-bowlout .45s 1.2s ease-in both}
+#walkout .wo-glass{position:absolute;inset:auto 0 0 0;height:72%;border-radius:12% 12% 50% 50%/10% 10% 60% 60%;overflow:hidden;
+  background:radial-gradient(ellipse at 30% 20%,rgba(255,255,255,.45),rgba(255,255,255,.08) 40%,rgba(180,220,255,.12));box-shadow:inset 0 0 0 4px rgba(255,255,255,.55),inset 0 -20px 40px rgba(255,255,255,.15),0 20px 40px rgba(0,0,0,.4)}
+#walkout .wo-glass i{position:absolute;width:28%;height:14%;background:#f6ecd2;border-radius:3px;box-shadow:0 2px 3px rgba(0,0,0,.25);animation:wo-jiggle .3s ease-in-out infinite alternate}
+#walkout .wo-hand{position:absolute;left:50%;top:-6%;font-size:clamp(3.4rem,8vh,5rem);transform:translateX(-50%);animation:wo-dip 1s .1s ease-in-out both;z-index:2}
+#walkout .wo-slip{position:absolute;left:50%;top:22%;z-index:3;transform:translate(-50%,0);background:#f6ecd2;color:#2b1d12;border-radius:4px;padding:.25em .8em;
+  font:700 clamp(1.6rem,4vh,2.4rem)/1.1 "Caveat","Segoe Print","Bradley Hand",cursive;white-space:nowrap;box-shadow:0 8px 20px rgba(0,0,0,.45);animation:wo-slipup 1.15s .15s cubic-bezier(.3,1.2,.5,1) both}
+#walkout .wo-card{display:grid;grid-template-columns:auto auto;gap:clamp(16px,2.6vw,34px);align-items:center;text-align:left;background:linear-gradient(180deg,#f6ecd2,#e8d6ac);color:#2b1d12;
+  border-radius:16px;padding:clamp(14px,2.2vh,24px) clamp(18px,2.6vw,34px);box-shadow:0 0 0 5px var(--wo-accent),0 0 0 10px var(--wo-accent2),0 24px 60px rgba(0,0,0,.55);
+  animation:wo-cardin .75s 1.25s cubic-bezier(.2,1.4,.4,1) both;transform-origin:center}
+#walkout .wo-card .wo-av{width:clamp(150px,26vh,260px);animation:none}
+#walkout .wo-card .wo-from{color:var(--wo-accent2);animation:none;font-size:clamp(1rem,2.2vw,1.5rem)}
+#walkout .wo-card .wo-name{color:#2b1d12;text-shadow:0 3px 0 var(--wo-accent);font-size:clamp(2.2rem,6vw,4.4rem)}
+#walkout .wo-sheet{display:grid;gap:4px;margin-top:8px;font-weight:800;font-size:clamp(.95rem,1.8vw,1.25rem)}
+#walkout .wo-sheet div{animation:wo-pop .35s var(--d) both}
+#walkout .wo-sheet b{color:var(--wo-accent2)}
+#walkout .wo-chariot{position:absolute;bottom:6%;left:0;font-size:clamp(2.6rem,7vh,4rem);white-space:nowrap;display:flex;align-items:center;gap:4px;pointer-events:none;
+  filter:drop-shadow(0 0 14px rgba(255,120,0,.9));animation:wo-ride 2.2s 2.7s linear both}
+#walkout .wo-chariot img{width:1.2em;height:1.2em;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #ffb02e}
+@keyframes wo-bowlout{to{opacity:0;transform:scale(.6) translateY(40px)}}
+@keyframes wo-jiggle{to{transform:translateY(-3px) rotate(4deg)}}
+@keyframes wo-dip{0%{transform:translate(-50%,-60px);opacity:0}25%{opacity:1}50%{transform:translate(-50%,60px)}100%{transform:translate(-50%,-40px)}}
+@keyframes wo-slipup{0%{transform:translate(-50%,90px) scaleY(.15);opacity:0}45%{transform:translate(-50%,-30px) scaleY(.15);opacity:1}75%{transform:translate(-50%,-40px) scaleY(1)}100%{transform:translate(-50%,-40px) scaleY(1)}}
+@keyframes wo-cardin{from{transform:perspective(900px) rotateY(90deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes wo-ride{from{transform:translateX(-30vw)}to{transform:translateX(130vw)}}
+/* 🔏 LINEUP style (District Secrets): height chart, mugshot flash, fingerprint scan, typed case file, SUSPECT stamp */
+#walkout .wo-lineup{display:grid;grid-template-columns:auto minmax(0,420px);gap:clamp(16px,3vw,40px);align-items:center;text-align:left}
+#walkout .wo-mug{position:relative;padding:18px 18px 54px;border-radius:8px;
+  background:repeating-linear-gradient(180deg,transparent 0 37px,rgba(255,255,255,.35) 37px 39px),linear-gradient(180deg,#3a3446,#24202e);box-shadow:inset 0 0 0 3px rgba(255,255,255,.25),0 18px 40px rgba(0,0,0,.5)}
+#walkout .wo-mug .wo-av{border-radius:6px;width:clamp(170px,28vh,270px);box-shadow:0 0 0 4px #ddd;animation:wo-mugshot .6s 1.2s both}
+#walkout .wo-mug .wo-hgt{position:absolute;right:4px;top:10px;display:grid;gap:22px;font:800 .72rem/1 monospace;color:rgba(255,255,255,.55)}
+#walkout .wo-plac{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:#111;color:#fff;font:800 clamp(.75rem,1.4vw,1rem)/1.2 "Courier New",monospace;padding:.35em .9em;border-radius:3px;white-space:nowrap;letter-spacing:.06em}
+#walkout .wo-scanl{position:absolute;left:18px;right:18px;height:4px;top:18px;background:#5dff9b;box-shadow:0 0 18px 4px rgba(93,255,155,.8);opacity:0;animation:wo-scan 1.1s 1.7s ease-in-out both}
+#walkout .wo-match{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-8deg);font:900 clamp(1.2rem,2.6vw,2rem)/1 "Courier New",monospace;color:#5dff9b;background:rgba(0,0,0,.7);
+  padding:.2em .5em;border:3px solid #5dff9b;border-radius:6px;animation:wo-stamp .4s 2.85s cubic-bezier(.3,1.6,.5,1) both}
+#walkout .wo-file{position:relative;background:#efe2c4;color:#2b1d12;border-radius:4px;padding:16px 18px 18px;box-shadow:0 14px 30px rgba(0,0,0,.5),inset 0 0 40px rgba(120,80,30,.3);transform:rotate(1.5deg);
+  font:700 clamp(.95rem,1.8vw,1.25rem)/1.45 "Special Elite","Courier New",monospace;animation:wo-pop .5s 1.3s both}
+#walkout .wo-fhead{font-size:.75em;letter-spacing:.12em;border-bottom:2px dashed rgba(80,50,20,.35);padding-bottom:6px;margin-bottom:6px;opacity:.8}
+#walkout .wo-tl{overflow:hidden;white-space:nowrap;width:0;animation:wo-type .9s var(--d) steps(28) both}
+#walkout .wo-red{background:#111;color:#111;border-radius:2px}
+#walkout .wo-sus{position:absolute;right:-14px;bottom:-16px;font:900 clamp(1.4rem,3vw,2.3rem)/1 "Courier New",monospace;color:#c11b2a;border:4px solid #c11b2a;padding:.1em .4em;border-radius:6px;
+  transform:rotate(-12deg);background:rgba(239,226,196,.85);animation:wo-stamp .45s 3.3s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes wo-mugshot{from{filter:brightness(0) contrast(2)}to{filter:none}}
+@keyframes wo-scan{0%{opacity:1;top:18px}50%{top:calc(100% - 60px)}100%{opacity:0;top:18px}}
+@keyframes wo-type{to{width:100%}}
+@media (max-width:760px){#walkout .wo-card,#walkout .wo-lineup{grid-template-columns:1fr;justify-items:center;text-align:center}}
 @media (prefers-reduced-motion:reduce){#walkout *{animation:none!important}}
 #walkout .wo-back,#rules .ru-back{position:absolute;top:max(14px,env(safe-area-inset-top,0px));left:max(14px,env(safe-area-inset-left,0px));z-index:2;font:inherit;font-weight:800;font-size:.95rem;
   color:#fff;background:rgba(0,0,0,.35);border:0;border-radius:10px;padding:.5em .95em;box-shadow:inset 0 0 0 2px rgba(255,255,255,.3);cursor:pointer}
@@ -215,6 +269,28 @@ window.Walkout = (() => {
     const hype = (o.hype || T.hype).slice().sort(() => Math.random() - .5);
     const stats = STATS.slice().sort(() => Math.random() - .5), seed = Math.random() * 100 | 0;
     Music.start();
+    const pick = (arr, k) => arr[(k + seed) % arr.length];
+    const letters = n => `<div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>`;
+    const photoHTML = (n, prop) => `<div class="wo-photo"><img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">${calm ? "" : `<span class="wo-prop${prop.eyes ? " eyes" : ""}" aria-hidden="true">${prop.e}</span>`}</div>`;
+    const hypeLine = (n, i) => `<div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div>`;
+    function middle(style, n, dn, prop, stat, i) {
+      if (style === "reaping") {   // 🏹 drawn from the reaping bowl, then the tribute card
+        const slips = Array.from({ length: 14 }, (_, k) => `<i style="left:${(k * 6.5) % 76}%;bottom:${(k * 13) % 50}%;transform:rotate(${(k * 37) % 70 - 35}deg);animation-delay:${(k % 5) * 60}ms"></i>`).join("");
+        return `<div class="wo-stage"><div class="wo-bowl" aria-hidden="true"><div class="wo-glass">${slips}</div><div class="wo-hand">✋</div><div class="wo-slip">${esc(n)}</div></div>
+          <div class="wo-card">${photoHTML(n, prop)}<div><div class="wo-from">District ${dn} Tribute</div>${letters(n)}
+          <div class="wo-sheet"><div style="--d:1.9s">🎯 Training score: <b>${5 + ((i * 7 + seed) % 8)}</b></div><div style="--d:2.15s">🗡️ Weapon of choice: <b>${esc(pick(WEAPONS, i))}</b></div><div style="--d:2.4s">🎲 Odds: <b>${esc(pick(ODDS, i))}</b></div></div></div></div></div>${hypeLine(n, i)}`;
+      }
+      if (style === "lineup") {   // 🔏 mugshot against the height chart, fingerprint match, typed case file
+        const red = "█".repeat(6 + (i % 5));
+        return `<div class="wo-lineup"><div class="wo-mug"><div class="wo-hgt" aria-hidden="true"><span>6'</span><span>5'</span><span>4'</span><span>3'</span></div>${photoHTML(n, prop)}
+          <div class="wo-scanl" aria-hidden="true"></div><div class="wo-match">MATCH ✓</div><div class="wo-plac">SUSPECT #${i + 1} · DISTRICT ${dn}</div></div>
+          <div class="wo-file"><div class="wo-fhead">CASE FILE #${(1200 + seed * 7 + i * 13) % 9000 + 1000}</div>
+          <div class="wo-tl" style="--d:1.8s">ALIAS: ${esc(pick(ALIASES, i))}</div><div class="wo-tl" style="--d:2.4s">KNOWN FOR: <span class="wo-red">${red}</span></div>
+          <div class="wo-tl" style="--d:3s">LAST SEEN: ${esc(pick(SEEN, i))}</div><div class="wo-sus">SUSPECT</div></div></div>${letters(n)}${hypeLine(n, i)}`;
+      }
+      return `${photoHTML(n, prop)}<div class="wo-from">From District ${dn}…</div>${letters(n)}${hypeLine(n, i)}<div class="wo-stat">${esc(stat)}</div>`;
+    }
+    if (!document.getElementById("wo-font") && o.style === "reaping") { const l = document.createElement("link"); l.id = "wo-font"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap"; document.head.appendChild(l); }
     let i = -1;
     const step = () => {
       if (!root) return;
@@ -225,11 +301,10 @@ window.Walkout = (() => {
       const conf = calm ? "" : Array.from({ length: 18 }, (_, k) => `<span class="wo-conf" style="left:${(k * 5.6 + Math.random() * 4).toFixed(1)}%;--t:${(2.2 + Math.random() * 1.6).toFixed(2)}s;--d:${(1.5 + Math.random() * .9).toFixed(2)}s;--r:${(Math.random() * 720 - 360) | 0}deg">${CONF[(k + i) % CONF.length]}</span>`).join("");
       root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div><div class="wo-search"></div>'}<div class="wo-beam"></div>${conf}<button class="wo-back" type="button">↩ Back to setup</button>
         <div class="wo-in"><div class="wo-tag">${T.tag}</div>
-        <div class="wo-photo"><img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">${calm ? "" : `<span class="wo-prop${prop.eyes ? " eyes" : ""}" aria-hidden="true">${prop.e}</span>`}</div>
-        <div class="wo-from">From District ${dn}…</div><div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>
-        <div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div><div class="wo-stat">${esc(stat)}</div>
+        ${middle(o.style, n, dn, prop, stat, i)}
         <div class="wo-dots">${names.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
         <button class="wo-skip" type="button">Skip intros</button><div class="wo-hint">Space: skip</div></div>`;
+      if (o.style === "reaping" && !calm) root.insertAdjacentHTML("beforeend", `<div class="wo-chariot" aria-hidden="true">🔥🐎🐎<img src="${esc(o.photo ? o.photo(n) : "")}" alt="">🛞🔥🔥</div>`);
       root.querySelector(".wo-skip").onclick = () => end();
       root.querySelector(".wo-back").onclick = () => end(true);
       // ~5 seconds each: drumroll → BAM (photo + name) → a funny sound and confetti → the prop drops on their head

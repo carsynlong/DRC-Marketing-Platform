@@ -745,9 +745,13 @@ async function countVotes(auto){
   if(S.phase!=="tb"||(!S.tie.voted.length&&auto!==true))return;   // time ran out with no votes: still tied
   S.phase="tbsuspense";stopSong();render();drumroll(1.9);
   later(()=>{const T=S.tie,max=Math.max(...T.names.map(n=>T.votes[n])),lead=T.names.filter(n=>T.votes[n]===max);
+    T.lead=lead;
+    if(T.prize){   // 🏆 sudden death for the major award
+      if(lead.length===1){S.pkg.winner=lead[0];S.pkg.faceoff=true;S.phase="pkg";giftFx();render();return}
+      S.phase="tbresult";later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300);render();return}
     T.names.forEach(n=>addVotes(n,T.votes[n]*(S.mult||1)));
     S.slow=phones.filter(n=>voters().includes(n)&&!T.voted.includes(n));S.slow.forEach(n=>addVotes(n,-SLOW_PEN));   // ⏰ didn't vote in time
-    T.lead=lead;S.phase="tbresult";
+    S.phase="tbresult";
     if(lead.length===1){S.results[S.k]={name:lead[0],votes:cur().top[0][1],tb:true};later(()=>{winFx();applause();flash()},700);later(()=>playSong("strut"),2000);later(leaderCheck,3200)}
     else{later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300)}
     render();},2000);
@@ -759,7 +763,8 @@ function spin(names,done){
   step();
 }
 function fate(){
-  const T=S.tie;S.phase="fate";stopSong();render();
+  const T=S.tie;if(T.prize){S.pkg.lead=T.names;return pkgFate()}
+  S.phase="fate";stopSong();render();
   spin(T.names,w=>{S.results[S.k]={name:w,votes:cur().top[0][1],tb:true,fate:true};T.lead=[w];S.phase="tbresult";winFx();applause();flash();later(()=>playSong("strut"),1400);render()});
 }
 function nextQuestion(){
@@ -783,6 +788,11 @@ function packageReveal(){
   later(()=>{const P=S.pkg,max=rows[0][1];P.lead=rows.filter(r=>r[1]===max).map(r=>r[0]);P.done=true;
     if(P.lead.length===1){P.winner=P.lead[0];giftFx()}else{sfx("buzz");shake()}
     render()},tFinal+3500);
+}
+function prizeFaceoff(){   // tied for the major award: a face-off vote decides it (no random spin)
+  const P=S.pkg;S.tie={names:P.lead.slice(),round:0,q:null,votes:{},voted:[],prize:true};
+  if(!voters().length)return pkgFate();
+  nextTiebreaker();
 }
 function pkgFate(){
   const P=S.pkg;S.phase="pkgfate";stopSong();render();
@@ -935,9 +945,9 @@ function tbresult(){
     <p class="sub">${r.fate?`The lucky spin picked <b>${esc(r.name)}</b>!`:`<b>${esc(r.name)}</b> wins the face-off, ${T.names.map(n=>T.votes[n]).sort((a,b)=>b-a).join(" to ")}!`}</p>
     ${cur().jab?`<div class="jab late" style="--d:1.2s">${esc(cur().jab.replace("{n}",r.name))}</div>`:""}${slowLine(1.6)}
     <div class="ctl">${sndBtn()}<button class="btn" id="next">${S.k+1<S.order.length?"Next question":"Final board"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
-  const more=T.round<TB_PER_TIE;
+  const more=voters().length>0;   // keep asking face-off questions until someone wins
   return `<section class="center">${podiums(T.lead,sc)}<div class="tieban late" style="--d:0s">${strike(.15)}Still tied!</div>
-    <p class="sub late" style="--d:1s">${more?"On to another face-off question.":"Three face-offs and still tied. Time for a lucky spin!"}</p>
+    <p class="sub late" style="--d:1s">${more?`On to another face-off question${T.prize?" for the major award":""}.`:"Nobody's left to vote. Time for a lucky spin!"}</p>
     <div class="ctl late" style="--d:1s"><button class="btn red" id="${more?"again":"fate"}">${more?"⚡ Next face-off":"🎰 Lucky spin"}</button></div><div class="hint">Space: continue</div></section>${raceBar()}`;
 }
 const spinView=(label,n)=>`<section class="center"><span class="qtag">${label}</span><div class="bulbs"><div class="board spinbox"><img id="fateImg" src="${AV(n)}" alt=""><div class="nm" id="fateName">${esc(n)}</div></div></div></section>`;
@@ -955,10 +965,11 @@ function pkgView(){
   if(!open) return `<section class="center"><h1 class="ptitle">🎁 Prize Round</h1>${b}</section>`;
   if(!P.winner) return `<section class="center"><div class="tieban late" style="--d:0s">${strike(.15)}Tied for the prize!</div>
     ${podiums(P.lead,n=>S.tally[n])}
-    <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">🎰 Lucky spin for the prize</button></div><div class="hint">Space: continue</div>${b}</section>`;
+    <p class="sub late" style="--d:.8s">Sudden death! Everyone else votes in secret on one more question.</p>
+    <div class="ctl late" style="--d:1s"><button class="btn red" id="pkgfate">⚡ Sudden-death face-off</button></div><div class="hint">Space: continue</div>${b}</section>`;
   const list=board("Final totals",P.rows.map(([n,v],i)=>tile({n,v,num:i+1,state:"open"})).join(""),"Votes + correct guesses","compact one");
   return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🏆 Major award winner</h1>
-    <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"vote")}</div>
+    <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":P.faceoff?"Won the sudden-death face-off":"Top of the prize race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"vote")}</div>
     <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
 }
 function pkgFateView(){return spinView("🎰 Lucky spin for the prize",S.pkg.lead[0]);}
@@ -975,9 +986,9 @@ function primary(){
   if(p==="question")return surveySays();
   if(p==="reveal")return isTie(cur())?startTie():nextQuestion();
   if(p==="tb"&&S.tie.voted.length&&S.tie.voted.length>=voters().length)return countVotes();
-  if(p==="tbresult")return S.tie.lead.length===1?nextQuestion():(S.tie.round<TB_PER_TIE?nextTiebreaker():fate());
+  if(p==="tbresult")return S.tie.lead.length===1?nextQuestion():(voters().length?nextTiebreaker():fate());
   if(p==="end")return packageReveal();
-  if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return pkgFate();
+  if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return prizeFaceoff();
 }
 const musicFor=()=>({intro:"strut",half:"half",lobby:"lobby",question:"think",tb:"faceoff",reveal:S.order.length&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
 function wire(){
@@ -987,7 +998,7 @@ function wire(){
   document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>castVote(b.dataset.pick));
   on("skipintro",finishIntro);on("fango",goQuestion);on("dblgo",showQuestion);on("half2",goQuestion);
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
-  on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",pkgFate);
+  on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",prizeFaceoff);
   on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("faceoff");render()});
   on("lobby",goSetup);
   on("replay",()=>{if(S.phase==="end"&&!confirm("Start the show over? The prize race goes back to zero."))return;clearTimers();stopSong();startGame()});
@@ -1016,7 +1027,7 @@ function snapshot(){
   if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p==="tbsuspense"?0:S.tie.ends||0});
-  if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
+  if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:S.tie.prize?"The major award":cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
   if(["end","pkg","pkgfate"].includes(p)){g.phase="final";if(p==="pkg"&&S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
   return JSON.stringify(g);
 }

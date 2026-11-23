@@ -164,7 +164,20 @@ function mkMarch(){ // "God Rest Ye Merry Gentlemen" (traditional English carol)
     for(let k=0;k<8;k++)ev.push([b+k/2,"hat",0,.5,k%2?.4:.7]);});
   return {bpm:128,len:48,ev};
 }
-const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge(),march:mkMarch()};
+function mkBattle(){ // "We Three Kings" (Hopkins, 1857): fast, pounding battle version for face-offs
+  const B=71,A=69,G=67,E=64,Fs=66,D5=74,C5=72;
+  const L1=[[B,2],[A,1],[G,2],[E,1],[Fs,1],[G,1],[Fs,1],[E,3]];
+  const L3=[[G,2],[G,1],[A,2],[A,1],[B,2],[B,1],[D5,1],[C5,1],[B,1]];
+  const L4=[[A,1],[B,1],[A,1],[G,2],[Fs,1],[E,3]];
+  const ev=seq([...L1,...L1,...L3,...L4],"brass").map(e=>(e[2]+=12,e));
+  const roots=[40,40,47,40,40,40,47,40,43,43,45,47,45,40,47,40]; // one per 3-beat bar
+  roots.forEach((r,i)=>{const b=i*3;
+    [0,.5,1,1.5,2,2.5].forEach((x,k)=>{ev.push([b+x,"bass",r,.5,k%2?.7:1],[b+x,"hat",0,.5,k%2?.5:.8])});
+    ev.push([b,"taiko",0,1,1.2],[b+1,"snare",0,1,.9],[b+1.5,"taiko",0,1,.7],[b+2,"snare",0,1,1],[b+2.5,"taiko",0,1,.6],[b,"timp",r,1,.9]);
+    if(i%4===0)ev.push([b,"brass",r+12,3,.7],[b,"brass",r+19,3,.5]);});
+  return {bpm:210,len:48,ev};
+}
+const SONGS={lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge(),march:mkMarch(),battle:mkBattle()};
 XM.duck=on=>{if(musicBus)musicBus.gain.setTargetAtTime(on?.16:.5,AC.currentTime,.15)};
 XM.playSong=function(name,force){
   if(songName===name&&!force)return;
@@ -223,6 +236,23 @@ XM.sfx=function(kind){
     noise(t+.5,1.2,.28,sfxBus,"highpass",6000)}
   if(kind==="chirp"){[0,.18,.36].forEach(d=>{const o=osc("sine",2200,t+d,.12,.12,sfxBus);o.frequency.setValueAtTime(2200,t+d);o.frequency.exponentialRampToValueAtTime(3600,t+d+.1)})}
   if(kind==="thwip"){const o=osc("sine",1800,t,.18,.15,sfxBus);o.frequency.exponentialRampToValueAtTime(300,t+.18);noise(t,.15,.15,sfxBus,"highpass",3000);INST.kick(t+.22,0,0,1);noise(t+.22,.08,.3,sfxBus,"bandpass",900,1)}
+};
+
+/* ================= ANNOUNCER (laptop's built-in voice, pitched down) ================= */
+XM.SAY={"Elisha":"Alicia","QUEEN MOTHER":"Queen Mother"};
+XM.spoken=n=>XM.SAY[n]||n;
+let sayGen=0;
+const pickVoice=()=>{const sy=window.speechSynthesis;if(!sy)return null;const v=sy.getVoices().filter(v=>/^en/i.test(v.lang));
+  return v.find(v=>/(Daniel|Google UK English Male|Microsoft (Guy|David|Mark|Ryan)|Fred|Alex|Aaron|Arthur|Rocko|Ralph)/i.test(v.name))||v.find(v=>/male/i.test(v.name)&&!/female/i.test(v.name))||v[0]||null};
+if(window.speechSynthesis)speechSynthesis.getVoices();
+XM.hush=()=>{sayGen++;if(window.speechSynthesis)speechSynthesis.cancel()};
+XM.say=(text,done,{pitch=.15,rate=.85,fallback=900,interrupt=false}={})=>{
+  const my=sayGen;let fired=false;const fin=()=>{if(fired||my!==sayGen)return;fired=true;done&&done()};
+  const sy=window.speechSynthesis;
+  if(!sy||!XM.sound){setTimeout(fin,fallback);return}
+  if(interrupt)sy.cancel();
+  const u=new SpeechSynthesisUtterance(text);const v=pickVoice();if(v)u.voice=v;u.pitch=pitch;u.rate=rate;u.onend=fin;u.onerror=fin;sy.speak(u);
+  setTimeout(fin,Math.max(fallback,text.length*110+2000));
 };
 
 /* ================= SNOW ================= */

@@ -134,7 +134,7 @@ function spin(){
   if(S.pool.length===1&&!S.pick)return;
   S.spinning=true;render();
   const start=S.rot,dist=2*Math.PI*(5+Math.random()*3)+Math.random()*2*Math.PI,dur=4200+Math.random()*900,t0=performance.now();
-  let lastIdx=idxAtPointer();playSong("count");
+  let lastIdx=idxAtPointer();playSong("battle");
   const ease=t=>1-Math.pow(1-t,4);
   const step=now=>{const t=Math.min(1,(now-t0)/dur);S.rot=start+dist*ease(t);drawWheel();
     const i=idxAtPointer();if(i!==lastIdx){lastIdx=i;sfx("tick")}
@@ -144,7 +144,7 @@ function spin(){
 function land(name){
   stopSong();S.spinning=false;S.pool=S.pool.filter(n=>n!==name);
   let showVs=null;
-  if(!S.pick){S.pick=name;S.last=null;sfx("reveal")}
+  if(!S.pick){S.pick=name;S.last=null;sfx("reveal");XM.say(XM.spoken(name)+"!",null,{pitch:.1,rate:.8,interrupt:true})}
   else{S.matches.push({a:S.pick,b:name,win:null});S.last={a:S.pick,b:name};showVs=S.matches.length-1;S.pick=null}
   if(!S.pick&&S.pool.length===1){S.bye=S.pool[0];S.pool=[]}
   if(!S.pool.length&&!S.pick){S.phase="play"}
@@ -167,9 +167,11 @@ function versus(i){
       <button class="btn ghost" id="vs-tie" style="font-size:1.1rem">⚔️ It's a tie</button></div></div>`;
   document.body.appendChild(ov);
   sfx("whoosh");setTimeout(()=>{sfx("cannon");confetti(140)},700);
-  const close=()=>{ov.remove();if(S.phase==="play")playSong("board")};
+  setTimeout(()=>{if(!document.getElementById("vsov"))return;XM.say(XM.spoken(m.a)+"...",()=>{if(!document.getElementById("vsov"))return;
+    XM.say("versus...",()=>{if(document.getElementById("vsov"))XM.say(XM.spoken(m.b)+"!",null,{pitch:.05,rate:.75})},{pitch:.1,rate:.7})},{pitch:.05,rate:.75,interrupt:true})},900);
+  const close=()=>{XM.hush();ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
-  ov.querySelector("#vs-timer").onclick=()=>{ov.remove();openTimer(i)};
+  ov.querySelector("#vs-timer").onclick=()=>{XM.hush();ov.remove();openTimer(i)};
   ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{m.win=m[b.dataset.vswin];sfx("fanfare");confetti(160);ov.remove();render();if(S.phase==="play")playSong("board")});
   ov.querySelector("#vs-tie").onclick=()=>{ov.remove();tiebreak([m.a,m.b],m)};
 }
@@ -198,13 +200,25 @@ function openTimer(i){
     <div class="timer" id="tnum">${left}</div><div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="tgo">Go!</button><button class="btn ghost" id="tclose">Close</button></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center"><span class="eyebrow">Who won?</span><button class="btn" data-twin="a">👑 ${esc(m.a)}</button><button class="btn" data-twin="b">👑 ${esc(m.b)}</button><button class="btn ghost" id="ttie">⚔️ It's a tie</button></div></div>`;
   document.body.appendChild(ov);
-  const close=()=>{clearInterval(tId);ov.remove();stopSong();playSong("board")};
+  const close=()=>{clearInterval(tId);XM.hush();ov.remove();stopSong();playSong("board")};
   ov.querySelector("#tclose").onclick=close;
   ov.querySelectorAll("[data-twin]").forEach(b=>b.onclick=()=>{clearInterval(tId);m.win=m[b.dataset.twin];ov.remove();stopSong();sfx("fanfare");confetti(160);render();if(S.phase==="play")playSong("board")});
   ov.querySelector("#ttie").onclick=()=>{clearInterval(tId);ov.remove();tiebreak([m.a,m.b],m)};
-  ov.querySelector("#tgo").onclick=e=>{e.target.disabled=true;sfx("go");playSong("count");
-    tId=setInterval(()=>{left--;const el=document.getElementById("tnum");if(el)el.textContent=left;
-      if(left<=5&&left>0)sfx("tock");if(left<=0){clearInterval(tId);stopSong();sfx("cannon");if(el)el.textContent="Time!"}},1000)};
+  const word=["zero","one","two","three","four","five"];
+  const num=(t,hot)=>{const el=document.getElementById("tnum");if(!el)return;el.textContent=t;el.style.color=hot?"#ff6b5e":"";el.animate([{transform:"scale(1.6)",opacity:.3},{transform:"scale(1)",opacity:1}],{duration:350,easing:"cubic-bezier(.2,1.4,.4,1)"})};
+  ov.querySelector("#tgo").onclick=e=>{e.target.disabled=true;stopSong();playSong("battle");
+    // 5, 4, 3, 2, 1 ... BOOM, then the clock runs
+    let c=5;num(c,true);sfx("drum");XM.say("Five",null,{pitch:.1,rate:1,interrupt:true});
+    tId=setInterval(()=>{c--;
+      if(c>0){num(c,true);sfx(c===1?"thud":"drum");XM.say(word[c],null,{pitch:.1,rate:1,interrupt:true});return}
+      clearInterval(tId);num("GO!",true);sfx("cannon");sfx("go");confetti(160);XM.say("Go!",null,{pitch:.3,rate:1,interrupt:true});
+      const box=document.getElementById("tov");if(box)box.animate([{transform:"translate(-14px,6px)"},{transform:"translate(12px,-6px)"},{transform:"none"}],{duration:350});
+      setTimeout(()=>{if(!document.getElementById("tov"))return;num(left,false);
+        tId=setInterval(()=>{left--;
+          if(left>0&&left<=5){num(left,true);sfx("tock");XM.say(word[left],null,{pitch:.1,rate:1,interrupt:true})}
+          else if(left>0)num(left,false);
+          if(left<=0){clearInterval(tId);stopSong();sfx("cannon");num("TIME!",true);XM.say("Time!",null,{pitch:.05,rate:.8,interrupt:true});confetti(120)}},1000)},900);
+    },1000)};
 }
 function tiebreak(names,match){
   stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render()}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});

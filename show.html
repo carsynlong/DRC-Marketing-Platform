@@ -236,13 +236,15 @@ const announcer=(()=>{
   const pickVoice=()=>{if(!synth)return null;const v=synth.getVoices().filter(v=>/^en/i.test(v.lang));
     return v.find(v=>/(Daniel|Google UK English Male|Microsoft (Guy|David|Mark|Ryan)|Fred|Alex|Aaron|Arthur|Rocko|Ralph)/i.test(v.name))||v.find(v=>/male/i.test(v.name)&&!/female/i.test(v.name))||v[0]||null};
   if(synth)synth.onvoiceschanged=()=>{};
+  const pickFemale=()=>{if(!synth)return null;const v=synth.getVoices().filter(v=>/^en/i.test(v.lang));
+    return v.find(v=>/(Samantha|Google US English|Google UK English Female|Microsoft (Aria|Jenny|Zira|Libby|Sonia|Michelle)|Victoria|Karen|Moira|Tessa|Fiona|Serena|Allison|Ava|Susan)/i.test(v.name))||v.find(v=>/female|woman/i.test(v.name))||null};
   return {
     stop(){gen++;if(synth)synth.cancel();XM.duck(false)},
     // say text, then call done(). Falls back to a timer when muted or no voice.
-    say(text,done,{pitch=.1,rate=.78,fallback=1600}={}){
+    say(text,done,{pitch=.1,rate=.78,fallback=1600,female=false}={}){
       const my=gen;let fired=false;const fin=()=>{if(fired||my!==gen)return;fired=true;done&&done()};
       if(!synth||!XM.sound){setTimeout(fin,fallback);return}
-      const u=new SpeechSynthesisUtterance(text);const v=pickVoice();if(v)u.voice=v;u.pitch=pitch;u.rate=rate;u.volume=1;
+      const u=new SpeechSynthesisUtterance(text);const v=female?(pickFemale()||pickVoice()):pickVoice();if(v)u.voice=v;u.pitch=pitch;u.rate=rate;u.volume=1;
       u.onend=fin;u.onerror=fin;synth.speak(u);
       setTimeout(fin,Math.max(fallback,text.length*120+2500)); // safety net if the voice never reports "done"
     },
@@ -268,9 +270,9 @@ function narrate(el,intro){
   const items=[...el.querySelectorAll("[data-say]")];
   const show=n=>{n.style.opacity="";n.classList.add(n.dataset.anim||"pop");n.querySelectorAll(".spin").forEach(c=>{c.style.animation="none";void c.offsetWidth;c.style.animation=""});XM.sfx("whoosh")};
   const step=i=>{if(!ok())return;if(i>=items.length){XM.duck(false);XM.sfx("sparkle");return}
-    setTimeout(()=>{if(!ok())return;show(items[i]);announcer.say(items[i].dataset.say,()=>step(i+1),{pitch:.3,rate:.9,fallback:2200})},450)};
+    setTimeout(()=>{if(!ok())return;show(items[i]);announcer.say(items[i].dataset.say,()=>step(i+1),{pitch:1.05,rate:.95,fallback:2200,female:true})},450)};
   XM.duck(true);
-  setTimeout(()=>ok()&&announcer.say(intro,()=>step(0),{pitch:.15,rate:.8,fallback:900}),900);
+  setTimeout(()=>ok()&&announcer.say(intro,()=>step(0),{pitch:1,rate:.9,fallback:900,female:true}),900);
 }
 /* ---------- the slides, in show order ---------- */
 const SLIDES=[
@@ -280,7 +282,11 @@ const SLIDES=[
     <h1 class="title-xl slam" ${d(1.1)} style="font-size:170px">CHRISTMAS GAMES</h1>
     <span class="pill pop" ${d(1.8)} style="font-size:38px">Thanksmas Edition</span>
     <div class="motto fade" ${d(2.3)}>May the odds be ever in your favor</div></div>`,
-   enter(){setTimeout(()=>XM.confetti(200,true),1300)}},
+   enter(el){setTimeout(()=>XM.confetti(200,true),1300);
+     announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;
+     const L=[["Ladies and gentlemen...",{pitch:.1,rate:.75}],["Welcome to this year's Christmas Games!",{pitch:.1,rate:.8}],["The Thanksmas Edition.",{pitch:.15,rate:.8}],["May the odds... be ever in your favor.",{pitch:.05,rate:.72}]];
+     const go=i=>{if(!ok())return;if(i>=L.length){XM.duck(false);return}setTimeout(()=>ok()&&announcer.say(L[i][0],()=>go(i+1),{...L[i][1],fallback:1200}),i?450:0)};
+     setTimeout(()=>{if(!ok())return;XM.duck(true);go(0)},1500)}},
  {id:"welcome",music:"stop",html:()=>`<div style="display:grid;grid-template-columns:520px 1fr;gap:90px;align-items:center;text-align:left">
     <div class="card spin" style="padding:44px 36px;display:grid;justify-items:center;gap:14px;box-shadow:0 0 0 4px var(--gold),0 30px 70px rgba(0,0,0,.6);background:linear-gradient(170deg,#1d3b32,#0d1f18)">
       <div class="eb" style="letter-spacing:.4em;color:var(--gold)">CAPITOL ID</div>
@@ -294,7 +300,7 @@ const SLIDES=[
       <h1 class="title-l slam" ${d(.6)}>Citizens of the living room!</h1>
       <p class="fr" ${d(1.2)} style="font-size:38px;line-height:1.35;margin:0">Welcome to the 2026 Christmas Games, where the turkey is digested, the stakes are high, and the pie counts as a sponsor gift.</p>
       <p class="fr" ${d(1.6)} style="font-size:38px;line-height:1.35;margin:0">Twelve tributes. Eight games. A pile of major awards made of real lost mail that nobody has seen inside. Not even me.</p>
-      <p class="fr" ${d(2)} style="font-size:38px;line-height:1.35;margin:0">Play fair, trash talk responsibly, and remember: what happens in the arena stays in the group chat.</p>
+      <p class="fr" ${d(2)} style="font-size:38px;line-height:1.35;margin:0">Play fair, trash talk responsibly, and remember: what happens at Thanksgiving stays at Thanksgiving.</p>
     </div></div>`,enter(){XM.sfx("whoosh");setTimeout(()=>XM.sfx("thud"),1000)}},
  {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","Every game you win earns you a major award. Win three games? Take home three."],
     ["lock","#3e8a52","What's inside? No idea","They're real unclaimed mail. Nobody knows what's inside. Not even the Gamemaker."],

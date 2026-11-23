@@ -222,6 +222,16 @@ function tieSlide(k){
     <div class="fade" ${d(1.9)} style="font-size:24px;opacity:.8">Yes: tap who tied and the tie-breaking starts. No: on to the next slide.</div></div>`,
     enter(){setTimeout(()=>XM.sfx("thud"),400)}};
 }
+// "HOW TO PLAY... IDK. ASK ___." joke slide (Mitten Mayhem, Left Right Capitol)
+function idkSlide(k,img,who,spoken){
+  return {id:"idk-"+k,music:"stop",html:()=>`${tbBtn(k)}<div style="display:grid;justify-items:center;gap:24px;height:100%;grid-template-rows:auto 1fr auto">
+    <h1 class="title-l fd" style="color:#fff;letter-spacing:.06em">HOW TO PLAY...</h1>
+    <div class="pola zoom" ${d(.7)} style="position:relative;--r:-3deg;transform:rotate(-3deg);padding:16px 16px 16px"><img src="${img}" alt="" style="width:auto;height:560px;max-width:900px;object-fit:cover"></div>
+    <h1 class="title-xl slam" ${d(2.2)} style="font-size:150px">IDK. ASK ${who}.</h1></div>`,
+   enter(el){announcer.stop();const my=announcer.gen();const ok=()=>my===announcer.gen()&&curEl===el;
+     setTimeout(()=>ok()&&announcer.say("How to play...",null,{pitch:.3,rate:.75}),300);
+     setTimeout(()=>{if(!ok())return;XM.sfx("thud");shake();announcer.say(`I don't know. Ask ${spoken}.`,()=>ok()&&XM.sfx("trombone"),{pitch:.2,rate:.8,fallback:400})},2600)}};
+}
 function orderSlide(k,blurb){
   const g=GAMES[k];
   return {id:"order-"+k,music:null,html:()=>`${tbBtn(k)}<div style="display:grid;justify-items:center;gap:28px;width:100%">
@@ -348,13 +358,7 @@ const SLIDES=[
  gameTitle("tribute"),
  // GAME 3
  gameTitle("mitten"),
- {id:"granny",music:"stop",html:()=>`<div style="display:grid;justify-items:center;gap:24px;height:100%;grid-template-rows:auto 1fr auto">
-    <h1 class="title-l fd" style="color:#fff;letter-spacing:.06em">HOW TO PLAY...</h1>
-    <div class="pola zoom" ${d(.7)} style="position:relative;--r:-3deg;transform:rotate(-3deg);padding:16px 16px 16px"><img src="/xmas/past/granny-idk.jpg" alt="Granny shrugging" style="width:auto;height:560px;max-width:900px"></div>
-    <h1 class="title-xl slam" ${d(2.2)} style="font-size:150px">IDK. ASK GRANNY.</h1></div>`,
-   enter(el){announcer.stop();const my=announcer.gen();const ok=()=>my===announcer.gen()&&curEl===el;
-     setTimeout(()=>ok()&&announcer.say("How to play...",null,{pitch:.3,rate:.75}),300);
-     setTimeout(()=>{if(!ok())return;XM.sfx("thud");shake();announcer.say("I don't know. Ask Granny.",()=>ok()&&XM.sfx("trombone"),{pitch:.2,rate:.8,fallback:400})},2600)}},
+ idkSlide("mitten","/xmas/past/granny-idk.jpg","GRANNY","Granny"),
  orderSlide("mitten","Everyone gets a turn. Shuffle to see who unwraps first."),
  // GAME 4
  gameTitle("feud"),
@@ -366,12 +370,12 @@ const SLIDES=[
  gameTitle("secrets"),
  // GAME 7
  gameTitle("lrc"),
- howTo("lrc",["Everyone starts with 3 chips","Roll one die for each chip you have (up to 3)","L passes a chip left, R passes right, C sends it to the Capitol","Dots? Lucky you. Keep that chip"],"Last tribute holding chips wins the Capitol's pot and a major award."),
+ idkSlide("lrc","/xmas/past/elisha-idk.jpg","ELISHA","Alicia"),
  orderSlide("lrc","Shuffle to see who rolls first. Play goes in this order."),
  tieSlide("lrc"),
  // GAME 8
  gameTitle("bingo"),
- howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Five in a row wins: across, down, or diagonal","Yell BINGO! We check your card number on screen"],"Every bingo wins a major award. We keep playing until they're all gone.",
+ howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV: a row, four corners, a big X, and a blackout to finish","Yell BINGO! We check your card number on screen"],"Every bingo wins a major award. We keep playing until they're all gone.",
    `<a class="btn red" href="/bingo" target="_blank" rel="noopener" style="font-size:28px">Open the Bingo Board</a>`),
  {id:"bingo-board",music:null,html:()=>`${tbBtn("bingo")}<div style="display:grid;grid-template-columns:auto 1fr;gap:90px;align-items:center;text-align:left">
     <div class="ball drop" style="--r:0deg"><div class="face"><span style="font-family:var(--display);font-size:80px;color:#17998a">B</span><span style="font-weight:800;font-size:170px">7</span></div></div>

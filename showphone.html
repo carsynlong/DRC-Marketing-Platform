@@ -462,8 +462,10 @@ function coach(){if(me!=="Carsyn")return;let c=document.getElementById("coach");
   if(!slide){c.innerHTML=`<div class="eyebrow">🎬 Your coach</div><div class="tiny" style="text-align:left">Start the show on the laptop and your next step shows here.</div>`;return}
   c.innerHTML=`<div class="eyebrow">🎬 Now on the TV · <b class="n">${slide.n||""} / ${slide.total||""}</b></div><div style="font-weight:800;margin:4px 0 2px">${esc(slide.title||"")}</div><div style="font-size:.95rem">👉 ${esc(coachNote(slide.id||"")||"Press → when ready.")}</div>`}
 let pollN=0;
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)pollN=0});   // coming back: next check is a full one
 async function poll(){
-  pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%3===1?"&full=1":""),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();const s=j.slide;
+  if(document.hidden){setTimeout(poll,4000);return}   // screen off or another app: don't use up database calls
+  pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%3===1?"&full=1&pid="+encodeURIComponent(pid):""),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();const s=j.slide;
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}

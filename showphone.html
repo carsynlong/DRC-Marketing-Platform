@@ -633,7 +633,11 @@ function signedOut(){if(!me)return;stopLive();me=null;myEpoch=null;XM.store.set(
 function showSlide(){
   const n=document.getElementById("tvn"),t=document.getElementById("tvt"),b=document.getElementById("tvb");if(!t){coach();return}
   if(!slide){t.textContent="Waiting for the Gamemaker...";b.textContent="";n.textContent="";return}
-  n.textContent=slide.total?`${slide.n} / ${slide.total}`:"";t.textContent=slide.title||"";b.textContent=slide.body||"";
+  n.textContent=slide.total?`${slide.n} / ${slide.total}`:"";t.textContent=slide.title||"";
+  // tidy the slide text: drop emoji-only lines and stitch short fragments together
+  {const L=String(slide.body||"").split("\n").map(x=>x.trim()).filter(x=>/[A-Za-z0-9]/.test(x)),out=[];
+   for(const x of L){if(out.length&&(x.length<28||out[out.length-1].length<28))out[out.length-1]+=" · "+x;else out.push(x)}
+   b.textContent=out.slice(0,6).join("\n")}
   const d=document.getElementById("tvdo");if(d)d.textContent=slide.todo?"👉 Right now: "+slide.todo:"";
   coach();
 }

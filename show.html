@@ -553,7 +553,7 @@ const announcer=(()=>{
 })();
 function announce(t,el){
   announcer.stop();const my=announcer.gen();
-  const spoken=XM.spoken(t.name),ok=()=>my===announcer.gen()&&curEl===el;
+  const spoken=t.name==="Brandon"?"Butchus Byron Marvin Iron Balls the Third":XM.spoken(t.name),ok=()=>my===announcer.gen()&&curEl===el;
   const stats=[...el.querySelectorAll("[data-stat]")];
   const lines=[`Weapon of choice. ${t.weapon}`,`Survival strategy. ${t.strategy}`,`Capitol odds. ${t.odds==="Gamemaker"?"Gamemaker. Obviously.":t.odds}`];
   XM.duck(true);

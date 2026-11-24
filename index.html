@@ -397,7 +397,7 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker, a.k.a. Clo":n==="Jessie"?"a.k.a. Lucky PomPoms":n==="Grandad"?"The Ancient and Wise 🧙":n==="Dash"?"a.k.a. Chad Thundercock":n==="Jonny"?"a.k.a. HumblePie1 🥧":n==="Natalie"?"a.k.a. Buzz Buzz 🐝":n==="Brandon"?"a.k.a. Iron Balls":n==="Kamdon"?"a.k.a. Big Daddy Kam":n==="Elisha"?"a.k.a. Bye Felicia 👋":n==="Kyle"?"a.k.a. Kachow! ⚡":null});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker, a.k.a. Clo":n==="Jessie"?"a.k.a. Lucky PomPoms":n==="Grandad"?"The Ancient and Wise 🧙":n==="Dash"?"a.k.a. Chad Thundercock":n==="Jonny"?"a.k.a. HumblePie1 🥧":n==="Natalie"?"a.k.a. Buzz Buzz 🐝":n==="Brandon"?"a.k.a. Iron Balls III":n==="Kamdon"?"a.k.a. Big Daddy Kam":n==="Elisha"?"a.k.a. Bye Felicia 👋":n==="Kyle"?"a.k.a. Kachow! ⚡":null});
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud

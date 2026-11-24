@@ -60,7 +60,8 @@ export default async function handler(req, res) {
     const pts = await points();
     let mission = null;
     if (me) { const m = await redis.hget(P + "missions", me); try { mission = m ? (typeof m === "string" ? JSON.parse(m) : m) : null; } catch {} }
-    return reply(res, 200, { slide, quest, points: pts, mission, now: Date.now() });
+    const epoch = Number(await redis.get(P + "epoch")) || 0;
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -104,13 +105,15 @@ export default async function handler(req, res) {
 
   if (a === "join") {
     if (!pid || !NAMES.includes(name)) return reply(res, 400, { error: "Unknown name" });
+    // a phone checking in from before the Gamemaker cleared the phones must join again
+    if (req.body?.epoch != null && Number(req.body.epoch) !== (Number(await redis.get(P + "epoch")) || 0)) return reply(res, 410, { error: "reset" });
     const all = await hash(P + "players");
     if (all[name] && all[name] !== pid && (await redis.get(`${P}seen:${name}`))) return reply(res, 409, { error: "taken" });
     const mine = Object.keys(all).filter(n => all[n] === pid && n !== name);
     if (mine.length) await redis.hdel(P + "players", ...mine);
     await redis.hset(P + "players", { [name]: pid });
     await redis.set(`${P}seen:${name}`, "1", { ex: 30 });
-    return reply(res, 200, { me: name });
+    return reply(res, 200, { me: name, epoch: Number(await redis.get(P + "epoch")) || 0 });
   }
 
   // Gamemaker-only actions that only need the PIN (so the laptop host menu can use them too)
@@ -127,6 +130,15 @@ export default async function handler(req, res) {
     await redis.lpush(P + "sablog", JSON.stringify(s)); await redis.ltrim(P + "sablog", 0, 9);
     await pushCmd("sab", s);
     return reply(res, 200, { ok: true, sab: s });
+  }
+
+  // ⚙ host menu on the TV: sign every phone out (they scan and tap their name again)
+  if (a === "clearphones") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    await redis.incr(P + "epoch");
+    for (const k of ["players", "cams", "missions", "quest"]) await redis.del(P + k);
+    for (const n of NAMES) await redis.del(`${P}seen:${n}`);
+    return reply(res, 200, { ok: true });
   }
 
   if (a === "tw") {

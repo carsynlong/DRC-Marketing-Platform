@@ -78,6 +78,7 @@ XM.snow(document.getElementById("snow"));
 const {esc,TRIBUTES}=XM;
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 const pid=(()=>{try{let p=localStorage.getItem("xmas-sh-pid");if(!p){p=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("xmas-sh-pid",p)}return p}catch(e){return "p"+Math.random()}})();
+let myEpoch=XM.store.get("xmas-sh-epoch",null);
 let me=XM.store.get("xmas-sh-me",null),slide=null,taken=[],skew=0,points={},quest=null,qTimer=0;
 const api=(body)=>fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pid,...body})}).then(r=>r.json().then(j=>({ok:r.ok,status:r.status,...j}))).catch(()=>({ok:false}));
 
@@ -88,7 +89,7 @@ function render(){
       <div class="sub">Tap your face to join, tribute.</div>
       <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>`;
     app.querySelectorAll("[data-n]").forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await api({a:"join",name:b.dataset.n});
-      if(r.ok){me=r.me;XM.store.set("xmas-sh-me",me);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute.":"Couldn't join. Check your internet and try again.")}});
+      if(r.ok){me=r.me;myEpoch=r.epoch||0;XM.store.set("xmas-sh-me",me);XM.store.set("xmas-sh-epoch",myEpoch);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute.":"Couldn't join. Check your internet and try again.")}});
     return;
   }
   const t=TRIBUTES.find(x=>x.name===me);
@@ -191,6 +192,8 @@ function hostCard(){
     if(r.ok)m.textContent="✅ Sent to the TV";else if(r.status===403){XM.store.set("xmas-sh-pin",null);hostCard()}else m.textContent="Couldn't send. Try again.";
     setTimeout(()=>{if(m)m.textContent=""},1500)});
 }
+function signedOut(){stopLive();me=null;myEpoch=null;XM.store.set("xmas-sh-me",null);XM.store.set("xmas-sh-epoch",null);XM.store.set("xmas-sh-pin",null);
+  document.querySelectorAll(".qov").forEach(n=>n.remove());render();alert("The Gamemaker reset the phones. Tap your face to join again.")}
 function showSlide(){
   const n=document.getElementById("tvn"),t=document.getElementById("tvt"),b=document.getElementById("tvb");if(!t)return;
   if(!slide){t.textContent="Waiting for the Gamemaker...";b.textContent="";n.textContent="";return}
@@ -199,6 +202,8 @@ function showSlide(){
 async function poll(){
   try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):""),{cache:"no-store"});const j=await r.json();const s=j.slide;
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
+    if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
+    if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
     skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission)}catch(e){}
   setTimeout(poll,(quest&&quest.status==="live")?1000:2000);
 }
@@ -229,7 +234,7 @@ function stopLive(){
 addEventListener("pagehide",stopLive);
 render();poll();
 // keep our name claimed while the page is open
-setInterval(()=>{if(me)api({a:"join",name:me}).then(r=>{if(r.status===409){me=null;XM.store.set("xmas-sh-me",null);render()}})},20000);
+setInterval(()=>{if(me)api({a:"join",name:me,epoch:myEpoch}).then(r=>{if(r.status===410)signedOut();else if(r.status===409){me=null;XM.store.set("xmas-sh-me",null);render()}})},20000);
 </script>
 </body>
 </html>

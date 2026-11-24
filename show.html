@@ -1043,7 +1043,9 @@ function tickerLoop(){
   const items=newsLog.slice(-8).reverse().map(x=>x.t);
   const lead=Object.entries(lastPoints||{}).sort((a,b)=>b[1]-a[1])[0];if(lead&&lead[1]>0)items.unshift(`⭐ ${lead[0]} leads the Capitol Points with ${lead[1]}`);
   const V=XM.victors();const vs=Object.entries(V).filter(([,n])=>n).map(([g,n])=>`🏆 ${n} won ${GAMES[g].name}`);items.push(...vs.slice(-3));
-  if(!items.length)items.push("Welcome to the 2026 Christmas Games, Thanksmas Edition","May the odds be ever in your favor","Scan the QR code to join on your phone");
+  // mix in Capitol headlines so it's never just one item on repeat
+  const extra=[...TICKER].sort(()=>Math.random()-.5).slice(0,items.length>3?3:5);
+  for(const x of extra){const k=1+Math.floor(Math.random()*items.length);items.splice(k,0,x)}
   const sp=el.querySelector("span");sp.textContent=XM.nick(items.join("     ✦     "));
   const w=sp.offsetWidth,box=el.querySelector(".tk").offsetWidth,dur=Math.max(12,(w+box)/90);
   sp.animate([{transform:`translate(${box}px,-50%)`},{transform:`translate(${-w}px,-50%)`}],{duration:dur*1000,easing:"linear"}).onfinish=()=>tickerLoop();
@@ -1915,7 +1917,11 @@ const TICKER=["BREAKING: QUEEN MOTHER favored to win, odds 1 to 1, obviously","C
  "Weather: 100% chance of trash talk","Grandad spotted fixing something. Nobody knows what.","Kamdon has already calculated your odds. They are not good.",
  "Tinsley's memes reach the Capitol","Natalie breaks into song mid-broadcast","Brandon has not sat down in 3 hours","Gamemaker denies all rigging allegations. Probably.",
  "Kyle rushes the arena like it's pledge week","Jessie offers free trims to anyone who surrenders","Elisha seen out-planking a tribute","Jonny posts a pep talk. Morale soars.",
- "Dash spotted running. Reason unknown.","May the odds be ever in your favor"];
+ "Dash spotted running. Reason unknown.","May the odds be ever in your favor",
+ "Natalie files official complaint: it's not fair","Capitol scientists confirm: Kachow is a valid greeting","Iron Balls III demands to be addressed by his full title",
+ "Leftover turkey declared a Capitol treasure","Grandad the Ancient and Wise shares a story. It is long.","Major awards remain wrapped. Tension rises.",
+ "Scan the QR code to join the Games on your phone","Thanksmas declared an official Capitol holiday","Pee Pee Balls refuses to comment","Chad Thundercock seen flexing at the snack table",
+ "Lucky PomPoms' luck under official review","Bye Felicia waves goodbye to the competition","Big Daddy Kam is already counting the points","HumblePie1 stays humble. Mostly."];
 function liveBroadcast(){
   if(busy())return;const {m,close}=openMoment("live",{stopMusic:false});let stream=null;
   m.innerHTML=`<video autoplay playsinline muted></video><div class="tag">🔴 LIVE FROM THE ARENA</div><img class="logo" src="/xmas/emblem.png" alt="">

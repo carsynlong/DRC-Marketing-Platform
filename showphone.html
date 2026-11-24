@@ -206,7 +206,7 @@ function myBday(b){if(!b||b.id===bdaySeen||me==="Carsyn")return;bdaySeen=b.id;XM
     ${queen?"":`<button class="tapb" id="cake" style="width:180px;height:180px;border-radius:50%;border:0;font-size:5rem;background:rgba(255,255,255,.12)">🎂</button>`}<button class="btn ghost" id="bok">Close</button></div>`;
   document.body.appendChild(ov);buzz([100,60,100,60,300]);
   const c=ov.querySelector("#cake");if(c)c.onclick=()=>{api({a:"react",name:me,e:"🎂"});c.animate([{transform:"scale(1)"},{transform:"scale(1.2)"},{transform:"scale(1)"}],{duration:250})};
-  ov.querySelector("#bok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),90000)}
+  ov.querySelector("#bok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),45000)}
 /* ---- 📲 tap race ---- */
 let race=null,raceN=0,raceSent=0,raceTimer=0,raceTick=0,raceShown=null;
 function myRace(r){
@@ -267,9 +267,10 @@ function myMission(m){
   if(!m){if(card)card.remove();return}
   if(!card){const me_=document.querySelector(".card.me");if(!me_)return;card=document.createElement("div");card.className="card mcard";card.id="mcard";me_.after(card)}
   card.innerHTML=`<div class="eyebrow" style="color:#c9a8ff">🕵️ Your secret mission (tell no one)</div><div style="font-weight:800;font-size:1.1rem;margin-top:4px">${esc(m.text)}</div><div class="tiny" style="text-align:left;margin-top:4px">Pull it off without getting caught, then tell the Gamemaker to earn points.</div>`;
-  if(m.id!==had&&had!==undefined){const ov=document.createElement("div");ov.className="qov spy";
+  const seenM=XM.store.get("xmas-mission-seen",null);
+  if(m.id!==had&&m.id!==seenM){XM.store.set("xmas-mission-seen",m.id);const ov=document.createElement("div");ov.className="qov spy";
     ov.innerHTML=`<div class="in"><div class="ic">🕵️</div><h2>Secret Mission</h2><div class="q">${esc(m.text)}</div><div class="tiny">Don't let anyone see your screen. Don't get caught.</div><button class="btn" id="mok">Got it</button></div>`;
-    document.body.appendChild(ov);buzz([100,80,100]);ov.querySelector("#mok").onclick=()=>ov.remove()}
+    document.body.appendChild(ov);buzz([100,80,100]);ov.querySelector("#mok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),15000)}
 }
 // 📶 no internet? say so instead of looking frozen
 let offN=0;function online(ok){let b=document.getElementById("offbar");if(ok){offN=0;if(b)b.remove();return}
@@ -419,7 +420,7 @@ function showSlide(){
 }
 let pollN=0;
 async function poll(){
-  pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%5===1?"&full=1":""),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();const s=j.slide;
+  pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%3===1?"&full=1":""),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();const s=j.slide;
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}

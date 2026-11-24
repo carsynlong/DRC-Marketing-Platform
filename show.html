@@ -885,7 +885,9 @@ function updateBets(b){betState=b;if(!betUI||!betUI.m.isConnected||!b||b.id!==be
   Object.values(b.bets||{}).forEach(x=>{c[x.on]=(c[x.on]||0)+x.amt;n++});
   betUI.m.querySelectorAll("[data-v]").forEach(x=>{x.querySelector(".n").textContent=c[x.dataset.v]?"💰"+c[x.dataset.v]:"";x.classList.toggle("lead",!!c[x.dataset.v])});
   const t=betUI.m.querySelector("#btot");if(t)t.textContent=n?`${n} bet${n===1?"":"s"} placed`:"No bets yet"}
-function betPaid(r){news(`💰 Bets paid on ${r.winner}: ${(r.results||[]).filter(x=>x.n>0).map(x=>x.who).join(", ")||"nobody"} cashed in`);
+let betQueue=null;
+setInterval(()=>{if(betQueue&&!busy()){const r=betQueue;betQueue=null;betPaid(r)}},1000);
+function betPaid(r){if(busy()&&!betQueue&&!r._q){betQueue={...r,_q:1};toast(`💰 Bets paid on ${r.winner}. Results coming up.`);return}news(`💰 Bets paid on ${r.winner}: ${(r.results||[]).filter(x=>x.n>0).map(x=>x.who).join(", ")||"nobody"} cashed in`);
   if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;setBanner("bets",null);if(busy())return toast(`💰 Bets paid on ${r.winner}`);
   const {m,close}=openMoment("twist feast");const res=(r.results||[]).sort((a,b)=>b.n-a.n);
   m.innerHTML=`<div class="inner"><div class="eb">💰 THE BETS ARE IN · ${esc(r.game)}</div><h1>${esc(r.winner)} won!</h1>
@@ -1089,6 +1091,7 @@ function raceLanes(r){
 function raceWin(x){
   if(raceUI&&raceUI.m.isConnected){raceUI.done=true;const go=raceUI.m.querySelector("#rgo");go.textContent=`🏆 ${x.name}!`;
     const ln=raceUI.m.querySelector(`[data-r="${CSS.escape(x.name)}"]`);if(ln){ln.classList.add("win");ln.querySelector(".rn").style.left="85%"}}
+  const ui=raceUI;setTimeout(()=>{if(ui&&ui.m.isConnected)ui.close()},10000);
   XM.stopSong();XM.celebrate(x.name,{line:`${XM.spoken(x.name)} wins the tap race in ${x.secs} seconds! Plus one point!`});news(`📲 ${x.name} won the tap race in ${x.secs} seconds`);
 }
 /* ---------- 📜 bounty board: everything still in play ---------- */
@@ -1632,7 +1635,7 @@ function pickVictor(g,place=1){
     if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
     close();refreshCorners();XM.stopSong();
     if(place===1){setTimeout(()=>walkUp(n),4200);
-      if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length)setTimeout(()=>{if(confirm(`Pay out the bets on ${n}?`))hostCall({a:"betpay",winner:n})},6500);
+      if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length&&(betState.game===GAMES[g].name||betState.game==="the next game"))setTimeout(()=>hostCall({a:"betpay",winner:n}),2500);
       XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten"&&g!=="bingo")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
     else XM.celebrate(n,{intro:"And in second place"})});
   const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};

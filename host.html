@@ -230,13 +230,13 @@ document.getElementById("rh-on").onclick=async()=>{
   ["cookie","tribute","mitten","feud","scoop","secrets"].forEach(g=>{v[g]=pick();if(g!=="mitten"){let s2=pick();while(s2===v[g])s2=pick();sc[g]=s2}});
   const set=(k,x)=>{try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}};
   set("xmas-victors",v);set("xmas-second",sc);set("xmas-bingo-winners",{line:[7],corners:[42]});set("xmas-ties",[{game:"scoop",tied:[pick(),pick()],winner:v.scoop,how:"10-Second Scoop-Off",t:Date.now()}]);set("xmas-rehearsal",true);
-  const pin=pinNow();if(pin)for(const n of N.slice(0,6))await api({a:"pointsadd",pin,to:n,n:Math.floor(Math.random()*7)-2});
+  const pin=pinNow();if(pin)for(const n of N.slice(0,6))await api({a:"pointsadd",pin,to:n,n:[3,5,-1,2,4,-2][N.indexOf(n)%6]});
   document.getElementById("rhmsg").textContent="🧪 Test data loaded. Reload the show tab (Cmd+R) to see it."+(pin?"":" (Unlock the Side quests section to add test points too.)")};
 let rhArmed=0;document.getElementById("rh-off").onclick=async()=>{const m=document.getElementById("rhmsg");
   if(Date.now()-rhArmed>4000){rhArmed=Date.now();m.textContent="Click again to wipe all test data.";return}rhArmed=0;
-  KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});const pin=pinNow();if(pin){await api({a:"pointsreset",pin});await api({a:"clearphones",pin})}
+  KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{ch&&ch.postMessage({cmd:"chaos:off"});ch&&ch.postMessage({cmd:"sponsor:off"});ch&&ch.postMessage({cmd:"clock:off"})}catch(e){}const pin=pinNow();if(pin){await api({a:"pointsreset",pin});await api({a:"clearphones",pin})}
   m.textContent=pin?"🧹 Rehearsal over. Everything is wiped. Reload the show tab.":"🧹 Wiped this laptop. Points on the server were NOT reset: unlock the Side quests section with your PIN, then click End rehearsal again.";};
-const KEYS=["xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
+const KEYS=["xmas-chaos","xmas-sponsor-auto","xmas-ticker","xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
 let armed=0;const rb=document.getElementById("reset");
 rb.onclick=()=>{const m=document.getElementById("rmsg");
   if(Date.now()-armed>4000){armed=Date.now();m.textContent="Click again to really reset everything.";return}

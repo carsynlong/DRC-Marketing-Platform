@@ -302,7 +302,7 @@ async function main(req, res) {
     const data = { kind, t: Date.now() };
     if (kind === "bounty") {
       const pts = await points(); const top = Object.entries(pts).sort((x, y) => y[1] - x[1])[0];
-      data.to = to || (top && top[1] > 0 ? top[0] : pick(others()));
+      data.to = top && top[1] > 0 ? top[0] : (to || pick(others()));   // always the points leader when there is one
     } else if (kind === "swap" || kind === "alliance") {
       data.to = to || pick(others()); data.with = pick(others([data.to]));
     } else if (kind === "silence" || kind === "wheel" || kind === "mission") {

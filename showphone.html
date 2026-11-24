@@ -109,6 +109,12 @@ html{touch-action:manipulation}
 .htabs button .i{display:block;font-size:1.3rem}
 .htabs button.on{background:var(--gold);color:#13271f}
 .hpane{display:none}.hpane.on{display:block}
+details.picker{margin:0 0 8px;border-radius:14px;background:rgba(255,255,255,.06);padding:8px 10px}details.picker summary{font-weight:800;cursor:pointer;list-style:none}details.picker summary::-webkit-details-marker{display:none}details.picker[open] summary{margin-bottom:8px}
+details.hfold{margin:12px 0 4px;border-radius:14px;background:rgba(255,255,255,.05);padding:8px 10px}details.hfold summary{font-weight:800;cursor:pointer;list-style:none}details.hfold summary::-webkit-details-marker{display:none}details.hfold[open] summary{margin-bottom:8px}
+details.hfold.mini{display:inline-block;padding:2px 12px;margin:6px 0 0}details.hfold.mini[hidden]{display:none}
+[data-when][hidden]{display:none!important}
+#host #qmsg:empty{display:none}
+.tvctl.slim{padding:10px 14px}.tvctl.slim .eyebrow{margin:0}
 #score summary{cursor:pointer;list-style:none;font-family:var(--display);color:var(--gold);font-size:1.2rem;text-align:center}
 #score summary::-webkit-details-marker{display:none}
 .todo{margin-top:8px;padding:8px 12px;border-radius:12px;background:rgba(232,176,75,.16);box-shadow:inset 0 0 0 1px var(--gold);font-weight:800;font-size:1.02rem}
@@ -284,14 +290,7 @@ function render(){if(me!=="Carsyn")dropBar();
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
     <div id="extras" style="display:grid;gap:16px"></div>
-    ${me==="Carsyn"?`<div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div>${DEMOJI[me]?`<div class="eyebrow" style="text-align:center;margin:2px 0 8px">Your district: D${t.d} · ${DIND[t.d]||""}</div><div class="reacts">${DEMOJI[me].map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div><div class="eyebrow" style="text-align:center;margin:12px 0 8px">Arena classics</div>`:""}<div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
-    <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>
-    <div class="card booth" id="booth"><div class="eyebrow" style="text-align:center;margin-bottom:8px">📸 Capitol Photo Booth</div>
-      <input type="file" id="phfile" accept="image/*" capture="user" hidden>
-      <div id="phprev" class="phprev" hidden><img id="phimg" alt=""></div>
-      <button class="btn red" id="phtake" style="width:100%;font-size:1.1rem">📸 Take a photo</button>
-      <div class="phrow" id="phrow" hidden><button class="btn" id="phsend">📨 Send to the Capitol</button><button class="btn ghost" id="phretake">🔁 Retake</button></div>
-      <div class="tiny" id="phmsg">It pops up on the TV, and stars in the Fallen Tributes slideshow at the end.</div></div>`:guestTiles(t)}`;
+    ${me==="Carsyn"?"":guestTiles(t)}`;
   wireTiles(app);wireDecree(app);
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
     m.textContent=r.ok?"📨 Complaint filed!":r.status===429?"The Capitol is still processing your last complaint. Try again in a bit.":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},r.ok?45000:3000)};
@@ -299,7 +298,7 @@ function render(){if(me!=="Carsyn")dropBar();
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
     buzz(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
-  app.querySelector("#golive").onclick=goLive;
+  const gl=app.querySelector("#golive");if(gl)gl.onclick=goLive;
   wireBooth();
   if(app.querySelector("#snsend")){let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
@@ -492,23 +491,6 @@ function myQuest(q){
 }
 /* ---- split the remote into tabs so it's quick to use in the moment ---- */
 const TABS=[["show","🎮","Show"],["quests","⚔️","Quests"],["twists","🌀","Twists"],["phones","📱","Phones"],["fun","🎉","Fun"]];
-const SECT=[["pick who","top"],["The show","show",1],["Jump to","show",0],["Phone sign-ins","phones",5],["Arena clock","show",2],["Your voice","show",3],["Twists on the picked","twists",1],["Twists for the whole room","twists",2],["Sabotage","twists",3],
-  ["Phone vote","phones",1],["Betting","phones",2],["Tap race","phones",3],["Hot seat","phones",4],["Soundboard","fun",1],["Big moments","fun",2]];
-function tabify(box){
-  const kids=[...box.children];const secs=[];let cur=null;
-  kids.forEach(el=>{if(el.tagName==="H3")return;if(el.classList.contains("eyebrow")){const t=el.textContent;const m=SECT.find(([k])=>t.includes(k))||["","fun",9];cur={tab:m[1],o:m[2]||0,els:[el]};secs.push(cur)}else if(cur)cur.els.push(el)});
-  const top=secs.find(x=>x.tab==="top");
-  // the picker stays on top; the side quest controls after it go in the Quests tab
-  const quest={tab:"quests",o:1,els:top.els.splice(2)};top.els[0].textContent="👤 Pick a tribute (quests, twists, sabotage, hot seat, points...)";
-  const msg=box.querySelector("#qmsg");
-  const bar=document.createElement("div");bar.className="htabs";bar.innerHTML=TABS.map(([k,i,l])=>`<button data-tab="${k}"><span class="i">${i}</span>${l}</button>`).join("");
-  const panes={};TABS.forEach(([k])=>{const d=document.createElement("div");d.className="hpane";d.dataset.pane=k;panes[k]=d});
-  [quest,...secs.filter(x=>x.tab!=="top")].sort((a,b)=>a.o-b.o).forEach(x=>x.els.forEach(e=>{if(e!==msg)panes[x.tab].appendChild(e)}));
-  top.els.forEach(e=>box.appendChild(e));if(msg){msg.style.cssText="position:sticky;top:74px;z-index:4;min-height:1.2em;font-weight:800;color:var(--gold);text-align:center;margin:4px 0;pointer-events:none;background:rgba(13,31,24,.92);border-radius:10px";box.appendChild(msg)}
-  box.appendChild(bar);TABS.forEach(([k])=>box.appendChild(panes[k]));
-  const show=k=>{bar.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("on",b.dataset.tab===k));Object.entries(panes).forEach(([n,d])=>d.classList.toggle("on",n===k));XM.store.set("xmas-sh-tab",k)};
-  bar.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>show(b.dataset.tab));show(XM.store.get("xmas-sh-tab","quests"));
-}
 /* ---- Gamemaker remote: only for Carsyn, locked with a PIN ---- */
 const SAB=[["freeze","❄️","Phone freeze (8s)"],["bite","🐕","Mutt bite (25s slow)"],["fog","🌫️","Fog (10s)"],["flip","🙃","Flip upside down"],["jackers","🐝","Tracker jackers"]];
 const TW=[["wheel","🎰","Wheel of Punishment"],["swap","🔁","Body swap (picked + random)"],["silence","🤐","Silence the picked"],["decree","👑","QUEEN MOTHER decree"],["bounty","🎯","Bounty on the leader"],["alliance","🐦","Alliance (picked + random)"],["mission","🕵️","Secret mission to picked"]];
@@ -521,50 +503,47 @@ function hostCard(){
     box.querySelector("#pinok").onclick=async()=>{const v=box.querySelector("#pin").value.trim();const r=await api({a:"pin",pin:v});
       if(r.ok){XM.store.set("xmas-sh-pin",v);hostCard()}else alert(r.status===403?"Wrong PIN.":"Couldn't check the PIN. Check your internet.")};return}
   const b=([c,i,l])=>`<button data-c="${c}"><span class="i">${i}</span>${l}</button>`;
-  box.innerHTML=`<h3>🎮 Gamemaker Remote</h3>
-    <div class="eyebrow" style="margin-bottom:6px">⚔️ Side quest: pick who</div>
-    <div class="qfaces">${TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
-    <select id="qsel">${XM.QUESTS.map((q,i)=>`<option value="${i}">${q[0]} ${esc(q[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
+  const SB=XM.SOUNDBOARD,quick=["airhorn","drumroll","applause"];
+  const sec=(t,h)=>`<div class="eyebrow" style="margin:10px 0 6px">${t}</div>${h}`;
+  const P={
+   show:sec("📍 Jump to a slide",`<div class="hgrid" id="jquick"></div><div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>`)+
+    sec("🔊 Your voice on the TV",`<textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%">🔊 Announce it</button>`)+
+    sec("🎙️ Quick sounds",`<div class="hgrid">${SB.filter(x=>quick.includes(x[0])).map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
+    sec("☕ Breaks",`<div class="hgrid">${b(["intermission","☕","Intermission"])}${b(["live","🎥","Live cam"])}<button data-c="clock:10"><span class="i">⏰</span>10 min clock</button><button data-c="clock:20"><span class="i">⏰</span>20 min clock</button><button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button></div>`),
+   quests:sec("⚔️ Side quest",`<select id="qsel">${XM.QUESTS.map((q,i)=>`<option value="${i}">${q[0]} ${esc(q[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
     <textarea id="qown" rows="2" placeholder="Your side quest" style="display:none" maxlength="150"></textarea>
-    <div class="chips" id="qsecs">${[10,15,30,60].map(n=>`<button data-s="${n}">${n}s</button>`).join("")}</div>
-    <div class="chips"><button id="qdbl">🎲 Double or nothing: OFF</button></div>
+    <div class="chips" id="qsecs">${[10,15,30,60].map(n=>`<button data-s="${n}">${n}s</button>`).join("")}<button id="qdbl">🎲 Double: OFF</button></div>
     <button class="btn red" id="qsend" style="width:100%;font-size:1.1rem">⚔️ Send the side quest</button>
-    <div class="hgrid" style="grid-template-columns:repeat(2,1fr);margin-top:8px"><button id="qdone"><span class="i">✅</span>They did it (+1)</button><button id="qfail"><span class="i">❌</span>Failed (-1)</button></div>
-    <div class="hgrid"><button id="pplus"><span class="i">⭐</span>+1 point to pick</button><button id="pminus"><span class="i">💀</span>-1 point to pick</button><button data-c="points"><span class="i">📊</span>Points on TV</button></div>
-    <div class="eyebrow" style="margin:4px 0 6px">🎯 Twists on the picked tribute (or Random)</div>
-    <div class="hgrid twists">${TW.map(([k,i,l])=>`<button data-tw="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
-    <div class="eyebrow" style="margin:4px 0 6px">🐺 Sabotage the online games (the tribute picked above)</div>
-    <div class="hgrid twists">${SAB.map(([k,i,l])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}</button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Phone freeze everyone BUT picked</button></div>
-    <div class="tiny" id="qmsg" style="margin-bottom:8px"></div>
-    <div class="eyebrow" style="margin:4px 0 6px">🎙️ Soundboard (plays on the TV)</div>
-    <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${XM.SOUNDBOARD.map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
-    <div class="eyebrow" style="margin:4px 0 6px">🗳️ Phone vote</div>
-    <select id="psel">${XM.POLLS.map(q=>`<option>${esc(q)}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
-    <textarea id="pown" rows="2" placeholder="Your question" style="display:none" maxlength="110"></textarea>
-    <div class="hgrid" style="grid-template-columns:repeat(2,1fr)"><button id="popen"><span class="i">🗳️</span>Open the vote</button><button id="pclose"><span class="i">🏁</span>Reveal the winner</button></div>
-    <div class="eyebrow" style="margin:4px 0 6px">💰 Betting</div>
-    <select id="bgame">${Object.values(XM.GAMES).map(g=>`<option>${esc(g.name)}</option>`).join("")}<option>the next game</option></select>
-    <div class="hgrid"><button id="bopen"><span class="i">💰</span>Open bets</button><button id="block"><span class="i">🔒</span>Lock bets</button><button id="bpay"><span class="i">🏆</span>Pay out (picked won)</button><button id="bcancel"><span class="i">↩️</span>Cancel bets</button></div>
-    <div class="eyebrow" style="margin:4px 0 6px">🔊 Your voice on the TV</div>
-    <textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%;margin-bottom:8px">🔊 Announce it</button>
-    <div class="eyebrow" style="margin:4px 0 6px">🎭 Hot seat · 🏳️ Mercy · 🔮 Predictions (use the tribute picked at the top)</div>
-    <div class="hgrid"><button id="hotgo"><span class="i">🎭</span>Hot seat</button><button id="hotend"><span class="i">⏹️</span>End hot seat</button><button id="mgo"><span class="i">🏳️</span>Mercy vote</button>
-      <button id="mclose"><span class="i">⚖️</span>Mercy verdict</button><button id="pro"><span class="i">🔮</span>Open predictions</button><button id="prl"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal"><span class="i">🎉</span>Reveal predictions</button></div>
-    <div id="asks"></div><div id="shouts"></div>
-    <div class="eyebrow" style="margin:4px 0 6px">⏰ Arena clock · 🎲 Chaos · 📺 Ticker</div>
-    <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${[5,10,15,20,30].map(n=>`<button data-c="clock:${n}"><span class="i">⏰</span>${n} min</button>`).join("")}<button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button><button data-c="chaos:on"><span class="i">🎲</span>Chaos ON</button><button data-c="chaos:off"><span class="i">😌</span>Chaos OFF</button><button data-c="ticker:on"><span class="i">📺</span>Ticker ON</button><button data-c="ticker:off"><span class="i">🚫</span>Ticker OFF</button><button data-c="recap"><span class="i">📼</span>Night recap</button><button data-c="fallen"><span class="i">🕯️</span>Fallen Tributes</button></div>
-    <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
-    <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
-    <div class="eyebrow" style="margin:4px 0 6px">📱 Phone sign-ins</div>
-    <div class="hgrid" style="grid-template-columns:1fr"><button id="clrphones"><span class="i">🧹</span>Sign out every phone (everyone scans again)</button></div>
-    <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
-    <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button id="statsclear"><span class="i">🧹</span>Clear winners and award stats</button><button id="startover"><span class="i">🔄</span>Start completely over</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
-    <div class="eyebrow" style="margin-bottom:6px">📍 Jump to a slide</div>
-    <div class="hgrid" id="jquick"></div>
-    <div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>
-    <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
-    <div class="eyebrow" style="margin-bottom:6px">🌍 Twists for the whole room</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
-  tabify(box);
+    <div class="hgrid" style="grid-template-columns:repeat(2,1fr);margin-top:8px"><button id="qdone"><span class="i">✅</span>They did it (+1)</button><button id="qfail"><span class="i">❌</span>Failed (-1)</button></div>`)+
+    sec("⭐ Points",`<div class="hgrid"><button id="pplus"><span class="i">⭐</span>+1 to picked</button><button id="pminus"><span class="i">💀</span>-1 to picked</button><button data-c="points"><span class="i">📊</span>Points on TV</button></div>`),
+   twists:sec("🎯 Twists on the picked tribute (or Random)",`<div class="hgrid twists">${TW.map(([k,i,l])=>`<button data-tw="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
+    sec("🌍 Twists for the whole room",`<div class="hgrid twists">${TWIST_BTNS.filter(x=>!/^sponsor:/.test(x[0])).map(b).join("")}</div>`)+
+    `<details class="hfold"><summary>🐺 Sabotage phones (online games)</summary><div class="hgrid twists">${SAB.map(([k,i,l])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}</button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Freeze everyone BUT picked</button></div></details>`,
+   phones:`<div id="asks"></div><div id="shouts"></div>`+
+    sec("🗳️ Phone vote",`<div data-when="novote"><select id="psel">${XM.POLLS.map(q=>`<option>${esc(q)}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
+     <textarea id="pown" rows="2" placeholder="Your question" style="display:none" maxlength="110"></textarea></div>
+     <div class="hgrid" style="grid-template-columns:1fr"><button id="popen" data-when="novote"><span class="i">🗳️</span>Open the vote</button><button id="pclose" data-when="vote"><span class="i">🏁</span>Reveal the winner</button></div>`)+
+    sec("💰 Betting",`<select id="bgame" data-when="nobet">${Object.values(XM.GAMES).map(g=>`<option>${esc(g.name)}</option>`).join("")}<option>the next game</option></select>
+     <div class="hgrid" style="grid-template-columns:1fr"><button id="bopen" data-when="nobet"><span class="i">💰</span>Open bets</button><button id="block" data-when="betopen"><span class="i">🔒</span>Lock bets</button><button id="bpay" data-when="bet"><span class="i">🏆</span>Pay out (picked tribute won)</button></div>
+     <details class="hfold mini" data-when="bet"><summary>…</summary><div class="hgrid" style="grid-template-columns:1fr"><button id="bcancel"><span class="i">↩️</span>Cancel bets</button></div></details>`)+
+    sec("📲 Tap race",`<div class="chips" data-when="norace">${[30,50,100].map(n=>`<button data-race="${n}">📲 Race to ${n}</button>`).join("")}</div><div class="hgrid" style="grid-template-columns:1fr"><button id="raceend" data-when="race"><span class="i">⏹️</span>End race</button></div>`)+
+    sec("🎭 Hot seat · 🏳️ Mercy · 🔮 Predictions",`<div class="hgrid"><button id="hotgo" data-when="nohot"><span class="i">🎭</span>Hot seat (picked)</button><button id="hotend" data-when="hot"><span class="i">⏹️</span>End hot seat</button>
+     <button id="mgo" data-when="nomercy"><span class="i">🏳️</span>Mercy vote (picked)</button><button id="mclose" data-when="mercy"><span class="i">⚖️</span>Mercy verdict</button>
+     <button id="pro" data-when="nopredict"><span class="i">🔮</span>Open predictions</button><button id="prl" data-when="predict"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal" data-when="nopredict"><span class="i">🎉</span>Reveal predictions</button></div>`),
+   fun:sec("🎙️ Soundboard (plays on the TV)",`<div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${SB.map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
+    sec("🎉 Big moments",`<div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="recap"><span class="i">📼</span>Night recap</button><button data-c="fallen"><span class="i">🕯️</span>Fallen Tributes</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>`)+
+    `<details class="hfold"><summary>⚙ Settings</summary><div class="hgrid" style="grid-template-columns:1fr">${TOGGLES.map(k=>`<button data-tg="${k}"></button>`).join("")}</div></details>
+    <details class="hfold"><summary>🛠️ Setup and reset</summary><div class="hgrid"><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button id="clrphones"><span class="i">🧹</span>Sign out all phones</button><button id="statsclear"><span class="i">🧹</span>Clear winners and award stats</button><button id="startover"><span class="i">🔄</span>Start completely over</button></div></details>`};
+  box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="tiny" id="qmsg"></div>
+    <div class="htabs">${TABS.map(([k,i,l])=>`<button data-tab="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
+    <details class="picker" id="picker"><summary>👤 Picked: <b id="pkname">nobody yet</b> ▾</summary>
+      <div class="qfaces">${TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div></details>
+    ${TABS.map(([k])=>`<div class="hpane" data-pane="${k}">${P[k]}</div>`).join("")}<div class="tiny" id="hmsg"></div>`;
+  {const msg=box.querySelector("#qmsg");msg.style.cssText="position:sticky;top:74px;z-index:4;min-height:1.2em;font-weight:800;color:var(--gold);text-align:center;margin:4px 0;pointer-events:none;background:rgba(13,31,24,.92);border-radius:10px";
+   const pk=box.querySelector("#picker"),PICK=["quests","twists","phones"];
+   const show=k=>{box.querySelectorAll(".htabs [data-tab]").forEach(x=>x.classList.toggle("on",x.dataset.tab===k));box.querySelectorAll(".hpane").forEach(d=>d.classList.toggle("on",d.dataset.pane===k));
+     pk.hidden=!PICK.includes(k);if(!pk.hidden)box.querySelector(`.hpane[data-pane="${k}"]`).before(pk);XM.store.set("xmas-sh-tab",k)};
+   box.querySelectorAll(".htabs [data-tab]").forEach(x=>x.onclick=()=>show(x.dataset.tab));show(XM.store.get("xmas-sh-tab","show"))}
   // big one-way buttons need a second tap within 3 seconds (no pocket taps)
   const arm=(x,fn)=>async(...a)=>{if(!x._armed){x._armed=true;x.classList.add("armed");const keep=x.innerHTML;x._keep=keep;x.innerHTML=`<span class="i">⚠️</span>Tap again to confirm`;
       clearTimeout(x._at);x._at=setTimeout(()=>{x._armed=false;x.classList.remove("armed");x.innerHTML=keep},3000);return}
@@ -572,18 +551,19 @@ function hostCard(){
   const ARM=["crown","awards","draft"];
   let qn=null,qs=null;const qmsg=t=>{const m=box.querySelector("#qmsg")||document.getElementById("qmsg");if(!m)return;m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3000)};
   const call=async body=>{const r=await api({pin,...body});if(r.status===403&&r.error==="Gamemaker only"){XM.store.set("xmas-sh-pin",null);hostCard()}return r};
-  box.querySelectorAll("[data-qn]").forEach(x=>x.onclick=()=>{qn=x.dataset.qn;box.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===x))});
+  box.querySelectorAll("[data-qn]").forEach(x=>x.onclick=()=>{qn=x.dataset.qn;box.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===x));
+    box.querySelector("#pkname").textContent=qn==="random"?"🎲 Random":XM.dn(qn);box.querySelector("#picker").open=false});
   const sel=box.querySelector("#qsel"),own=box.querySelector("#qown");
   const setSecs=n=>{qs=n;box.querySelectorAll("[data-s]").forEach(y=>y.classList.toggle("on",+y.dataset.s===n))};
   sel.onchange=()=>{own.style.display=sel.value==="own"?"":"none";if(sel.value!=="own")setSecs(XM.QUESTS[+sel.value][2])};setSecs(XM.QUESTS[0][2]);
   box.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>setSecs(+x.dataset.s));
-  box.querySelector("#qsend").onclick=async()=>{if(!qn){qmsg("Tap who gets the quest first.");return}
+  box.querySelector("#qsend").onclick=async()=>{if(!qn){qmsg("Pick a tribute first (👤 Picked ▾).");box.querySelector("#picker").open=true;return}
     const Q=sel.value==="own"?["📜",own.value.trim()]:XM.QUESTS[+sel.value];if(!Q[1]){qmsg("Type your side quest first.");return}
     const r=await call({a:"quest",to:qn,q:Q[1],ic:Q[0],secs:qs||15,double:dbl});qmsg(r.ok?`⚔️ Sent to ${r.quest.to}!`:"Couldn't send. Try again.")};
   box.querySelector("#qdone").onclick=async()=>{const r=await call({a:"questdone",result:"done"});qmsg(r.ok?`✅ +1 for ${r.quest.to}`:r.status===409?"No side quest running.":"Couldn't send.")};
   box.querySelector("#qfail").onclick=async()=>{const r=await call({a:"questdone",result:"fail"});qmsg(r.ok?`❌ -1 for ${r.quest.to}`:r.status===409?"No side quest running.":"Couldn't send.")};
   const pts=n=>async()=>{if(!qn||qn==="random"){qmsg("Tap a tribute first.");return}const r=await call({a:"pointsadd",to:qn,n});qmsg(r.ok?`${n>0?"⭐ +1":"💀 -1"} for ${qn}`:"Couldn't send.")};
-  let dbl=false;const db=box.querySelector("#qdbl");db.onclick=()=>{dbl=!dbl;db.classList.toggle("on",dbl);db.textContent=`🎲 Double or nothing: ${dbl?"ON":"OFF"}`};
+  let dbl=false;const db=box.querySelector("#qdbl");db.onclick=()=>{dbl=!dbl;db.classList.toggle("on",dbl);db.textContent=`🎲 Double: ${dbl?"ON":"OFF"}`};
   box.querySelectorAll("[data-tw]").forEach(x=>x.onclick=async()=>{const r=await call({a:"tw",kind:x.dataset.tw,to:qn||"random"});
     qmsg(!r.ok?"Couldn't send.":r.tw.mission?`🕵️ ${r.tw.to}'s mission: ${r.tw.mission}`:`${x.querySelector(".i").textContent} Sent${r.tw.to?" ("+r.tw.to+(r.tw.with?" + "+r.tw.with:"")+")":""}`)});
   box.querySelectorAll("[data-sab]").forEach(x=>x.onclick=async()=>{if(!qn||(x.dataset.allbut&&qn==="random")){qmsg("Tap a tribute first.");return}
@@ -593,7 +573,7 @@ function hostCard(){
   box.querySelector("#pclose").onclick=arm(box.querySelector("#pclose"),async()=>{const r=await call({a:"pollclose"});qmsg(r.ok?(r.win.length?`🏁 Winner: ${r.win.join(" & ")}`:"🏁 Nobody voted"):"No vote running.")});
   box.querySelector("#bopen").onclick=async()=>{const r=await call({a:"betopen",game:box.querySelector("#bgame").value});qmsg(r.ok?"💰 Betting is open":"Couldn't open bets.")};
   box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
-  box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Tap who WON at the top first.");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
+  box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Pick who WON first (👤 Picked ▾).");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
   box.querySelector("#bcancel").onclick=arm(box.querySelector("#bcancel"),async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")});
   box.querySelector("#startover").onclick=arm(box.querySelector("#startover"),async()=>{if(!confirm("Wipe EVERYTHING and sign every phone out?"))return;
     const r=await call({a:"cmd",name:me,cmd:"startover"});if(r.ok){qmsg("🔄 Done. Tap your face again to rejoin.")}else qmsg("Couldn't start over. Is the TV on?")});
@@ -621,12 +601,18 @@ function hostCard(){
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
     if(r.ok){qmsg("✅ Sent to the TV");const [k,v]=x.dataset.c.split(":");if(TOGGLES.includes(k)&&(v==="on"||v==="off")){const st=XM.store.get("xmas-sh-toggles",{})||{};st[k]=v;XM.store.set("xmas-sh-toggles",st);showToggles()}}else if(r.status===403&&r.error==="Gamemaker only"){XM.store.set("xmas-sh-pin",null);hostCard()}else if(r.status===403){qmsg("Another phone took your name. Tap Not you? and rejoin.")}else qmsg("Couldn't send. Try again.")};
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=ARM.includes(x.dataset.c)?arm(x,()=>sendC(x)):()=>sendC(x));
-  // on/off buttons: light up the one you last sent (the phone can't see the TV, so it's your last pick)
-  function showToggles(){const st=XM.store.get("xmas-sh-toggles",{})||{};box.querySelectorAll("[data-c]").forEach(x=>{const [k,v]=x.dataset.c.split(":");if(TOGGLES.includes(k)&&(v==="on"||v==="off"))x.classList.toggle("on",st[k]===v)})}
-  showToggles();
+  // ⚙ on/off settings: one button each, showing the state you last set (the TV starts with chaos off, ticker on, random gifts off)
+  const TGL={chaos:["🎲","Chaos mode"],ticker:["📺","News ticker"],sponsor:["🪂","Random sponsor gifts"]},TDEF={chaos:"off",ticker:"on",sponsor:"off"};
+  function showToggles(){const st=XM.store.get("xmas-sh-toggles",{})||{};box.querySelectorAll("[data-tg]").forEach(x=>{const k=x.dataset.tg,v=st[k]||TDEF[k];x.classList.toggle("on",v==="on");x.innerHTML=`<span class="i">${TGL[k][0]}</span>${TGL[k][1]}: <b>${v==="on"?"ON":"OFF"}</b>`})}
+  box.querySelectorAll("[data-tg]").forEach(x=>x.onclick=async()=>{const k=x.dataset.tg,st=XM.store.get("xmas-sh-toggles",{})||{},v=(st[k]||TDEF[k])==="on"?"off":"on";buzz(20);
+    const r=await api({a:"cmd",name:me,pin,cmd:k+":"+v});if(r.ok){st[k]=v;XM.store.set("xmas-sh-toggles",st);showToggles();qmsg(`${TGL[k][1]}: ${v.toUpperCase()}`)}else qmsg("Couldn't send. Try again.")});
+  showToggles();hostState();
   remoteBar(pin);
 }
-const TOGGLES=["sponsor","chaos","ticker"];
+const TOGGLES=["chaos","ticker","sponsor"];
+let hostRace=null;
+function hostState(){const box=document.getElementById("host");if(!box)return;const S={vote:!!vote,bet:!!bet,betopen:!!(bet&&bet.state==="open"),race:!!(hostRace&&hostRace.state==="live"),hot:!!hot,mercy:!!mercy,predict:!!(predict&&predict.open)};
+  box.querySelectorAll("[data-when]").forEach(x=>{const w=x.dataset.when,neg=w.startsWith("no")&&!(w in S),k=neg?w.slice(2):w;x.hidden=neg?S[k]:!S[k]})}
 /* ---- 📍 jump to a slide (the list comes from the TV) ---- */
 function gmCmd(cmd,data){return api({a:"cmd",name:me,pin:XM.store.get("xmas-sh-pin",null),cmd,data})}
 async function gotoSlide(id){buzz(20);const r=await gmCmd("goto",{id});const m=document.getElementById("qmsg");if(m){m.textContent=r.ok?"📍 Jumping on the TV":"Couldn't send. Try again.";setTimeout(()=>m.textContent="",2500)}fastPoll=true}
@@ -648,7 +634,8 @@ function tvCtl(all){
   const key=JSON.stringify([all,tvPage]);if(key===tvSeen)return;tvSeen=key;
   let c=document.getElementById("tvctl");const h=document.getElementById("host");if(!h)return;
   if(!c){c=document.createElement("div");c.className="card tvctl";c.id="tvctl";h.before(c)}
-  if(!pages.length){c.innerHTML=`<div class="eyebrow">👆 On the TV right now</div><div class="tiny" style="text-align:left">Start the show on the laptop. Then every button on the TV shows up here.</div>`;return}
+  if(!pages.length){c.classList.add("slim");c.innerHTML=`<div class="tiny" style="text-align:left">👆 Click Start the show on the laptop first.</div>`;return}
+  c.classList.remove("slim");
   // the screen in front: an open Wheel or Bingo tab beats the show behind it
   const front=pages.slice().sort((a,b)=>(all[b].visible-all[a].visible)||(a==="show")-(b==="show"))[0];
   const pg=pages.includes(tvPage)?tvPage:front,d=all[pg];
@@ -662,7 +649,7 @@ function tvCtl(all){
     <h4>${d.popup?"🔔 ":""}${esc(d.title||(d.popup?"A pop-up is open":"The slide"))}</h4>
     ${d.list.length||extra.length?`<div class="tvb">${btns.map(([rid,l,on])=>`<button data-rid="${esc(rid)}" class="${on?"on":""}">${face(l)}<span>${esc(l)}</span></button>`).join("")}${extra.map(([k,l])=>`<button data-vid="${k}">${l}</button>`).join("")}</div>
       ${nums.length?`<div class="tvb nums">${nums.map(([rid,l,on])=>`<button data-rid="${esc(rid)}" class="${on?"on":""}">${esc(l)}</button>`).join("")}</div>`:""}`
-      :`<div class="tiny" style="text-align:left">Nothing to tap on this screen. Use ➡️ Next or ✖️ Close below.</div>`}`;
+      :""}`;c.classList.toggle("slim",!d.list.length&&!extra.length&&!d.popup);
   c.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{tvPage=b.dataset.pg;tvSeen="";tvCtl(all)});
   const RISKY=/start over|clear|reset|new game/i;
   c.querySelectorAll("[data-rid]").forEach(b=>b.onclick=async()=>{
@@ -694,9 +681,9 @@ function showSlide(){
 function coachNote(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,""),k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];
   const N={lobby:"Leave this up while people arrive. Check the joined count. Press → when it's time.",title:"The announcer welcomes everyone. Wait for it.",welcome:"Read your speech: \"Citizens of the living room!\"",
-    rules:"The announcer reads the 5 rules. Let it finish.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes. Press →.",begin:"Your song plays. It stops when you press →.",
+    rules:"The announcer reads the rules. Let it finish.",phoneguide:"Phone guide: let it play, or tap Next to skip ahead.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes. Press →.",begin:"Your song plays. It stops when you press →.",
     halftime:"Games 1 to 4 victors and who's leading. Good time for a break or a twist.",victors:"Every victor. 2+ wins? Tap Reveal the Ultimate Victor (it reads how it's decided first).",
-    end:"The end. Good time for Night recap (Show tab) and Crown the Ultimate Victor (Fun tab).","bingo-board":"Open the bingo board. Pick the round type (a briefing reads the pattern), tap each number, check BINGO card numbers."};
+    end:"The end. Try Night recap or Fallen Tributes (Fun tab).","bingo-board":"Open the bingo board. Pick the round type (a briefing reads the pattern), tap each number, check BINGO card numbers."};
   if(N[id])return N[id];
   if(/^d\d+$/.test(id))return "Tribute profile. Let the announcer finish the weapon, strategy and odds, then →.";
   const by={game:{cookie:"Title slide. Good time to open bets (Phones tab) and start the arena clock (Show tab).",scoop:"Title slide. Open bets (Phones tab)?",tribute:"Click Play (new tab). Close it when the game ends.",feud:"Click Play (new tab). Close it when the game ends.",secrets:"Click Play (new tab). Close it when the game ends.",mitten:"Title slide.",lrc:"Title slide. Chips and dice ready?",bingo:"Title slide. Hand out cards and pens."},
@@ -720,7 +707,7 @@ async function poll(){
     if(me==="Carsyn"&&j.tvbtns!==undefined)tvCtl(j.tvbtns);
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch>myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){online(false)}
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
   const busyNow=(quest&&quest.status==="live")||(race&&race.state==="live");
   const tvPop=me==="Carsyn"&&document.querySelector("#tvctl.tvpop");
   setTimeout(poll,fastPoll?(fastPoll=false,700):busyNow?1000:tvPop?1500:(vote||bet||mercy||hot||(predict&&predict.open))?2000:me==="Carsyn"?2000:3000);

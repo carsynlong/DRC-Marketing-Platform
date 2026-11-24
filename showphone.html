@@ -104,6 +104,19 @@ select,textarea{width:100%;font-size:16px;font-weight:600;font-family:inherit;pa
 .qov.spy{background:radial-gradient(ellipse at center,#3a1f5c,#0a0612)}
 .pin{display:flex;gap:8px;justify-content:center}
 .pin input{width:9ch;font:800 1.4rem var(--body,inherit);text-align:center;letter-spacing:.3em;border-radius:12px;border:0;padding:8px}
+.tvctl{box-shadow:0 0 0 2px var(--gold);background:rgba(40,30,10,.95)}
+.tvctl.tvpop{box-shadow:0 0 0 3px #e85b4a;animation:tvpulse 1.2s ease-in-out 2}
+@keyframes tvpulse{50%{box-shadow:0 0 0 6px #e85b4a}}
+.tvctl h4{margin:2px 0 8px;font-size:1.15rem;line-height:1.2}
+.tvb{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tvb button{min-height:56px;border-radius:14px;background:rgba(255,255,255,.09);font-weight:800;font-size:1rem;line-height:1.15;padding:6px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.tvb.nums{grid-template-columns:repeat(5,1fr);gap:5px;margin-top:8px}.tvb.nums button{min-height:42px;font-size:1.05rem}
+.tvb button img{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none}
+.tvb button.on{background:var(--gold);color:#13271f}
+.tvb button.armed{background:#c0392b;color:#fff}
+.tvb button.sent{outline:3px solid #fff}
+.tvpages{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.tvpages button{border-radius:999px;padding:6px 12px;background:rgba(255,255,255,.08);font-weight:800;font-size:.9rem}.tvpages button.on{background:var(--gold);color:#13271f}
+.jump{display:flex;gap:8px;margin-bottom:10px}.jump select{flex:1;margin:0}.jump .btn{white-space:nowrap}
 #rbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:#08140f;box-shadow:0 -6px 20px rgba(0,0,0,.5)}
 #rbar button{display:grid;justify-items:center;gap:2px;padding:8px 2px;border-radius:12px;background:rgba(255,255,255,.08);color:inherit;border:0;font-weight:800;font-size:.82rem;font-family:inherit}
 #rbar button .i{font-size:1.5rem}#rbar button.on{background:var(--gold);color:#13271f}
@@ -356,7 +369,7 @@ function myQuest(q){
 }
 /* ---- split the remote into tabs so it's quick to use in the moment ---- */
 const TABS=[["show","🎮","Show"],["quests","⚔️","Quests"],["twists","🌀","Twists"],["phones","📱","Phones"],["fun","🎉","Fun"]];
-const SECT=[["pick who","top"],["The show","show",1],["Arena clock","show",2],["Your voice","show",3],["Twists on the picked","twists",1],["Twists for the whole room","twists",2],["Sabotage","twists",3],
+const SECT=[["pick who","top"],["The show","show",1],["Jump to","show",0],["Phone sign-ins","phones",5],["Arena clock","show",2],["Your voice","show",3],["Twists on the picked","twists",1],["Twists for the whole room","twists",2],["Sabotage","twists",3],
   ["Phone vote","phones",1],["Betting","phones",2],["Tap race","phones",3],["Hot seat","phones",4],["Soundboard","fun",1],["Big moments","fun",2]];
 function tabify(box){
   const kids=[...box.children];const secs=[];let cur=null;
@@ -419,8 +432,13 @@ function hostCard(){
     <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${[5,10,15,20,30].map(n=>`<button data-c="clock:${n}"><span class="i">⏰</span>${n} min</button>`).join("")}<button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button><button data-c="chaos:on"><span class="i">🎲</span>Chaos ON</button><button data-c="chaos:off"><span class="i">😌</span>Chaos OFF</button><button data-c="ticker:on"><span class="i">📺</span>Ticker ON</button><button data-c="ticker:off"><span class="i">🚫</span>Ticker OFF</button><button data-c="recap"><span class="i">📼</span>Night recap</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
     <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
+    <div class="eyebrow" style="margin:4px 0 6px">📱 Phone sign-ins</div>
+    <div class="hgrid" style="grid-template-columns:1fr"><button id="clrphones"><span class="i">🧹</span>Sign out every phone (everyone scans again)</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
     <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button id="statsclear"><span class="i">🧹</span>Clear award stats</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
+    <div class="eyebrow" style="margin-bottom:6px">📍 Jump to a slide</div>
+    <div class="hgrid" id="jquick"></div>
+    <div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">🌍 Twists for the whole room</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
   tabify(box);
@@ -466,6 +484,13 @@ function hostCard(){
   box.querySelector("#pro").onclick=async()=>{const r=await call({a:"predictopen"});qmsg(r.ok?"🔮 Predictions open":"Couldn't open.")};
   box.querySelector("#prl").onclick=async()=>{const r=await call({a:"predictlock"});qmsg(r.ok?"🔒 Predictions locked":"Couldn't lock.")};
   hostLists();
+  // 📍 jump straight to any slide
+  fillJump();
+  box.querySelector("#jgo").onclick=()=>{const v=box.querySelector("#jsel").value;if(v)gotoSlide(v)};
+  // 🧹 sign out every phone (this phone signs straight back in as the Gamemaker)
+  box.querySelector("#clrphones").onclick=arm(box.querySelector("#clrphones"),async()=>{const r=await call({a:"clearphones"});
+    if(!r.ok){qmsg("Couldn't clear. Check your internet.");return}
+    myEpoch=typeof r.epoch==="number"?r.epoch:null;XM.store.set("xmas-sh-epoch",myEpoch);await api({a:"join",name:"Carsyn"});qmsg("🧹 Every phone is signed out. They scan the QR code to join again.")});
   box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
   const sendC=async x=>{buzz(20);
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
@@ -477,6 +502,50 @@ function hostCard(){
   remoteBar(pin);
 }
 const TOGGLES=["sponsor","chaos","ticker"];
+/* ---- 📍 jump to a slide (the list comes from the TV) ---- */
+function gmCmd(cmd,data){return api({a:"cmd",name:me,pin:XM.store.get("xmas-sh-pin",null),cmd,data})}
+async function gotoSlide(id){buzz(20);const r=await gmCmd("goto",{id});const m=document.getElementById("qmsg");if(m){m.textContent=r.ok?"📍 Jumping on the TV":"Couldn't send. Try again.";setTimeout(()=>m.textContent="",2500)}fastPoll=true}
+function fillJump(){const sel=document.getElementById("jsel"),q=document.getElementById("jquick");if(!sel||!q)return;
+  const list=XM.store.get("xmas-sh-slides",null)||[];
+  if(!list.length){sel.innerHTML=`<option value="">Start the show on the laptop first</option>`;q.innerHTML="";return}
+  const keep=sel.value;sel.innerHTML=list.map(([id,t],i)=>`<option value="${esc(id)}">${i+1}. ${esc(t)}</option>`).join("");if(keep)sel.value=keep;
+  const ic={lobby:"⏮",victors:"👑",end:"⏭",halftime:"☕","bingo-board":"🎱"};
+  const quick=list.filter(([id])=>id==="lobby"||id.startsWith("game-")||id==="halftime"||id==="victors"||id==="end");
+  q.innerHTML=quick.map(([id,t])=>`<button data-go="${esc(id)}"><span class="i">${ic[id]||"🎮"}</span>${esc(id==="lobby"?"Beginning (Lobby)":id==="end"?"The end":t)}</button>`).join("");
+  q.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>gotoSlide(b.dataset.go))}
+/* ---- 👆 the buttons on the TV right now (pop-ups, pickers, corner buttons) ---- */
+let tvSeen="",tvPage=null,fastPoll=false;
+const TVPAGE={show:"📺 Show",wheel:"🎡 Wheel",bingo:"🎱 Bingo"};
+function tvCtl(all){
+  if(me!=="Carsyn"||!XM.store.get("xmas-sh-pin",null))return;
+  if(all&&all.show&&all.show.slides){const k=JSON.stringify(all.show.slides);if(k!==JSON.stringify(XM.store.get("xmas-sh-slides",null))){XM.store.set("xmas-sh-slides",all.show.slides);fillJump()}}
+  const pages=Object.keys(TVPAGE).filter(k=>all&&all[k]);
+  const key=JSON.stringify([all,tvPage]);if(key===tvSeen)return;tvSeen=key;
+  let c=document.getElementById("tvctl");const h=document.getElementById("host");if(!h)return;
+  if(!c){c=document.createElement("div");c.className="card tvctl";c.id="tvctl";h.before(c)}
+  if(!pages.length){c.innerHTML=`<div class="eyebrow">👆 On the TV right now</div><div class="tiny" style="text-align:left">Start the show on the laptop. Then every button on the TV shows up here.</div>`;return}
+  // the screen in front: an open Wheel or Bingo tab beats the show behind it
+  const front=pages.slice().sort((a,b)=>(all[b].visible-all[a].visible)||(a==="show")-(b==="show"))[0];
+  const pg=pages.includes(tvPage)?tvPage:front,d=all[pg];
+  const wasPop=c.dataset.pop==="1";c.dataset.pop=d.popup?"1":"0";c.classList.toggle("tvpop",!!d.popup);
+  if(d.popup&&!wasPop){buzz([60,40,60]);c.scrollIntoView({behavior:"smooth",block:"start"})}
+  const face=l=>{const t=TRIBUTES.find(x=>XM.dn(x.name)===l||x.name===l)||TRIBUTES.find(x=>l.startsWith(XM.dn(x.name)+" "));return t?`<img src="${t.img}" alt="">`:""};
+  const nums=d.list.filter(x=>/^\d{1,2}$/.test(x[1])),btns=d.list.filter(x=>!/^\d{1,2}$/.test(x[1]));   // bingo numbers go in a small grid
+  const extra=pg==="show"&&d.video?[["vt","⏯ Play / pause the video"],["vr","⏮ Restart the video"]]:[];
+  c.innerHTML=`<div class="eyebrow">👆 On the TV right now${pages.length>1?"":" · "+TVPAGE[pg]}</div>
+    ${pages.length>1?`<div class="tvpages">${pages.map(k=>`<button data-pg="${k}" class="${k===pg?"on":""}">${TVPAGE[k]}${all[k].visible?" (in front)":""}</button>`).join("")}</div>`:""}
+    <h4>${d.popup?"🔔 ":""}${esc(d.title||(d.popup?"A pop-up is open":"The slide"))}</h4>
+    ${d.list.length||extra.length?`<div class="tvb">${btns.map(([rid,l,on])=>`<button data-rid="${esc(rid)}" class="${on?"on":""}">${face(l)}<span>${esc(l)}</span></button>`).join("")}${extra.map(([k,l])=>`<button data-vid="${k}">${l}</button>`).join("")}</div>
+      ${nums.length?`<div class="tvb nums">${nums.map(([rid,l,on])=>`<button data-rid="${esc(rid)}" class="${on?"on":""}">${esc(l)}</button>`).join("")}</div>`:""}`
+      :`<div class="tiny" style="text-align:left">Nothing to tap on this screen. Use ➡️ Next or ✖️ Close below.</div>`}`;
+  c.querySelectorAll("[data-pg]").forEach(b=>b.onclick=()=>{tvPage=b.dataset.pg;tvSeen="";tvCtl(all)});
+  const RISKY=/start over|clear|reset|new game/i;
+  c.querySelectorAll("[data-rid]").forEach(b=>b.onclick=async()=>{
+    if((RISKY.test(b.textContent)||(b.classList.contains("on")&&b.closest(".nums")))&&!b._armed){b._armed=true;b.classList.add("armed");const k=b.innerHTML;b.innerHTML="⚠️ Tap again to confirm";b._t=setTimeout(()=>{b._armed=false;b.classList.remove("armed");b.innerHTML=k},3000);return}
+    clearTimeout(b._t);buzz(20);b.classList.add("sent");const r=await gmCmd("click",{page:pg,rid:b.dataset.rid});
+    if(!r.ok){b.classList.remove("sent");const m=document.getElementById("qmsg");if(m){m.textContent="Couldn't send. Try again.";setTimeout(()=>m.textContent="",3000)}}fastPoll=true});
+  c.querySelectorAll("[data-vid]").forEach(b=>b.onclick=async()=>{buzz(20);b.classList.add("sent");await gmCmd("video",{op:b.dataset.vid==="vr"?"restart":"toggle"});setTimeout(()=>b.classList.remove("sent"),400)});
+}
 // ⬅️ ✖️ ▶️ ➡️ 🔇 always at the bottom of the Gamemaker's screen
 function remoteBar(pin){let bar=document.getElementById("rbar");if(!bar){bar=document.createElement("div");bar.id="rbar";document.body.appendChild(bar);document.body.classList.add("hasbar")}
   bar.innerHTML=[["prev","⬅️","Back"],["close","✖️","Close"],["briefgo","▶️","Start"],["next","➡️","Next"],["mute","🔇","Mute"]].map(([c,i,l])=>`<button data-rb="${c}"><span class="i">${i}</span>${l}</button>`).join("");
@@ -519,11 +588,13 @@ async function poll(){
   if(document.hidden){setTimeout(poll,4000);return}   // screen off or another app: don't use up database calls
   pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%3===1?"&full=1&pid="+encodeURIComponent(pid):""),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();const s=j.slide;if(!me&&Array.isArray(j.taken)){takenNames=j.taken;markTaken()}
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
-    if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
+    if(me==="Carsyn"&&j.tvbtns!==undefined)tvCtl(j.tvbtns);
+    if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch>myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
     skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){online(false)}
   const busyNow=(quest&&quest.status==="live")||(race&&race.state==="live");
-  setTimeout(poll,busyNow?1000:(vote||bet||mercy||hot||(predict&&predict.open))?2000:3000);
+  const tvPop=me==="Carsyn"&&document.querySelector("#tvctl.tvpop");
+  setTimeout(poll,fastPoll?(fastPoll=false,700):busyNow?1000:tvPop?1500:(vote||bet||mercy||hot||(predict&&predict.open))?2000:me==="Carsyn"?2000:3000);
 }
 
 /* ---- go live: send a small camera frame about twice a second for 20 seconds ---- */

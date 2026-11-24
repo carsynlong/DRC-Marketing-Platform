@@ -85,6 +85,8 @@ h1.title{font-size:clamp(2rem,5vw,3.6rem);color:var(--gold);text-shadow:0 3px 0 
 <div class="app" id="app"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <script src="/xmas/xmas.js"></script>
+<script src="/remote-tv.js"></script>
+<script>addEventListener("load",()=>RemoteTV.start({page:"wheel",poll:true}))  /* 📱 Carsyn's remote can press the buttons here too */</script>
 <script>XM.useNicknames();XM.setSound(true) /* a game page always starts with sound on, even if the show was muted earlier */</script>
 <script>
 /* Matchup Wheel: spin twice per 1 vs 1 face-off, free pass for an odd player out,

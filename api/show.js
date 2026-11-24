@@ -21,7 +21,7 @@ const P = "sh:";
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "draft", "awards", "photo", "pollreveal", "betlock",
-  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "phonetour", "pointsinfo", "briefgo", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
+  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
 const SONGS = ["hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
@@ -50,6 +50,9 @@ const TWISTS = ["wheel", "swap", "silence", "decree", "bounty", "alliance", "mis
 const LV = ["poll", "bet", "hot", "mercy", "predict", "bday", "race"];
 const LVK = LV.map(k => P + "lv:" + k);
 const pj = x => { try { return x ? (typeof x === "string" ? JSON.parse(x) : x) : null; } catch { return null; } };
+// TV pages that publish their on-screen buttons for the remote (remote-tv.js)
+const PAGES = ["show", "wheel", "bingo"];
+const BTNK = PAGES.map(p => P + "btns:" + p);
 const readLive = async () => { const v = await redis.mget(...LVK); const o = {}; LV.forEach((k, i) => { o[k] = pj(v[i]); }); return o; };
 const saveLive = (k, val) => val == null ? redis.del(P + "lv:" + k) : redis.set(P + "lv:" + k, JSON.stringify(val), { ex: 43200 });
 // wrong PIN guesses are limited (30 a minute per network; only actual PIN entries count, not background checks)
@@ -85,7 +88,10 @@ async function main(req, res) {
   }
 
   if (req.method === "GET" && a === "phone") {
-    const [raw, qraw, ep, ...lvv] = await redis.mget(P + "state", P + "quest", P + "epoch", ...LVK);
+    const isGM = text(req.query.me, 40) === "Carsyn";
+    const [raw, qraw, ep, ...rest] = await redis.mget(P + "state", P + "quest", P + "epoch", ...LVK, ...(isGM ? BTNK : []));
+    const lvv = rest.slice(0, LVK.length), tvbtns = isGM ? {} : undefined;
+    if (isGM) PAGES.forEach((pg, i) => { const v = pj(rest[LVK.length + i]); if (v) tvbtns[pg] = v; });
     const slide = pj(raw);
     const me = text(req.query.me, 40), full = req.query.full === "1";
     const q = pj(qraw);
@@ -111,7 +117,7 @@ async function main(req, res) {
     let taken;
     if (!me && full) { const all = await hash(P + "players"), ns = Object.keys(all).filter(n => all[n] !== String(req.query.pid || ""));
       const sv = ns.length ? await redis.mget(...ns.map(n => `${P}seen:${n}`)) : []; taken = ns.filter((n, i) => sv[i]); }
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, taken, now: Date.now() });
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, taken, tvbtns, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -154,6 +160,13 @@ async function main(req, res) {
     return reply(res, 200, { stats: o, walkups: w, points: await points(), joined: Object.keys(await hash(P + "players")) });
   }
 
+  if (req.method === "GET" && a === "cmds") {
+    const since = Number(req.query.since) || 0, cmds = [];
+    const [clog, last] = await Promise.all([redis.lrange(P + "cmdlog", 0, 19), redis.get(P + "cmdid")]);
+    for (const r of clog || []) { try { const o = typeof r === "string" ? JSON.parse(r) : r; if (o.id > since && (o.cmd === "click")) cmds.push(o); } catch {} }
+    return reply(res, 200, { cmds: cmds.reverse(), last: Number(last) || 0 });
+  }
+
   if (req.method === "GET" && a === "tv") {
     const since = Number(req.query.since) || 0, csince = Number(req.query.csince) || 0;
     const full = req.query.full === "1";
@@ -181,11 +194,23 @@ async function main(req, res) {
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const pid = text(req.body?.pid, 64), name = text(req.body?.name, 40);
 
-  if ((a === "results" || a === "state") && req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+  if ((a === "results" || a === "state" || a === "btns") && req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
   if (a === "results") {
     const r = req.body?.results; if (!r || typeof r !== "object") return reply(res, 400, { error: "Missing results" });
     const j = JSON.stringify({ ...r, t: Date.now() }); if (j.length > 20000) return reply(res, 400, { error: "Too big" });
     await redis.set(P + "results", j, { ex: 60 * 60 * 24 * 3 }); return reply(res, 200, { ok: true });
+  }
+
+  if (a === "btns") {
+    const pg = req.body?.page; if (!PAGES.includes(pg)) return reply(res, 400, { error: "Unknown page" });
+    if (req.body?.gone) { await redis.del(P + "btns:" + pg); return reply(res, 200, { ok: true }); }
+    const list = (Array.isArray(req.body?.list) ? req.body.list : []).slice(0, 100)
+      .filter(x => Array.isArray(x) && /^\d{1,8}$/.test(String(x[0]))).map(x => [String(x[0]), text(x[1], 60) || "?", x[2] ? 1 : 0]);
+    const slides = pg === "show" && Array.isArray(req.body?.slides) ? req.body.slides.slice(0, 80)
+      .filter(x => Array.isArray(x) && /^[a-z0-9-]{1,40}$/.test(String(x[0]))).map(x => [String(x[0]), text(x[1], 60) || String(x[0])]) : undefined;
+    const o = { page: pg, visible: !!req.body?.visible, title: text(req.body?.title, 80) || "", popup: !!req.body?.popup, list, video: !!req.body?.video, slide: text(req.body?.slide, 40) || "", slides, t: Date.now() };
+    await redis.set(P + "btns:" + pg, JSON.stringify(o), { ex: 45 });
+    return reply(res, 200, { ok: true });
   }
 
   if (a === "state") {
@@ -336,7 +361,7 @@ async function main(req, res) {
     await redis.incr(P + "epoch");
     for (const k of ["players", "cams", "missions", "quest"]) await redis.del(P + k);
     for (const n of NAMES) await redis.del(`${P}seen:${n}`);
-    return reply(res, 200, { ok: true });
+    return reply(res, 200, { ok: true, epoch: Number(await redis.get(P + "epoch")) || 0 });
   }
 
   if (a === "tw") {
@@ -420,6 +445,19 @@ async function main(req, res) {
     if (name !== "Carsyn" || req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
     const c = req.body?.cmd;
     if (!CMDS.includes(c) && !(typeof c === "string" && c.startsWith("sfx:") && SFX.includes(c.slice(4)))) return reply(res, 400, { error: "Unknown command" });
+    const d = req.body?.data || {};
+    if (c === "click") {
+      if (!PAGES.includes(d.page) || !/^\d{1,8}$/.test(String(d.rid))) return reply(res, 400, { error: "Bad button" });
+      await pushCmd(c, { page: d.page, rid: String(d.rid) }); return reply(res, 200, { ok: true });
+    }
+    if (c === "goto") {
+      if (!/^[a-z0-9-]{1,40}$/.test(String(d.id))) return reply(res, 400, { error: "Bad slide" });
+      await pushCmd(c, { id: String(d.id) }); return reply(res, 200, { ok: true });
+    }
+    if (c === "video") {
+      if (!["toggle", "restart"].includes(d.op)) return reply(res, 400, { error: "Bad video" });
+      await pushCmd(c, { op: d.op }); return reply(res, 200, { ok: true });
+    }
     await pushCmd(req.body.cmd);
     return reply(res, 200, { ok: true });
   }

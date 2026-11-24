@@ -413,6 +413,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 </div>
 <script src="/xmas/xmas.js"></script>
 <script src="/qrcode.js"></script>
+<script src="/remote-tv.js"></script>
 <script>XM.useNicknames()</script>
 <script>
 const {esc,TRIBUTES,GAMES,TB}=XM;
@@ -1262,6 +1263,12 @@ function runCmd(c,data){
   if(c==="pointsadd"&&data){XM.sfx(data.n>0?"sparkle":"trombone");toast(`${data.n>0?"⭐":"💀"} ${data.to}: ${data.n>0?"+":""}${data.n} point${Math.abs(data.n)===1?"":"s"}`);return}
   if(c==="points")return showPoints();
   if(c.startsWith("twist:"))return arenaTwist(c.slice(6));
+  // 📱 the remote pressed a button that's on the TV, jumped to a slide, or worked a video
+  if(c==="click"&&data){if(window.RemoteTV)RemoteTV.run(c,data);return}
+  if(c==="goto"&&data){const i=SLIDES.findIndex(s=>s.id===data.id);if(i<0)return;if(window.Briefing&&Briefing.open())Briefing.close();
+    if(XM.tiebreakerOpen())document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));closeMoments(".moment,.vpick");go(i);return}
+  if(c==="video"&&data){const v=curEl&&curEl.querySelector("video");if(!v)return toast("📺 No video on this slide");
+    if(data.op==="restart"){v.currentTime=0;v.play().catch(()=>{})}else if(v.paused)v.play().catch(()=>{});else v.pause();return}
   if(c==="briefgo"){if(window.Briefing&&Briefing.open())Briefing.start();return}
   if(c==="close"&&window.Briefing&&Briefing.open()){Briefing.close();return}
   if(c==="close"){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));return}
@@ -1660,6 +1667,13 @@ function begin(){
   const st=document.getElementById("start");st.remove();
   const i=cur;cur=-1;curEl&&curEl.remove();curEl=null;go(i);
 }
+// 📱 Carsyn's remote sees (and can press) every button on the TV
+const SLIDE_TITLES=SLIDES.map(s=>{let t="";try{const d=document.createElement("div");d.innerHTML=s.html();const h=d.querySelector("h1,h2");t=h?h.textContent.replace(/\s+/g," ").trim():""}catch(e){}
+  return [s.id,(XM.nick?XM.nick(t||s.id):t||s.id).slice(0,60)]});
+if(window.RemoteTV)RemoteTV.start({page:"show",exclude:".hud",ready:()=>started,
+  extra:()=>({slide:SLIDES[cur]?SLIDES[cur].id:"",slides:SLIDE_TITLES,video:!!(curEl&&curEl.querySelector("video"))}),
+  opened:()=>{XM.stopSong();XM.sfx("go")},
+  blocked:()=>toast("🚫 Chrome blocked the new tab. On this laptop: click the blocked pop-up icon at the right of the address bar, choose Always allow, then tap it again.",12000)});
 const startI=(()=>{const id=location.hash.slice(1)||"";const i=SLIDES.findIndex(s=>s.id===id);return i<0?0:i})();
 go(startI);
 document.getElementById("start").addEventListener("click",e=>{e.stopPropagation();begin()});

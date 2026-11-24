@@ -122,6 +122,22 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 @keyframes flame{0%{transform:scale(1,.75) translateY(0);opacity:.85}100%{transform:scale(.8,1.25) translateY(-14px);opacity:1}}
 .fire .spark{position:absolute;bottom:10%;width:8px;height:8px;border-radius:50%;background:#ffd36b;box-shadow:0 0 10px #ff9a1a;animation:spark var(--s) linear var(--d) infinite}
 @keyframes spark{from{transform:translate(0,0);opacity:1}to{transform:translate(var(--dx),-600px);opacity:0}}
+/* district effects around a tribute's photo (each district's industry from the books) */
+.dfx{position:absolute;inset:-150px -190px -80px;pointer-events:none;z-index:-1}
+.dfx .aura{position:absolute;inset:40px 60px 20px;border-radius:60px;background:radial-gradient(ellipse at center,var(--g1) 0%,var(--g1) 38%,var(--g2) 62%,transparent 80%);filter:blur(22px);animation:aura 2.6s ease-in-out infinite alternate}
+@keyframes aura{from{opacity:.8;transform:scale(.97)}to{opacity:1;transform:scale(1.06)}}
+.dfx i{position:absolute;font-style:normal;line-height:1;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));will-change:transform,opacity}
+.dfx i.rise{bottom:0;animation:dRise var(--s) linear var(--d) infinite}
+@keyframes dRise{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:1}100%{transform:translate(var(--dx),-980px) rotate(var(--r));opacity:0}}
+.dfx i.fall{top:-40px;animation:dFall var(--s) linear var(--d) infinite}
+@keyframes dFall{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translate(var(--dx),980px) rotate(var(--r));opacity:0}}
+.dfx i.across{left:-60px;animation:dAcross var(--s) linear var(--d) infinite}
+@keyframes dAcross{0%{transform:translateX(0);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(840px);opacity:0}}
+.dfx i.twinkle{animation:dTw var(--s) ease-in-out var(--d) infinite}
+@keyframes dTw{0%,100%{transform:scale(.2) rotate(0);opacity:0}50%{transform:scale(1.15) rotate(25deg);opacity:1}}
+.dfx .bolt{position:absolute;inset:0;border-radius:40px;background:radial-gradient(ellipse at center,rgba(255,250,200,.95),rgba(255,230,80,.4) 40%,transparent 70%);opacity:0;animation:dBolt 2.4s steps(1) var(--d) infinite}
+@keyframes dBolt{0%,100%{opacity:0}8%{opacity:1}11%{opacity:0}14%{opacity:.8}17%{opacity:0}}
+.dbadge{position:absolute;left:50%;bottom:-34px;transform:translateX(-50%);z-index:4;white-space:nowrap;background:var(--red);color:#fff;font-weight:800;letter-spacing:.14em;font-size:24px;padding:8px 22px;border-radius:999px;box-shadow:0 0 0 4px var(--gold),0 10px 24px rgba(0,0,0,.5)}
 .qcrown{position:absolute;left:50%;top:-110px;font-size:150px;transform:translateX(-50%);z-index:3;animation:crownIn 1.2s .6s cubic-bezier(.2,1.5,.4,1) both;filter:drop-shadow(0 10px 18px rgba(0,0,0,.6))}
 @keyframes crownIn{from{transform:translate(-50%,-900px) rotate(-40deg)}to{transform:translateX(-50%)}}
 .chute{position:fixed;left:50%;top:0;z-index:54;display:grid;justify-items:center;animation:chuteDown 3s cubic-bezier(.3,.6,.4,1) both;pointer-events:none}
@@ -427,6 +443,28 @@ function orderSlide(k,blurb){
     enter(el){orderView(k,el.querySelector("#oarea"),blurb,el)}};
 }
 
+// each district gets its own effect from its industry in the books
+const DISTRICT_FX={
+ 1:{ind:"LUXURY",g:["rgba(255,200,230,.75)","rgba(232,176,75,.35)"],p:[["twinkle","💎",16],["twinkle","✨",10]]},
+ 2:{ind:"MASONRY",g:["rgba(200,190,170,.6)","rgba(120,110,95,.3)"],p:[["fall","🪨",14],["fall","🛡️",4]]},
+ 3:{ind:"TECHNOLOGY",g:["rgba(80,200,255,.7)","rgba(30,90,200,.35)"],p:[["twinkle","⚡",12],["rise","🔌",6],["twinkle","💡",6]]},
+ 4:{ind:"FISHING",g:["rgba(70,190,230,.7)","rgba(20,80,160,.35)"],p:[["rise","🫧",14],["rise","🐟",6],["rise","🐠",4],["rise","🔱",2]]},
+ 5:{ind:"POWER",g:["rgba(255,235,100,.75)","rgba(200,150,20,.35)"],p:[["twinkle","⚡",14]],bolt:true},
+ 6:{ind:"TRANSPORTATION",g:["rgba(180,190,210,.6)","rgba(70,90,130,.35)"],p:[["across","🚂",5],["across","🚆",4]]},
+ 7:{ind:"LUMBER",g:["rgba(120,200,110,.6)","rgba(60,110,40,.35)"],p:[["fall","🍂",10],["fall","🪵",6],["fall","🌲",4]]},
+ 8:{ind:"TEXTILES",g:["rgba(230,140,220,.6)","rgba(130,60,160,.35)"],p:[["rise","🧵",10],["rise","🪡",5],["rise","🧶",4]]},
+ 9:{ind:"GRAIN",g:["rgba(250,215,120,.7)","rgba(190,140,40,.35)"],p:[["fall","🌾",16]]},
+ 10:{ind:"LIVESTOCK",g:["rgba(200,230,150,.6)","rgba(110,140,60,.35)"],p:[["across","🐄",4],["across","🐑",4],["fall","🌾",5]]},
+ 11:{ind:"AGRICULTURE",g:["rgba(255,140,120,.6)","rgba(80,150,60,.35)"],p:[["fall","🍎",10],["fall","🍑",5],["fall","🍃",5]]},
+ 12:{ind:"COAL MINING",fire:true,p:[["rise","⛏️",4],["rise","🪨",5]]}};
+function districtFX(d){const f=DISTRICT_FX[d];if(!f)return fireHTML();const R=(a,b)=>a+Math.random()*(b-a);
+  let h=f.fire?fireHTML().replace('<div class="fire">','').replace(/<\/div>$/,""):`<div class="aura" style="--g1:${f.g[0]};--g2:${f.g[1]}"></div>`;
+  if(f.bolt)h+=`<div class="bolt" style="--d:${-R(0,2)}s"></div>`;
+  for(const [kind,em,n0] of f.p)for(let k=0,n=Math.round(n0*1.7);k<n;k++){const sz=R(50,96);
+    if(kind==="twinkle")h+=`<i class="twinkle" style="left:${R(-2,96)}%;top:${R(-4,96)}%;font-size:${sz}px;--s:${R(1.6,3)}s;--d:${-R(0,3)}s">${em}</i>`;
+    else if(kind==="across")h+=`<i class="across" style="top:${R(2,90)}%;font-size:${R(60,100)}px;--s:${R(4,7)}s;--d:${-R(0,7)}s">${em}</i>`;
+    else h+=`<i class="${kind}" style="left:${R(-4,98)}%;font-size:${sz}px;--s:${R(3.5,6.5)}s;--d:${-R(0,6.5)}s;--dx:${R(-90,90)}px;--r:${R(-300,300)}deg">${em}</i>`}
+  return `<div class="${f.fire?"fire dfx":"dfx"}">${h}</div>`}
 // flames around a tribute's photo, like the chariot parade
 function fireHTML(){const R=(a,b)=>a+Math.random()*(b-a);let h="";
   for(let k=0;k<20;k++)h+=`<span style="left:${k/19*100}%;--w:${R(110,180)}px;--h:${R(200,340)}px;--s:${R(.35,.7)}s;--d:${-R(0,.7)}s"></span>`;
@@ -913,7 +951,7 @@ const SLIDES=[
       <b style="font-size:30px">${esc(t.name)}</b></div>`).join("")}</div></div>`,
    enter(){for(let i=0;i<12;i++)st(()=>XM.sfx("pop"),500+i*120)}},
  ...TRIBUTES.map(t=>({id:"d"+t.d,music:"march",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
-    <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${fireHTML()}${t.d===11?`<div class="qcrown">👑</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">DISTRICT ${t.d}</span></div>
+    <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${districtFX(t.d)}${t.d===11?`<div class="qcrown">👑</div>`:""}${DISTRICT_FX[t.d]?`<div class="dbadge">DISTRICT ${t.d} · ${DISTRICT_FX[t.d].ind}</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">DISTRICT ${t.d}</span></div>
     <div style="display:grid;gap:26px">
       <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.label||"TRIBUTE PROFILE"}</div>
       <h1 class="title-xl slam" ${d(.7)} style="font-size:${t.name.length>8?118:150}px">${esc(t.name)}</h1>

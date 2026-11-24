@@ -40,7 +40,7 @@ XM.GAMES={
 
 // The announcer says "Game maker", not "Gamemaker"
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
-  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
+  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/\bKachow\b/gi,"Kuh-chow"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 // the shared "how this works" briefing screen (/briefing.js) on every page that uses these helpers
 if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){const s=document.createElement("script");s.src="/briefing.js";document.head.appendChild(s)}
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
@@ -358,7 +358,7 @@ XM.sfx=function(kind){
 };
 
 /* ================= ANNOUNCER (laptop's built-in voice, pitched down) ================= */
-XM.SAY={"HumblePie1":"Humble Pie One","Iron Balls III":"Iron Balls the Third","Elisha":"Alicia","QUEEN MOTHER":"Queen Mother","Kamdon":"Camden"};
+XM.SAY={"Kachow":"Kuh-chow","HumblePie1":"Humble Pie One","Iron Balls III":"Iron Balls the Third","Elisha":"Alicia","QUEEN MOTHER":"Queen Mother","Kamdon":"Camden"};
 XM.spoken=n=>{const d=XM.dn(n);return XM.SAY[d]||(d===n?XM.SAY[n]:null)||d};
 let sayGen=0;
 const pickVoice=()=>{const sy=window.speechSynthesis;if(!sy)return null;const v=sy.getVoices().filter(v=>/^en/i.test(v.lang));

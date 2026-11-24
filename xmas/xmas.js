@@ -15,7 +15,7 @@ XM.TRIBUTES=[
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Offer to fix everyone's gear. Fix it wrong. On purpose.",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"Daily motivation, straight from JT Motivation",strategy:"Stay fresh. Stay motivated. Stay undefeated.",odds:"5 to 1"},
- {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER · AKA BITCH (CARSYN)"},
+ {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER · AKA CLO (CARSYN)"},
  {d:7,name:"Tinsley",weapon:"A brand-new driver's permit. Stay off the roads when you see her coming.",strategy:"Make everyone laugh till they drop, then floor it",odds:"3 to 1"},
  {d:8,name:"Natalie",weapon:"A rolling pin and a fresh batch of cookies",strategy:"Bribe the arena with cookies, then randomly break into song",odds:"4 to 1"},
  {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)",label:"AKA BIG DADDY KAM"},
@@ -42,7 +42,7 @@ XM.GAMES={
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
   const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Jessie:"Lucky PomPoms",Natalie:"Buzz Buzz",Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Bitch"};
+XM.AKA={Jessie:"Lucky PomPoms",Natalie:"Buzz Buzz",Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Clo"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 // swap real names for nicknames in a string (for speech and canvas text)

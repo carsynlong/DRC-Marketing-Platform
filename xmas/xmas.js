@@ -504,7 +504,7 @@ function startTB(k){
   const go=()=>{if(!T)return;view("play");XM.sfx("stinger");if(XM.TB[k].song)later(()=>XM.playSong(XM.TB[k].song),900)};
   if(!window.Briefing)return go();
   // ⚔️ read the tiebreaker's rules out loud first; the Gamemaker presses Start
-  const t=XM.TB[k],tied=[...T.picked].map(XM.dn),sentences=t.rules.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const t=XM.TB[k],tied=[...T.picked].map(XM.dn),sentences=(t.rules.match(/[^.!?]+[.!?]+|[^.!?]+$/g)||[]).map(x=>x.trim()).filter(Boolean);
   const HOW={stopwatch:"The Gamemaker starts the stopwatch, then taps whoever finishes first.",timer:`The Gamemaker starts a ${t.secs||10}-second timer. When it ends, tap who won.`,
     dice:"Roll, then the Gamemaker taps the highest roll. Ties roll again.",closest:"Each guess gets typed in on the TV. The closest one wins.",
     elim:"The Gamemaker taps each tribute out as they crack. Last one standing wins.",toss:"The Gamemaker counts each throw. Most in the cup wins."};

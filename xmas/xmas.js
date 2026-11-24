@@ -11,7 +11,7 @@ XM.store=store;
 /* ================= DATA ================= */
 XM.TRIBUTES=[
  {d:1,name:"Jessie",weapon:"Shears in one hand, lash tweezers in the other",strategy:"Give everyone a fresh cut, then take them out",odds:"4 to 1"},
- {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1",label:"AKA LISH"},
+ {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1",label:"AKA BYE FELICIA"},
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Offer to fix everyone's gear. Fix it wrong. On purpose.",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"Daily motivation, straight from JT Motivation",strategy:"Stay fresh. Stay motivated. Stay undefeated.",odds:"5 to 1"},
@@ -42,7 +42,7 @@ XM.GAMES={
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
   const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Jessie:"Lucky PomPoms",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Clo"};
+XM.AKA={Jessie:"Lucky PomPoms",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Clo"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 // swap real names for nicknames in a string (for speech and canvas text)

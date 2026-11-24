@@ -486,7 +486,7 @@ function idkSlide(k,img,who,spoken){
   return {id:"idk-"+k,music:"stop",html:()=>`${tbBtn(k)}<div style="display:grid;justify-items:center;gap:24px;height:100%;grid-template-rows:auto 1fr auto">
     <h1 class="title-l fd" style="color:#fff;letter-spacing:.06em">HOW TO PLAY...</h1>
     <div class="pola zoom" ${d(.7)} style="position:relative;--r:-3deg;transform:rotate(-3deg);padding:16px 16px 16px"><img src="${img}" alt="" style="width:auto;height:560px;max-width:900px;object-fit:cover"></div>
-    <h1 class="title-xl slam" ${d(2.2)} style="font-size:150px">IDK. ASK ${who}.</h1></div>`,
+    <h1 class="title-xl slam" ${d(2.2)} style="font-size:${who.length>8?104:150}px;white-space:nowrap">IDK. ASK ${who}.</h1></div>`,
    enter(el){announcer.stop();const my=announcer.gen();const ok=()=>my===announcer.gen()&&curEl===el;
      st(()=>ok()&&announcer.say("How to play...",null,{pitch:.3,rate:.75}),300);
      st(()=>{if(!ok())return;XM.sfx("thud");shake();announcer.say(`I don't know. Ask ${spoken}.`,()=>ok()&&XM.sfx("trombone"),{pitch:.2,rate:.8,fallback:400})},2600)}};
@@ -1460,7 +1460,7 @@ const SLIDES=[
  gameTitle("secrets"),
  // GAME 7
  gameTitle("lrc"),
- idkSlide("lrc","/xmas/past/elisha-idk.jpg","LISH","Lish"),
+ idkSlide("lrc","/xmas/past/elisha-idk.jpg","BYE FELICIA","Bye Felicia"),
  orderSlide("lrc","Shuffle to see who rolls first. Play goes in this order."),
  tieSlide("lrc"),
  // GAME 8

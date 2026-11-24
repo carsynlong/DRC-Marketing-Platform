@@ -56,7 +56,7 @@ h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 
 <div class="app" id="app"><p style="margin-top:20vh;text-align:center">Loading the bingo cards…</p></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <script src="/xmas/xmas.js"></script>
-<script>XM.useNicknames()</script>
+<script>XM.useNicknames();XM.setSound(true) /* a game page always starts with sound on, even if the show was muted earlier */</script>
 <script>
 /* District Bingo board. Numbers come out of the real bingo cage; the Gamemaker taps each one here.
    Card checks use /xmas/bingo-cards.json: the exact numbers on the 100 printed cards (xmas/bingo-cards.pdf).

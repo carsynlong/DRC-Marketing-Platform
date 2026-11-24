@@ -213,6 +213,7 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .row .pts{font-weight:800;font-variant-numeric:tabular-nums;font-size:1.2rem;text-align:right}
 .row .delta{display:block;font-size:.8rem;color:var(--good)}
 .row .streak{font-size:.8rem;color:var(--gold-hi);margin-left:.5em}
+.brf .row{padding:0;background:none;box-shadow:none;border-radius:0;overflow:visible;animation:none;text-align:center}   /* the briefing's button row (briefing.js) is not a ledger row */
 .mv{font-size:.8rem;font-weight:800;margin-left:.5em}.mv.up{color:var(--good)}.mv.dn{color:var(--bad)}
 @keyframes rowin{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
 .podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:12px;max-width:780px;width:100%;margin:0 auto}
@@ -459,10 +460,11 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 <script src="/qrcode.js"></script>
 <script src="/ambient.js"></script>
 <script src="/showtime.js"></script>
+<script src="/briefing.js"></script>
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-23-12";
+const BUILD="ds-build-2026-11-24-1";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -1004,12 +1006,22 @@ function lastView(){
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
-  S.ttlDone=false;S.likelySeen={};S.mole=null;S.deck=dressDeck(S.opts?.decoys?buildDeck():REAL.map(x=>({...x})));Q.splice(0,Q.length,...S.deck);S.fifthUsed={};S.champ=null;S.duel=null;S.duelDone=false;   // decoys shuffled in fresh each game
+  S.ttlDone=false;S.likelySeen={};S.briefed={};S.mole=null;S.deck=dressDeck(S.opts?.decoys?buildDeck():REAL.map(x=>({...x})));Q.splice(0,Q.length,...S.deck);S.fifthUsed={};S.champ=null;S.duel=null;S.duelDone=false;   // decoys shuffled in fresh each game
   S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
   post({action:"reset",total:BASE+40}).catch(()=>{});dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
 }
+/* 📋 briefings (briefing.js): "how this works" read out loud before a special round. Nothing starts until the Gamemaker presses Start.
+   Sponsor bets and the mole are explained once per game, right before the first secret. */
 function beginQuestion(){
+  S.briefed=S.briefed||{};
+  if(window.Briefing&&!cur()?.ttl){
+    if(S.opts?.bets&&!S.briefed.bets){S.briefed.bets=1;return brief(betsBrief(),beginQuestion)}
+    if(S.opts?.mole&&!S.briefed.mole&&guessers().filter(p=>p.name!==HOST).length>=3){S.briefed.mole=1;return brief(moleBrief(),beginQuestion)}
+  }
+  beginQuestionNow();
+}
+function beginQuestionNow(){
   S.phase="ready";S.count=3;stopSong();render();sfx("dial");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}
     sfx("dial");const d=$(".dial");if(d)d.outerHTML=dialHTML(S.count)},900);
@@ -1139,7 +1151,8 @@ async function reveal(){
 /* 🎤 Story time: the owner accepts (+300) or declines (−200) on their phone; the host can also start it or skip it (no penalty) */
 const STORY_YES=300,STORY_NO=200,STORY_ASK=15;
 const NO_GUESS=200;   // points lost for not sealing a guess in time (phone players only)   // 15 seconds to accept or decline; no answer counts as declining
-function storyTime(){S.phase="story";S.storyState="ask";S.storyAt=null;S.askAt=Date.now();stopSong();sfx("mic");render()}
+function storyTime(){if(S.phase!=="reveal")return;brief(storyBrief(),storyTimeNow)}
+function storyTimeNow(){if(S.phase!=="reveal")return;S.phase="story";S.storyState="ask";S.storyAt=null;S.askAt=Date.now();stopSong();sfx("mic");render()}
 function storyDecide(state){
   if(S.phase!=="story"||S.storyState!=="ask")return;
   S.storyState=state;
@@ -1224,6 +1237,7 @@ function pleadFifth(n){
 function showdownDue(){if(!S.opts?.showdown||S.champ||S.duelDone)return false;const r=ranked();return r.length>1&&r[0].score>0&&r[0].score===r[1].score}
 function startShowdown(){
   const r=ranked();S.duel={a:r[0].name,b:r[1].name,round:1,state:"vs"};S.phase="showdown";S.duelDone=true;stopSong();sfx("gong");render();
+  if(window.Briefing)brief(duelBrief(),()=>{if(S.phase==="showdown"&&S.duel?.state==="vs")duelGo()});   // Start = Ready… Steady…
 }
 let duelT=0,duelPoll=0;
 function duelGo(){   // Ready… Steady… (a random 2–5 seconds) … DRAW!
@@ -1259,12 +1273,12 @@ function duelView(){
       :`<p class="quip">${d.note?esc(d.note)+" ":""}When the TV says <b>DRAW!</b>, tap your phone. First tap wins the major award. Tap too soon and you lose!</p><div class="ctl" style="justify-content:center"><button class="btn wax" id="duelgo">${d.state==="again"?"Try again":"Ready!"}</button></div>`}
   </section>`;
 }
-function next(){S.qi++;if(likelyDue())return startLikely();proceed()}
+function next(){S.qi++;if(likelyDue()){S.qi--;return brief(likelyBrief(),()=>{if(S.phase!=="board")return;S.qi++;startLikely()})}proceed()}
 function proceed(){
   const x=Q[S.qi],prev=Q[S.qi-1];
   if(x?.bonus&&!prev?.bonus){S.phase="bonuscard";stopSong();sfx("gong");render();return}
-  if(x?.lightning&&!prev?.lightning){S.phase="lightcard";stopSong();sfx("cannon");render();return}
-  if(x?.ttl&&!prev?.ttl){S.phase="ttlcard";stopSong();sfx("gong");render();return}
+  if(x?.lightning&&!prev?.lightning){S.phase="lightcard";stopSong();sfx("cannon");render();if(window.Briefing)cardGo();return}
+  if(x?.ttl&&!prev?.ttl){S.phase="ttlcard";stopSong();sfx("gong");render();if(window.Briefing)cardGo();return}
   beginQuestion();
 }
 /* 🗳️ Most likely to… : a quick 15-second vote every few secrets, just for laughs */
@@ -1320,6 +1334,86 @@ function ttlRevealView(){
     <div class="cracked" style="width:min(92vw,760px)"><h3>${right.length?`${right.length} spotted the lie`:"Nobody spotted the lie!"}${fooled?` · 🎭 ${esc(x.a)} fooled ${fooled}`:""}</h3>
       ${right.length?`<div class="faces">${right.map(n=>`<div class="face"><img src="${AV(n)}" alt="">${esc(n)}</div>`).join("")}</div>`:""}</div>
     <div class="ctl" style="justify-content:center"><span class="hint tiny">Space: scores</span><button class="btn" id="score">Show scores</button></div></section>`;
+}
+
+/* 📋 the briefings for the special rounds (see beginQuestion, storyTime, next, proceed, startShowdown) */
+function brief(o,go){
+  if(!window.Briefing)return go();
+  stopSong();
+  Briefing.show({...o,muted:()=>!musicOn,onStart:()=>{ensureAudio();go()}});
+}
+// the Lightning and Two Truths cards: the briefing goes up over the card; Start begins the countdown
+function cardGo(){
+  if(S.phase==="lightcard")return brief(lightBrief(),()=>{if(S.phase==="lightcard")beginQuestion()});
+  if(S.phase==="ttlcard")return brief(ttlBrief(),()=>{if(S.phase==="ttlcard")beginQuestion()});
+  beginQuestion();
+}
+function storyBrief(){
+  const a=cur().a,n=esc(a),mult=qMult(S.qi),st=[
+    ["🎤",`It's <b>${n}</b>'s secret. Will they tell the story behind it?`,`It's ${a}'s secret. Will they tell the story behind it?`],
+    ["📱",`${n}: accept or decline on your phone. You have <b>${STORY_ASK} seconds</b>.`,`${a}: accept or decline on your phone. You have ${STORY_ASK} seconds.`],
+    ["✅",`Accept: <b>+${STORY_YES}</b>, and you get the stage for <b>30 seconds</b>.`,`Accept, and you get plus ${STORY_YES}, and the stage for 30 seconds.`],
+    ["❌",`Decline, or no answer in time: <b>-${STORY_NO}</b>.`,`Decline, or don't answer in time, and it's minus ${STORY_NO}.`],
+    ["👏",`Everyone else rates the story on their phone. Every 🔥 😂 🤯 🤔 vote: <b>+100</b> for ${n}.`,`Everyone else rates the story on their phone. Every hot, hilarious, mind blown, or makes sense vote is plus 100 for ${a}.`],
+    ["😴",`Every 😴 Boring or 👎 That sucks vote: <b>-50</b>.`,`Every boring, or that sucks vote, is minus 50.`]];
+  if(mult>1)st.push(["✨",`This secret counts <b>×${mult}</b>, so the story votes do too.`,`This secret counts ${mult===3?"triple":"double"}, so the story votes do too.`]);
+  return {eyebrow:"🎤 STORY TIME",title:"Story Time",intro:"It's story time. Here's how it works.",steps:st,start:"▶ Start story time"};
+}
+function duelBrief(){
+  const d=S.duel,a=d.a,b=d.b;
+  return {eyebrow:"⚔️ THE SHOWDOWN",title:"Quick Draw",intro:"It's a tie at the top. Welcome to the showdown. Here's how it works.",start:"▶ Ready… Steady…",steps:[
+    ["⚔️",`<b>${esc(a)}</b> and <b>${esc(b)}</b> are tied at the top. One of you takes the major award.`,`${a} and ${b} are tied at the top. One of you takes the major award.`],
+    ["📱","You two: phones in hand, fingers ready. Everyone else: watch.","You two: phones in hand, fingers ready. Everyone else, watch."],
+    ["🤫","The TV says <b>Ready… Steady…</b> and then waits <b>2 to 5 seconds</b>. Nobody knows how long.","The TV says ready, steady, and then waits 2 to 5 seconds. Nobody knows how long."],
+    ["💥","When it says <b>DRAW!</b>, tap your phone. <b>First tap wins.</b>","When it says draw, tap your phone. First tap wins."],
+    ["❌","Tap too soon and you <b>lose</b>. Both too soon? We go again.","Tap too soon and you lose. If you both tap too soon, we go again."],
+    ["🏆","The winner gets <b>+500</b> and finishes on top.","The winner gets plus 500, and finishes on top."]]};
+}
+function likelyBrief(){
+  return {eyebrow:"🗳️ MOST LIKELY TO",title:"Most Likely To…",intro:"Time for a quick vote. Here's how it works.",start:"▶ Start the vote",steps:[
+    ["🗳️","The TV asks: <b>who's most likely to…</b> something silly.","The TV asks: who's most likely to, something silly."],
+    ["📱","Tap a name on your phone. Anyone but yourself. You can change your vote.","Tap a name on your phone. Anyone but yourself. You can change your vote."],
+    ["⏱️",`You have <b>${LIKELY_SECS} seconds</b>.`,`You have ${LIKELY_SECS} seconds.`],
+    ["🏆","Results show when the clock runs out, or as soon as everyone has voted.","Results show when the clock runs out, or as soon as everyone has voted."],
+    ["😂","<b>No points.</b> Just bragging rights.","No points. Just bragging rights."]]};
+}
+function lightBrief(){
+  const L=LIGHTNING_SECS;
+  return {eyebrow:"⚡ LIGHTNING ROUND",title:"Lightning Round",intro:"Welcome to the Lightning Round. Here's how it works.",start:"▶ Strike!",steps:[
+    ["⚡","<b>Three secrets</b>, back to back.","Three secrets, back to back."],
+    ["⏱️",`Only <b>${L} seconds</b> each. Type your guess fast!`,`Only ${L} seconds each. Type your guess fast.`],
+    ["💰","Everything counts <b>double</b>: a right guess is <b>2,000</b>, and the speed bonus and streaks double too.","Everything counts double. A right guess is 2000, and the speed bonus and streaks double too."],
+    ["🎭","Your secret? Every person you fool is worth <b>+300</b>.","If it's your secret, every person you fool is worth plus 300."],
+    ["🎲","Sponsor bets double too. So does the penalty: no guess in time is <b>-400</b>.","Sponsor bets double too. So does the penalty. No guess in time is minus 400."],
+    ["🚫","No interrogations, no stories. Straight to the reveal.","No interrogations, no stories. Straight to the reveal."]]};
+}
+function ttlBrief(){
+  const n=Q.filter(x=>x.ttl).length,s=S.secs;
+  return {eyebrow:"🤥 TWO TRUTHS AND A LIE",title:"Two Truths and a Lie",intro:"Welcome to Two Truths and a Lie. Here's how it works.",start:"▶ Let's hear them",steps:[
+    ["🤥",`${n} of you wrote <b>two truths and a lie</b>. All three statements go up on the screen.`,`${n} of you wrote two truths and a lie. All three statements go up on the screen.`],
+    ["📱",`On your phone, tap the one you think is the <b>lie</b>. You have <b>${s} seconds</b>.`,`On your phone, tap the one you think is the lie. You have ${s} seconds.`],
+    ["✅","Find the lie: <b>1,000 points</b>, plus a speed bonus and extra for a streak.","Find the lie, and you get 1000 points, plus a speed bonus, and extra for a streak."],
+    ["🎭","Your own? Keep a straight face. <b>+150</b> for every person who picks a truth.","If it's your own, keep a straight face. You get plus 150 for every person who picks a truth."],
+    ["⏰","No answer in time: <b>-200</b>.","No answer in time is minus 200."],
+    ["🔓","No interrogation, no story. When time's up, the lie is revealed.","No interrogation, no story. When time's up, the lie is revealed."]]};
+}
+function betsBrief(){
+  return {eyebrow:"🎲 SPONSOR BETS",title:"Sponsor Bets",intro:"Before the first secret: sponsor bets. Here's how they work.",start:"▶ Got it",steps:[
+    ["🎲","Before you seal each guess, pick a bet on your phone.","Before you seal each guess, pick a bet on your phone."],
+    ["🪶","<b>Hunch</b>: the normal way. No extra risk.","Hunch: the normal way. No extra risk."],
+    ["🎯","<b>Sure</b>: right gets <b>+500</b> extra. Wrong: <b>-250</b>.","Sure: if you're right, plus 500 extra. If you're wrong, minus 250."],
+    ["💀","<b>All in</b>: right <b>doubles</b> your points for that secret. Wrong: <b>-500</b>.","All in: if you're right, your points for that secret double. If you're wrong, minus 500."],
+    ["✨","On double and golden secrets, the bets are bigger too.","On double and golden secrets, the bets are bigger too."],
+    ["🛡️","A lost bet can't take you below zero.","A lost bet can't take you below zero."]]};
+}
+function moleBrief(){
+  return {eyebrow:"🐀 THE MOLE",title:"There's a Mole",intro:"One more thing. There's a mole in the room. Here's how it works.",start:"▶ Trust no one",steps:[
+    ["🐀","Every secret, one guesser is secretly picked as <b>the mole</b>. Only their phone knows.","Every secret, one guesser is secretly picked as the mole. Only their phone knows."],
+    ["🎯","The mole's phone names a <b>wrong person</b>. Their mission: get the room to guess that name.","The mole's phone names a wrong person. Their mission: get the room to guess that name."],
+    ["💰","The mole gets <b>+150</b> for every person who guesses that name.","The mole gets plus 150 for every person who guesses that name."],
+    ["🗳️","The mole still seals their own guess, and it scores as normal.","The mole still seals their own guess, and it scores as normal."],
+    ["🕵️","Everyone else: <b>trust no one</b>. That helpful hint might be a trap.","Everyone else: trust no one. That helpful hint might be a trap."],
+    ["🔓","The mole is unmasked at every reveal.","The mole is unmasked at every reveal."]]};
 }
 
 /* ================= VIEWS ================= */
@@ -1574,7 +1668,7 @@ function primary(){
   ensureAudio();
   if(S.phase==="lobby")return active().length>=2&&howTo();
   if(S.phase==="howto")return readyGo();
-  if(["roundcard","bonuscard","lightcard","ttlcard"].includes(S.phase))return beginQuestion();
+  if(["roundcard","bonuscard","lightcard","ttlcard"].includes(S.phase))return cardGo();
   if(S.phase==="likely")return S.likely?.show?proceed():likelyResults();
   if(S.phase==="last")return newGame();
   if(S.phase==="ready")return (clearInterval(readyT),sfx("go"),startQuestion());
@@ -1592,7 +1686,7 @@ function wire(){
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   on("roomstart",startRoom);on("roomreread",readRoomRules);
-  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("likelyshow",likelyResults);on("lastgo",newGame);on("likelynext",proceed);on("duelgo",duelGo);on("duelfinal",finishShowdown);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
+  on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",cardGo);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("likelyshow",likelyResults);on("lastgo",newGame);on("likelynext",proceed);on("duelgo",duelGo);on("duelfinal",finishShowdown);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});

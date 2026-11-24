@@ -16,6 +16,8 @@ import { redis, hash, reply, text } from "../lib/redis.js";
 
 const NAMES = ["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const EMOJI = ["🏹", "🔥", "🌹", "🍞", "🐦", "🎁", "😱", "😂", "🎂"];
+// each tribute also gets their own district's emojis (same as their profile effects)
+const DEMOJI = {Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
 const P = "sh:";
 // The Gamemaker's phone remote and twists need this PIN (only Carsyn knows it).
 const HOST_PIN = "1185";
@@ -546,7 +548,7 @@ async function main(req, res) {
   }
 
   if (a === "react") {
-    if (!EMOJI.includes(req.body?.e)) return reply(res, 400, { error: "Unknown emoji" });
+    if (!EMOJI.includes(req.body?.e) && !(DEMOJI[name] || []).includes(req.body?.e)) return reply(res, 400, { error: "Unknown emoji" });
     if (!(await redis.set(`${P}rl:${name}`, "1", { nx: true, px: 350 }))) return reply(res, 429, { error: "Slow down" });
     const id = await redis.incr(P + "reactid");
     await redis.lpush(P + "reactlog", JSON.stringify({ id, name, e: req.body.e }));

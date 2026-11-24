@@ -138,6 +138,9 @@ document.getElementById("lights").outerHTML=XM.lights(14);
 XM.snow(document.getElementById("snow"));
 const {esc,TRIBUTES}=XM;
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
+// your own district's emojis (matches your profile on the TV)
+const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
+const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
 function buzz(p){try{if(navigator.vibrate&&navigator.vibrate(p))return}catch(e){}
   const big=Array.isArray(p)||p>=150;if(!big)return;const f=document.createElement("div");f.style.cssText="position:fixed;inset:0;z-index:99;background:#fff;pointer-events:none;transition:opacity .5s";document.body.appendChild(f);
@@ -171,7 +174,7 @@ function render(){if(me!=="Carsyn")dropBar();
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
     <div id="extras" style="display:grid;gap:16px"></div>
     ${me==="Natalie"?`<div class="card" style="text-align:center"><button class="btn red" id="notfair" style="width:100%;font-size:1.5rem;padding:.8em">😤 IT'S NOT FAIR!</button><div class="tiny" id="nfmsg">Your official catchphrase. Tap it and the TV hears your complaint.</div></div>`:""}
-    <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
+    <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div>${DEMOJI[me]?`<div class="eyebrow" style="text-align:center;margin:2px 0 8px">Your district: D${t.d} · ${DIND[t.d]||""}</div><div class="reacts">${DEMOJI[me].map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div><div class="eyebrow" style="text-align:center;margin:12px 0 8px">Arena classics</div>`:""}<div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>
     ${me==="Carsyn"?"":`<div class="card"><button class="btn helpbtn" id="helpme">🆘 I'm lost. Help!</button><div class="tiny" id="helpmsg">Tap it and the Gamemaker comes to help you.</div></div>
     <details class="card more"><summary>🎉 More fun stuff <span class="tiny">(snitch, send points, shout-outs, walk-up song)</span></summary><div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>

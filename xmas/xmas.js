@@ -45,6 +45,8 @@ XM.GAMES={
 XM.AKA={Jessie:"Lucky PomPoms",Natalie:"Buzz Buzz",Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Bitch"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
+// swap real names for nicknames in a string (for speech and canvas text)
+XM.nick=t=>String(t).replace(new RegExp("\\b("+Object.keys(XM.AKA).join("|")+")\\b","g"),m=>XM.AKA[m]);
 XM.aka=n=>"";
 // Swap real names for nicknames in any text on the page, including text added later.
 XM.useNicknames=function(root){
@@ -594,8 +596,8 @@ function drawFate(names,rot){
   x.clearRect(0,0,W,W);x.save();x.translate(W/2,W/2);x.beginPath();x.arc(0,0,R+10,0,7);x.fillStyle="#e8b04b";x.fill();x.rotate(rot);
   for(let i=0;i<n;i++){x.beginPath();x.moveTo(0,0);x.arc(0,0,R,i*sl,(i+1)*sl);x.closePath();x.fillStyle=FCOL[i%(n%FCOL.length===1?FCOL.length-1:FCOL.length)];x.fill();x.strokeStyle="rgba(251,246,234,.6)";x.lineWidth=3;x.stroke();
     x.save();x.rotate(i*sl+sl/2);x.textAlign="right";x.textBaseline="middle";let fs=Math.min(56,Math.max(24,sl*R*.4));x.font=`800 ${fs}px Outfit, system-ui, sans-serif`;
-    while(x.measureText(names[i]).width>R*.6&&fs>16){fs-=2;x.font=`800 ${fs}px Outfit, system-ui, sans-serif`}
-    x.fillStyle="#fff";x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=6;x.fillText(names[i],R-30,0);x.restore()}
+    while(x.measureText(XM.dn(names[i])).width>R*.6&&fs>16){fs-=2;x.font=`800 ${fs}px Outfit, system-ui, sans-serif`}
+    x.fillStyle="#fff";x.shadowColor="rgba(0,0,0,.55)";x.shadowBlur=6;x.fillText(XM.dn(names[i]),R-30,0);x.restore()}
   x.restore();
 }
 function spinFate(names){

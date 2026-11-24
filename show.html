@@ -592,8 +592,8 @@ function narrate(el,intro){
   XM.duck(true);
   st(()=>ok()&&announcer.say(intro,()=>step(0),{pitch:1,rate:.9,fallback:900,female:true}),900);
 }
-/* ---------- "Let the Games BEGIN!" song (your track, starting at 2:25, looping) ---------- */
-const BEGIN=new Audio("/xmas/sfx/lets-begin.m4a");BEGIN.loop=true;BEGIN.preload="auto";BEGIN.muted=!XM.sound;
+/* ---------- "Let the Games BEGIN!" song (your track, trimmed to end 8 seconds early, looping) ---------- */
+const BEGIN=new Audio("/xmas/sfx/lets-begin.m4a?v=2");BEGIN.loop=true;BEGIN.preload="auto";BEGIN.muted=!XM.sound;
 let beginFade=0;
 function fadeBegin(to,ms,done){clearInterval(beginFade);const from=BEGIN.volume,t0=performance.now();
   beginFade=setInterval(()=>{const k=Math.min(1,(performance.now()-t0)/ms);BEGIN.volume=from+(to-from)*k;if(k>=1){clearInterval(beginFade);done&&done()}},40)}

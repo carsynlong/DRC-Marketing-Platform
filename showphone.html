@@ -202,7 +202,7 @@ function render(){if(me!=="Carsyn")dropBar();
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
     const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${sn}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
   const ws=app.querySelector("#wsel");if(walkup)ws.value=walkup;
-  app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value);setTimeout(()=>XM.stopSong(),9000)};
+  app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value,true);clearTimeout(window.__wpT);window.__wpT=setTimeout(()=>XM.stopSong(),12000)};
   app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});app.querySelector("#wmsg").textContent=r.ok?"🎵 Saved! It plays on the TV when you win.":"Couldn't save.";if(r.ok)walkup=ws.value};
   let gv=null,gn=null;app.querySelectorAll("[data-gv]").forEach(b=>b.onclick=()=>{gv=b.dataset.gv;app.querySelectorAll("[data-gv]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelectorAll("[data-gn]").forEach(b=>b.onclick=()=>{gn=+b.dataset.gn;app.querySelectorAll("[data-gn]").forEach(x=>x.classList.toggle("on",x===b))});

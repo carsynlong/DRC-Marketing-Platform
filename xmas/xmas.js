@@ -82,7 +82,10 @@ XM.POLLS=["Who's most likely to cheat?","Best dressed tribute?","Who would survi
  "Who would win a real snowball fight?","Who's most likely to cry at a Christmas movie?","Who's Santa's favorite?","Who's on the naughty list?",
  "Who would make the best Gamemaker?","Who tells the worst jokes?","Who's most likely to re-gift a present?","Who's the most competitive?"];
 /* 🎵 walk-up songs (the show's own music) */
-XM.WALKUPS=[["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
+// 🎤 real walk-up songs (30-second clips in /xmas/walkups/), then the built-in beats as backups
+XM.WALKFILES=[["wu_ride","Ride · twenty one pilots"],["wu_snap","Snap Yo Fingers · Lil Jon"],["wu_walk","Walk · Pantera"],["wu_thunder","Thunderstruck · AC/DC"],
+ ["wu_country","Country Grammar · Nelly"],["wu_crazytrain","Crazy Train · Ozzy Osbourne"],["wu_gangsta","Gangsta's Paradise · Coolio"],["wu_goingbad","Going Bad · Meek Mill"]];
+XM.WALKUPS=[...XM.WALKFILES,["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
  ["hh_secrets","Secret Agent"],["hh_lrc","Dice Roll"],["hh_bingo","Bingo Bounce"],["hh_lounge","Lounge Lo-fi"],["battle","Battle March"],["march","Tribute Parade"],["board","Deck the Halls"],["lobby","Jingle Bells"]];
 XM.SOUNDBOARD=[["airhorn","📯","Air horn"],["cheer","🙌","Cheer"],["applause","👏","Applause"],["gasp","😮","Ohhh!"],["laugh","😂","Laugh"],["rimshot","🥁","Rimshot"],
  ["trombone","🎺","Sad trombone"],["cannon","💥","Cannon"],["drumroll","🪘","Drumroll"],["siren","🚨","Siren"],["fanfare","🎉","Fanfare"],["boom","🔊","Boom"]];
@@ -126,7 +129,7 @@ function ensureAudio(){
 }
 XM.ensureAudio=ensureAudio;
 XM.audioReady=()=>!!AC&&AC.state==="running";
-XM.setSound=on=>{XM.sound=on;store.set("xmas-muted",!on);if(master)master.gain.setTargetAtTime(on?.8:0,AC.currentTime,.05);document.querySelectorAll("[data-mute]").forEach(b=>{b.textContent=on?"🔊":"🔇";b.setAttribute("aria-label",on?"Mute sound":"Turn sound on");b.title=on?"Mute (M)":"Sound on (M)"})};
+XM.setSound=on=>{XM.sound=on;store.set("xmas-muted",!on);if(fileSong)fileSong.volume=on?.9:0;if(master)master.gain.setTargetAtTime(on?.8:0,AC.currentTime,.05);document.querySelectorAll("[data-mute]").forEach(b=>{b.textContent=on?"🔊":"🔇";b.setAttribute("aria-label",on?"Mute sound":"Turn sound on");b.title=on?"Mute (M)":"Sound on (M)"})};
 XM.toggleSound=()=>{ensureAudio();XM.setSound(!XM.sound)};
 const hz=m=>440*Math.pow(2,(m-69)/12);
 function env(g,t,a,peak,dec){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+a);g.gain.exponentialRampToValueAtTime(.0001,t+dec);}
@@ -288,9 +291,13 @@ const HIP={
 };
 const SONGS={...Object.fromEntries(Object.entries(HIP).map(([k,v])=>["hh_"+k,v])),lobby:mkJingle(),count:mkCarol(),board:mkDeck(),silent:mkSilent(),dirge:mkDirge(),march:mkMarch(),battle:mkBattle()};
 XM.duck=on=>{if(musicBus)musicBus.gain.setTargetAtTime(on?.16:.5,AC.currentTime,.15)};
+var fileSong=null;
 XM.playSong=function(name,force){
   if(songName===name&&!force)return;
   XM.stopSong();if(!ensureAudio())return;
+  if(/^wu_[a-z0-9]+$/.test(name)){   // a real recorded walk-up song: plays once, about 30 seconds
+    const a=new Audio("/xmas/walkups/"+name.slice(3)+".m4a");a.volume=XM.sound?.9:0;fileSong=a;songName=name;
+    a.onended=()=>{if(fileSong===a){fileSong=null;if(songName===name)songName=null}};a.play().catch(()=>{});return}
   song=SONGS[name];if(!song){songName=null;return}songName=name;
   const evs=song.ev.slice().sort((a,b)=>a[0]-b[0]);let loopStart=AC.currentTime+.08,i=0;
   timerId=setInterval(()=>{
@@ -303,7 +310,7 @@ XM.playSong=function(name,force){
     }
   },25);
 };
-XM.stopSong=function(){clearInterval(timerId);timerId=0;song=null;songName=null};
+XM.stopSong=function(){clearInterval(timerId);timerId=0;song=null;songName=null;if(fileSong){const a=fileSong;fileSong=null;try{a.pause()}catch(e){}}};
 XM.currentSong=()=>songName;
 XM.sfx=function(kind){
   if(!ensureAudio())return;const t=AC.currentTime+.01;

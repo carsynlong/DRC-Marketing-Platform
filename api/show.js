@@ -43,6 +43,18 @@ export default async function handler(req, res) {
     return reply(res, 200, { slide, quest, points: pts, now: Date.now() });
   }
 
+  // sabotage for the online games (sabotage.js)
+  if (req.method === "GET" && a === "sab") {
+    const me = text(req.query.me, 40); let sab = null;
+    if (me) { const r = await redis.hget(P + "sab", me); try { sab = r ? (typeof r === "string" ? JSON.parse(r) : r) : null; } catch {} }
+    return reply(res, 200, { sab, now: Date.now() });
+  }
+  if (req.method === "GET" && a === "sablog") {
+    const since = Number(req.query.since) || 0, out = [];
+    for (const r of (await redis.lrange(P + "sablog", 0, 9)) || []) { try { const o = typeof r === "string" ? JSON.parse(r) : r; if (o.id > since) out.push(o); } catch {} }
+    return reply(res, 200, { sabs: out.reverse() });
+  }
+
   if (req.method === "GET" && a === "tv") {
     const since = Number(req.query.since) || 0, csince = Number(req.query.csince) || 0;
     const [log, players, cams, clog] = await Promise.all([redis.lrange(P + "reactlog", 0, 39), hash(P + "players"), hash(P + "cams"), redis.lrange(P + "cmdlog", 0, 19)]);
@@ -82,6 +94,20 @@ export default async function handler(req, res) {
   }
 
   // Gamemaker-only actions that only need the PIN (so the laptop host menu can use them too)
+  if (a === "sab") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const kind = req.body?.kind;
+    if (!["freeze", "bite", "fog", "flip", "jackers"].includes(kind)) return reply(res, 400, { error: "Unknown sabotage" });
+    let to = text(req.body?.to, 40);
+    if (to === "random") { const pool = NAMES.filter(n => n !== "Carsyn"); to = pool[Math.floor(Math.random() * pool.length)]; }
+    if (!NAMES.includes(to)) return reply(res, 400, { error: "Unknown tribute" });
+    const id = await redis.incr(P + "sabid"), s = { id, to, kind, t: Date.now() };
+    await redis.hset(P + "sab", { [to]: JSON.stringify(s) });
+    await redis.lpush(P + "sablog", JSON.stringify(s)); await redis.ltrim(P + "sablog", 0, 9);
+    await pushCmd("sab", s);
+    return reply(res, 200, { ok: true, sab: s });
+  }
+
   if (a === "quest" || a === "questdone" || a === "pointsreset" || a === "pointsadd") {
     if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
     if (a === "quest") {

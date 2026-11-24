@@ -25,3 +25,6 @@ const Memes = (() => {
   }
   return { pick, html };
 })();
+
+// Gamemaker sabotage add-on (freeze, mutt bites...). Lives in /sabotage.js and only draws on top of the page.
+document.head.appendChild(Object.assign(document.createElement("script"),{src:"/sabotage.js"}));

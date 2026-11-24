@@ -126,6 +126,7 @@ function myQuest(q){
     ov.querySelector("#qok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),8000)}
 }
 /* ---- Gamemaker remote: only for Carsyn, locked with a PIN ---- */
+const SAB=[["freeze","❄️","Freeze (8s)"],["bite","🐕","Mutt bite (25s slow)"],["fog","🌫️","Fog (10s)"],["flip","🙃","Flip upside down"],["jackers","🐝","Tracker jackers"]];
 const SHOW_BTNS=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live cam"],["mute","🔇","Mute"]];
 const TWIST_BTNS=[["twist:fire","🔥","Fireballs"],["twist:storm","⚡","Lightning: swap seats"],["twist:mutts","🐺","Mutts: stand and spin"],["twist:freeze","❄️","Freeze!"],["twist:bonus","🎁","Bonus major award"],["twist:rule","📜","New rule"],["twist:feast","🍗","The Feast (snacks)"],["sponsor","🪂","Sponsor gift now"],["sponsor:on","⏱️","Random sponsor gifts ON"],["sponsor:off","⏹️","Random sponsor gifts OFF"],["clearrule","🧽","Clear the rule"]];
 function hostCard(){
@@ -144,6 +145,8 @@ function hostCard(){
     <button class="btn red" id="qsend" style="width:100%;font-size:1.1rem">⚔️ Send the side quest</button>
     <div class="hgrid" style="grid-template-columns:repeat(2,1fr);margin-top:8px"><button id="qdone"><span class="i">✅</span>They did it (+1)</button><button id="qfail"><span class="i">❌</span>Failed (-1)</button></div>
     <div class="hgrid"><button id="pplus"><span class="i">⭐</span>+1 point to pick</button><button id="pminus"><span class="i">💀</span>-1 point to pick</button><button data-c="points"><span class="i">📊</span>Points on TV</button></div>
+    <div class="eyebrow" style="margin:4px 0 6px">🐺 Sabotage the online games (the tribute picked above)</div>
+    <div class="hgrid twists">${SAB.map(([k,i,l])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
     <div class="tiny" id="qmsg" style="margin-bottom:8px"></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
@@ -160,6 +163,8 @@ function hostCard(){
   box.querySelector("#qdone").onclick=async()=>{const r=await call({a:"questdone",result:"done"});qmsg(r.ok?`✅ +1 for ${r.quest.to}`:r.status===409?"No side quest running.":"Couldn't send.")};
   box.querySelector("#qfail").onclick=async()=>{const r=await call({a:"questdone",result:"fail"});qmsg(r.ok?`❌ -1 for ${r.quest.to}`:r.status===409?"No side quest running.":"Couldn't send.")};
   const pts=n=>async()=>{if(!qn||qn==="random"){qmsg("Tap a tribute first.");return}const r=await call({a:"pointsadd",to:qn,n});qmsg(r.ok?`${n>0?"⭐ +1":"💀 -1"} for ${qn}`:"Couldn't send.")};
+  box.querySelectorAll("[data-sab]").forEach(x=>x.onclick=async()=>{if(!qn){qmsg("Tap who to sabotage first (or 🎲 Random).");return}
+    const r=await call({a:"sab",to:qn,kind:x.dataset.sab});qmsg(r.ok?`${x.querySelector(".i").textContent} Got ${r.sab.to}!`:"Couldn't send.")});
   box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(navigator.vibrate)navigator.vibrate(20);const m=box.querySelector("#hmsg");
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});

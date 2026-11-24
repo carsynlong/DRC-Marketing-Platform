@@ -634,6 +634,7 @@ function setSponsorAuto(on){try{localStorage.setItem("xmas-sponsor-auto",on?"1":
 addEventListener("storage",e=>{if(e.key==="xmas-sponsor-auto")scheduleSponsor()});
 function runCmd(c,data){
   if(!started)return;
+  if(c==="sab"&&data){XM.sfx("stinger");toast(`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"⚠️"} The Gamemaker sabotaged ${data.to}!`);return}
   if(c==="sponsor")return void sponsorDrop();
   if(c==="sponsor:on")return setSponsorAuto(true);
   if(c==="sponsor:off")return setSponsorAuto(false);

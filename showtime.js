@@ -713,3 +713,6 @@ window.MusicPill = { add({ on, toggle }) {
   b.onclick = e => { e.stopPropagation(); try { toggle(); } catch (err) { console.error(err); } b.blur(); paint(); };
   (document.body ? Promise.resolve() : new Promise(r => addEventListener("DOMContentLoaded", r))).then(() => { document.body.appendChild(b); paint(); setInterval(paint, 400); });
 } };
+
+// Gamemaker sabotage add-on (freeze, mutt bites...). Lives in /sabotage.js and only draws on top of the page.
+document.head.appendChild(Object.assign(document.createElement("script"),{src:"/sabotage.js"}));

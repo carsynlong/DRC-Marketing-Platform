@@ -118,6 +118,7 @@ document.querySelectorAll("#ctrl [data-c]").forEach(b=>b.onclick=()=>send(b.data
 // side quests go through the server (needs the PIN) so they also reach phones
 const HP=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
 const api=b=>fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json().then(j=>({ok:r.ok,status:r.status,...j}))).catch(()=>({ok:false}));
+const SAB=[["freeze","❄️","Freeze","Iced over, no taps for 8 seconds"],["bite","🐕","Mutt bite","25 seconds: every tap makes them limp"],["fog","🌫️","Fog","Blurry screen for 10 seconds"],["flip","🙃","Flip","Upside down for 12 seconds"],["jackers","🐝","Tracker jackers","Bees swarm their screen"]];
 function questUI(){
   const q=document.getElementById("qbody");const pin=HP();
   if(!pin){q.innerHTML=`<div class="qrow pinrow"><span>Gamemaker PIN:</span><input id="hpin" type="password" inputmode="numeric" maxlength="4"><button class="chip on" id="hpok">Unlock</button></div>`;
@@ -129,7 +130,10 @@ function questUI(){
     <div class="tiles twists"><button id="qsend"><span class="i">⚔️</span>Send the side quest</button><button id="qdone"><span class="i">✅</span>They did it<small>+1 point</small></button><button id="qfail"><span class="i">❌</span>Failed<small>-1 point</small></button>
       <button id="pplus"><span class="i">⭐</span>+1 point<small>to the tribute picked above</small></button><button id="pminus"><span class="i">💀</span>-1 point<small>to the tribute picked above</small></button>
       <button id="pshow"><span class="i">📊</span>Points on the TV</button><button id="preset" class="danger"><span class="i">🧹</span>Reset points<small>Click twice</small></button></div>
+    <h2 style="margin-top:16px">🐺 Sabotage the online games</h2><p>Hits the tribute picked above (or 🎲 Random) on their phone while they play Who's That Tribute, District Feud or District Secrets.</p>
+    <div class="tiles twists">${SAB.map(([k,i,l,d])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}</div>
     <div class="msg" id="qmsg"></div>`;
+  q.querySelectorAll("[data-sab]").forEach(b=>b.onclick=async()=>{if(!qn)return msg("Click who to sabotage first (or 🎲 Random).");const r=await call({a:"sab",to:qn,kind:b.dataset.sab});msg(r.ok?`${b.querySelector(".i").textContent} Got ${r.sab.to}!`:"Couldn't send.")});
   let qn=null,qs=15,armedP=0;const msg=t=>{const m=q.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3500)};
   const call=async b=>{const r=await api({pin,...b});if(r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}questUI()}return r};
   q.querySelectorAll("[data-qn]").forEach(b=>b.onclick=()=>{qn=b.dataset.qn;q.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===b))});

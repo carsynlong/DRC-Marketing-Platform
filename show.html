@@ -602,8 +602,8 @@ function slideTodo(id){
     scoop:{game:"Next up: Blind Snowball Scoop.",how:"Listen: blindfold on, scoop the snowballs into your bowl.",wheel:"Watch the wheel. If it picks you: blindfold on, spoon in hand!",tie:"Tied? Get ready for a tiebreaker."},
     tribute:{game:"Scan the QR code on the TV to play Who's That Tribute on your phone."},feud:{game:"Scan the QR code on the TV to play District Feud on your phone."},
     secrets:{game:"Scan the QR code on the TV to play District Secrets on your phone."},
-    mitten:{game:"Next up: Mitten Mayhem.",idk:"Listen to the Gamemaker for the real rules.",order:"Find your turn in the order on the TV. Wait for your turn."},
-    lrc:{game:"Next up: Left, Right, Capitol. Grab your chips.",idk:"Listen to the Gamemaker for the real rules.",order:"Find your turn in the order on the TV. Roll when it's your turn.",tie:"Tied? Get ready for a tiebreaker."},
+    mitten:{game:"Next up: Mitten Mayhem.",idk:"QUEEN MOTHER explains the rules. Listen up!",order:"Find your turn in the order on the TV. Wait for your turn."},
+    lrc:{game:"Next up: Left, Right, Capitol. Grab your chips.",idk:"Bye Felicia explains the rules. Listen up!",order:"Find your turn in the order on the TV. Roll when it's your turn.",tie:"Tied? Get ready for a tiebreaker."},
     bingo:{game:"Next up: District Bingo. Grab a card and a pen.",how:"Grab a bingo card and a pen. Write your name on it.",tie:"Tied? Get ready for a tiebreaker."}};
   const k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];return (G[g]&&k&&G[g][k])||"";
 }

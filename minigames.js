@@ -59,13 +59,40 @@ const Party = (() => {
     S.phase = "mini"; counts = {};
     post({ action: "miniReset" }).catch(() => {});
     stopSong(); sfx("gong"); render();
+    brief();
+    return true;
+  }
+  // 📋 spoken "how this works" before the mini-game (briefing.js). Start runs the countdown, so the 10-second clock never starts early.
+  const STEPS = {
+    race: [
+      ["📱", "Keep the game open on your phone. A big <b>TAP!</b> button appears.", "Keep the game open on your phone. A big tap button appears."],
+      ["3️⃣", "The TV counts down <b>3, 2, 1</b>, then GO!", "The TV counts down three, two, one, then go!"],
+      ["🏃", `Tap as fast as you can for <b>${SECS} seconds</b>. Every tap moves you along the track to the Cornucopia.`, `Tap as fast as you can for ${SECS} seconds. Every tap moves you along the track to the Cornucopia.`],
+      ["🏆", `Most taps wins. The top 3 get <b>+${BONUS[0]}</b>, <b>+${BONUS[1]}</b> and <b>+${BONUS[2]}</b> points.`, `Most taps wins. The top 3 get plus ${BONUS[0]}, plus ${BONUS[1]} and plus ${BONUS[2]} points.`],
+      ["🤝", "Same number of taps? You share the place and the bonus.", "Same number of taps? You share the place and the bonus."],
+    ],
+    climb: [
+      ["📳", "On your phone, tap <b>Allow shaking</b> now, before we start.", "On your phone, tap Allow shaking now, before we start."],
+      ["3️⃣", "The TV counts down <b>3, 2, 1</b>, then GO!", "The TV counts down three, two, one, then go!"],
+      ["🌲", `Shake your phone as hard as you can for <b>${SECS} seconds</b>. Every shake climbs you up the tree.`, `Shake your phone as hard as you can for ${SECS} seconds. Every shake climbs you up the tree.`],
+      ["👆", "Can't shake? Tap the button on your phone instead. Taps count too.", "Can't shake? Tap the button on your phone instead. Taps count too."],
+      ["🏆", `Highest count wins. The top 3 get <b>+${BONUS[0]}</b>, <b>+${BONUS[1]}</b> and <b>+${BONUS[2]}</b> points.`, `Highest count wins. The top 3 get plus ${BONUS[0]}, plus ${BONUS[1]} and plus ${BONUS[2]} points.`],
+    ],
+  };
+  function brief() {
+    const m = S.mini; if (!window.Briefing || !m || !STEPS[m.kind]) return false;
+    const info = INFO[m.kind], id = m.id;
+    Briefing.show({ eyebrow: `${info.icon} MINI-GAME · BONUS POINTS`, title: info.title, steps: STEPS[m.kind],
+      intro: `Mini-game time! ${info.title} Here's how it works.`, start: "▶ Start the mini-game", muted: () => !S.sound,
+      onStart: () => { if (S.phase === "mini" && S.mini && S.mini.id === id && S.mini.stage === "intro") { ensureAudio(); countdown(); } } });
     return true;
   }
   function countdown() {
     const m = S.mini; m.stage = "count"; m.count = 3; counts = {};
     post({ action: "miniReset" }).catch(() => {});
-    render(); sfx("drum"); clearInterval(cdT);
+    clearInterval(cdT);   // timer set before render(): miniView treats "count" with no timer as a reload and would fall back to the intro
     cdT = setInterval(() => { m.count--; if (m.count <= 0) { clearInterval(cdT); go(); return; } sfx("drum"); render(); }, 900);
+    render(); sfx("drum");
   }
   function go() {
     const m = S.mini; m.stage = "live"; m.endsAt = Date.now() + SECS * 1000;
@@ -168,6 +195,17 @@ const Party = (() => {
     const qi = Math.random() * Q.length | 0;            // one more face, picked at random
     S.rounds.push({ qi, choices: [], tb: true }); S.qi = S.rounds.length - 1;
     S.tbAgain = again; S.phase = "tbcard"; stopSong(); sfx("gong"); render();
+    // 📋 spoken "how the showdown works" (briefing.js), the first time only; Start begins the showdown face
+    if (window.Briefing && !again) Briefing.show({ eyebrow: "⚔️ TIE AT THE TOP", title: "Showdown!",
+      steps: [
+        ["⚔️", `It's a tie between <b>${names.map(esc).join(" and ")}</b>.`, `It's a tie between ${names.join(" and ")}.`],
+        ["📱", "One more face. Only the tied tributes answer, on their phones.", "One more face. Only the tied tributes answer, on their phones."],
+        ["⚡", "The <b>fastest right answer</b> wins <b>+1,000</b> and the Games.", "The fastest right answer wins plus 1,000 and the Games."],
+        ["🔁", "Nobody gets it right? Another face, until someone does.", "Nobody gets it right? Another face, until someone does."],
+        ["📣", "Everyone else: eyes on the TV and cheer for your favorite!", "Everyone else, eyes on the TV and cheer for your favorite!"],
+      ],
+      intro: "It's a tie at the top. Time for a showdown! Here's how it works.", start: "▶ Begin the showdown", muted: () => !S.sound,
+      onStart: () => { if (S.phase === "tbcard") { ensureAudio(); beginQuestion(); } } });
   }
   function tbView() {
     return `<section class="mg"><div class="eyebrow">${S.tbAgain ? "Nobody got it. Again!" : "It's a tie at the top"}</div><h1>⚔️ Showdown!</h1>
@@ -189,7 +227,7 @@ const Party = (() => {
   function primary() {
     if (S.phase === "tbcard") return beginQuestion();
     const m = S.mini; if (!m) return;
-    if (m.stage === "intro") return countdown();
+    if (m.stage === "intro") return brief() || countdown();   // the briefing's Start runs the countdown
     if (m.stage === "done") return finish();
   }
   function after() {

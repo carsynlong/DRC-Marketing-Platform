@@ -164,6 +164,9 @@ body.has-ticker .stage{max-height:42vh}
 .stage:has(~.answers){max-height:42vh}
 @media (max-width:620px){.answers{grid-template-columns:1fr}.stage{aspect-ratio:4/3}.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* 📋 briefing.js overlay: keep this page's .row (scoreboard) and .hint (extras.js) styles off its buttons row */
+.brf .row{display:flex!important;padding:0!important;background:none;box-shadow:none;overflow:visible;border-radius:0}
+.brf .hint{position:static;transform:none;background:none;box-shadow:none;padding:0;font-size:.85rem;font-weight:400;white-space:normal;animation:none;color:inherit}
 </style>
 
 <canvas id="snow" aria-hidden="true"></canvas>
@@ -178,6 +181,7 @@ body.has-ticker .stage{max-height:42vh}
 <script src="minigames.js"></script>
 <script src="firetimer.js"></script>
 <script src="extras.js"></script>
+<script src="/briefing.js"></script>
 <script>
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
@@ -422,7 +426,7 @@ function newGame(){
 }
 function roundCardOrQuestion(){
   const rc=ROUNDS.find(r=>r.at===S.qi);
-  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
+  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();if(rc.at===FEAST&&briefFeast())return;setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
   beginQuestion();
 }
 let readyT=0;
@@ -501,7 +505,37 @@ function score(){
   if(S.phase==="final"){stopSong();sfx("fanfare");confetti(260,true);playWinner()}else playSong("board");   // winner music starts right away
   render();
 }
-function next(){S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();}
+function next(){
+  const go=()=>{S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();};
+  if(DOUBLE.has(S.qi+1)&&S.qi+1<S.rounds.length&&briefDouble(go))return;   // sponsor gift face: briefing first, Start moves on
+  go();
+}
+/* 📋 spoken "how this works" when the scoring changes (briefing.js). Without it, everything runs as before. */
+function briefDouble(go){
+  if(!window.Briefing)return false;
+  const qi=S.qi;
+  Briefing.show({eyebrow:"🎁 SPONSOR GIFT",title:"Double Points!",start:"▶ Start the face",muted:()=>!S.sound,
+    intro:"A sponsor has sent a gift. The next face is worth double points. Here's how it works.",
+    steps:[["🎁","The next face is worth <b>double points</b>.","The next face is worth double points."],
+      ["🎯","A right answer scores <b>2,000</b>, and your streak bonus is doubled too.","A right answer scores 2,000, and your streak bonus is doubled too."],
+      ["⚡","A fast answer earns up to <b>+1,000</b> speed bonus.","A fast answer earns up to plus 1,000 speed bonus."],
+      ["⏰",`No answer before the cannon still costs <b>−${NO_ANSWER}</b>.`,`No answer before the cannon still costs minus ${NO_ANSWER}.`]],
+    onStart:()=>{if(S.phase==="board"&&S.qi===qi){ensureAudio();go()}}});
+  return true;
+}
+function briefFeast(){
+  if(!window.Briefing)return false;
+  const n=Q.length-FEAST;
+  Briefing.show({eyebrow:"🍗 ROUND 3",title:"The Feast",start:"▶ Start The Feast",muted:()=>!S.sound,
+    intro:"Welcome to The Feast. The scoring changes. Here's how it works.",
+    steps:[["🍗",`The last <b>${n} faces</b> are worth <b>triple points</b>.`,`The last ${n} faces are worth triple points.`],
+      ["🎯","A right answer scores <b>3,000</b>, and your streak bonus is tripled too.","A right answer scores 3,000, and your streak bonus is tripled too."],
+      ["⚡","A fast answer earns up to <b>+1,500</b> speed bonus.","A fast answer earns up to plus 1,500 speed bonus."],
+      ["⏰",`No answer before the cannon still costs <b>−${NO_ANSWER}</b>.`,`No answer before the cannon still costs minus ${NO_ANSWER}.`],
+      ["🏆","Anyone can still catch up and win the major award!","Anyone can still catch up and win the major award!"]],
+    onStart:()=>{if(S.phase==="roundcard"&&S.qi===FEAST){ensureAudio();beginQuestion()}}});
+  return true;
+}
 
 /* ---------- views ---------- */
 function render(){

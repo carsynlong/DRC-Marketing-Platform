@@ -24,7 +24,7 @@ const P = "sh:";
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "draft", "awards", "photo", "pollreveal", "betlock",
-  "clearresults", "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "fallen", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
+  "clearresults", "startover", "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "fallen", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
 const SONGS = ["wu_ride", "wu_snap", "wu_walk", "wu_thunder", "wu_country", "wu_crazytrain", "wu_gangsta", "wu_goingbad", "wu_boom", "wu_hypnotize", "wu_jump", "wu_throat", "hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
@@ -551,6 +551,19 @@ async function main(req, res) {
     if (!NAMES.includes(on) || ![1, 2, 3].includes(amt)) return reply(res, 400, { error: "Bad bet" });
     const fp = await firstPick(P + "bt:" + lv.bet.id, name); if (fp.locked) return reply(res, 409, { error: "locked", t: fp.t });
     await redis.hset(P + "bets:" + lv.bet.id, { [name]: JSON.stringify({ on, amt }) }); return reply(res, 200, { ok: true, t: fp.t });
+  }
+  // "✖ Clear my vote / Take back my bet": only inside the 10-second window; their next pick starts fresh
+  if (a === "unvote") {
+    const kind = req.body?.kind, lv = await readLive();
+    const K = kind === "vote" ? (lv.poll && lv.poll.open ? ["votes:", "vt:", lv.poll.id] : null)
+      : kind === "mercy" ? (lv.mercy && lv.mercy.open ? ["mercy:", "mt:", lv.mercy.id] : null)
+      : kind === "bet" ? (lv.bet && lv.bet.state === "open" ? ["bets:", "bt:", lv.bet.id] : null) : undefined;
+    if (K === undefined) return reply(res, 400, { error: "Unknown kind" });
+    if (!K) return reply(res, 409, { error: "It's closed" });
+    const t0 = Number(await redis.hget(P + K[1] + K[2], name)) || 0;
+    if (t0 && Date.now() - t0 > LOCK_MS) return reply(res, 409, { error: "locked", t: t0 });
+    await redis.hdel(P + K[0] + K[2], name); await redis.hdel(P + K[1] + K[2], name);
+    return reply(res, 200, { ok: true });
   }
   // 👑 QUEEN MOTHER's royal decree: a side quest for any tribute (or a random one), 30 seconds
   if (a === "decree") {

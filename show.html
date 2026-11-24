@@ -895,6 +895,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🎲 Chaos mode on/off",()=>setChaos(!chaosOn()));
   item("🎁 Major award draft order",()=>draftOrder());
   item("🏁 End-of-night awards",()=>nightAwards());
+  item("🔄 Start completely over",()=>{if(confirm("Start completely over? This wipes EVERYTHING: winners, Capitol Points, news, photos, quests, votes, award stats, and signs every phone out. Use it after practicing."))startOver()});
   item("🧹 Clear winners and award stats",()=>{if(confirm("Clear ALL game winners, 2nd places, tiebreakers and the end-of-night award stats? Use this after practicing."))clearResults()});
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
   item("✕ Close",()=>{});
@@ -1302,6 +1303,7 @@ function runCmd(c,data){
   if(c==="notfair")return notFair();
   if(c==="snitch"&&data){news(`🚨 ${data.from} reports ${data.to} ${data.why}`);return snitchCard(data)}
   if(c==="clearresults")return clearResults();
+  if(c==="startover")return void startOver();
   if(c==="draft")return draftOrder();
   if(c==="awards")return void nightAwards();
   if(c==="photo")return void photoBooth();
@@ -1833,6 +1835,12 @@ function silverBattle(g,names){
   m.querySelector("#sv-new").onclick=e=>{e.stopPropagation();close();silverBattle(g,names)};
   m.querySelector("#sv-x").onclick=e=>{e.stopPropagation();close()};
 }
+// 🔄 start completely over: everything on this laptop (except the PIN) and everything on the server, then back to the lobby
+const START_OVER_KEYS=["xmas-ultimate","xmas-chaos","xmas-sponsor-auto","xmas-ticker","xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-seconds","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide","xmas-muted","xmas-points-briefed","xmas-bingo-gm"];
+async function startOver(){toast("🔄 Starting over...",4000);
+  START_OVER_KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});newsLog.length=0;lastPoints={};
+  try{await hostCall({a:"pointsreset"});await hostCall({a:"statsreset"});await hostCall({a:"clearphones"})}catch(e){}
+  location.hash="lobby";setTimeout(()=>location.reload(),600)}
 // 🧹 wipe every result on this laptop (winners, 2nd places, bingo rounds, tiebreakers, Ultimate Victor) and the server's award stats
 function clearResults(){["xmas-victors","xmas-second","xmas-seconds","xmas-awards","xmas-bingo-winners","xmas-ties","xmas-ultimate"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
   hostCall({a:"statsreset"});closeMoments(".moment.twist");refreshCorners();if(SLIDES[cur])go(cur);toast("🧹 Winners and award stats cleared")}

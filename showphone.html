@@ -116,23 +116,23 @@ function render(){
   if(!me){
     app.innerHTML=`<img src="/xmas/emblem.png" alt="" style="width:90px;justify-self:center"><h1 class="t">The 2026 Christmas Games</h1>
       <div class="sub">Tap your face to join, tribute.</div>
-      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b>${XM.aka(t.name)?`<span style="font-size:.7rem;color:var(--gold);font-weight:700">${esc(XM.aka(t.name))}</span>`:""}</button>`).join("")}</div>`;
+      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b>${XM.aka(t.name)?`<span style="font-size:.7rem;color:var(--gold);font-weight:700">${esc(XM.aka(t.name))}</span>`:""}</button>`).join("")}</div>`;
     app.querySelectorAll("[data-n]").forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await api({a:"join",name:b.dataset.n});
       if(r.ok){me=r.me;myEpoch=r.epoch||0;XM.store.set("xmas-sh-me",me);XM.store.set("xmas-sh-epoch",myEpoch);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute.":"Couldn't join. Check your internet and try again.")}});
     return;
   }
   const t=TRIBUTES.find(x=>x.name===me);
-  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(me)}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
+  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(XM.dn(me))}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
     <div id="extras" style="display:grid;gap:16px"></div>
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     ${me==="Carsyn"?"":`<div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>
-      <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>
+      <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}</div>
       <select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button><div class="tiny" id="snmsg"></div></div>
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">🤝 Send someone your points (bribes welcome)</div>
-      <div class="vfaces" id="gvf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-gv="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>
+      <div class="vfaces" id="gvf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-gv="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}</div>
       <div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
       <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button><div class="tiny" id="gvmsg"></div></div>
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">💌 Shout-out on the TV</div>
@@ -240,9 +240,9 @@ function showExtras(){
     :`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🏳️ SPARE ${esc(mercy.to)}?</div><div class="hgrid" style="grid-template-columns:1fr 1fr;margin-top:8px"><button data-mv="up" class="${mercy.mine==="up"?"on":""}" style="font-size:2rem;min-height:70px;${mercy.mine==="up"?"background:var(--gold)":""}">👍</button><button data-mv="down" style="font-size:2rem;min-height:70px;${mercy.mine==="down"?"background:var(--gold)":""}">👎</button></div><div class="tiny">${mercy.mine?`You voted ${mercy.mine==="up"?"spare":"punish"}.`:"Thumbs up spares them. Thumbs down, no mercy."}</div></div>`;
   if(hot&&hot.to!==me)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🎭 ${esc(hot.to)} IS IN THE HOT SEAT</div><textarea id="askq" rows="2" maxlength="140" placeholder="Ask ${esc(hot.to)} anything (anonymous)" style="margin-top:8px"></textarea><button class="btn red" id="asksend" style="width:100%">Send question</button><div class="tiny" id="askmsg"></div></div>`;
   else if(hot&&hot.to===me)h+=`<div class="card vote" style="text-align:center"><div style="font-size:3rem">🎭</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">You're in the hot seat!</h2><div>Questions will show up on the TV. Answer honestly.</div></div>`;
-  if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Who wins the most games tonight? Right = +3 points at the end.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div></div>`;
+  if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Who wins the most games tonight? Right = +3 points at the end.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}</div></div>`;
   else if(predict&&predict.mine)h+=`<div class="card"><div class="eyebrow">🔮 Your prediction: ${esc(predict.mine)}</div></div>`;
-  const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>`;
+  const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}</div>`;
   if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(vote.mine)}. Tap someone else to change it.`:"Tap a face to vote."}</div></div>`;
   if(bet&&bet.state==="open")h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">💰 PLACE YOUR BET</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">Who wins ${esc(bet.game)}?</h2>
     ${faces("data-bo",bet.mine&&bet.mine.on)}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-ba="${n}" class="${bet.mine&&bet.mine.amt===n?"on":""}">${n} point${n>1?"s":""}</button>`).join("")}</div>
@@ -283,7 +283,7 @@ function myQuest(q){
   if(!ov){ov=document.createElement("div");ov.id="qov";ov.className="qov";document.body.appendChild(ov)}
   clearInterval(qTimer);
   if(q.status==="live"){ov.className="qov";
-    ov.innerHTML=`<div class="in"><div class="eyebrow" style="color:#ffd7d0">⚔️ SIDE QUEST FROM THE GAMEMAKER</div><h2>${esc(me)}!</h2><div class="ic">${esc(q.ic||"📜")}</div><div class="q">${esc(q.q)}</div>${q.double?`<div class="eyebrow" style="color:var(--gold);font-size:1rem">🎲 DOUBLE OR NOTHING</div>`:""}<div class="clk" id="qclk"></div></div>`;
+    ov.innerHTML=`<div class="in"><div class="eyebrow" style="color:#ffd7d0">⚔️ SIDE QUEST FROM THE GAMEMAKER</div><h2>${esc(XM.dn(me))}!</h2><div class="ic">${esc(q.ic||"📜")}</div><div class="q">${esc(q.q)}</div>${q.double?`<div class="eyebrow" style="color:var(--gold);font-size:1rem">🎲 DOUBLE OR NOTHING</div>`:""}<div class="clk" id="qclk"></div></div>`;
     buzz([300,120,300,120,600]);
     const tick=()=>{const now=Date.now()+skew,c=document.getElementById("qclk");if(!c)return;
       if(now<q.start){c.textContent="Get ready...";c.style.fontSize="2.2rem";return}
@@ -328,7 +328,7 @@ function hostCard(){
   const b=([c,i,l])=>`<button data-c="${c}"><span class="i">${i}</span>${l}</button>`;
   box.innerHTML=`<h3>🎮 Gamemaker Remote</h3>
     <div class="eyebrow" style="margin-bottom:6px">⚔️ Side quest: pick who</div>
-    <div class="qfaces">${TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
+    <div class="qfaces">${TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
     <select id="qsel">${XM.QUESTS.map((q,i)=>`<option value="${i}">${q[0]} ${esc(q[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
     <textarea id="qown" rows="2" placeholder="Your side quest" style="display:none" maxlength="150"></textarea>
     <div class="chips" id="qsecs">${[10,15,30,60].map(n=>`<button data-s="${n}">${n}s</button>`).join("")}</div>

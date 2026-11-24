@@ -19,7 +19,7 @@ XM.TRIBUTES=[
  {d:7,name:"Tinsley",weapon:"A brand-new driver's permit. Stay off the roads when you see her coming.",strategy:"Make everyone laugh till they drop, then floor it",odds:"3 to 1"},
  {d:8,name:"Natalie",weapon:"A rolling pin and a fresh batch of cookies",strategy:"Bribe the arena with cookies, then randomly break into song",odds:"4 to 1"},
  {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)"},
- {d:10,name:"Brandon",weapon:"The 5 D's: dodge, duck, dip, dive and dodge",strategy:"Never sit still. Will mow the lawn mid-game.",odds:"6 to 1"},
+ {d:10,name:"Brandon",weapon:"The 5 D's: dodge, duck, dip, dive and dodge",strategy:"Never sit still. Will mow the lawn mid-game.",odds:"6 to 1",label:"AKA BUTCHUS BYRON MARVIN IRON BALLS III"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
  {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Rush the arena like it's pledge week",odds:"12 to 1"},
 ];

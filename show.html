@@ -160,10 +160,11 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .preact .e{font-size:clamp(40px,5vw,80px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
 .preact .n{font-weight:800;font-size:clamp(14px,1.4vw,22px);background:rgba(13,31,24,.85);color:var(--gold);padding:2px 10px;border-radius:999px;margin-top:-6px}
 @keyframes preact{0%{transform:translateY(0) scale(.4);opacity:0}12%{transform:translateY(-6vh) scale(1.15);opacity:1}100%{transform:translateY(-70vh) scale(.9);opacity:0}}
-#livecorner{position:fixed;right:18px;bottom:70px;z-index:56;display:flex;flex-direction:column-reverse;gap:14px;pointer-events:none}
+#livecorner{position:fixed;right:14px;bottom:70px;top:200px;z-index:56;display:flex;flex-direction:column-reverse;flex-wrap:wrap-reverse;align-content:flex-start;gap:8px 10px;pointer-events:none}
 .livecam{display:grid;justify-items:center;gap:4px;animation:popIn .5s both}
-.livecam img{width:clamp(120px,13vw,220px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px #c41e1e,0 0 0 9px var(--gold),0 14px 30px rgba(0,0,0,.6);background:#000}
-.livecam b{font-weight:800;font-size:clamp(13px,1.2vw,18px);background:#c41e1e;color:#fff;padding:2px 10px;border-radius:999px;letter-spacing:.04em}
+.livecam{gap:2px}
+.livecam img{width:clamp(64px,6.2vw,118px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #c41e1e,0 0 0 6px var(--gold),0 8px 18px rgba(0,0,0,.6);background:#000}
+.livecam b{font-weight:800;font-size:clamp(10px,.85vw,14px);background:#c41e1e;color:#fff;padding:1px 8px;border-radius:999px;letter-spacing:.03em;white-space:nowrap}
 #miniqr{position:absolute;top:22px;right:22px;z-index:7;padding:8px 8px 6px;border-radius:14px;box-shadow:0 0 0 4px var(--gold),0 10px 24px rgba(0,0,0,.45)}
 #miniqr b{font-size:17px}
 #miniqr[hidden]{display:none}
@@ -179,6 +180,18 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .flash{position:fixed;inset:0;z-index:55;background:#fff;pointer-events:none;animation:flash .5s ease-out forwards}
 @keyframes flash{0%{opacity:.95}100%{opacity:0}}
 #rulebar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:52;background:var(--red);color:#fff;font-weight:800;font-size:clamp(14px,1.5vw,24px);padding:6px 18px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);cursor:pointer}
+/* side quests + points */
+.moment.quest .qface{width:min(230px,24vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 7px var(--gold),0 0 50px rgba(232,176,75,.6)}
+.moment.quest .qclock{font-family:var(--display);font-size:clamp(5rem,16vh,10rem);line-height:1;color:#fff}
+.moment.quest .qclock.low{color:#ff6b5b;animation:popIn .4s}
+.moment.quest .res{font-family:var(--display);font-size:clamp(3rem,8vw,6rem);line-height:1}
+.ptsrow{display:grid;grid-template-columns:60px 70px 1fr 90px;gap:16px;align-items:center;font-size:clamp(1.2rem,2.2vw,2rem);font-weight:800;text-align:left;width:min(820px,90vw)}
+.ptsrow img{width:62px;height:62px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.ptsrow .v{text-align:right;color:var(--gold)}
+.ptsrow .v.neg{color:#ff8a7a}
+.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:58;background:rgba(13,31,24,.95);color:var(--ink);font-weight:800;font-size:clamp(18px,2vw,30px);padding:12px 26px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);animation:popIn .4s both;pointer-events:none}
+.chute{position:fixed;left:50%;top:-30vh;z-index:54;font-size:clamp(90px,12vw,190px);line-height:.9;text-align:center;pointer-events:none;animation:chute 4.2s cubic-bezier(.3,.6,.4,1) forwards}
+@keyframes chute{0%{transform:translate(-50%,0) rotate(-8deg)}25%{transform:translate(-40%,30vh) rotate(8deg)}50%{transform:translate(-58%,55vh) rotate(-6deg)}75%{transform:translate(-46%,75vh) rotate(5deg)}100%{transform:translate(-50%,130vh) rotate(0)}}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:700px}
 .lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
@@ -518,8 +531,106 @@ function arenaTwist(kind){
     XM.sfx("gong");T(()=>XM.sfx("fanfare"),700);T(()=>flyAcross("🍗",6),300);T(()=>flyAcross("🥧",6),900);
     sp("Attention tributes! There will be a feast at the Cornucopia! Everyone grab a treat!");}
 }
-function runCmd(c){
+/* ---------- Side quests: the Gamemaker sends one tribute on a timed mission ---------- */
+let lastPoints={},questUI=null;
+const hostPin=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
+async function questResult(result){
+  let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN:");if(!pin)return;try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+  const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"questdone",pin,result})}).catch(()=>null);
+  if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}
+}
+function toast(t,ms=3500){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),ms)}
+function sideQuest(q){
   if(!started)return;
+  document.querySelectorAll(".moment.twist,.moment.quest").forEach(n=>n.remove());
+  if(busy()){toast(`⚔️ SIDE QUEST for ${q.to}: ${q.q}`,8000);return}
+  const {m,T,close}=openMoment("twist quest");const ph=XM.photo(q.to);let left=q.secs,iv=0;
+  m.innerHTML=`<div class="inner"><div class="eb">⚔️ SIDE QUEST FROM THE GAMEMAKER</div>
+    ${ph?`<img class="qface" src="${ph}" alt="">`:""}<h1>${esc(q.to)}</h1>
+    <div class="say" style="max-width:30ch">${esc(q.ic||"📜")} ${esc(q.q)}</div>
+    <div class="qclock" id="qclock">${q.secs}</div>
+    <div class="row" id="qbtns"><button class="btn" data-r="done">✅ Done (+1)</button><button class="btn red" data-r="fail">❌ Failed (-1)</button><button class="btn ghost" id="qx">Close (Esc)</button></div></div>`;
+  m.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();questResult(b.dataset.r)});
+  m.querySelector("#qx").onclick=e=>{e.stopPropagation();close()};
+  XM.sfx("siren");XM.playSong("battle");
+  announcer.say(`Side quest! ${XM.spoken(q.to)}! ${q.q.replace(/"/g,"")}. You have ${q.secs} seconds. Go!`,null,{pitch:.1,rate:.9});
+  const clock=m.querySelector("#qclock");clock.textContent="⏳";
+  const run=()=>{left=q.secs;clock.textContent=left;XM.sfx("boom");
+    iv=setInterval(()=>{if(!m.isConnected){clearInterval(iv);return}left--;clock.textContent=Math.max(0,left);
+      if(left<=5&&left>0){clock.classList.remove("low");void clock.offsetWidth;clock.classList.add("low");XM.sfx("tick")}
+      if(left<=0){clearInterval(iv);clock.textContent="TIME!";XM.stopSong();XM.sfx("gong");announcer.say("Time! Did they do it?",null,{pitch:.1,rate:.9})}},1000)};
+  T(run,Math.max(2500,Math.min(9000,(q.q.length+40)*55)));
+  questUI={id:q.id,m,close,stop:()=>clearInterval(iv)};
+}
+function questDone(q){
+  const ok=q.status==="done";let ui=questUI&&questUI.id===q.id&&questUI.m.isConnected?questUI:null;
+  if(!ui){if(busy()){toast(ok?`✅ ${q.to} completed the side quest! +1`:`❌ ${q.to} failed the side quest. -1`);return}
+    const o=openMoment("twist quest");ui={m:o.m,close:o.close,stop:()=>{}}}
+  ui.stop();const tot=(lastPoints[q.to]||0)+0;const ph=XM.photo(q.to);
+  ui.m.innerHTML=`<div class="inner">${ph?`<img class="qface" src="${ph}" alt="" style="${ok?"":"filter:grayscale(1)"}">`:""}<h1>${esc(q.to)}</h1>
+    <div class="res" style="color:${ok?"#6fe38e":"#ff6b5b"}">${ok?"✅ QUEST COMPLETE":"❌ QUEST FAILED"}</div>
+    <div class="say">${ok?"+1 point":"-1 point"}</div></div>`;
+  XM.stopSong();
+  if(ok){XM.sfx("fanfare");XM.confetti(140,true);announcer.say(`Quest complete! Plus one point for ${XM.spoken(q.to)}!`,null,{pitch:.1,rate:.9})}
+  else{XM.sfx("cannon");shake();XM.sfx("trombone");announcer.say(`Quest failed! ${XM.spoken(q.to)} loses a point!`,null,{pitch:.1,rate:.9})}
+  setTimeout(()=>{if(ui.m.isConnected)ui.close()},5000);questUI=null;
+}
+function showPoints(){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return;
+  const {m,close}=openMoment("twist");const rows=Object.entries(lastPoints).filter(([,v])=>v!==0).sort((a,b)=>b[1]-a[1]);
+  m.innerHTML=`<div class="inner"><div class="eb">SIDE QUEST STANDINGS</div><h1>📊 Capitol Points</h1>
+    <div style="display:grid;gap:10px">${rows.length?rows.map(([n,v],i)=>`<div class="ptsrow"><span>${["🥇","🥈","🥉"][i]||"#"+(i+1)}</span>${XM.photo(n)?`<img src="${XM.photo(n)}" alt="">`:"<span></span>"}<span>${esc(n)}</span><span class="v ${v<0?"neg":""}">${v>0?"+":""}${v}</span></div>`).join(""):`<div class="say">No points yet. Send someone on a side quest!</div>`}</div>
+    <button class="btn ghost" id="px">Close (Esc)</button></div>`;
+  m.querySelector("#px").onclick=e=>{e.stopPropagation();close()};XM.sfx("reveal");
+}
+/* ---------- Sponsor gifts: tributes who haven't won yet fight for bonus Capitol Points ---------- */
+const SPONSOR_PTS=2;
+async function addPoints(to,n){
+  let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN (to save points):");if(!pin)return false;try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+  const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"pointsadd",pin,to,n})}).catch(()=>null);
+  if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN. Points not saved.");return false}return !!(r&&r.ok)}
+function sponsorPool(){const won=new Set(Object.values(XM.victors()).filter(Boolean).map(n=>n.toLowerCase()));
+  let pool=TRIBUTES.map(t=>t.name).filter(n=>n!=="Carsyn"&&!won.has(n.toLowerCase()));
+  if(pool.length<2)pool=TRIBUTES.map(t=>t.name).filter(n=>n!=="Carsyn");return pool}
+function sponsorDrop(names){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return false;
+  const pool=sponsorPool();names=names||pool.slice().sort(()=>Math.random()-.5).slice(0,Math.min(3,pool.length));
+  const ch=SILVER[Math.floor(Math.random()*SILVER.length)];const {m,T,close}=openMoment("twist feast");
+  const c=document.createElement("div");c.className="chute";c.innerHTML="🪂<br>🎁";document.body.appendChild(c);setTimeout(()=>c.remove(),4400);
+  const faces=names.map(n=>`<button class="face" data-n="${esc(n)}">${XM.photo(n)?`<img src="${XM.photo(n)}" alt="">`:""}<b>${esc(n)}</b></button>`).join(`<div style="font-family:var(--display);font-size:clamp(2rem,4vw,3.4rem);color:var(--gold);align-self:center">VS</div>`);
+  m.innerHTML=`<div class="inner"><div class="eb">🪂 A SPONSOR GIFT HAS ARRIVED</div><h1>Sponsors Love an Underdog</h1>
+    <div class="say">Only tributes who haven't won a game yet can fight for it. The winner gets <span style="color:var(--gold)">+${SPONSOR_PTS} Capitol Points</span>.</div>
+    <div style="display:flex;gap:14px;align-items:center;justify-content:center"><div class="big" style="font-size:clamp(3rem,8vh,5rem)">${ch[0]}</div><div style="text-align:left"><h1 style="font-size:clamp(2rem,4.5vw,3.6rem)">${esc(ch[1])}</h1><div class="say" style="font-size:clamp(1.1rem,2.2vw,1.8rem)">${esc(ch[2])}</div></div></div>
+    <div class="faces" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">${faces}</div>
+    <div class="row"><button class="btn ghost" id="sp-ch">🔄 Different challenge</button><button class="btn ghost" id="sp-who">🎲 Different tributes</button><button class="btn ghost" id="sp-x">Cancel (Esc)</button></div>
+    <div class="sub" style="opacity:.85">Tap the winner's face when it's over.</div></div>`;
+  XM.sfx("whoosh");T(()=>XM.sfx("sparkle"),1500);T(()=>XM.playSong("battle"),2200);
+  announcer.say(`A sponsor gift has arrived! Only tributes who haven't won yet can fight for it. ${names.map(XM.spoken).join(" versus ")}. The challenge: ${ch[1]}! ${ch[2].replace(/"/g,"")}`,null,{pitch:.1,rate:.88});
+  m.querySelectorAll("[data-n]").forEach(b=>b.onclick=async e=>{e.stopPropagation();const n=b.dataset.n;
+    const ok=await addPoints(n,SPONSOR_PTS);close();XM.stopSong();XM.celebrate(n,{line:`${XM.spoken(n)} wins the sponsor gift! Plus ${SPONSOR_PTS} Capitol Points!`});if(!ok)toast("Points were not saved (no PIN).")});
+  m.querySelector("#sp-ch").onclick=e=>{e.stopPropagation();close();sponsorDrop(names)};
+  m.querySelector("#sp-who").onclick=e=>{e.stopPropagation();close();sponsorDrop()};
+  m.querySelector("#sp-x").onclick=e=>{e.stopPropagation();close()};
+  return true;
+}
+// random timer: one sponsor gift every 8 to 15 minutes while it's on
+let sponsorTimer=0;
+const sponsorAuto=()=>{try{return localStorage.getItem("xmas-sponsor-auto")==="1"}catch(e){return false}};
+function scheduleSponsor(ms){clearTimeout(sponsorTimer);if(!sponsorAuto())return;
+  sponsorTimer=setTimeout(()=>{if(!sponsorAuto())return;const id=SLIDES[cur]&&SLIDES[cur].id;
+    if(!started||busy()||["lobby","title","welcome","rules","end"].includes(id)||!sponsorDrop())return scheduleSponsor(20000);
+    scheduleSponsor()},ms||(8+Math.random()*7)*60000)}
+function setSponsorAuto(on){try{localStorage.setItem("xmas-sponsor-auto",on?"1":"0")}catch(e){}toast(on?"🪂 Random sponsor gifts: ON (every 8 to 15 min)":"🪂 Random sponsor gifts: OFF");scheduleSponsor()}
+addEventListener("storage",e=>{if(e.key==="xmas-sponsor-auto")scheduleSponsor()});
+function runCmd(c,data){
+  if(!started)return;
+  if(c==="sponsor")return void sponsorDrop();
+  if(c==="sponsor:on")return setSponsorAuto(true);
+  if(c==="sponsor:off")return setSponsorAuto(false);
+  if(c==="quest"&&data)return sideQuest(data);
+  if(c==="questdone"&&data)return questDone(data);
+  if(c==="pointsadd"&&data){XM.sfx(data.n>0?"sparkle":"trombone");toast(`${data.n>0?"⭐":"💀"} ${data.to}: ${data.n>0?"+":""}${data.n} point${Math.abs(data.n)===1?"":"s"}`);return}
+  if(c==="points")return showPoints();
   if(c.startsWith("twist:"))return arenaTwist(c.slice(6));
   if(c==="close"){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));return}
   if(c==="mute"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel();return}
@@ -527,14 +638,15 @@ function runCmd(c){
   if(busy())return;
   if(c==="next")next();else if(c==="prev")prev();else if(c==="intermission")intermission();else if(c==="live")liveBroadcast();
 }
-try{new BroadcastChannel("xmas-show").onmessage=e=>{if(e.data&&typeof e.data.cmd==="string")runCmd(e.data.cmd)}}catch(e){}
+try{new BroadcastChannel("xmas-show").onmessage=e=>{if(e.data&&typeof e.data.cmd==="string")runCmd(e.data.cmd,e.data.data)}}catch(e){}
 let reactSince=null,cmdSince=null,phonePolling=false;
 function startPhonePoll(){
   if(phonePolling)return;phonePolling=true;
   const tick=async()=>{
     try{const r=await fetch("/api/show?a=tv&since="+(reactSince||0)+"&csince="+(cmdSince||0),{cache:"no-store"});if(r.ok){const j=await r.json();
       if(cmdSince===null)cmdSince=Math.max(0,...(j.cmds||[]).map(x=>x.id));  // skip remote taps sent before the show opened
-      else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd)}
+      else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd,x.data)}
+      if(j.points)lastPoints=j.points;
       if(reactSince===null){reactSince=Math.max(0,...(j.reacts||[]).map(x=>x.id))}  // skip reactions sent before the show opened
       else for(const x of j.reacts||[]){reactSince=Math.max(reactSince,x.id);phoneReact(x)}
       showLive(j.live||{});showJoined(j.joined||[])}}catch(e){}
@@ -548,10 +660,10 @@ function phoneReact(x){
   XM.sfx("pop");
 }
 function showLive(live){
-  const box=document.getElementById("livecorner");const names=Object.keys(live).slice(0,3);
+  const box=document.getElementById("livecorner");const names=Object.keys(live).slice(0,12);
   box.querySelectorAll("[data-live]").forEach(n=>{if(!names.includes(n.dataset.live))n.remove()});
   names.forEach(name=>{let n=box.querySelector(`[data-live="${CSS.escape(name)}"]`);
-    if(!n){n=document.createElement("div");n.className="livecam";n.dataset.live=name;n.innerHTML=`<img alt=""><b>🔴 LIVE · ${esc(name)}</b>`;box.appendChild(n);XM.sfx("stinger")}
+    if(!n){n=document.createElement("div");n.className="livecam";n.dataset.live=name;n.innerHTML=`<img alt=""><b>🔴 ${esc(name==="QUEEN MOTHER"?"QUEEN":name)}</b>`;box.appendChild(n);XM.sfx("stinger")}
     const img=n.querySelector("img");if(img.src!==live[name])img.src=live[name]});
 }
 function showJoined(list){
@@ -726,7 +838,7 @@ const SLIDES=[
     <div class="ball drop" style="--r:0deg"><div class="face"><span style="font-family:var(--display);font-size:80px;color:#17998a">B</span><span style="font-weight:800;font-size:170px">7</span></div></div>
     <div style="display:grid;gap:28px;justify-items:start">
       <div class="eb fr" ${d(.4)}>GAME 8 · GRAND FINALE</div><h1 class="title-l slam" ${d(.6)}>The Bingo Board</h1>
-      <p class="fr" ${d(1)} style="font-size:38px;line-height:1.3;margin:0;max-width:26ch">Tap each number as it comes out of the cage. Someone yells BINGO? Check their card, 1 to 24, right on the TV.</p>
+      <p class="fr" ${d(1)} style="font-size:38px;line-height:1.3;margin:0;max-width:26ch">Tap each number as it comes out of the cage. Someone yells BINGO? Check their card number right on the TV.</p>
       <div class="pop" ${d(1.4)}>${openBtn("/bingo","🎱 Open the Bingo Board","red")}</div>
       <div class="fade" ${d(1.6)} style="font-size:24px;opacity:.8">Opens in a new tab. Close it to come back.</div></div></div>`,
    enter(){st(()=>XM.sfx("thud"),700)}},
@@ -822,7 +934,7 @@ function wireSlide(el){
 }
 const next=()=>go(cur+1),prev=()=>go(cur-1);
 function begin(){
-  if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);startPhonePoll();
+  if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);startPhonePoll();scheduleSponsor();
   const st=document.getElementById("start");st.remove();
   const i=cur;cur=-1;curEl&&curEl.remove();curEl=null;go(i);
 }

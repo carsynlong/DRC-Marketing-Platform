@@ -42,6 +42,23 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .hgrid button .i{display:block;font-size:1.5rem}
 .hgrid button:active{background:rgba(232,176,75,.35);transform:scale(.95)}
 .hgrid.twists button{background:rgba(196,30,30,.25)}
+.qov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,#8a1414,#200606);animation:qin .3s both}
+.qov.ok{background:radial-gradient(ellipse at center,#1f7a45,#06200f)}
+.qov .in{display:grid;gap:14px;justify-items:center}
+.qov h2{font-family:var(--display);font-weight:400;color:var(--gold);font-size:2.2rem;margin:0;line-height:1}
+.qov .q{font-size:1.5rem;font-weight:800;line-height:1.25}
+.qov .ic{font-size:4.5rem;line-height:1}
+.qov .clk{font-family:var(--display);font-size:5.5rem;line-height:1;color:#fff}
+@keyframes qin{from{opacity:0;transform:scale(1.1)}}
+.qfaces{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.qfaces button{display:grid;justify-items:center;gap:2px;padding:4px 0;border-radius:12px;font-size:.68rem;font-weight:800;background:rgba(255,255,255,.05)}
+.qfaces img,.qfaces .r{width:44px;height:44px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:1.6rem}
+.qfaces button.on img,.qfaces button.on .r{box-shadow:0 0 0 3px var(--gold)}
+.qfaces button.on{background:rgba(232,176,75,.25)}
+select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px;border:0;margin-bottom:8px}
+.chips{display:flex;gap:6px;margin-bottom:8px}
+.chips button{flex:1;padding:9px 0;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800}
+.chips button.on{background:var(--gold);color:#13271f}
 .pin{display:flex;gap:8px;justify-content:center}
 .pin input{width:9ch;font:800 1.4rem var(--body,inherit);text-align:center;letter-spacing:.3em;border-radius:12px;border:0;padding:8px}
 </style>
@@ -59,7 +76,7 @@ XM.snow(document.getElementById("snow"));
 const {esc,TRIBUTES}=XM;
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 const pid=(()=>{try{let p=localStorage.getItem("xmas-sh-pid");if(!p){p=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("xmas-sh-pid",p)}return p}catch(e){return "p"+Math.random()}})();
-let me=XM.store.get("xmas-sh-me",null),slide=null,taken=[];
+let me=XM.store.get("xmas-sh-me",null),slide=null,taken=[],skew=0,points={},quest=null,qTimer=0;
 const api=(body)=>fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pid,...body})}).then(r=>r.json().then(j=>({ok:r.ok,status:r.status,...j}))).catch(()=>({ok:false}));
 
 function render(){
@@ -73,7 +90,7 @@ function render(){
     return;
   }
   const t=TRIBUTES.find(x=>x.name===me);
-  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}</div><b>${esc(me)}</b></div><a href="#" class="x" id="notme">Not you?</a></div>
+  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}</div><b>${esc(me)}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
@@ -86,9 +103,31 @@ function render(){
   showSlide();
   if(me==="Carsyn")hostCard();
 }
+function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"}`:""}
+/* ---- side quest sent to me: full screen with a countdown ---- */
+function myQuest(q){
+  const prevId=quest&&quest.id,prevSt=quest&&quest.status;quest=q;
+  let ov=document.getElementById("qov");
+  if(!q){if(ov)ov.remove();return}
+  if(q.id===prevId&&q.status===prevSt)return;
+  if(!ov){ov=document.createElement("div");ov.id="qov";ov.className="qov";document.body.appendChild(ov)}
+  clearInterval(qTimer);
+  if(q.status==="live"){ov.className="qov";
+    ov.innerHTML=`<div class="in"><div class="eyebrow" style="color:#ffd7d0">⚔️ SIDE QUEST FROM THE GAMEMAKER</div><h2>${esc(me)}!</h2><div class="ic">${esc(q.ic||"📜")}</div><div class="q">${esc(q.q)}</div><div class="clk" id="qclk"></div></div>`;
+    if(navigator.vibrate)navigator.vibrate([300,120,300,120,600]);
+    const tick=()=>{const now=Date.now()+skew,c=document.getElementById("qclk");if(!c)return;
+      if(now<q.start){c.textContent="Get ready...";c.style.fontSize="2.2rem";return}
+      const left=Math.ceil((q.start+q.secs*1000-now)/1000);c.style.fontSize="";
+      c.textContent=left>0?left:"TIME!";if(left<=5&&left>0&&navigator.vibrate)navigator.vibrate(60);if(left<=0)clearInterval(qTimer)};
+    tick();qTimer=setInterval(tick,250)}
+  else{const ok=q.status==="done";ov.className="qov"+(ok?" ok":"");
+    ov.innerHTML=`<div class="in"><div class="ic">${ok?"✅":"❌"}</div><h2>${ok?"Quest complete!":"Quest failed!"}</h2><div class="q">${ok?"+1 point":"-1 point"}</div><button class="btn ghost" id="qok">OK</button></div>`;
+    if(navigator.vibrate)navigator.vibrate(ok?[80,60,80]:[500]);
+    ov.querySelector("#qok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),8000)}
+}
 /* ---- Gamemaker remote: only for Carsyn, locked with a PIN ---- */
 const SHOW_BTNS=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live cam"],["mute","🔇","Mute"]];
-const TWIST_BTNS=[["twist:fire","🔥","Fireballs"],["twist:storm","⚡","Lightning: swap seats"],["twist:mutts","🐺","Mutts: stand and spin"],["twist:freeze","❄️","Freeze!"],["twist:bonus","🎁","Bonus major award"],["twist:rule","📜","New rule"],["twist:feast","🍗","The Feast (snacks)"],["clearrule","🧽","Clear the rule"]];
+const TWIST_BTNS=[["twist:fire","🔥","Fireballs"],["twist:storm","⚡","Lightning: swap seats"],["twist:mutts","🐺","Mutts: stand and spin"],["twist:freeze","❄️","Freeze!"],["twist:bonus","🎁","Bonus major award"],["twist:rule","📜","New rule"],["twist:feast","🍗","The Feast (snacks)"],["sponsor","🪂","Sponsor gift now"],["sponsor:on","⏱️","Random sponsor gifts ON"],["sponsor:off","⏹️","Random sponsor gifts OFF"],["clearrule","🧽","Clear the rule"]];
 function hostCard(){
   const box=document.getElementById("host");if(!box)return;const pin=XM.store.get("xmas-sh-pin",null);
   if(!pin){box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="tiny" style="margin-bottom:8px">Enter your PIN to control the TV.</div>
@@ -96,8 +135,32 @@ function hostCard(){
     box.querySelector("#pinok").onclick=async()=>{const v=box.querySelector("#pin").value.trim();const r=await api({a:"pin",pin:v});
       if(r.ok){XM.store.set("xmas-sh-pin",v);hostCard()}else alert("Wrong PIN.")};return}
   const b=([c,i,l])=>`<button data-c="${c}"><span class="i">${i}</span>${l}</button>`;
-  box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
+  box.innerHTML=`<h3>🎮 Gamemaker Remote</h3>
+    <div class="eyebrow" style="margin-bottom:6px">⚔️ Side quest: pick who</div>
+    <div class="qfaces">${TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
+    <select id="qsel">${XM.QUESTS.map((q,i)=>`<option value="${i}">${q[0]} ${esc(q[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
+    <textarea id="qown" rows="2" placeholder="Your side quest" style="display:none" maxlength="150"></textarea>
+    <div class="chips" id="qsecs">${[10,15,30,60].map(n=>`<button data-s="${n}">${n}s</button>`).join("")}</div>
+    <button class="btn red" id="qsend" style="width:100%;font-size:1.1rem">⚔️ Send the side quest</button>
+    <div class="hgrid" style="grid-template-columns:repeat(2,1fr);margin-top:8px"><button id="qdone"><span class="i">✅</span>They did it (+1)</button><button id="qfail"><span class="i">❌</span>Failed (-1)</button></div>
+    <div class="hgrid"><button id="pplus"><span class="i">⭐</span>+1 point to pick</button><button id="pminus"><span class="i">💀</span>-1 point to pick</button><button data-c="points"><span class="i">📊</span>Points on TV</button></div>
+    <div class="tiny" id="qmsg" style="margin-bottom:8px"></div>
+    <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
+  let qn=null,qs=null;const qmsg=t=>{const m=box.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3000)};
+  const call=async body=>{const r=await api({pin,...body});if(r.status===403){XM.store.set("xmas-sh-pin",null);hostCard()}return r};
+  box.querySelectorAll("[data-qn]").forEach(x=>x.onclick=()=>{qn=x.dataset.qn;box.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===x))});
+  const sel=box.querySelector("#qsel"),own=box.querySelector("#qown");
+  const setSecs=n=>{qs=n;box.querySelectorAll("[data-s]").forEach(y=>y.classList.toggle("on",+y.dataset.s===n))};
+  sel.onchange=()=>{own.style.display=sel.value==="own"?"":"none";if(sel.value!=="own")setSecs(XM.QUESTS[+sel.value][2])};setSecs(XM.QUESTS[0][2]);
+  box.querySelectorAll("[data-s]").forEach(x=>x.onclick=()=>setSecs(+x.dataset.s));
+  box.querySelector("#qsend").onclick=async()=>{if(!qn){qmsg("Tap who gets the quest first.");return}
+    const Q=sel.value==="own"?["📜",own.value.trim()]:XM.QUESTS[+sel.value];if(!Q[1]){qmsg("Type your side quest first.");return}
+    const r=await call({a:"quest",to:qn,q:Q[1],ic:Q[0],secs:qs||15});qmsg(r.ok?`⚔️ Sent to ${r.quest.to}!`:"Couldn't send. Try again.")};
+  box.querySelector("#qdone").onclick=async()=>{const r=await call({a:"questdone",result:"done"});qmsg(r.ok?`✅ +1 for ${r.quest.to}`:r.status===409?"No side quest running.":"Couldn't send.")};
+  box.querySelector("#qfail").onclick=async()=>{const r=await call({a:"questdone",result:"fail"});qmsg(r.ok?`❌ -1 for ${r.quest.to}`:r.status===409?"No side quest running.":"Couldn't send.")};
+  const pts=n=>async()=>{if(!qn||qn==="random"){qmsg("Tap a tribute first.");return}const r=await call({a:"pointsadd",to:qn,n});qmsg(r.ok?`${n>0?"⭐ +1":"💀 -1"} for ${qn}`:"Couldn't send.")};
+  box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(navigator.vibrate)navigator.vibrate(20);const m=box.querySelector("#hmsg");
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
     if(r.ok)m.textContent="✅ Sent to the TV";else if(r.status===403){XM.store.set("xmas-sh-pin",null);hostCard()}else m.textContent="Couldn't send. Try again.";
@@ -109,9 +172,10 @@ function showSlide(){
   n.textContent=slide.total?`${slide.n} / ${slide.total}`:"";t.textContent=slide.title||"";b.textContent=slide.body||"";
 }
 async function poll(){
-  try{const r=await fetch("/api/show?a=phone",{cache:"no-store"});const j=await r.json();const s=j.slide;
-    if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}}catch(e){}
-  setTimeout(poll,2500);
+  try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):""),{cache:"no-store"});const j=await r.json();const s=j.slide;
+    if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest)}catch(e){}
+  setTimeout(poll,(quest&&quest.status==="live")?1000:2000);
 }
 
 /* ---- go live: send a small camera frame about twice a second for 20 seconds ---- */

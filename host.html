@@ -27,6 +27,15 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .msg{min-height:1.3em;text-align:center;font-weight:800;color:var(--gold);margin-top:10px}
 .danger{background:#5a1410!important}
 .pin{font-size:1.6rem;font-family:var(--display);color:var(--gold)}
+.qfaces{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;margin-bottom:12px}
+.qfaces button{display:grid;justify-items:center;gap:4px;padding:6px 2px;border-radius:14px;border:0;background:rgba(255,255,255,.06);color:var(--ink);font:800 .8rem "Outfit",sans-serif;cursor:pointer}
+.qfaces img,.qfaces .r{width:56px;height:56px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:1.8rem}
+.qfaces button.on{background:rgba(232,176,75,.25)}.qfaces button.on img,.qfaces button.on .r{box-shadow:0 0 0 3px var(--gold)}
+.qrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.qrow select,.qrow input[type=text]{flex:1;min-width:240px;font:600 1rem "Outfit",sans-serif;padding:10px;border-radius:12px;border:0}
+.chip{border:0;border-radius:999px;padding:9px 16px;background:rgba(255,255,255,.08);color:var(--ink);font:800 .95rem "Outfit",sans-serif;cursor:pointer}
+.chip.on{background:var(--gold);color:#13271f}
+.pinrow input{width:7em;font:800 1.2rem "Outfit",sans-serif;text-align:center;padding:8px;border-radius:12px;border:0}
 </style>
 </head>
 <body>
@@ -46,7 +55,13 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
   <div class="sec"><h2>🌀 Twists (only you can do these)</h2>
     <p>Click one and it takes over the TV. The show tab must be open in this same browser. Esc on the show closes it.</p>
     <div class="tiles twists" id="twists"></div>
+    <div class="qrow" style="margin-top:14px"><b>🪂 Random sponsor gifts</b> (one drops every 8 to 15 minutes): <button class="chip" id="spon">On</button><button class="chip" id="spoff">Off</button></div>
     <div class="msg" id="tmsg"></div>
+  </div>
+
+  <div class="sec" id="questsec"><h2>⚔️ Side quests and Capitol Points</h2>
+    <p>Pick a tribute, pick a quest, pick the time, send. It takes over the TV with a countdown and pops up full screen on their phone. When time's up, click Done or Failed (on the TV, here, or on your phone).</p>
+    <div id="qbody"></div>
   </div>
 
   <div class="sec"><h2>🎮 Control the show from here</h2>
@@ -68,7 +83,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 
   <div class="sec"><h2>📱 Your phone remote</h2>
     <p>On your phone, scan the QR code on the TV (or go to whos-that-tribute.vercel.app/showphone), tap your face (Carsyn), and enter this PIN to unlock the Gamemaker Remote with the same buttons and twists:</p>
-    <div class="pin">PIN: 1225</div>
+    <div class="pin">PIN: 1185</div>
   </div>
 
   <div class="sec"><h2>🧹 Reset for game night</h2>
@@ -94,12 +109,47 @@ const send=(cmd,msg)=>{if(!ch){alert("This browser can't talk to the show tab. U
   const m=document.getElementById(msg);m.textContent="✅ Sent to the show";setTimeout(()=>m.textContent="",1600)};
 const TW=[["twist:fire","🔥","Fireballs","Booms and flying fire"],["twist:storm","⚡","Lightning storm","Everyone swaps seats"],["twist:mutts","🐺","Mutts released","Stand and spin, last one loses a turn"],
   ["twist:freeze","❄️","Freeze!","5-second countdown, nobody move"],["twist:bonus","🎁","Bonus major award","Next to make you laugh wins"],["twist:rule","📜","New rule","Random silly rule stays on screen"],
-  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["clearrule","🧽","Clear the rule","Removes the rule banner"]];
+  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["sponsor","🪂","Sponsor gift now","Non-winners fight for +2 points"],["clearrule","🧽","Clear the rule","Removes the rule banner"]];
 document.getElementById("twists").innerHTML=TW.map(([c,i,l,s])=>`<button data-c="${c}">${tile(i,l,s)}</button>`).join("");
 const CT=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live broadcast"],["mute","🔇","Mute / unmute"]];
 document.getElementById("ctrl").innerHTML=CT.map(([c,i,l])=>`<button data-c="${c}">${tile(i,l)}</button>`).join("")+'<div class="msg" id="cmsg" style="grid-column:1/-1"></div>';
 document.querySelectorAll("#twists [data-c]").forEach(b=>b.onclick=()=>send(b.dataset.c,"tmsg"));
 document.querySelectorAll("#ctrl [data-c]").forEach(b=>b.onclick=()=>send(b.dataset.c,"cmsg"));
+// side quests go through the server (needs the PIN) so they also reach phones
+const HP=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
+const api=b=>fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json().then(j=>({ok:r.ok,status:r.status,...j}))).catch(()=>({ok:false}));
+function questUI(){
+  const q=document.getElementById("qbody");const pin=HP();
+  if(!pin){q.innerHTML=`<div class="qrow pinrow"><span>Gamemaker PIN:</span><input id="hpin" type="password" inputmode="numeric" maxlength="4"><button class="chip on" id="hpok">Unlock</button></div>`;
+    q.querySelector("#hpok").onclick=async()=>{const v=q.querySelector("#hpin").value.trim();const r=await api({a:"pin",pin:v});if(r.ok){try{localStorage.setItem("xmas-host-pin",v)}catch(e){}questUI()}else alert("Wrong PIN.")};return}
+  q.innerHTML=`<div class="qfaces">${XM.TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name)}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
+    <div class="qrow"><select id="qsel">${XM.QUESTS.map((x,i)=>`<option value="${i}">${x[0]} ${esc(x[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
+      <input type="text" id="qown" placeholder="Your side quest" maxlength="150" style="display:none"></div>
+    <div class="qrow">Time: ${[10,15,30,60].map(n=>`<button class="chip" data-s="${n}">${n} sec</button>`).join("")}</div>
+    <div class="tiles twists"><button id="qsend"><span class="i">⚔️</span>Send the side quest</button><button id="qdone"><span class="i">✅</span>They did it<small>+1 point</small></button><button id="qfail"><span class="i">❌</span>Failed<small>-1 point</small></button>
+      <button id="pplus"><span class="i">⭐</span>+1 point<small>to the tribute picked above</small></button><button id="pminus"><span class="i">💀</span>-1 point<small>to the tribute picked above</small></button>
+      <button id="pshow"><span class="i">📊</span>Points on the TV</button><button id="preset" class="danger"><span class="i">🧹</span>Reset points<small>Click twice</small></button></div>
+    <div class="msg" id="qmsg"></div>`;
+  let qn=null,qs=15,armedP=0;const msg=t=>{const m=q.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3500)};
+  const call=async b=>{const r=await api({pin,...b});if(r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}questUI()}return r};
+  q.querySelectorAll("[data-qn]").forEach(b=>b.onclick=()=>{qn=b.dataset.qn;q.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===b))});
+  const sel=q.querySelector("#qsel"),own=q.querySelector("#qown");
+  const setS=n=>{qs=n;q.querySelectorAll("[data-s]").forEach(y=>y.classList.toggle("on",+y.dataset.s===n))};setS(XM.QUESTS[0][2]);
+  sel.onchange=()=>{own.style.display=sel.value==="own"?"":"none";if(sel.value!=="own")setS(XM.QUESTS[+sel.value][2])};
+  q.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>setS(+b.dataset.s));
+  q.querySelector("#qsend").onclick=async()=>{if(!qn)return msg("Click who gets the quest first.");const Q=sel.value==="own"?["📜",own.value.trim()]:XM.QUESTS[+sel.value];if(!Q[1])return msg("Type your side quest first.");
+    const r=await call({a:"quest",to:qn,q:Q[1],ic:Q[0],secs:qs});msg(r.ok?`⚔️ Sent to ${r.quest.to}!`:"Couldn't send. Check the internet.")};
+  const res=v=>async()=>{const r=await call({a:"questdone",result:v});msg(r.ok?(v==="done"?`✅ +1 for ${r.quest.to}`:`❌ -1 for ${r.quest.to}`):r.status===409?"No side quest running.":"Couldn't send.")};
+  q.querySelector("#qdone").onclick=res("done");q.querySelector("#qfail").onclick=res("fail");
+  const pts=n=>async()=>{if(!qn||qn==="random")return msg("Click a tribute first.");const r=await call({a:"pointsadd",to:qn,n});msg(r.ok?`${n>0?"⭐ +1":"💀 -1"} for ${qn}`:"Couldn't send.")};
+  q.querySelector("#pplus").onclick=pts(1);q.querySelector("#pminus").onclick=pts(-1);
+  q.querySelector("#pshow").onclick=()=>send("points","qmsg");
+  q.querySelector("#preset").onclick=async()=>{if(Date.now()-armedP>4000){armedP=Date.now();return msg("Click again to reset everyone's points to 0.")}armedP=0;const r=await call({a:"pointsreset"});msg(r.ok?"🧹 Points reset.":"Couldn't reset.")};
+}
+questUI();
+const spState=()=>{let on=false;try{on=localStorage.getItem("xmas-sponsor-auto")==="1"}catch(e){}document.getElementById("spon").classList.toggle("on",on);document.getElementById("spoff").classList.toggle("on",!on)};
+document.getElementById("spon").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","1")}catch(e){}send("sponsor:on","tmsg");spState()};
+document.getElementById("spoff").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","0")}catch(e){}send("sponsor:off","tmsg");spState()};spState();
 // reset
 const KEYS=["xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
 let armed=0;const rb=document.getElementById("reset");

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Print Bingo Cards</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<style>
+/* Printable District Bingo cards: 2 per landscape letter page, same numbers as /xmas/bingo-cards.json (what the bingo board checks). */
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:#e9e4d8;font-family:"Outfit",system-ui,sans-serif;color:#222}
+.bar{position:sticky;top:0;z-index:5;background:#0d1f18;color:#fbf6ea;padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:center}
+.bar h1{font-family:"Rye",serif;font-weight:400;color:#e8b04b;font-size:1.4rem;margin:0}
+.bar label{font-weight:600}
+.bar input{width:5.5em;font:700 1rem "Outfit",sans-serif;padding:4px 6px;border-radius:8px;border:0}
+.bar button{font:800 1rem "Outfit",sans-serif;border:0;border-radius:999px;padding:9px 20px;background:#b8322a;color:#fff;cursor:pointer}
+.bar .ghost{background:transparent;box-shadow:inset 0 0 0 2px #e8b04b;color:#e8b04b;padding:7px 14px}
+.bar small{width:100%;text-align:center;color:#bccabd}
+.pages{display:grid;justify-content:center;gap:18px;padding:18px 8px}
+.page{width:11in;height:8.5in;background:#fff;display:flex;align-items:center;justify-content:space-evenly;padding:.35in;box-shadow:0 4px 18px rgba(0,0,0,.18);position:relative}
+.page::after{content:"";position:absolute;top:.4in;bottom:.4in;left:50%;border-left:1px dashed #ccc}
+.card{width:4.75in;height:7.6in;border-radius:.2in;padding:.2in;background:var(--c);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 6px,transparent 6px 12px);display:flex}
+.in{flex:1;background:#fff;border-radius:.13in;padding:.16in .16in .1in;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:8px}
+.top img{width:.55in;height:.55in}
+.top .ttl{flex:1;text-align:center}
+.top .ttl small{display:block;font-weight:800;letter-spacing:.14em;font-size:.6rem;color:var(--c)}
+.top .ttl b{display:block;font-family:"Rye",serif;font-weight:400;font-size:1.5rem;color:var(--c);line-height:1.1}
+.top .ic{width:.55in;text-align:center;font-size:1.5rem}
+.letters{display:grid;grid-template-columns:repeat(5,1fr);gap:.08in;margin:.1in 0 .08in}
+.letters span{aspect-ratio:1;border-radius:50%;display:grid;place-items:center;font-family:"Rye",serif;font-size:1.45rem;color:#fff;background:var(--c);box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
+.letters span:nth-child(even){background:#c8322a}
+.grid{flex:1;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:.07in}
+.grid div{border:2px solid var(--c);border-radius:.07in;display:grid;place-items:center;font-weight:800;font-size:1.55rem;color:#222}
+.grid div:nth-child(odd){background:var(--l)}
+.grid .free{background:var(--c)!important;color:#fff;font-size:.75rem;letter-spacing:.06em;align-content:center;gap:2px}
+.grid .free i{font-style:normal;font-size:1.5rem;line-height:1}
+.foot{display:flex;justify-content:space-between;align-items:end;gap:8px;margin-top:.09in;font-weight:800;font-size:.7rem}
+.foot span{flex:1;border-bottom:1px solid #555;margin:0 4px}
+.foot .no{color:var(--c);font-size:.85rem}
+@page{size:letter landscape;margin:0}
+@media print{body{background:#fff}.bar{display:none}.pages{padding:0;gap:0}.page{box-shadow:none;break-after:page}}
+@media screen and (max-width:1100px){.pages{zoom:.5}}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>🎱 District Bingo Cards</h1>
+  <label>Cards # <input id="from" type="number" min="1" value="1"></label>
+  <label>to # <input id="to" type="number" min="1" value="120"></label>
+  <button class="ghost" id="show">Show these</button>
+  <button id="print">🖨️ Print</button>
+  <small>2 cards per page. In the print window pick Landscape, turn on "Background graphics", and set Margins to None. Every card here can be checked on the Bingo Board.</small>
+</div>
+<div class="pages" id="pages"><p style="text-align:center">Loading cards…</p></div>
+<script>
+// one look per district, like the original printed cards
+const D=[["#3f6c99","#e9f0f7","💎"],["#c0912a","#fbf3e1","🛡️"],["#c8322a","#fbeae8","⚙️"],["#6a3c9c","#f1eaf8","🐟"],["#2b2b2b","#fff6dc","⚡"],["#2d73a8","#e7f1fa","🚂"],
+ ["#4a4a4a","#efefef","🌲"],["#2f7d4f","#e8f5ec","🧵"],["#8a1f22","#f8e9e9","🌾"],["#d2611c","#fdeee3","🐄"],["#1f8a7f","#e4f5f3","🍎"],["#7b4a2a","#fbefe4","⛏️"]];
+let CARDS=[];
+const q=new URLSearchParams(location.search);
+function card(c,k){const [col,light,ic]=D[(k-1)%12];let g="";
+  for(let r=0;r<5;r++)for(let i=0;i<5;i++)g+=r===2&&i===2?`<div class="free"><i>${ic}</i>FREE</div>`:`<div>${c[i][r]}</div>`;
+  return `<div class="card" style="--c:${col};--l:${light}"><div class="in">
+    <div class="top"><img src="/xmas/emblem.png" alt=""><div class="ttl"><small>THE 2026 CHRISTMAS GAMES</small><b>District Bingo</b></div><div class="ic">🎁</div></div>
+    <div class="letters">${"BINGO".split("").map(l=>`<span>${l}</span>`).join("")}</div>
+    <div class="grid">${g}</div>
+    <div class="foot">Tribute<span></span>District<span style="flex:.4"></span><b class="no">#${String(k).padStart(2,"0")}</b></div></div></div>`}
+function draw(){const n=CARDS.length;let a=Math.max(1,Math.min(n,+document.getElementById("from").value||1)),b=Math.max(a,Math.min(n,+document.getElementById("to").value||n));
+  document.getElementById("from").value=a;document.getElementById("to").value=b;
+  let h="";for(let k=a;k<=b;k+=2)h+=`<div class="page">${card(CARDS[k-1],k)}${k+1<=b?card(CARDS[k],k+1):'<div style="width:4.75in"></div>'}</div>`;
+  document.getElementById("pages").innerHTML=h}
+fetch("/xmas/bingo-cards.json",{cache:"no-cache"}).then(r=>r.json()).then(c=>{CARDS=c;
+  document.getElementById("from").max=document.getElementById("to").max=c.length;
+  document.getElementById("from").value=q.get("from")||1;document.getElementById("to").value=q.get("to")||c.length;draw()});
+document.getElementById("show").onclick=draw;
+document.getElementById("print").onclick=()=>{draw();setTimeout(()=>print(),300)};
+</script>
+</body>
+</html>

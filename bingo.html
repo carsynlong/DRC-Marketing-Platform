@@ -60,7 +60,7 @@ h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 
 <script src="/xmas/xmas.js"></script>
 <script>
 /* District Bingo board. Numbers come out of the real bingo cage; the Gamemaker taps each one here.
-   Card checks use /xmas/bingo-cards.json: the exact numbers on the 24 printed cards.
+   Card checks use /xmas/bingo-cards.json: the exact numbers on the printed cards (1 to 24 from the original PDF, 25 to 120 from /bingocards).
    Each card is 5 columns (B, I, N, G, O) of 5 numbers, top to bottom. The middle square is FREE on the printed cards. */
 document.getElementById("lights").outerHTML=XM.lights(26);
 XM.snow(document.getElementById("snow"));
@@ -177,7 +177,7 @@ function deal(){
   const t=setInterval(()=>{S.gm=opts[Math.random()*opts.length|0];render();sfx("tick");if(++k>=16){clearInterval(t);save();S.gmBingo=lines(CARDS[S.gm-1]).length>0;sfx("reveal");render()}},110);
 }
 // Hidden tester: triple-click the "District Bingo" title, or press Shift+T, to preview a win (changes nothing)
-function testWin(){ensureAudio();const k=1+Math.floor(Math.random()*24);bigWin(`Card ${k}`,"Test run");XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}
+function testWin(){ensureAudio();const k=1+Math.floor(Math.random()*(CARDS.length||24));bigWin(`Card ${k}`,"Test run");XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}
 document.addEventListener("click",e=>{if(e.detail===3&&e.target.closest&&e.target.closest("h1.title"))testWin()});
 document.addEventListener("keydown",e=>{if(e.key==="T"&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!(e.target.closest&&e.target.closest("input")))testWin()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".bigwin").forEach(x=>x.remove())}});

@@ -38,6 +38,18 @@ XM.GAMES={
  bingo:{n:8,name:"District Bingo",kind:"LUCK",tag:"LUCK · GRAND FINALE",color:"#17998a",tb:"bingo"},
 };
 
+/* Side quests the Gamemaker sends to one tribute: [icon, quest, suggested seconds] */
+XM.QUESTS=[
+ ["🍺","Bring the Gamemaker a beer",15],["🥤","Bring the Gamemaker a drink. Any drink.",15],["🍪","Bring the Gamemaker a snack",20],
+ ["🧊","Bring the Gamemaker a cup of ice",20],["🧻","Bring the Gamemaker a napkin",10],["🥄","Bring the Gamemaker a spoon",15],
+ ["🛋️","Bring the Gamemaker a pillow or blanket",20],["🧦","Bring back one sock that is NOT yours",30],["🎄","Bring the Gamemaker an ornament from the tree (carefully)",20],
+ ["🚪","Touch the front door and come back",15],["👑","Bow to QUEEN MOTHER and say \"Long live the Queen\"",10],["🙇","Bow to the Gamemaker and say \"Long live the Capitol\"",10],
+ ["🫡","Give every tribute the three-finger salute",15],["🐦","Whistle the Mockingjay call",10],["🎤","Sing the first line of a Christmas song",10],
+ ["💃","Do a victory dance",10],["🏋️","Do 10 squats",15],["🦵","Do 10 jumping jacks",15],["😂","Make QUEEN MOTHER laugh",20],
+ ["💌","Give a compliment to every tribute in the room",30],["🤳","Take a selfie with QUEEN MOTHER",20],["🎅","Do your best Santa \"Ho ho ho\"",10],
+ ["🔄","Switch seats with the person across from you",10],["🍗","Name 5 Thanksgiving foods",10],["🎬","Name 5 Christmas movies",15],
+ ["🗣️","Say \"May the odds be ever in your favor\" in an Effie Trinket voice",10],["🤫","Whisper a secret to the Gamemaker",15],["🧤","Find a mitten, glove or hat and put it on",30]];
+
 /* Tiebreakers. tool decides what appears on screen. */
 XM.TB={
  cookie:{title:"Cookie Sudden Death",ic:"🍪",rules:"Fresh cookies on every forehead. Everyone goes at once, no hands. First to eat their cookie wins.",tool:"stopwatch"},

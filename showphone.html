@@ -104,6 +104,8 @@ html{touch-action:manipulation}
 .coach b.n{color:#9fd0ff}
 .helpcard{box-shadow:0 0 0 3px #ff4d4d;background:rgba(80,10,10,.95);animation:qin .3s both}
 .mcard{box-shadow:0 0 0 2px #6a3c9c;background:rgba(40,20,60,.95)}
+.qov.royal{background:radial-gradient(ellipse at center,#6b4a12,#1a0f02)}
+.queen .dec{display:grid;grid-template-columns:1fr 1fr;gap:8px}.queen .dec button{padding:10px 8px;border-radius:12px;background:rgba(255,255,255,.06);font-weight:800;font-size:.95rem;line-height:1.2;color:inherit;border:0}.queen .dec button.on,.queen .vfaces button.on{background:var(--gold);color:#13271f}
 .qov.spy{background:radial-gradient(ellipse at center,#3a1f5c,#0a0612)}
 .pin{display:flex;gap:8px;justify-content:center}
 .pin input{width:9ch;font:800 1.4rem var(--body,inherit);text-align:center;letter-spacing:.3em;border-radius:12px;border:0;padding:8px}
@@ -140,6 +142,8 @@ body.hasbar{padding-bottom:96px}
 document.getElementById("lights").outerHTML=XM.lights(14);
 XM.snow(document.getElementById("snow"));
 const {esc,TRIBUTES}=XM;
+const DECREES=["Bring the QUEEN a drink","Compliment the QUEEN's outfit","Do 10 jumping jacks","Bow and say 'Your Majesty'","Serve the QUEEN dessert","Sing a Christmas carol",
+ "Give the QUEEN a foot rub... just kidding, a hug","Tell the QUEEN why she's the best","Do your best royal wave","Fetch the QUEEN a napkin","Dance for 10 seconds","Speak in a British accent until the next game"];
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 // your own district's emojis (matches your profile on the TV)
 const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
@@ -197,6 +201,15 @@ function render(){if(me!=="Carsyn")dropBar();
   }
   const t=TRIBUTES.find(x=>x.name===me);
   app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(XM.dn(me))}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
+    ${me==="QUEEN MOTHER"?`<div class="card queen" style="box-shadow:0 0 0 3px var(--gold)"><div class="eyebrow" style="color:var(--gold);text-align:center;font-size:1rem">👑 THE QUEEN HAS SPOKEN</div>
+      <div class="tiny" style="margin:4px 0 10px">Give a royal decree. The TV announces it and they have 30 seconds to obey.</div>
+      <div class="dec">${DECREES.map(d=>`<button data-dq="${esc(d)}">${esc(d)}</button>`).join("")}</div>
+      <input id="dqown" maxlength="80" placeholder="...or write your own decree" style="width:100%;margin-top:8px;font-size:16px;padding:10px;border-radius:12px">
+      <div class="eyebrow" style="margin:12px 0 6px;text-align:center">Who must obey?</div>
+      <button class="btn ghost" data-dt="random" style="width:100%;margin-bottom:8px">🎲 Random tribute</button>
+      <div class="vfaces">${TRIBUTES.filter(x=>x.name!==me).map(x=>`<button data-dt="${esc(x.name)}"><img src="${x.img}" alt="">${esc(XM.dn(x.name))}</button>`).join("")}</div>
+      <button class="btn red" id="dqsend" style="width:100%;margin-top:10px;font-size:1.3rem">👑 The QUEEN has spoken!</button><div class="tiny" id="dqmsg"></div>
+      <button class="btn" id="qbday" style="width:100%;margin-top:14px;font-size:1.15rem">🎂 Everybody stop and sing Happy Birthday to me!</button><div class="tiny" id="qbmsg">Stops the whole show. Once every 10 minutes.</div></div>`:""}
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
     <div id="extras" style="display:grid;gap:16px"></div>
@@ -223,6 +236,20 @@ function render(){if(me!=="Carsyn")dropBar();
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">🎵 Your walk-up song (plays on the TV when you win)</div>
       <select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
       <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny" id="wmsg"></div></div></details>`}`;
+  // 👑 QUEEN MOTHER's decree and birthday buttons
+  if(app.querySelector("#dqsend")){let dq=null,dt=null;
+    app.querySelectorAll("[data-dq]").forEach(b=>b.onclick=()=>{dq=b.dataset.dq;app.querySelector("#dqown").value="";app.querySelectorAll("[data-dq]").forEach(x=>x.classList.toggle("on",x===b))});
+    app.querySelector("#dqown").oninput=e=>{if(e.target.value.trim()){dq=null;app.querySelectorAll("[data-dq]").forEach(x=>x.classList.remove("on"))}};
+    app.querySelectorAll("[data-dt]").forEach(b=>b.onclick=()=>{dt=b.dataset.dt;app.querySelectorAll("[data-dt]").forEach(x=>x.classList.toggle("on",x===b))});
+    app.querySelector("#dqsend").onclick=async()=>{const m=app.querySelector("#dqmsg"),own=app.querySelector("#dqown").value.trim(),q=own||dq;
+      if(!q){m.textContent="Pick a decree (or write one) first.";return}if(!dt){m.textContent="Pick who must obey, or tap Random.";return}
+      const r=await api({a:"decree",name:me,q,to:dt});
+      m.textContent=r.ok?`👑 Decree sent! ${XM.dn(r.quest.to)} has 30 seconds.`:r.status===429?"Your subjects need a breather. Try again in a few seconds.":r.status===409?"The Capitol is busy, try again in a moment.":"Couldn't send. Check your internet.";
+      if(r.ok){buzz([80,40,80]);app.querySelector("#dqown").value="";dq=null;dt=null;app.querySelectorAll("[data-dq],[data-dt]").forEach(x=>x.classList.remove("on"))}};
+    let qbT=0;const qbLeft=sec=>{const m=app.querySelector("#qbmsg"),b=app.querySelector("#qbday");clearInterval(qbT);let left=sec;
+      const tk=()=>{if(!m.isConnected){clearInterval(qbT);return}if(left<=0){clearInterval(qbT);b.disabled=false;m.textContent="Stops the whole show. Once every 10 minutes.";return}
+        b.disabled=true;m.textContent=`🎂 The Capitol is singing for you! Again in ${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}.`;left--};tk();qbT=setInterval(tk,1000)};
+    app.querySelector("#qbday").onclick=async()=>{const r=await api({a:"qbday",name:me});if(r.ok){buzz([200,100,200]);qbLeft(r.left||600)}else if(r.status===429)qbLeft(r.left||60);else app.querySelector("#qbmsg").textContent="Couldn't send. Check your internet."}}
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
     m.textContent=r.ok?"📨 Complaint filed. The Gamemaker will rule.":r.status===429?"The Capitol is still processing your last complaint. Try again in a bit.":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},r.ok?45000:3000)};
   app.querySelector("#notme").onclick=e=>{e.preventDefault();if(!confirm("Sign out of "+XM.dn(me)+" so someone else can use this phone?"))return;api({a:"leave",name:me});stopLive();me=null;walkup=null;quest=null;mission=null;predict=null;vote=null;bet=null;XM.store.set("xmas-sh-me",null);document.querySelectorAll(".qov,#race,#mcard").forEach(n=>n.remove());render()};
@@ -335,37 +362,46 @@ function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove
   document.body.style.background=`radial-gradient(ellipse at top,${col},var(--night) 70%)`;const R=(a,b)=>a+Math.random()*(b-a);
   const l=document.createElement("div");l.className="dlayer";l.innerHTML=Array.from({length:12},()=>`<i style="left:${R(0,95)}%;font-size:${R(22,40)}px;--s:${R(9,16)}s;--d:${-R(0,16)}s;--dx:${R(-40,40)}px;--r:${R(-200,200)}deg">${em}</i>`).join("");document.body.prepend(l)}
 /* ---- votes and bets the Gamemaker opens ---- */
+// 10 seconds to change your mind after your first pick, then it locks and shrinks to one line
+const reopen={};
+const winLeft=t=>t?Math.max(0,Math.ceil((t+10000-(Date.now()+skew))/1000)):10;
+function lockedCard(title,line,key,left,kind){return `<div class="card" style="padding:12px 16px"><div class="eyebrow">${title}</div><div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:4px;flex-wrap:wrap"><b>${line} ${left===0?"✓ Locked":"✓"}</b>${left>0?`<button class="btn ghost" data-reopen="${key}" style="font-size:.9rem;padding:.45em 1em">↩️ Change my ${kind} (${left})</button>`:""}</div></div>`}
+setInterval(()=>{if(document.hidden)return;const now=Date.now()+skew;if([vote,mercy,bet&&bet.state==="open"?bet:null].some(x=>x&&x.mine&&x.mt&&now<x.mt+11500)){lastExtras="";showExtras()}},1000);
 function showExtras(){
   const box=document.getElementById("extras");if(!box)return;const key=JSON.stringify([vote,bet,hot,mercy,predict]);if(key===lastExtras)return;
   const ids=JSON.stringify([vote&&vote.id,bet&&bet.id+(bet.state||""),hot&&hot.id,mercy&&mercy.id,predict&&predict.open]),fresh=lastIds!==null&&ids!==lastIds&&(vote||bet&&bet.state==="open"||hot||mercy||predict&&predict.open);lastIds=ids;
   lastExtras=key;let h="";
   if(mercy)h+=mercy.to===me?`<div class="card vote" style="text-align:center"><div class="ic" style="font-size:3rem">🏳️</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">Beg for mercy!</h2><div>Everyone is voting on whether to spare you. Plead your case, out loud.</div></div>`
-    :`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🏳️ SPARE ${esc(mercy.to)}?</div><div class="hgrid" style="grid-template-columns:1fr 1fr;margin-top:8px"><button data-mv="up" class="${mercy.mine==="up"?"on":""}" style="font-size:2rem;min-height:70px;${mercy.mine==="up"?"background:var(--gold)":""}">👍</button><button data-mv="down" style="font-size:2rem;min-height:70px;${mercy.mine==="down"?"background:var(--gold)":""}">👎</button></div><div class="tiny">${mercy.mine?`You voted ${mercy.mine==="up"?"spare":"punish"}.`:"Thumbs up spares them. Thumbs down, no mercy."}</div></div>`;
+    :mercy.mine&&(winLeft(mercy.mt)===0||!reopen["m"+mercy.id])?lockedCard(`🏳️ Spare ${esc(XM.dn(mercy.to))}?`,`You voted ${mercy.mine==="up"?"👍 spare":"👎 no mercy"}`,"m"+mercy.id,winLeft(mercy.mt),"vote")
+    :`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🏳️ SPARE ${esc(mercy.to)}?</div><div class="hgrid" style="grid-template-columns:1fr 1fr;margin-top:8px"><button data-mv="up" class="${mercy.mine==="up"?"on":""}" style="font-size:2rem;min-height:70px;${mercy.mine==="up"?"background:var(--gold)":""}">👍</button><button data-mv="down" style="font-size:2rem;min-height:70px;${mercy.mine==="down"?"background:var(--gold)":""}">👎</button></div><div class="tiny">${mercy.mine?`You voted ${mercy.mine==="up"?"spare":"punish"}. Tap the other one to change (${winLeft(mercy.mt)}s).`:"Thumbs up spares them. Thumbs down, no mercy. You get 10 seconds to change your mind."}</div></div>`;
   if(hot&&hot.to!==me)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🎭 ${esc(hot.to)} IS IN THE HOT SEAT</div><textarea id="askq" rows="2" maxlength="140" placeholder="Ask ${esc(XM.dn(hot.to))} anything (anonymous)" style="margin-top:8px"></textarea><button class="btn red" id="asksend" style="width:100%">Send question</button><div class="tiny" id="askmsg"></div></div>`;
   else if(hot&&hot.to===me)h+=`<div class="card vote" style="text-align:center"><div style="font-size:3rem">🎭</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">You're in the hot seat!</h2><div>Questions will show up on the TV. Answer honestly.</div></div>`;
   if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Who wins the most games tonight? Right = +3 points at the end.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div></div>`;
   else if(predict&&predict.mine)h+=`<div class="card"><div class="eyebrow">🔮 Your prediction: ${esc(predict.mine)}</div></div>`;
   const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div>`;
-  if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(vote.mine)}. Tap someone else to change it.`:"Tap a face to vote."}</div></div>`;
-  if(bet&&bet.state==="open")h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">💰 PLACE YOUR BET</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">Who wins ${esc(bet.game)}?</h2>
+  if(vote&&vote.mine&&(winLeft(vote.mt)===0||!reopen["v"+vote.id]))h+=lockedCard(`🗳️ ${esc(vote.q)}`,`Voted: ${esc(XM.dn(vote.mine))}`,"v"+vote.id,winLeft(vote.mt),"vote");
+  else if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(XM.dn(vote.mine))}. Tap someone else to change it (${winLeft(vote.mt)}s).`:"Tap a face to vote. You get 10 seconds to change your mind."}</div></div>`;
+  if(bet&&bet.state==="open"&&bet.mine&&(winLeft(bet.mt)===0||!reopen["b"+bet.id]))h+=lockedCard(`💰 Who wins ${esc(bet.game)}?`,`Your bet: ${bet.mine.amt} on ${esc(XM.dn(bet.mine.on))}`,"b"+bet.id,winLeft(bet.mt),"bet");
+  else if(bet&&bet.state==="open")h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">💰 PLACE YOUR BET</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">Who wins ${esc(bet.game)}?</h2>
     ${faces("data-bo",bet.mine&&bet.mine.on)}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-ba="${n}" class="${bet.mine&&bet.mine.amt===n?"on":""}">${n} point${n>1?"s":""}</button>`).join("")}</div>
-    <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(bet.mine.on)}. You can change it until the bets lock.`:"Right pick: win that many points. Wrong: lose them."}</div></div>`;
+    <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(XM.dn(bet.mine.on))}. Change it and tap Place bet again (${winLeft(bet.mt)}s).`:"Right pick: win that many points. Wrong: lose them. You get 10 seconds to change it."}</div></div>`;
   else if(bet&&bet.state==="locked")h+=`<div class="card"><div class="eyebrow">🔒 BETS LOCKED · ${esc(bet.game)}</div><div style="margin-top:6px;font-weight:800">${bet.mine?`You bet ${bet.mine.amt} on ${esc(bet.mine.on)}. Fingers crossed.`:"You didn't bet this round."}</div></div>`;
   const keep=box.querySelector("#askq")?box.querySelector("#askq").value:"";
   const keepBo=box.querySelector("[data-bo].on"),keepBa=box.querySelector("[data-ba].on");
   box.innerHTML=h;if(keep&&box.querySelector("#askq"))box.querySelector("#askq").value=keep;
   if(fresh&&h){buzz([120,60,120]);box.scrollIntoView({behavior:"smooth",block:"start"})}
-  box.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{const r=await api({a:"mvote",name:me,v:b.dataset.mv});if(r.ok){mercy.mine=b.dataset.mv;lastExtras="";showExtras();buzz(30)}});
+  box.querySelectorAll("[data-reopen]").forEach(b=>b.onclick=()=>{reopen[b.dataset.reopen]=true;lastExtras="";showExtras()});
+  box.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{const r=await api({a:"mvote",name:me,v:b.dataset.mv});if(r.ok){mercy.mine=b.dataset.mv;mercy.mt=mercy.mt||r.t;reopen["m"+mercy.id]=false;lastExtras="";showExtras();buzz(30)}else if(r.error==="locked"){mercy.mt=r.t;lastExtras="";showExtras()}});
   box.querySelectorAll("[data-pr]").forEach(b=>b.onclick=async()=>{const r=await api({a:"predict",name:me,choice:b.dataset.pr});if(r.ok){predict.mine=b.dataset.pr;lastExtras="";showExtras()}});
   const as=box.querySelector("#asksend");if(as)as.onclick=async()=>{const t=box.querySelector("#askq"),m=box.querySelector("#askmsg");const q=t.value.trim();if(!q){m.textContent="Type a question first.";return}
     const r=await api({a:"ask",name:me,q});m.textContent=r.ok?"🎭 Sent! The Gamemaker decides if it goes on the TV.":(r.error||"Couldn't send.");if(r.ok)t.value=""};
-  box.querySelectorAll("[data-vt]").forEach(b=>b.onclick=async()=>{const r=await api({a:"vote",name:me,choice:b.dataset.vt});if(r.ok){vote.mine=b.dataset.vt;lastExtras="";showExtras();buzz(30)}});
+  box.querySelectorAll("[data-vt]").forEach(b=>b.onclick=async()=>{const r=await api({a:"vote",name:me,choice:b.dataset.vt});if(r.ok){vote.mine=b.dataset.vt;vote.mt=vote.mt||r.t;reopen["v"+vote.id]=false;lastExtras="";showExtras();buzz(30)}else if(r.error==="locked"){vote.mt=r.t;lastExtras="";showExtras()}});
   let bo=bet&&bet.mine?bet.mine.on:(keepBo&&keepBo.dataset.bo)||null,ba=bet&&bet.mine?bet.mine.amt:(keepBa?+keepBa.dataset.ba:null);
   if(bo&&!bet?.mine){const x=box.querySelector(`[data-bo="${CSS.escape(bo)}"]`);if(x)x.classList.add("on")}if(ba&&!bet?.mine){const x=box.querySelector(`[data-ba="${ba}"]`);if(x)x.classList.add("on")}
   box.querySelectorAll("[data-bo]").forEach(b=>b.onclick=()=>{bo=b.dataset.bo;box.querySelectorAll("[data-bo]").forEach(x=>x.classList.toggle("on",x===b))});
   box.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>{ba=+b.dataset.ba;box.querySelectorAll("[data-ba]").forEach(x=>x.classList.toggle("on",x===b))});
   const bs=box.querySelector("#bsend");if(bs)bs.onclick=async()=>{const m=box.querySelector("#bmsg");if(!bo||!ba){m.textContent="Pick who and how many points.";return}
-    const r=await api({a:"bet",name:me,on:bo,amt:ba});if(r.ok){bet.mine={on:bo,amt:ba};lastExtras="";showExtras()}else m.textContent=r.status===409?"Too late, bets are locked.":"Couldn't place the bet."};
+    const r=await api({a:"bet",name:me,on:bo,amt:ba});if(r.ok){bet.mine={on:bo,amt:ba};bet.mt=bet.mt||r.t;reopen["b"+bet.id]=false;lastExtras="";showExtras()}else if(r.error==="locked"){bet.mt=r.t;lastExtras="";showExtras()}else m.textContent=r.status===409?"Too late, bets are locked.":"Couldn't place the bet."};
 }
 // a side quest or race on screen comes first; missions and the birthday wait their turn
 function busyPop(){return !!(document.getElementById("race")||(quest&&quest.status==="live"&&document.getElementById("qov")))}
@@ -392,8 +428,8 @@ function myQuest(q){
   if(q.id===prevId&&q.status===prevSt)return;
   if(!ov){ov=document.createElement("div");ov.id="qov";ov.className="qov";document.body.appendChild(ov)}
   clearInterval(qTimer);
-  if(q.status==="live"){ov.className="qov";
-    ov.innerHTML=`<div class="in"><div class="eyebrow" style="color:#ffd7d0">⚔️ SIDE QUEST FROM THE GAMEMAKER</div><h2>${esc(XM.dn(me))}!</h2><div class="ic">${esc(q.ic||"📜")}</div><div class="q">${esc(q.q)}</div>${q.double?`<div class="eyebrow" style="color:var(--gold);font-size:1rem">🎲 DOUBLE OR NOTHING</div>`:""}<div class="clk" id="qclk"></div></div>`;
+  if(q.status==="live"){ov.className=q.royal?"qov royal":"qov";
+    ov.innerHTML=`<div class="in"><div class="eyebrow" style="color:${q.royal?"var(--gold)":"#ffd7d0"}">${q.royal?"👑 BY ORDER OF THE QUEEN MOTHER":"⚔️ SIDE QUEST FROM THE GAMEMAKER"}</div><h2>${esc(XM.dn(me))}!</h2><div class="ic">${esc(q.ic||"📜")}</div><div class="q">${esc(q.q)}</div>${q.double?`<div class="eyebrow" style="color:var(--gold);font-size:1rem">🎲 DOUBLE OR NOTHING</div>`:""}<div class="clk" id="qclk"></div></div>`;
     buzz([300,120,300,120,600]);
     const tick=()=>{const now=Date.now()+skew,c=document.getElementById("qclk");if(!c)return;
       if(now<q.start){c.textContent="Get ready...";c.style.fontSize="2.2rem";return}

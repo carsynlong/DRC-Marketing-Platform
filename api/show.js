@@ -74,6 +74,12 @@ const pushCmd = async (cmd, data) => {
 };
 const readQuest = async () => { try { const r = await redis.get(P + "quest"); return r ? (typeof r === "string" ? JSON.parse(r) : r) : null; } catch { return null; } };
 const points = async () => { const h = await hash(P + "points"); const o = {}; for (const [k, v] of Object.entries(h)) o[k] = Number(v) || 0; return o; };
+// votes, mercy votes and bets: 10 seconds to change your mind after your first pick, then locked
+const LOCK_MS = 10000;
+const firstPick = async (key, name) => { const t0 = Number(await redis.hget(key, name)) || 0, now = Date.now();
+  if (t0 && now - t0 > LOCK_MS) return { locked: true, t: t0 };
+  if (!t0) { await redis.hset(key, { [name]: now }); await redis.expire(key, 43200); }
+  return { locked: false, t: t0 || now }; };
 const owns = async (name, pid) => name && pid && (await redis.hget(P + "players", name)) === pid;
 
 export default async function handler(req, res) {
@@ -106,12 +112,12 @@ async function main(req, res) {
     const epoch = Number(ep) || 0;
     const live = {}; LV.forEach((k, i) => { live[k] = pj(lvv[i]); });
     let vote = null, bet = null, walkup = null;
-    if (live.poll && live.poll.open) vote = { ...live.poll, mine: me ? await redis.hget(P + "votes:" + live.poll.id, me) : null };
-    if (live.bet && live.bet.state !== "paid") { const mb = me ? await redis.hget(P + "bets:" + live.bet.id, me) : null; let mine = null; try { mine = mb ? (typeof mb === "string" ? JSON.parse(mb) : mb) : null; } catch {} bet = { ...live.bet, mine }; }
+    if (live.poll && live.poll.open) { const mine = me ? await redis.hget(P + "votes:" + live.poll.id, me) : null; vote = { ...live.poll, mine, mt: mine ? Number(await redis.hget(P + "vt:" + live.poll.id, me)) || 0 : 0 }; }
+    if (live.bet && live.bet.state !== "paid") { const mb = me ? await redis.hget(P + "bets:" + live.bet.id, me) : null; let mine = null; try { mine = mb ? (typeof mb === "string" ? JSON.parse(mb) : mb) : null; } catch {} bet = { ...live.bet, mine, mt: mine ? Number(await redis.hget(P + "bt:" + live.bet.id, me)) || 0 : 0 }; }
     if (me && full) walkup = await redis.hget(P + "walkups", me); else walkup = undefined;
     const hot = live.hot ? { id: live.hot.id, to: live.hot.to } : null;
     let mercy = null, predict = null;
-    if (live.mercy && live.mercy.open) mercy = { ...live.mercy, mine: me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null };
+    if (live.mercy && live.mercy.open) { const mine = me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null; mercy = { ...live.mercy, mine, mt: mine ? Number(await redis.hget(P + "mt:" + live.mercy.id, me)) || 0 : 0 }; }
     if (live.predict && live.predict.open) predict = { open: true, mine: me ? await redis.hget(P + "predict", me) : null };
     const bday = live.bday && Date.now() - live.bday.t < 120000 ? live.bday : null;
     let race = null;
@@ -511,7 +517,8 @@ async function main(req, res) {
   if (a === "mvote") {
     const lv = await readLive(); if (!lv.mercy || !lv.mercy.open) return reply(res, 409, { error: "No mercy vote" });
     if (name === lv.mercy.to) return reply(res, 400, { error: "You can't vote on yourself" });
-    const v = req.body?.v === "up" ? "up" : "down"; await redis.hset(P + "mercy:" + lv.mercy.id, { [name]: v }); return reply(res, 200, { ok: true });
+    const fp = await firstPick(P + "mt:" + lv.mercy.id, name); if (fp.locked) return reply(res, 409, { error: "locked", t: fp.t });
+    const v = req.body?.v === "up" ? "up" : "down"; await redis.hset(P + "mercy:" + lv.mercy.id, { [name]: v }); return reply(res, 200, { ok: true, t: fp.t });
   }
   if (a === "predict") {
     const lv = await readLive(); if (!lv.predict || !lv.predict.open) return reply(res, 409, { error: "Predictions are closed" });
@@ -534,14 +541,38 @@ async function main(req, res) {
     const lv = await readLive();
     if (!lv.poll || !lv.poll.open) return reply(res, 409, { error: "No vote open" });
     const ch = text(req.body?.choice, 40); if (!NAMES.includes(ch)) return reply(res, 400, { error: "Unknown tribute" });
-    await redis.hset(P + "votes:" + lv.poll.id, { [name]: ch }); return reply(res, 200, { ok: true });
+    const fp = await firstPick(P + "vt:" + lv.poll.id, name); if (fp.locked) return reply(res, 409, { error: "locked", t: fp.t });
+    await redis.hset(P + "votes:" + lv.poll.id, { [name]: ch }); return reply(res, 200, { ok: true, t: fp.t });
   }
   if (a === "bet") {
     const lv = await readLive();
     if (!lv.bet || lv.bet.state !== "open") return reply(res, 409, { error: "Betting is closed" });
     const on = text(req.body?.on, 40), amt = Math.round(Number(req.body?.amt));
     if (!NAMES.includes(on) || ![1, 2, 3].includes(amt)) return reply(res, 400, { error: "Bad bet" });
-    await redis.hset(P + "bets:" + lv.bet.id, { [name]: JSON.stringify({ on, amt }) }); return reply(res, 200, { ok: true });
+    const fp = await firstPick(P + "bt:" + lv.bet.id, name); if (fp.locked) return reply(res, 409, { error: "locked", t: fp.t });
+    await redis.hset(P + "bets:" + lv.bet.id, { [name]: JSON.stringify({ on, amt }) }); return reply(res, 200, { ok: true, t: fp.t });
+  }
+  // 👑 QUEEN MOTHER's royal decree: a side quest for any tribute (or a random one), 30 seconds
+  if (a === "decree") {
+    if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only the QUEEN MOTHER can do that" });
+    const q = text(req.body?.q, 80); if (!q) return reply(res, 400, { error: "Pick a decree first" });
+    let to = text(req.body?.to, 40);
+    if (to === "random") { const pl = Object.keys(await hash(P + "players")).filter(n => n !== name); const pool = pl.length ? pl : NAMES.filter(n => n !== name); to = pool[Math.floor(Math.random() * pool.length)]; }
+    if (!NAMES.includes(to) || to === name) return reply(res, 400, { error: "Pick a tribute" });
+    const cur = await readQuest(), now = Date.now();
+    if (cur && cur.status === "live" && now < cur.start + cur.secs * 1000 + 60000) return reply(res, 409, { error: "The Capitol is busy, try again in a moment" });
+    if (!(await redis.set(P + "decree", String(now), { nx: true, ex: 45 }))) return reply(res, 429, { error: "wait" });
+    const quest = { id: now, to, q, ic: "👑", secs: 30, t: now, start: now + 6000, status: "live", double: false, royal: true };
+    await redis.set(P + "quest", JSON.stringify(quest), { ex: 60 * 30 }); await stat("decree:" + to);
+    await pushCmd("quest", quest); return reply(res, 200, { ok: true, quest });
+  }
+  // 🎂 QUEEN MOTHER: "Everybody stop and sing Happy Birthday to me!" (once every 10 minutes)
+  if (a === "qbday") {
+    if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only the QUEEN MOTHER can do that" });
+    const now = Date.now();
+    if (!(await redis.set(P + "qbday", String(now), { nx: true, ex: 600 }))) { const t0 = Number(await redis.get(P + "qbday")) || now; return reply(res, 429, { error: "wait", left: Math.max(1, Math.ceil((t0 + 600000 - now) / 1000)) }); }
+    const lv = await readLive(); lv.bday = { id: now, t: now, queen: true };
+    await saveLive("bday", lv.bday); await pushCmd("bday", lv.bday); return reply(res, 200, { ok: true, left: 600 });
   }
   // 😤 Buzz Buzz's catchphrase button (Natalie's phone only)
   if (a === "notfair") {

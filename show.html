@@ -721,15 +721,21 @@ function sideQuest(q){
   closeMoments(".moment.twist,.moment.quest");
   if(busy()){toast(`⚔️ SIDE QUEST for ${q.to}: ${q.q}`,8000);return}
   const {m,T,close}=openMoment("twist quest");const ph=XM.photo(q.to);let left=q.secs,iv=0;
-  m.innerHTML=`<div class="inner"><div class="eb">⚔️ SIDE QUEST FROM THE GAMEMAKER</div>
+  const qm=q.royal&&XM.photo("QUEEN MOTHER");
+  m.innerHTML=`<div class="inner"><div class="eb"${q.royal?' style="color:var(--gold);font-size:clamp(1.2rem,2.2vw,2rem)"':""}>${q.royal?"👑 BY ORDER OF THE QUEEN MOTHER":"⚔️ SIDE QUEST FROM THE GAMEMAKER"}</div>
+    ${qm?`<img src="${qm}" alt="" style="position:absolute;left:4%;top:12%;width:clamp(110px,13vw,220px);aspect-ratio:1;object-fit:cover;border-radius:50%;box-shadow:0 0 0 6px var(--gold),0 14px 30px rgba(0,0,0,.5);transform:rotate(-6deg)"><div style="position:absolute;left:calc(4% + clamp(30px,4vw,70px));top:calc(12% - 54px);font-size:clamp(50px,6vw,90px);transform:rotate(-14deg)">👑</div>`:""}
     ${ph?`<img class="qface" src="${ph}" alt="">`:""}<h1>${esc(q.to)}</h1>${XM.aka(q.to)?`<div class="eb" style="color:var(--gold)">a.k.a. ${esc(XM.aka(q.to))}</div>`:""}
     <div class="say" style="max-width:30ch">${esc(q.ic||"📜")} ${esc(q.q)}</div>${q.double?`<div class="rule" style="font-size:clamp(1.4rem,3vw,2.6rem)">🎲 DOUBLE OR NOTHING</div>`:""}
     <div class="qclock" id="qclock">${q.secs}</div>
     <div class="row" id="qbtns"><button class="btn" data-r="done">✅ Done (${q.double?"double it":"+1"})</button><button class="btn red" data-r="fail">❌ Failed (${q.double?"lose it all":"-1"})</button><button class="btn ghost" id="qx">Close (Esc)</button></div></div>`;
   m.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();questResult(b.dataset.r)});
   m.querySelector("#qx").onclick=e=>{e.stopPropagation();close()};
-  XM.sfx("siren");XM.playSong("battle");
-  announcer.say(`Side quest! ${q.double?"Double or nothing! ":""}${XM.spoken(q.to)}! ${q.q.replace(/"/g,"")}. You have ${q.secs} seconds. Go!`,null,{pitch:.1,rate:.9});
+  // the QUEEN's decree: "Kachow must bring the QUEEN a drink!"
+  const must=t=>/^[A-Z][a-z]/.test(t)?"must "+t[0].toLowerCase()+t.slice(1):"must "+t;
+  if(q.royal){XM.sfx("fanfare");XM.playSong("march");
+    announcer.say(`Hear ye, hear ye! By order of the QUEEN MOTHER... ${XM.spoken(q.to)} ${must(q.q.replace(/"/g,"").replace(/[.!]+$/,""))}! You have ${q.secs} seconds.`,null,{pitch:.1,rate:.9})}
+  else{XM.sfx("siren");XM.playSong("battle");
+  announcer.say(`Side quest! ${q.double?"Double or nothing! ":""}${XM.spoken(q.to)}! ${q.q.replace(/"/g,"")}. You have ${q.secs} seconds. Go!`,null,{pitch:.1,rate:.9})}
   const clock=m.querySelector("#qclock");clock.textContent="⏳";
   const run=()=>{left=q.secs;clock.textContent=left;XM.sfx("boom");
     iv=setInterval(()=>{if(!m.isConnected){clearInterval(iv);return}left--;clock.textContent=Math.max(0,left);
@@ -1221,15 +1227,15 @@ function happyBirthdaySong(){
   setTimeout(()=>ac.close(),(t-ac.currentTime+1)*1000)}
 function balloons(){const R=(a,b)=>a+Math.random()*(b-a);for(let k=0;k<18;k++)setTimeout(()=>{if(!bdayOn)return;const b=document.createElement("div");b.className="balloon";b.textContent=["🎈","🎈","🎉","🎂","🎁"][k%5];
   b.style.left=R(2,92)+"vw";b.style.setProperty("--s",R(5,8)+"s");b.style.setProperty("--d","0s");b.style.setProperty("--dx",R(-15,15)+"vw");b.style.setProperty("--r",R(-30,30)+"deg");document.body.appendChild(b);setTimeout(()=>b.remove(),8500)},k*260)}
-function birthday(){
+function birthday(queen){
   if(!started)return;closeMoments(".moment.twist");if(busy())closeMoments(".moment,.vpick");
   const {m,T,close}=openMoment("twist feast");const ph=XM.photo("QUEEN MOTHER");
   m.innerHTML=`<div class="inner"><div class="eb">🎂 A ROYAL ANNOUNCEMENT</div><span class="crowned">${ph?`<img src="${ph}" alt="">`:""}<span class="cr" style="font-size:150px">🎂</span></span>
-    <h1 style="font-size:clamp(2.6rem,6vw,5.4rem)">Happy Birthday, QUEEN MOTHER!</h1><div class="say">Born on Thanksgiving. Of course she was. Everyone, sing!</div><button class="btn ghost" id="hx">Close (Esc)</button></div>`;
+    ${queen?`<div class="eb" style="color:var(--gold)">👑 THE QUEEN HAS SPOKEN. EVERYTHING STOPS.</div>`:""}<h1 style="font-size:clamp(2.6rem,6vw,5.4rem)">Happy Birthday, QUEEN MOTHER!</h1><div class="say">${queen?"Her Majesty demands a song. Everybody stop and sing!":"Born on Thanksgiving. Of course she was. Everyone, sing!"}</div><button class="btn ghost" id="hx">Close (Esc)</button></div>`;
   m.querySelector("#hx").onclick=e=>{e.stopPropagation();close()};XM.stopSong();
   bdayOn=true;m.onClose=()=>{bdayOn=false;try{bdayAC&&bdayAC.close()}catch(e){}document.querySelectorAll(".balloon").forEach(b=>b.remove())};
   XM.sfx("fanfare");balloons();XM.confetti(220,true);
-  announcer.say("Attention, tributes! Yesterday was QUEEN MOTHER's birthday! Everyone, sing!",null,{pitch:.1,rate:.88});
+  announcer.say(queen?"Stop everything! The QUEEN MOTHER has commanded it. Everybody, sing her Happy Birthday!":"Attention, tributes! Yesterday was QUEEN MOTHER's birthday! Everyone, sing!",null,{pitch:.1,rate:.88});
   T(()=>{happyBirthdaySong();T(balloons,4000)},5200);T(()=>{XM.sfx("cheer");XM.sfx("applause");XM.confetti(200,true)},19000);news("🎂 Happy belated birthday, QUEEN MOTHER!")}
 /* ---------- 📱 what your phone does tonight (spoken tour) ---------- */
 function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
@@ -1263,7 +1269,7 @@ function runCmd(c,data){
   if(["questdone","pointsadd","betpaid","racewin","predictpaid"].includes(c))firstPoints();
   if(c==="board")return bountyBoard();
   if(c==="crown")return coronation();
-  if(c==="bday")return birthday();
+  if(c==="bday"){if(data&&data.queen){closeMoments(".moment,.vpick");if(window.Briefing&&Briefing.open())Briefing.close();news("👑 The QUEEN MOTHER has commanded: everybody sing!")}return birthday(data&&data.queen)}
   if(c==="race"&&data)return raceOpen(data);
   if(c==="racewin"&&data)return raceWin(data);
   if(c==="raceend"){if(raceUI&&raceUI.m.isConnected)raceUI.close();raceUI=null;return}

@@ -3,6 +3,7 @@
 //
 // Phones:
 //   POST { a:"join",  pid, name }          claim a tribute (one phone per name)
+//   POST { a:"leave", pid, name }          give the tribute back ("Not you?")
 //   POST { a:"react", pid, name, e }       emoji burst on the TV
 //   POST { a:"cam",   pid, name, img }     one camera frame (small JPEG data URL) for the live corner on the TV
 //   POST { a:"camoff",pid, name }          stop being live
@@ -106,7 +107,11 @@ async function main(req, res) {
     const bday = live.bday && Date.now() - live.bday.t < 120000 ? live.bday : null;
     let race = null;
     if (live.race && live.race.state === "live" && Date.now() - live.race.start < 120000) race = { ...live.race, winner: live.race.winner || (await redis.get(P + "racewin:" + live.race.id)) || null, mine: me ? Number(await redis.hget(P + "race:" + live.race.id, me)) || 0 : 0 };
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, now: Date.now() });
+    // join screen: which faces are already on someone's phone (so they show "on a phone")
+    let taken;
+    if (!me && full) { const all = await hash(P + "players"), ns = Object.keys(all).filter(n => all[n] !== String(req.query.pid || ""));
+      const sv = ns.length ? await redis.mget(...ns.map(n => `${P}seen:${n}`)) : []; taken = ns.filter((n, i) => sv[i]); }
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, taken, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -203,6 +208,13 @@ async function main(req, res) {
     await redis.hset(P + "players", { [name]: pid });
     await redis.set(`${P}seen:${name}`, "1", { ex: 120 });
     return reply(res, 200, { me: name, epoch: Number(await redis.get(P + "epoch")) || 0 });
+  }
+
+  // "Not you?" on a phone: free the name so someone else can take it
+  if (a === "leave") {
+    if (!pid || !NAMES.includes(name)) return reply(res, 400, { error: "Unknown name" });
+    if ((await redis.hget(P + "players", name)) === pid) { await redis.hdel(P + "players", name); await redis.del(`${P}seen:${name}`); }
+    return reply(res, 200, { ok: true });
   }
 
   // Gamemaker-only actions that only need the PIN (so the laptop host menu can use them too)

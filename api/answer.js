@@ -23,5 +23,7 @@ export default async function handler(req, res) {
   // Each phone writes only its own field, so twelve people answering at once can't collide.
   const key = `${p}answers:${qi}`;
   const fresh = await redis.hsetnx(key, name, answer);
+  // when it arrived, by the server's clock: the showdown, jackpot and speed bonus use this (not when the TV happened to look)
+  if (fresh && !p) await redis.hsetnx(`anstime:${qi}`, name, Date.now());   // Who's That Tribute only
   reply(res, 200, { answer: fresh ? answer : await redis.hget(key, name) });
 }

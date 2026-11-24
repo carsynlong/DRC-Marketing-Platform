@@ -352,7 +352,7 @@ window.Ticker = (() => {
 #ticker .tk-c em{font-style:normal;font-weight:800;color:#7dff9e;font-size:.85rem;animation:tk-plus 1.8s ease-out both}
 @keyframes tk-bump{30%{transform:scale(1.25);color:var(--tk-accent)}}
 @keyframes tk-plus{0%{opacity:0;transform:translateY(10px)}20%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
-body.has-ticker{padding-bottom:52px}
+body.has-ticker{padding-bottom:52px;box-sizing:border-box}
 @media (prefers-reduced-motion:reduce){#ticker,#ticker *{animation:none!important;transition:none!important}}`;
   let el = null, last = "", prev = {}, timer = 0;
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

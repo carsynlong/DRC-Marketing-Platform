@@ -269,8 +269,10 @@ async function poll(){
     if(D.me!==myName){myName=D.me;store.set("tribute-name",myName)}
     if(pending&&D.game&&(pending.gid!==D.game.gid||pending.qi!==D.game.qi||D.myAnswer))pending=null;
   }catch(e){offline++}
-  render();
-  timer=setTimeout(poll,1500);
+  // a drawing bug must never stop the phone from updating: the next look is always booked
+  try{render()}catch(e){console.error(e)}
+  finally{clearTimeout(timer);const g=D&&D.game,fast=g&&(g.phase==="ready"||(g.phase==="mini"&&g.mini&&/^(count|live)$/.test(g.mini.stage)));
+    timer=setTimeout(poll,fast?350:1500)}   // mini-games and the 3-2-1: look often, so every phone starts together
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
 
@@ -296,7 +298,9 @@ async function leave(){
 // typed a name but never tapped Lock it in? send it just before the cannon fires
 setInterval(()=>{const g=D.game,i=document.getElementById("guess");
   if(!g||g.phase!=="question"||!g.hurry||pending||D.myAnswer||!i||!i.value.trim())return;
-  if(Date.now()>g.hurry-1600||(g.left!=null&&g.left<=3)){i.blur();answer(i.value)}},250);
+  // seconds left by this phone's own clock (the TV's clock may be set differently)
+  const left=hurry&&hurry.gid===g.gid&&hurry.qi===g.qi?hurry.left-(Date.now()-hurry.at)/1000:null;
+  if((left!=null&&left<=1.6)||(g.left!=null&&g.left<=3)){i.blur();answer(i.value)}},250);
 async function answer(text){
   buzz(15);PFX.sfx("tap");
   const g=D.game;text=String(text||"").trim();
@@ -350,7 +354,7 @@ function hostScreen(g,key){
   const n=(g.playing||[]).length;
   return [key+"ha",header()+`<section class="msg" style="flex:none"><div class="icon">🔮</div><h1>You're the Gamemaker</h1>
     <p>You know this face! How many tributes will get it right?</p></section>
-    <div class="pick">${Array.from({length:n+1},(_,i)=>`<button data-pred="${i}">${i}<small>${i===0?"nobody":i===n?"everyone":"tributes"}</small></button>`).join("")}</div>`];
+    <div class="pick">${Array.from({length:n+1},(_,i)=>`<button data-pred="${i}">${i}<small>${i===0?"nobody":i===n?"everyone":i===1?"tribute":"tributes"}</small></button>`).join("")}</div>`];
 }
 
 /* ---------- mini-games: tap race and tree climb ---------- */
@@ -396,7 +400,8 @@ setInterval(()=>{
 
 /* ---------- scoreboard on the phone: who leads, how far you are from catching up, and the full board ---------- */
 function chase(g,s){
-  const sc=(g.scores||[]).slice().sort((a,b)=>(a.rank||0)-(b.rank||0)||b.score-a.score||a.name.localeCompare(b.name));   // the TV's order (a tribute beats Carsyn on a tie)if(!sc.length||!s)return "";
+  const sc=(g.scores||[]).slice().sort((a,b)=>(a.rank||0)-(b.rank||0)||b.score-a.score||a.name.localeCompare(b.name));   // the TV's order (a tribute beats Carsyn on a tie)
+  if(!sc.length||!s)return "";
   const lead=sc[0],tied=sc.filter(x=>x.score===lead.score),me=sc.findIndex(x=>x.name===D.me),above=sc.slice(0,me).reverse().find(x=>x.score>s.score);
   let top;
   if(s.score===lead.score&&lead.score>0)top=tied.length>1?`👑 You're tied for the lead with ${tied.filter(x=>x.name!==D.me).map(x=>esc(x.name)).join(", ")}!`:`👑 You're in the lead! ${sc[1]?`${fmt(s.score-sc[1].score)} ahead of ${esc(sc[1].name)}`:""}`;

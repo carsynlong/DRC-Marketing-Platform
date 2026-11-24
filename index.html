@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.ctl.stick{position:sticky;bottom:62px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.ctl.stick,.settings.stick{position:sticky;bottom:62px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}.settings.stick{bottom:12px;padding:8px 12px}
 </style></head><body>
 <meta charset="utf-8">
 <title>Who's That Tribute?</title>
@@ -238,7 +238,7 @@ function freshState(){
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 // a TV reload mid-face picks up the clock where it was (at least 8 seconds left), so nobody loses points to a refresh
-function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); }
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
 
 /* ================= MUSIC: original game-show loops over public-domain carols ================= */
 let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
@@ -401,7 +401,7 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker, a.k.a. Clo":n==="Jessie"?"a.k.a. Lucky PomPoms":n==="Tinsley"?"a.k.a. Big Fat Balls 🎄":n==="Grandad"?"The Ancient and Wise 🧙":n==="Dash"?"a.k.a. Chad Thundercock":n==="Jonny"?"a.k.a. HumblePie1 🥧":n==="Natalie"?"a.k.a. Buzz Buzz 🐝":n==="Brandon"?"a.k.a. Iron Balls III":n==="Kamdon"?"a.k.a. Big Daddy Kam":n==="Elisha"?"a.k.a. Bye Felicia 👋":n==="Kyle"?"a.k.a. Kachow! ⚡":null});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker":n==="Brandon"?"Butchus Byron Marvin Iron Balls III":n==="Grandad"?"🧙 Ancient and wise":null});
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
@@ -426,7 +426,7 @@ function newGame(){
 }
 function roundCardOrQuestion(){
   const rc=ROUNDS.find(r=>r.at===S.qi);
-  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();if(rc.at===FEAST&&briefFeast())return;setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
+  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();if(rc.at===FEAST&&window.Briefing){setTimeout(()=>{if(S.phase==="roundcard"&&S.qi===FEAST)briefFeast()},3000);return}setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
   beginQuestion();
 }
 let readyT=0;
@@ -483,7 +483,13 @@ function reveal(){
   if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(rs(p)!==prev){rank=i+1;prev=rs(p)}m[p.name]=rank});return m}
+let scoreWait=false;
 function score(){
+  if(S.phase!=="reveal")return scoreNow();
+  if(scoreWait)return;scoreWait=true;const b=$("#score");if(b){b.disabled=true;b.textContent="Counting..."}
+  Sync.fresh().catch(()=>{}).then(()=>{scoreWait=false;if(S.phase==="reveal")scoreNow()});
+}
+function scoreNow(){
   if(S.rounds[S.qi]?.tb)return Party.scoreTiebreak();
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();S.slow=[];Extras.before();
   S.players.forEach(p=>{
@@ -498,7 +504,8 @@ function score(){
   Party.scored();
   // the host (🔮 Gamemaker) predicted how many would get it right: exact +500, off by one +200
   const h=S.players.find(p=>p.name===HOST),pick=Sync.hostPick();
-  if(h&&h.on&&pick!=null){const n=S.correct.length,d=Math.abs(pick-n);const add=d===0?500:d===1?200:0;h.delta=(h.delta||0)+add;h.score+=add;S.hostPick={pick,n}}   // keeps a 🌹 rose in her deltaelse S.hostPick=null;
+  if(h&&h.on&&pick!=null){const n=S.correct.length,d=Math.abs(pick-n);const add=d===0?500:d===1?200:0;h.delta=(h.delta||0)+add;h.score+=add;S.hostPick={pick,n}}   // keeps a 🌹 rose in her delta
+  else S.hostPick=null;
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   S.phase=S.qi===S.rounds.length-1?"final":"board";
   if(S.phase==="final"&&Party.tie())return;   // tied at the top: showdown first
@@ -514,7 +521,8 @@ function next(){
 function briefDouble(go){
   if(!window.Briefing)return false;
   const qi=S.qi;
-  Briefing.show({eyebrow:"🎁 SPONSOR GIFT",title:"Double Points!",start:"▶ Start the face",muted:()=>!S.sound,
+  stopSong();
+  Briefing.show({eyebrow:"🎁 SPONSOR GIFT",title:"Double Points!",start:"▶ Start the face",
     intro:"A sponsor has sent a gift. The next face is worth double points. Here's how it works.",
     steps:[["🎁","The next face is worth <b>double points</b>.","The next face is worth double points."],
       ["🎯","A right answer scores <b>2,000</b>, and your streak bonus is doubled too.","A right answer scores 2,000, and your streak bonus is doubled too."],
@@ -526,7 +534,7 @@ function briefDouble(go){
 function briefFeast(){
   if(!window.Briefing)return false;
   const n=Q.length-FEAST;
-  Briefing.show({eyebrow:"🍗 ROUND 3",title:"The Feast",start:"▶ Start The Feast",muted:()=>!S.sound,
+  Briefing.show({eyebrow:"🍗 ROUND 3",title:"The Feast",start:"▶ Start The Feast",
     intro:"Welcome to The Feast. The scoring changes. Here's how it works.",
     steps:[["🍗",`The last <b>${n} faces</b> are worth <b>triple points</b>.`,`The last ${n} faces are worth triple points.`],
       ["🎯","A right answer scores <b>3,000</b>, and your streak bonus is tripled too.","A right answer scores 3,000, and your streak bonus is tripled too."],
@@ -566,7 +574,7 @@ function lobbyView(){
     <div class="settings"><span class="tiny">Seconds per face</span>
       <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30,45].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
       ${sndBtn()}</div>
-    <div class="settings"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
+    <div class="settings stick"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
 }
@@ -631,7 +639,7 @@ function boardView(){
   return `<div class="top"><div><div class="eyebrow">After face ${S.qi+1} of ${S.rounds.length}</div><h2 class="qnum">The Capitol Scoreboard</h2></div>${sndBtn()}</div>
   <div class="quip">${quip()}</div>
   <div class="board">${boardRows()}</div>
-  <div class="ctl"><span class="hint tiny">Space: ${nextRound?"on to "+nextRound.name:"next face"}</span><button class="btn" id="next">${nextRound?"On to "+nextRound.name:"Next face"}</button></div>`;
+  <div class="ctl stick"><span class="hint tiny">Space: ${nextRound?"on to "+nextRound.name:"next face"}</span><button class="btn" id="next">${nextRound?"On to "+nextRound.name:"Next face"}</button></div>`;
 }
 function finalView(){
   const r=ranked(),top=r[0]?rs(r[0]):0,tied=r.filter(p=>rs(p)===top&&top>0);

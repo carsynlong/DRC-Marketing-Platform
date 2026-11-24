@@ -11,7 +11,7 @@ const Sync = (() => {
   let answers = {};       // phone answers for the current face: name -> answer
   let answersQi = -1;     // which face `answers` belongs to
   let counted = null;     // names whose phone answer was already applied at the reveal
-  let lastPushed = "", pushing = false, polling = false, lastPoll = 0, lastSave = 0, pollKey = "", firstPoll = true;
+  let skew = null, lastPushed = "", pushing = false, polling = false, lastPoll = 0, lastSave = 0, pollKey = "", firstPoll = true;
 
   const post = body => fetch("/api/host", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   const hasPhone = n => phones.includes(n);
@@ -60,7 +60,10 @@ const Sync = (() => {
     polling = true; lastPoll = Date.now();
     const qi = S.phase === "lobby" ? null : S.qi;
     try {
+      const sent = Date.now();
       const d = await (await fetch(`/api/host?react=1${qi == null ? "" : `&qi=${qi}`}`, { cache: "no-store" })).json();
+      // server clock minus this TV's clock (measured at the middle of the request)
+      if (d.now) skew = d.now - (sent + Date.now()) / 2;
       if (d.react) floatReacts(d.react);
       const before = phones.join("|"), had = phones;
       phones = d.players.sort();
@@ -69,7 +72,10 @@ const Sync = (() => {
       if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
       firstPoll = false;
       if (d.qi != null && d.qi === S.qi) {
-        if (S.phase === "question") { S.ansAt = S.ansAt || {}; for (const n in d.answers) if (S.ansAt[n] == null && S.qStart) S.ansAt[n] = Date.now() - S.qStart; }
+        if (S.phase === "question" || S.phase === "reveal") { S.ansAt = S.ansAt || {};
+          for (const n in d.answers) { const t = d.times && Number(d.times[n]);
+            if (t && S.qStart && skew != null) S.ansAt[n] = Math.max(0, t - skew - S.qStart);        // exact arrival time (server)
+            else if (S.ansAt[n] == null && S.qStart && S.phase === "question") S.ansAt[n] = Date.now() - S.qStart; } }
         answers = d.answers; answersQi = d.qi;
       }
       if (S.phase === "lobby" && before !== phones.join("|")) render();
@@ -77,6 +83,12 @@ const Sync = (() => {
       if (S.phase === "reveal") lateAnswers();
     } catch (e) { /* try again next time */ }
     polling = false;
+  }
+  // one brand-new look at the answers (waits out a look that's already running), so buzzer answers count before scoring
+  async function fresh() {
+    const until = Date.now() + 2500;
+    while (polling && Date.now() < until) await new Promise(r => setTimeout(r, 50));
+    await Promise.race([poll(), new Promise(r => setTimeout(r, Math.max(0, until - Date.now())))]);
   }
   // Poll right away whenever the face or its lock changes (e.g. the cannon fires, or the reveal).
   function maybePoll() {
@@ -301,5 +313,5 @@ const Sync = (() => {
 
   // the host's 🔮 prediction for this face (a number), if she made one
   function hostPick() { const v = current()[HOST]; const m = /^🔮(\d+)$/.exec(v || ""); return m ? +m[1] : null; }
-  return { hostPick, restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
+  return { fresh, hostPick, restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
 })();

@@ -158,7 +158,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
 @keyframes hb-pop{from{transform:scale(1.8);opacity:0}}
 @keyframes hb-shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){#hurrybar,#hurrybar *,body.hurry-shake{animation:none!important}}`;
-  let hb = null, hbTimer = 0, hbEnds = 0, hbLast = null, slowKey = "";
+  let hb = null, hbTimer = 0, hbEnds = 0, hbLast = null, slowKey = "", hbHost = false, hbSeen = null, hbLocal = 0;
   const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
   function css2() { if (!document.getElementById("hurry-css2")) { const st = document.createElement("style"); st.id = "hurry-css2"; st.textContent = HCSS; document.head.appendChild(st); } }
   function stopHurry() { clearInterval(hbTimer); hbTimer = 0; hbEnds = 0; hbLast = null; if (hb) { hb.remove(); hb = null; } document.body.classList.remove("hurrying", "hurry-shake"); }
@@ -171,7 +171,8 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
       const sec = Math.ceil((hbEnds - Date.now()) / 1000);
       if (sec <= 0) { stopHurry(); return; }
       if (sec === hbLast) return; hbLast = sec;
-      hb.innerHTML = `<b>${sec}</b><span>⏰ HURRY! Lock in your answer!<small>Too slow = you lose points</small></span>`;
+      hb.innerHTML = hbHost ? `<b>${sec}</b><span>⏰ HURRY! Make your 🔮 prediction!<small>Pick how many will get it right</small></span>`
+        : `<b>${sec}</b><span>⏰ HURRY! Lock in your answer!<small>Too slow = you lose points</small></span>`;
       buzz(sec <= 3 ? [180, 60, 180] : 120);
       document.body.classList.remove("hurry-shake"); void document.body.offsetWidth; document.body.classList.add("hurry-shake");
     };
@@ -186,7 +187,13 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     const me = o.me, ends = g && g.hurry;
     const hostPlays = g && g.hostPlays && g.host === me;   // Who's That Tribute: the Gamemaker hurries too until she predicts
     const exempt = !me || (!hostPlays && ((g && g.tied && g.tied.includes(me)) || (g && g.host && g.host === me) || (g && g.playing && !g.playing.includes(me)) || (g && g.exempt === me)));
-    if (ends && !o.answered && !exempt && Date.now() < ends) startHurry(ends); else stopHurry();
+    // The TV's deadline is on the TV's clock, which can be set differently from this phone.
+    // Turn it into this phone's clock once, when it first shows up: the seconds left the TV sent (if any), else assume about 10 seconds.
+    if (ends && ends !== hbSeen) { hbSeen = ends; const skew = ends - Date.now();
+      hbLocal = g.left != null ? Date.now() + Math.min(10, g.left) * 1000 : Date.now() + (skew > 0 && skew <= 10500 ? skew : 9000); }
+    if (!ends) hbSeen = null;
+    hbHost = !!hostPlays;
+    if (ends && !o.answered && !exempt && Date.now() < hbLocal) startHurry(hbLocal); else stopHurry();
     if (g && me && g.slow && g.slow.includes(me)) {
       const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;
       if (k !== slowKey) { slowKey = k; const mine = (g.scores || []).find(s => s.name === me), pen = mine ? Math.min(g.slowPen || Infinity, Math.max(0, -(mine.delta || 0))) : g.slowPen;   // the no-answer part only (not a rose)

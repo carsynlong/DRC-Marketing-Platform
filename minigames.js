@@ -83,7 +83,7 @@ const Party = (() => {
     const m = S.mini; if (!window.Briefing || !m || !STEPS[m.kind]) return false;
     const info = INFO[m.kind], id = m.id;
     Briefing.show({ eyebrow: `${info.icon} MINI-GAME · BONUS POINTS`, title: info.title, steps: STEPS[m.kind],
-      intro: `Mini-game time! ${info.title} Here's how it works.`, start: "▶ Start the mini-game", muted: () => !S.sound,
+      intro: `Mini-game time! ${info.title} Here's how it works.`, start: "▶ Start the mini-game",
       onStart: () => { if (S.phase === "mini" && S.mini && S.mini.id === id && S.mini.stage === "intro") { ensureAudio(); countdown(); } } });
     return true;
   }
@@ -117,7 +117,7 @@ const Party = (() => {
     m.results = all.filter(([, n]) => place(n) <= 3).map(([name, n]) => ({ name, n, bonus: BONUS[place(n) - 1] }));
     m.all = all;
     m.results.forEach(r => { const p = S.players.find(x => x.name === r.name); if (p) { p.score += r.bonus; } });
-    if (m.results[0]) stat(m.results[0].name)[m.kind] = m.results[0].n;
+    if (m.results[0]) m.results.filter(r => r.n === m.results[0].n).forEach(r => { stat(r.name)[m.kind] = r.n; });   // tied winners all get the award
     m.stage = "done"; sfx("fanfare"); confetti(220, true); render();
   }
   function finish() { S.minisDone.push(S.mini.qi); S.mini = null; roundCardOrQuestion(); }
@@ -155,7 +155,7 @@ const Party = (() => {
       <span>${esc(name)} <span class="tiny">${n} ${info.verb}</span></span><span class="b">${pl <= 3 ? "+" + BONUS[pl - 1] : ""}</span></div>`; }).join("");
     return `<section class="mg"><div class="icon">🏆</div><h1>${m.results?.[0] ? (() => { const top = m.results.filter(r => r.n === m.results[0].n).map(r => esc(r.name)); return top.length > 1 ? top.join(" & ") + " tie!" : top[0] + " wins!"; })() : "Nobody moved!"}</h1>
       <div class="mres">${rows || "<p>No taps came in. Was everyone asleep?</p>"}</div>
-      <div class="ctl" style="justify-content:center"><button class="btn" id="mnext">On to ${esc(roundOf(m.qi).name)} ▶</button></div><div class="tiny">Space: continue</div></section>`;
+      <div class="ctl stick" style="justify-content:center"><button class="btn" id="mnext">On to ${esc(roundOf(m.qi).name)} ▶</button></div><div class="tiny">Space: continue</div></section>`;
   }
 
   /* ---------------- awards ---------------- */
@@ -170,10 +170,11 @@ const Party = (() => {
   function emoji(name) { stat(name).emoji++; }
   function awardsHTML() {
     const st = S.stats || {}, names = Object.keys(st).filter(n => S.players.find(p => p.name === n)?.on);
-    const pick = (score, min = 1) => { let best = null, v = -Infinity; names.forEach(n => { const x = score(st[n]); if (x != null && x >= min && x > v) { v = x; best = n; } }); return best ? [best, v] : null; };
+    // ties share an award ("A & B")
+    const pick = (score, min = 1) => { let best = [], v = -Infinity; names.forEach(n => { const x = score(st[n]); if (x == null || x < min) return; if (x > v) { v = x; best = [n]; } else if (x === v) best.push(n); }); return best.length ? [best.join(" & "), v] : null; };
     const list = [];
     const sharp = pick(s => s.best, 2); if (sharp) list.push(["🎯", "Sharpshooter", sharp[0], `${sharp[1]} right in a row`]);
-    const brain = pick(s => s.right); if (brain) list.push(["🧠", "Knows the Family Best", brain[0], `${brain[1]} faces guessed`]);
+    const brain = pick(s => s.right); if (brain) list.push(["🧠", "Knows the Family Best", brain[0], `${brain[1]} face${brain[1] === 1 ? "" : "s"} guessed`]);
     const fast = pick(s => s.times.length >= 3 ? -(s.times.reduce((a, b) => a + b, 0) / s.times.length) : null, -Infinity);
     if (fast) list.push(["⚡", "Fastest Finger", fast[0], `${(-fast[1] / 1000).toFixed(1)}s average`]);
     const run = pick(s => s.race || null); if (run) list.push(["🏃", "Cornucopia Sprinter", run[0], `${run[1]} taps in 10 seconds`]);
@@ -181,7 +182,7 @@ const Party = (() => {
     const loud = pick(s => s.emoji, 3); if (loud) list.push(["📣", "Loudest in the Crowd", loud[0], `${loud[1]} emojis sent`]);
     const r = ranked(); if (r.length > 2) list.push(["🌹", "The President's Favorite", r[r.length - 1].name, "last place, but still standing"]);
     if (!list.length) return "";
-    return `<div class="eyebrow">🏅 Awards</div><div class="awards">${list.map(([e, t, n, d], i) => `<div class="award" style="animation-delay:${.2 + i * .15}s"><span class="e">${e}</span><span class="t">${t}</span><span class="n">${esc(n)}</span><span class="d">${d}</span></div>`).join("")}</div>`;
+    return `<div class="eyebrow">🏅 Honors</div><div class="awards">${list.map(([e, t, n, d], i) => `<div class="award" style="animation-delay:${.2 + i * .15}s"><span class="e">${e}</span><span class="t">${t}</span><span class="n">${esc(n)}</span><span class="d">${d}</span></div>`).join("")}</div>`;
   }
 
   /* ---------------- tie-breaker showdown ---------------- */
@@ -192,11 +193,15 @@ const Party = (() => {
   }
   function startShowdown(names, again) {
     S.tb = names;
-    const qi = Math.random() * Q.length | 0;            // one more face, picked at random
+    // one more face, picked at random from faces not shown yet (any face if they've all been used)
+    const used = new Set(S.rounds.map(r => r.qi)), fresh = Q.map((_, i) => i).filter(i => !used.has(i)), pool = fresh.length ? fresh : Q.map((_, i) => i);
+    const qi = pool[Math.random() * pool.length | 0];
     S.rounds.push({ qi, choices: [], tb: true }); S.qi = S.rounds.length - 1;
     S.tbAgain = again; S.phase = "tbcard"; stopSong(); sfx("gong"); render();
+    const myQi = S.qi;
     // 📋 spoken "how the showdown works" (briefing.js), the first time only; Start begins the showdown face
-    if (window.Briefing && !again) Briefing.show({ eyebrow: "⚔️ TIE AT THE TOP", title: "Showdown!",
+    // shown after the room has had 3 seconds to see the faces go head to head
+    if (window.Briefing && !again) setTimeout(() => { if (S.phase === "tbcard" && S.qi === myQi) Briefing.show({ eyebrow: "⚔️ TIE AT THE TOP", title: "Showdown!",
       steps: [
         ["⚔️", `It's a tie between <b>${names.map(esc).join(" and ")}</b>.`, `It's a tie between ${names.join(" and ")}.`],
         ["📱", "One more face. Only the tied tributes answer, on their phones.", "One more face. Only the tied tributes answer, on their phones."],
@@ -204,8 +209,8 @@ const Party = (() => {
         ["🔁", "Nobody gets it right? Another face, until someone does.", "Nobody gets it right? Another face, until someone does."],
         ["📣", "Everyone else: eyes on the TV and cheer for your favorite!", "Everyone else, eyes on the TV and cheer for your favorite!"],
       ],
-      intro: "It's a tie at the top. Time for a showdown! Here's how it works.", start: "▶ Begin the showdown", muted: () => !S.sound,
-      onStart: () => { if (S.phase === "tbcard") { ensureAudio(); beginQuestion(); } } });
+      intro: "It's a tie at the top. Time for a showdown! Here's how it works.", start: "▶ Begin the showdown",
+      onStart: () => { if (S.phase === "tbcard") { ensureAudio(); beginQuestion(); } } }); }, 3000);
   }
   function tbView() {
     return `<section class="mg"><div class="eyebrow">${S.tbAgain ? "Nobody got it. Again!" : "It's a tie at the top"}</div><h1>⚔️ Showdown!</h1>

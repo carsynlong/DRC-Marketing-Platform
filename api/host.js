@@ -11,13 +11,14 @@ export default async function handler(req, res) {
     const players = Object.keys(await hash(p + "players"));
     const qi = Number.parseInt(req.query.qi, 10);
     const answers = Number.isInteger(qi) ? await hash(`${p}answers:${qi}`) : {};
+    const times = Number.isInteger(qi) ? await hash(`${p}anstime:${qi}`) : {};   // server time each answer arrived
     const coins = req.query.coins ? await hash(p + "coins") : undefined;
     const react = req.query.react ? await redis.lrange(p + "reactlog", 0, 59) : undefined;   // recent emoji bursts (District Secrets)
     const mini = req.query.mini ? await hash(p + "mini") : undefined;     // tap race / tree climb counts (Who's That Tribute)
     const ready = req.query.ready ? Object.keys(await hash(p + "ready")) : undefined;   // tapped Got it on How to play
     const buys = req.query.buys != null ? await hash(`${p}buys:${Number.parseInt(req.query.buys, 10) || 0}`) : undefined;   // sponsor shop (Tribute)
     const asks = req.query.asks ? await redis.lrange(p + "asks", 0, 99) : undefined;   // victor's interview questions (Tribute)
-    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, coins, react, mini , ready , buys, asks });
+    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, times, now: Date.now(), coins, react, mini , ready , buys, asks });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });
 
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
     const total = Math.min(Math.max(Number(req.body.total) || 0, 1), 100);
     await redis.del(p + "spent", p + "asks", ...Array.from({ length: total }, (_, i) => `${p}buys:${i}`));
     await redis.del(p + "coins", p + "reactlog", ...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
+    await redis.del(...Array.from({ length: total }, (_, i) => `${p}anstime:${i}`));
     return reply(res, 200, { ok: true });
   }
   if (action === "miniReset") {

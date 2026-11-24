@@ -118,6 +118,7 @@
   function sky() {
     const r = S.rounds[S.qi]; if (!r) return;
     S.fallen = (S.fallen || []).filter(q => q !== r.qi).concat(r.qi);
+    if (S.phase === "final") return;   // the winner screen keeps its song: the face just joins the fallen tributes list
     // like the films: the music drops out, one cannon booms over the silence, then the carol comes back
     try { stopSong(); setTimeout(() => sfx("cannon"), 250); setTimeout(() => { if (S.phase === "board") playSong("board"); }, 3400); } catch (e) {}
     const d = document.createElement("div"); d.className = "fx-sky";

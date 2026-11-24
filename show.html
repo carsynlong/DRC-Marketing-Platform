@@ -1431,8 +1431,10 @@ const SLIDES=[
     </div></div>`,
    enter(el){const cards=[...el.querySelectorAll(".lc")];let i=0;
      const box=el.querySelector("#hgfact");const facts=factDeck();for(let k=0;k<=facts.length;k+=5)facts.splice(k,0,["🎂 ROYAL NEWS","Yesterday was QUEEN MOTHER's birthday! Wish her a happy birthday when you see her.","#ff9ad5"]);let f=0;
-     const fact=()=>{box.style.opacity=0;setTimeout(()=>{const [lab,txt,col]=facts[f%facts.length];box.innerHTML=`<div class="eb" style="color:${col}">${lab}</div><div style="font-size:32px;font-weight:600;line-height:1.3;margin-top:8px">${esc(txt)}</div>`;box.style.opacity=1;f++},600)};
-     fact();const fiv=setInterval(()=>{if(curEl!==el){clearInterval(fiv);return}fact()},FACT_MS);
+     // the birthday card stays up 3x as long as a normal fact
+     const fact=()=>{const [lab,txt,col]=facts[f%facts.length];box.style.opacity=0;setTimeout(()=>{box.innerHTML=`<div class="eb" style="color:${col}">${lab}</div><div style="font-size:32px;font-weight:600;line-height:1.3;margin-top:8px">${esc(txt)}</div>`;box.style.opacity=1},600);f++;
+       setTimeout(()=>{if(curEl===el)fact()},lab==="🎂 ROYAL NEWS"?FACT_MS*3:FACT_MS)};
+     fact();
      const show=()=>{cards.forEach((c,j)=>c.classList.toggle("on",j===i))};
      show();const iv=setInterval(()=>{if(curEl!==el){clearInterval(iv);return}i=(i+1)%cards.length;show()},4500)}},
  {id:"title",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:20px">

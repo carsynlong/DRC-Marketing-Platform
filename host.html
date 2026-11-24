@@ -138,7 +138,26 @@ function questUI(){
     <div class="qrow" style="margin-top:10px"><input type="text" id="dtext" placeholder="Optional: type QUEEN MOTHER's decree (blank = random)" maxlength="130"></div>
     <h2 style="margin-top:16px">🐺 Sabotage the online games</h2><p>Hits the tribute picked above (or 🎲 Random) on their phone while they play Who's That Tribute, District Feud or District Secrets.</p>
     <div class="tiles twists">${SAB.map(([k,i,l,d])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Freeze everyone BUT picked<small>Only they can play for 8 seconds</small></button></div>
+    <h2 style="margin-top:16px">🎙️ Soundboard</h2><div class="tiles">${XM.SOUNDBOARD.map(([k,i,l])=>`<button data-snd="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
+    <h2 style="margin-top:16px">🗳️ Phone vote</h2>
+    <div class="qrow"><select id="psel">${XM.POLLS.map(x=>`<option>${esc(x)}</option>`).join("")}<option value="own">✏️ Write my own...</option></select><input type="text" id="pown" placeholder="Your question" maxlength="110" style="display:none"></div>
+    <div class="tiles"><button id="popen"><span class="i">🗳️</span>Open the vote<small>Everyone votes on their phone, live on the TV</small></button><button id="pclose"><span class="i">🏁</span>Reveal the winner</button></div>
+    <h2 style="margin-top:16px">💰 Betting</h2>
+    <div class="qrow"><select id="bgame">${Object.values(XM.GAMES).map(g=>`<option>${esc(g.name)}</option>`).join("")}<option>the next game</option></select></div>
+    <div class="tiles"><button id="bopen"><span class="i">💰</span>Open bets<small>Bet 1 to 3 points on who wins</small></button><button id="block"><span class="i">🔒</span>Lock bets</button>
+      <button id="bpay"><span class="i">🏆</span>Pay out<small>The tribute picked above won (or just record the victor on the show)</small></button><button id="bcancel"><span class="i">↩️</span>Cancel bets</button></div>
+    <h2 style="margin-top:16px">🎉 Big moments</h2>
+    <div class="tiles"><button data-big="photo"><span class="i">📸</span>Photo booth<small>Laptop camera, framed photo, slideshow at the end</small></button><button data-big="draft"><span class="i">🎁</span>Major award draft order<small>Most points picks first</small></button><button data-big="awards"><span class="i">🏁</span>End-of-night awards<small>Most Sabotaged, Biggest Snitch and more</small></button></div>
     <div class="msg" id="qmsg"></div>`;
+  q.querySelectorAll("[data-snd]").forEach(b=>b.onclick=()=>send("sfx:"+b.dataset.snd,"qmsg"));
+  q.querySelectorAll("[data-big]").forEach(b=>b.onclick=()=>send(b.dataset.big,"qmsg"));
+  const ps=q.querySelector("#psel"),po=q.querySelector("#pown");ps.onchange=()=>po.style.display=ps.value==="own"?"":"none";
+  q.querySelector("#popen").onclick=async()=>{const t=ps.value==="own"?po.value.trim():ps.value;if(!t)return msg("Type your question first.");const r=await call({a:"pollopen",q:t});msg(r.ok?"🗳️ Vote is open":"Couldn't open the vote.")};
+  q.querySelector("#pclose").onclick=async()=>{const r=await call({a:"pollclose"});msg(r.ok?(r.win.length?`🏁 Winner: ${r.win.join(" & ")}`:"🏁 Nobody voted"):"No vote running.")};
+  q.querySelector("#bopen").onclick=async()=>{const r=await call({a:"betopen",game:q.querySelector("#bgame").value});msg(r.ok?"💰 Betting is open":"Couldn't open bets.")};
+  q.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});msg(r.ok?"🔒 Bets locked":"No open betting.")};
+  q.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random")return msg("Click who WON at the top first.");const r=await call({a:"betpay",winner:qn});msg(r.ok?`🏆 Paid out on ${qn}`:"No betting round.")};
+  q.querySelector("#bcancel").onclick=async()=>{const r=await call({a:"betcancel"});msg(r.ok?"↩️ Bets canceled":"No betting round.")};
   q.querySelectorAll("[data-tw]").forEach(b=>b.onclick=async()=>{const r=await call({a:"tw",kind:b.dataset.tw,to:qn||"random",text:b.dataset.tw==="decree"?q.querySelector("#dtext").value.trim():undefined});
     msg(!r.ok?"Couldn't send.":r.tw.mission?`🕵️ ${r.tw.to}'s secret mission: ${r.tw.mission}`:`${b.querySelector(".i").textContent} Sent${r.tw.to?" ("+r.tw.to+(r.tw.with?" + "+r.tw.with:"")+")":""}`)});
   q.querySelectorAll("[data-sab]").forEach(b=>b.onclick=async()=>{if(!qn||(b.dataset.allbut&&qn==="random"))return msg("Click a tribute first.");const r=await call({a:"sab",to:qn,kind:b.dataset.sab,allBut:!!b.dataset.allbut});msg(r.ok?`${b.querySelector(".i").textContent} Got ${r.sab.to}!`:"Couldn't send.")});
@@ -164,7 +183,7 @@ const spState=()=>{let on=false;try{on=localStorage.getItem("xmas-sponsor-auto")
 document.getElementById("spon").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","1")}catch(e){}send("sponsor:on","tmsg");spState()};
 document.getElementById("spoff").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","0")}catch(e){}send("sponsor:off","tmsg");spState()};spState();
 // reset
-const KEYS=["xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
+const KEYS=["xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
 let armed=0;const rb=document.getElementById("reset");
 rb.onclick=()=>{const m=document.getElementById("rmsg");
   if(Date.now()-armed>4000){armed=Date.now();m.textContent="Click again to really reset everything.";return}

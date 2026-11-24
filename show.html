@@ -217,6 +217,30 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:58;background:rgba(13,31,24,.95);color:var(--ink);font-weight:800;font-size:clamp(18px,2vw,30px);padding:12px 26px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);animation:popIn .4s both;pointer-events:none}
 .chute{position:fixed;left:50%;top:-30vh;z-index:54;font-size:clamp(90px,12vw,190px);line-height:.9;text-align:center;pointer-events:none;animation:chute 4.2s cubic-bezier(.3,.6,.4,1) forwards}
 @keyframes chute{0%{transform:translate(-50%,0) rotate(-8deg)}25%{transform:translate(-40%,30vh) rotate(8deg)}50%{transform:translate(-58%,55vh) rotate(-6deg)}75%{transform:translate(-46%,75vh) rotate(5deg)}100%{transform:translate(-50%,130vh) rotate(0)}}
+/* votes, bets, snitches, draft, awards, photo booth */
+.vgrid2{display:grid;grid-template-columns:repeat(6,1fr);gap:16px 22px;width:min(1500px,92vw)}
+.vgrid2 .vc{display:grid;justify-items:center;gap:4px;position:relative}
+.vgrid2 img{width:min(120px,12vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line);transition:box-shadow .3s,transform .3s}
+.vgrid2 .vc.lead img{box-shadow:0 0 0 6px var(--gold);transform:scale(1.08)}
+.vgrid2 b{font-weight:800;font-size:1.1rem}
+.vgrid2 .n{position:absolute;top:-6px;right:12%;min-width:42px;height:42px;border-radius:21px;background:var(--red);color:#fff;font-weight:900;font-size:1.4rem;display:grid;place-items:center;box-shadow:0 0 0 3px var(--gold)}
+.vgrid2 .n:empty{display:none}
+.snitch{position:fixed;left:18px;bottom:80px;z-index:58;display:flex;gap:12px;align-items:center;background:#2a0a0a;border-radius:20px;padding:12px 18px;box-shadow:0 0 0 3px #ff4d4d,0 14px 30px rgba(0,0,0,.6);animation:popIn .4s both;max-width:min(640px,60vw)}
+.snitch img{width:70px;height:70px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.snitch div{font-weight:800;font-size:clamp(16px,1.6vw,26px);line-height:1.2}
+.draftrow{display:grid;grid-template-columns:110px 66px 1fr 70px;gap:12px;align-items:center;font-size:clamp(1.1rem,1.8vw,1.7rem);font-weight:800;text-align:left;width:min(700px,44vw);animation:popIn .5s both}
+.draftrow img{width:60px;height:60px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.draftrow .pk{font-family:var(--display);color:var(--gold)}
+.award{display:grid;justify-items:center;gap:10px;animation:popIn .6s both}
+.award img{width:min(240px,26vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 8px var(--gold),0 0 60px rgba(232,176,75,.6)}
+.booth{position:relative;width:min(1100px,86vw);aspect-ratio:16/9;border-radius:26px;overflow:hidden;box-shadow:0 0 0 10px var(--gold),0 0 0 20px var(--red)}
+.booth video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);background:#000}
+.booth .cap{position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.75));font-family:var(--display);font-size:clamp(1.6rem,3.4vw,3rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d)}
+.booth .cd{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(6rem,18vh,12rem);color:#fff;text-shadow:0 6px 20px rgba(0,0,0,.6)}
+.flashw{position:fixed;inset:0;background:#fff;z-index:70;pointer-events:none;animation:flash .6s ease-out forwards}
+.polaroid{position:fixed;right:40px;bottom:90px;z-index:8;background:#fbf6ea;padding:14px 14px 50px;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);transform:rotate(4deg);width:min(460px,28vw)}
+.polaroid img{width:100%;display:block;border-radius:3px}
+.polaroid b{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:#13271f;font-family:var(--display);font-size:clamp(14px,1.4vw,22px)}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:520px}
 /* who's joined on their phone: all 12 tributes, dim until they join */
@@ -752,6 +776,9 @@ function twistTo(d){
     const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"clearphones",pin})}).catch(()=>null);
     if(r&&r.ok){toast("📱 All phones cleared. Everyone scans to join again.");showLive({});showJoined([])}
     else if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}else alert("Couldn't reach the server. Check the internet.")});
+  item("📸 Photo booth",()=>photoBooth());
+  item("🎁 Major award draft order",()=>draftOrder());
+  item("🏁 End-of-night awards",()=>nightAwards());
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
   item("✕ Close",()=>{});
   b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};
@@ -759,8 +786,153 @@ function twistTo(d){
   document.addEventListener("click",e=>{if(!m.contains(e.target)&&e.target!==b)show(false)},true);
   document.body.appendChild(b);document.body.appendChild(m);
 })();
+/* ---------- 📋 scoreboard for the Gamemaker's phone: publish results whenever they change ---------- */
+let lastResults="";
+function publishResults(){
+  const r={victors:XM.victors(),seconds:XM.seconds(),bingo:XM.store.get("xmas-bingo-winners",{}),ties:XM.store.get("xmas-ties",[]),awards:XM.store.get("xmas-awards",{}),
+    games:Object.fromEntries(Object.entries(GAMES).map(([k,g])=>[k,{n:g.n,name:g.name}])),ultimate:(()=>{try{return ultimateList()}catch(e){return null}})()};
+  const j=JSON.stringify(r);if(j===lastResults)return;
+  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"results",results:r})}).then(x=>{if(x.ok)lastResults=j}).catch(()=>{});
+}
+setInterval(publishResults,5000);
+/* ---------- 🗳️ phone votes ---------- */
+let voteUI=null;
+function hostCall(body){let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN:");if(!pin)return Promise.resolve(null);try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+  return fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...body,pin})}).then(async r=>{if(r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}return r}).catch(()=>null)}
+function openVote(p){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return toast("🗳️ Vote open on your phones: "+p.q,6000);
+  const {m,close}=openMoment("twist");
+  m.innerHTML=`<div class="inner"><div class="eb">🗳️ VOTE ON YOUR PHONE NOW</div><h1 style="font-size:clamp(2.2rem,5vw,4.4rem)">${esc(p.q)}</h1>
+    <div class="vgrid2">${TRIBUTES.map(t=>`<div class="vc" data-v="${esc(t.name)}"><img src="${t.img}" alt=""><span class="n"></span><b>${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</b></div>`).join("")}</div>
+    <div class="say" id="vtot" style="font-size:1.4rem">0 votes</div>
+    <div class="row"><button class="btn red" id="vreveal">🏁 Reveal the winner</button><button class="btn ghost" id="vx">Close (Esc)</button></div></div>`;
+  m.querySelector("#vreveal").onclick=e=>{e.stopPropagation();hostCall({a:"pollclose"})};m.querySelector("#vx").onclick=e=>{e.stopPropagation();close()};
+  XM.sfx("reveal");XM.playSong("hh_lounge");announcer.say("Time to vote! "+p.q+" Vote on your phones now.",null,{pitch:.15,rate:.9});
+  voteUI={id:p.id,m,close};
+}
+function updateVote(p){if(!voteUI||!voteUI.m.isConnected||!p||p.id!==voteUI.id)return;const c={};Object.values(p.votes||{}).forEach(v=>c[v]=(c[v]||0)+1);
+  const max=Math.max(0,...Object.values(c));voteUI.m.querySelectorAll("[data-v]").forEach(x=>{const n=c[x.dataset.v]||0;x.querySelector(".n").textContent=n||"";x.classList.toggle("lead",n>0&&n===max)});
+  const tot=Object.keys(p.votes||{}).length;const t=voteUI.m.querySelector("#vtot");if(t)t.textContent=tot+" vote"+(tot===1?"":"s")}
+function voteResult(r){
+  if(voteUI&&voteUI.m.isConnected)voteUI.close();voteUI=null;if(busy())document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return;
+  const {m,close}=openMoment("twist");const w=r.win||[];
+  m.innerHTML=`<div class="inner"><div class="eb">🗳️ THE PEOPLE HAVE SPOKEN</div><h1 style="font-size:clamp(2rem,4.4vw,3.8rem)">${esc(r.q)}</h1>
+    ${w.length?`<div class="duo">${w.map(n=>`<div>${face(n)}<b>${esc(n)}</b></div>`).join("")}</div><div class="say">${w.length>1?"It's a tie!":""} ${r.counts[w[0]]} vote${r.counts[w[0]]===1?"":"s"}</div>`:`<div class="say">Nobody voted!</div>`}
+    <button class="btn ghost" id="rx">Close (Esc)</button></div>`;
+  m.querySelector("#rx").onclick=e=>{e.stopPropagation();close()};XM.stopSong();
+  if(w.length){XM.sfx("drumroll");setTimeout(()=>{XM.sfx("fanfare");XM.confetti(160,true);announcer.say(`${r.q} The winner${w.length>1?"s are":" is"}: ${w.map(XM.spoken).join(" and ")}!`,null,{pitch:.1,rate:.88})},1200)}
+}
+/* ---------- 💰 betting on the next game ---------- */
+let betState=null,betUI=null;
+function openBets(b){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return toast("💰 Betting is open on your phones!",6000);
+  const {m,close}=openMoment("twist feast");
+  m.innerHTML=`<div class="inner"><div class="eb">💰 PLACE YOUR BETS</div><h1>Who wins ${esc(b.game)}?</h1>
+    <div class="say">Bet 1, 2 or 3 Capitol Points on your phone. Pick right and you win that many. Pick wrong and you lose them.</div>
+    <div class="vgrid2">${TRIBUTES.map(t=>`<div class="vc" data-v="${esc(t.name)}"><img src="${t.img}" alt=""><span class="n"></span><b>${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</b></div>`).join("")}</div>
+    <div class="say" id="btot" style="font-size:1.3rem">No bets yet</div>
+    <div class="row"><button class="btn red" id="block">🔒 Lock the bets</button><button class="btn ghost" id="bx">Close (Esc)</button></div></div>`;
+  m.querySelector("#block").onclick=e=>{e.stopPropagation();hostCall({a:"betlock"})};m.querySelector("#bx").onclick=e=>{e.stopPropagation();close()};
+  XM.sfx("sparkle");XM.playSong("hh_lrc");announcer.say(`Place your bets! Who wins ${b.game}? Bet on your phones now.`,null,{pitch:.15,rate:.9});
+  betUI={id:b.id,m,close};
+}
+function updateBets(b){betState=b;if(!betUI||!betUI.m.isConnected||!b||b.id!==betUI.id)return;const c={};let n=0;
+  Object.values(b.bets||{}).forEach(x=>{c[x.on]=(c[x.on]||0)+x.amt;n++});
+  betUI.m.querySelectorAll("[data-v]").forEach(x=>{x.querySelector(".n").textContent=c[x.dataset.v]?"💰"+c[x.dataset.v]:"";x.classList.toggle("lead",!!c[x.dataset.v])});
+  const t=betUI.m.querySelector("#btot");if(t)t.textContent=n?`${n} bet${n===1?"":"s"} placed`:"No bets yet"}
+function betPaid(r){
+  if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;setBanner("bets",null);if(busy())return toast(`💰 Bets paid on ${r.winner}`);
+  const {m,close}=openMoment("twist feast");const res=(r.results||[]).sort((a,b)=>b.n-a.n);
+  m.innerHTML=`<div class="inner"><div class="eb">💰 THE BETS ARE IN · ${esc(r.game)}</div><h1>${esc(r.winner)} won!</h1>
+    <div style="display:grid;gap:8px">${res.length?res.map(x=>`<div class="ptsrow">${face(x.who)||"<span></span>"}<span>${esc(x.who)}</span><span style="font-size:.8em;opacity:.8">bet ${x.amt} on ${esc(x.on)}</span><span class="v ${x.n<0?"neg":""}">${x.n>0?"+":""}${x.n}</span></div>`).join(""):`<div class="say">Nobody bet. Cowards.</div>`}</div>
+    <button class="btn ghost" id="px">Close (Esc)</button></div>`;
+  m.querySelector("#px").onclick=e=>{e.stopPropagation();close()};XM.sfx("fanfare");
+  const won=res.filter(x=>x.n>0).map(x=>XM.spoken(x.who));announcer.say(won.length?`The bets are in! Winners: ${won.join(", ")}!`:"The bets are in! Nobody picked the winner!",null,{pitch:.1,rate:.9});
+}
+/* ---------- 🚨 snitches from phones ---------- */
+function snitchCard(x){const d=document.createElement("div");d.className="snitch";
+  d.innerHTML=`${face(x.to)}<div>🚨 <span style="color:#ff8a7a">${esc(x.from)}</span> reports:<br>${esc(x.to)} ${esc(x.why)}!</div>`;document.body.appendChild(d);
+  XM.sfx("siren");setTimeout(()=>d.remove(),7000)}
+/* ---------- 🎁 major award draft order, by Capitol Points ---------- */
+function draftOrder(){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return;
+  const {m,T,close}=openMoment("twist feast");const pts=lastPoints||{};
+  const order=TRIBUTES.map(t=>t.name).map(n=>[n,pts[n]||0,Math.random()]).sort((a,b)=>b[1]-a[1]||a[2]-b[2]);
+  m.innerHTML=`<div class="inner"><div class="eb">🎁 MAJOR AWARD DRAFT</div><h1>Who Picks First?</h1><div class="say" style="font-size:1.3rem">Most Capitol Points picks first. Ties are settled by the Capitol (randomly).</div>
+    <div id="drows" style="display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:row;gap:8px 40px"></div><button class="btn ghost" id="dx">Close (Esc)</button></div>`;
+  m.querySelector("#dx").onclick=e=>{e.stopPropagation();close()};XM.playSong("march");
+  const rows=m.querySelector("#drows");
+  order.slice().reverse().forEach(([n,p],i)=>T(()=>{const k=order.length-i;const r=document.createElement("div");r.className="draftrow";
+    r.innerHTML=`<span class="pk">Pick ${k}</span>${face(n)||"<span></span>"}<span>${esc(n)}</span><span style="color:var(--gold);text-align:right">${p>0?"+":""}${p}</span>`;
+    rows.prepend(r);XM.sfx(k===1?"fanfare":"drum");if(k===1){XM.confetti(160,true);announcer.say(`${XM.spoken(n)} picks first!`,null,{pitch:.1,rate:.9})}},800+i*1100));
+}
+/* ---------- 🏁 end-of-night awards ---------- */
+async function nightAwards(){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return;
+  let j=null;try{j=await (await fetch("/api/show?a=stats",{cache:"no-store"})).json()}catch(e){}
+  const st=(j&&j.stats)||{},pts=(j&&j.points)||lastPoints||{},joined=(j&&j.joined)||[];const names=TRIBUTES.map(t=>t.name);
+  const top=(pre,min=1)=>{let best=null,v=min-1;names.forEach(n=>{const x=st[pre+n]||0;if(x>v){v=x;best=n}});return best?[best,v]:null};
+  const wins={};Object.values(XM.victors()).forEach(n=>{if(n)wins[n]=(wins[n]||0)+1});
+  const A=[];const add=(ic,t,r,why)=>{if(r)A.push({ic,t,n:r[0],why:why(r[1])})};
+  add("🏆","Most Victorious",(()=>{let b=null,v=0;Object.entries(wins).forEach(([n,c])=>{if(c>v){v=c;b=n}});return b?[b,v]:null})(),v=>`${v} game${v===1?"":"s"} won`);
+  add("⭐","Capitol Points Champion",(()=>{let b=null,v=0;Object.entries(pts).forEach(([n,c])=>{if(c>v){v=c;b=n}});return b?[b,v]:null})(),v=>`${v} points`);
+  add("💀","Biggest Point Loser",(()=>{let b=null,v=0;Object.entries(pts).forEach(([n,c])=>{if(c<v){v=c;b=n}});return b?[b,v]:null})(),v=>`${v} points`);
+  add("🐺","Most Sabotaged",top("sab:"),v=>`sabotaged ${v} time${v===1?"":"s"}`);
+  add("⚔️","Side Quest Champion",top("qdone:"),v=>`${v} side quest${v===1?"":"s"} done`);
+  add("🙈","Worst at Side Quests",top("qfail:"),v=>`failed ${v}`);
+  add("🚨","Biggest Snitch",top("snitcher:"),v=>`${v} report${v===1?"":"s"}`);
+  add("🎯","Most Wanted",top("snitched:"),v=>`snitched on ${v} time${v===1?"":"s"}`);
+  add("📣","Loudest Fan",top("react:"),v=>`${v} emoji${v===1?"":"s"} sent`);
+  add("🎥","Camera Hog",top("live:"),v=>`went live ${v} time${v===1?"":"s"}`);
+  add("🗳️","The People's Choice",top("votewin:"),v=>`won ${v} vote${v===1?"":"s"}`);
+  const quiet=joined.filter(n=>!st["react:"+n]);if(quiet.length)A.push({ic:"🤫",t:"Quietest Tribute",n:quiet[Math.floor(Math.random()*quiet.length)],why:"not a single emoji all night"});
+  const {m,T,close}=openMoment("twist feast");XM.playSong("board");
+  if(!A.length){m.innerHTML=`<div class="inner"><h1>No awards yet</h1><div class="say">Play some games first!</div><button class="btn ghost" id="ax">Close (Esc)</button></div>`;m.querySelector("#ax").onclick=e=>{e.stopPropagation();close()};return}
+  let i=0;const show=()=>{if(!m.isConnected)return;const a=A[i];
+    m.innerHTML=`<div class="inner"><div class="eb">🏁 END-OF-NIGHT AWARDS · ${i+1} OF ${A.length}</div><div class="award"><div class="big">${a.ic}</div><h1>${esc(a.t)}</h1>${face(a.n)}<div class="say">${esc(a.n)}<br><span style="font-size:.7em;opacity:.85">${esc(a.why)}</span></div></div>
+      <div class="row">${i<A.length-1?`<button class="btn red" id="anext">Next award ▶</button>`:""}<button class="btn ghost" id="ax">Close (Esc)</button></div></div>`;
+    m.querySelector("#ax").onclick=e=>{e.stopPropagation();close()};const nb=m.querySelector("#anext");if(nb)nb.onclick=e=>{e.stopPropagation();i++;show()};
+    XM.sfx("drumroll");T(()=>{XM.sfx("fanfare");XM.confetti(120,true)},900);announcer.say(`The award for ${a.t} goes to... ${XM.spoken(a.n)}!`,null,{pitch:.1,rate:.88})};
+  show();
+}
+/* ---------- 📸 photo booth (only when the Gamemaker taps it) ---------- */
+async function photoBooth(){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return;
+  const s=SLIDES[cur],g=Object.keys(GAMES).find(k=>s&&s.id.endsWith("-"+k)),v=g&&XM.victors()[g];
+  const cap=v?`🏆 ${v} · ${GAMES[g].name} Victor`:"The 2026 Christmas Games";
+  const {m,close}=openMoment("twist feast",{stopMusic:false});let stream=null;
+  m.innerHTML=`<div class="inner"><div class="eb">📸 CAPITOL PHOTO BOOTH</div><div class="booth"><video autoplay playsinline muted></video><div class="cap">${esc(cap)}</div><div class="cd" id="pcd"></div></div>
+    <div class="row"><button class="btn red" id="psnap">📸 Snap (3, 2, 1)</button><button class="btn ghost" id="px">Close (Esc)</button></div></div>`;
+  m.onClose=()=>{if(stream)stream.getTracks().forEach(t=>t.stop())};
+  m.querySelector("#px").onclick=e=>{e.stopPropagation();close()};
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720}},audio:false});m.querySelector("video").srcObject=stream}
+  catch(e){m.querySelector(".cd").textContent="📷";m.querySelector(".cap").textContent="Camera blocked. Allow the camera for this site in Chrome.";return}
+  m.querySelector("#psnap").onclick=e=>{e.stopPropagation();const cd=m.querySelector("#pcd");let n=3;cd.textContent=n;XM.sfx("tick");
+    const iv=setInterval(()=>{n--;if(n>0){cd.textContent=n;XM.sfx("tick");return}clearInterval(iv);cd.textContent="";
+      const v=m.querySelector("video");if(!v||!v.videoWidth)return;const c=document.createElement("canvas");c.width=960;c.height=540;const x=c.getContext("2d");
+      x.save();x.translate(960,0);x.scale(-1,1);const sw=v.videoWidth,sh=v.videoHeight,sc=Math.max(960/sw,540/sh);x.drawImage(v,(960-sw*sc)/2,(540-sh*sc)/2,sw*sc,sh*sc);x.restore();
+      x.lineWidth=18;x.strokeStyle="#e8b04b";x.strokeRect(9,9,942,522);const gr=x.createLinearGradient(0,430,0,540);gr.addColorStop(0,"rgba(0,0,0,0)");gr.addColorStop(1,"rgba(0,0,0,.75)");x.fillStyle=gr;x.fillRect(18,430,924,92);
+      x.fillStyle="#e8b04b";x.font="bold 34px Rye, Georgia, serif";x.textAlign="center";x.fillText(cap.replace(/^🏆 /,""),480,505);
+      const img=c.toDataURL("image/jpeg",.72);const L=XM.store.get("xmas-photos",[]);L.push({cap,img});while(L.length>12)L.shift();XM.store.set("xmas-photos",L);
+      const f=document.createElement("div");f.className="flashw";document.body.appendChild(f);setTimeout(()=>f.remove(),700);XM.sfx("shutter");
+      cd.innerHTML=`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover">`;setTimeout(()=>{if(cd.isConnected)cd.innerHTML=""},2500)},1000)};
+}
+/* ---------- 🎵 walk-up song when a victor is recorded ---------- */
+async function walkUp(n){try{const j=await (await fetch("/api/show?a=stats",{cache:"no-store"})).json();const song=j.walkups&&j.walkups[n];if(song)XM.playSong(song)}catch(e){}}
 function runCmd(c,data){
   if(!started)return;
+  if(c.startsWith("sfx:")){XM.sfx(c.slice(4));if(c==="sfx:cannon")shake();return}
+  if(c==="poll"&&data)return openVote(data);
+  if(c==="pollresult"&&data)return voteResult(data);
+  if(c==="pollreveal")return void hostCall({a:"pollclose"});
+  if(c==="betopen"&&data)return openBets(data);
+  if(c==="betlock"&&data){if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;XM.sfx("gong");setBanner("bets",`💰 BETS LOCKED for ${data.game}`);toast("🔒 Bets are locked!");return}
+  if(c==="betcancel"){if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;setBanner("bets",null);return}
+  if(c==="betpaid"&&data)return betPaid(data);
+  if(c==="snitch"&&data)return snitchCard(data);
+  if(c==="draft")return draftOrder();
+  if(c==="awards")return void nightAwards();
+  if(c==="photo")return void photoBooth();
   if(c==="tw"&&data)return twistTo(data);
   if(c==="sab"&&data){XM.sfx("stinger");toast(data.allBut?`❄️ The Gamemaker froze EVERYONE except ${data.to}!`:`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"⚠️"} The Gamemaker sabotaged ${data.to}!`);return}
   if(c==="sponsor")return void sponsorDrop();
@@ -786,6 +958,7 @@ function startPhonePoll(){
       if(cmdSince===null)cmdSince=Math.max(0,...(j.cmds||[]).map(x=>x.id));  // skip remote taps sent before the show opened
       else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd,x.data)}
       if(j.points)lastPoints=j.points;
+      if(j.poll)updateVote(j.poll);betState=j.bets||null;if(j.bets)updateBets(j.bets);
       if(reactSince===null){reactSince=Math.max(0,...(j.reacts||[]).map(x=>x.id))}  // skip reactions sent before the show opened
       else for(const x of j.reacts||[]){reactSince=Math.max(reactSince,x.id);phoneReact(x)}
       showLive(j.live||{});showJoined(j.joined||[])}}catch(e){}
@@ -1059,6 +1232,8 @@ const SLIDES=[
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
     <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div>`,
    enter(el){SNOW.set(3.2);
+     const ph=XM.store.get("xmas-photos",[]);if(ph.length){const p=document.createElement("div");p.className="polaroid fade";el.appendChild(p);let i=0;
+       const nx=()=>{if(curEl!==el)return;const x=ph[i++%ph.length];p.innerHTML=`<img src="${x.img}" alt=""><b>${esc(x.cap.replace(/^🏆 /,""))}</b>`;st(nx,4000)};nx()}
      st(()=>{if(curEl!==el)return;XM.sfx("boom");st(()=>XM.sfx("boom"),380);st(()=>XM.sfx("cheer"),600);st(()=>XM.sfx("applause"),1800);
        [1200,1800,2400,3100,3800,4600].forEach(t=>st(()=>curEl===el&&XM.sfx("firework"),t));XM.confetti(260,true);st(()=>curEl===el&&XM.confetti(220,true),2500)},1000);
      announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;XM.duck(true);
@@ -1201,7 +1376,9 @@ function pickVictor(g,place=1){
   ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;
     if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
     close();refreshCorners();XM.stopSong();
-    if(place===1){XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten"&&g!=="bingo")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
+    if(place===1){setTimeout(()=>walkUp(n),4200);
+      if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length)setTimeout(()=>{if(confirm(`Pay out the bets on ${n}?`))hostCall({a:"betpay",winner:n})},6500);
+      XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten"&&g!=="bingo")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
     else XM.celebrate(n,{intro:"And in second place"})});
   const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};
   ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};

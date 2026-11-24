@@ -19,7 +19,13 @@ const P = "sh:";
 // The Gamemaker's phone remote and twists need this PIN (only Carsyn knows it).
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
-  "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off"];
+  "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "draft", "awards", "photo", "pollreveal", "betlock"];
+// 🎙️ soundboard: the TV plays these
+const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
+const SONGS = ["hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
+const WHY = ["fell asleep", "is cheating", "is on their phone", "is talking trash", "broke the rule", "stole a snack", "is hogging the snacks", "didn't do their side quest"];
+const stat = (k, n = 1) => redis.hincrby(P + "stats", k, n);
+const jget = async k => { const r = await redis.get(k); try { return r ? (typeof r === "string" ? JSON.parse(r) : r) : null; } catch { return null; } };
 
 const MISSIONS = [
   "Get Grandad to say the word \"turkey\" without asking him to",
@@ -61,7 +67,12 @@ export default async function handler(req, res) {
     let mission = null;
     if (me) { const m = await redis.hget(P + "missions", me); try { mission = m ? (typeof m === "string" ? JSON.parse(m) : m) : null; } catch {} }
     const epoch = Number(await redis.get(P + "epoch")) || 0;
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, now: Date.now() });
+    const live = (await jget(P + "live")) || {};
+    let vote = null, bet = null, walkup = null;
+    if (live.poll && live.poll.open) vote = { ...live.poll, mine: me ? await redis.hget(P + "votes:" + live.poll.id, me) : null };
+    if (live.bet && live.bet.state !== "paid") { const mb = me ? await redis.hget(P + "bets:" + live.bet.id, me) : null; let mine = null; try { mine = mb ? (typeof mb === "string" ? JSON.parse(mb) : mb) : null; } catch {} bet = { ...live.bet, mine }; }
+    if (me) walkup = await redis.hget(P + "walkups", me);
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -76,6 +87,17 @@ export default async function handler(req, res) {
     return reply(res, 200, { sabs: out.reverse() });
   }
 
+  // 📋 results the TV laptop publishes (victors, 2nd places, bingo rounds, tiebreakers), for the Gamemaker's phone
+  if (req.method === "GET" && a === "results") {
+    return reply(res, 200, { results: await jget(P + "results"), points: await points() });
+  }
+
+  if (req.method === "GET" && a === "stats") {
+    const [st, w] = await Promise.all([hash(P + "stats"), hash(P + "walkups")]);
+    const o = {}; for (const [k, v] of Object.entries(st)) o[k] = Number(v) || 0;
+    return reply(res, 200, { stats: o, walkups: w, points: await points(), joined: Object.keys(await hash(P + "players")) });
+  }
+
   if (req.method === "GET" && a === "tv") {
     const since = Number(req.query.since) || 0, csince = Number(req.query.csince) || 0;
     const [log, players, cams, clog] = await Promise.all([redis.lrange(P + "reactlog", 0, 39), hash(P + "players"), hash(P + "cams"), redis.lrange(P + "cmdlog", 0, 19)]);
@@ -88,11 +110,21 @@ export default async function handler(req, res) {
       try { const o = JSON.parse(v); if (now - o.t < 6000) live[name] = o.img; else stale.push(name); } catch { stale.push(name); }
     }
     if (stale.length) await redis.hdel(P + "cams", ...stale);
-    return reply(res, 200, { reacts: reacts.reverse(), live, joined: Object.keys(players), cmds: cmds.reverse(), points: await points() });
+    const lv = (await jget(P + "live")) || {};
+    let poll = null, bets = null;
+    if (lv.poll && lv.poll.open) { const v = await hash(P + "votes:" + lv.poll.id); poll = { ...lv.poll, votes: v }; }
+    if (lv.bet && lv.bet.state !== "paid") { const b = await hash(P + "bets:" + lv.bet.id); const o = {}; for (const [k, x] of Object.entries(b)) { try { o[k] = JSON.parse(x); } catch {} } bets = { ...lv.bet, bets: o }; }
+    return reply(res, 200, { reacts: reacts.reverse(), live, joined: Object.keys(players), cmds: cmds.reverse(), points: await points(), poll, bets });
   }
 
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const pid = text(req.body?.pid, 64), name = text(req.body?.name, 40);
+
+  if (a === "results") {
+    const r = req.body?.results; if (!r || typeof r !== "object") return reply(res, 400, { error: "Missing results" });
+    const j = JSON.stringify({ ...r, t: Date.now() }); if (j.length > 20000) return reply(res, 400, { error: "Too big" });
+    await redis.set(P + "results", j, { ex: 60 * 60 * 24 * 3 }); return reply(res, 200, { ok: true });
+  }
 
   if (a === "state") {
     const s = req.body?.slide;
@@ -128,8 +160,45 @@ export default async function handler(req, res) {
     if (allBut) { const o = {}; for (const n of others([to])) o[n] = JSON.stringify(s); await redis.hset(P + "sab", o); }
     else await redis.hset(P + "sab", { [to]: JSON.stringify(s) });
     await redis.lpush(P + "sablog", JSON.stringify(s)); await redis.ltrim(P + "sablog", 0, 9);
+    if (allBut) { for (const n of others([to])) await stat("sab:" + n); } else await stat("sab:" + to);
     await pushCmd("sab", s);
     return reply(res, 200, { ok: true, sab: s });
+  }
+
+  if (["pollopen", "pollclose", "betopen", "betpay", "betcancel"].includes(a)) {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const lv = (await jget(P + "live")) || {};
+    if (a === "pollopen") {
+      const q = text(req.body?.q, 120); if (!q) return reply(res, 400, { error: "Missing question" });
+      lv.poll = { id: Date.now(), q, open: true }; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 });
+      await pushCmd("poll", lv.poll); return reply(res, 200, { ok: true, poll: lv.poll });
+    }
+    if (a === "pollclose") {
+      if (!lv.poll) return reply(res, 409, { error: "No vote running" });
+      const v = await hash(P + "votes:" + lv.poll.id), c = {};
+      for (const x of Object.values(v)) c[x] = (c[x] || 0) + 1;
+      const max = Math.max(0, ...Object.values(c)), win = Object.keys(c).filter(k => c[k] === max && max > 0);
+      for (const w of win) await stat("votewin:" + w);
+      lv.poll.open = false; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 });
+      await pushCmd("pollresult", { ...lv.poll, counts: c, win }); return reply(res, 200, { ok: true, counts: c, win });
+    }
+    if (a === "betopen") {
+      lv.bet = { id: Date.now(), game: text(req.body?.game, 60) || "the next game", state: "open" };
+      await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 }); await pushCmd("betopen", lv.bet); return reply(res, 200, { ok: true, bet: lv.bet });
+    }
+    if (!lv.bet || lv.bet.state === "paid") return reply(res, 409, { error: "No betting round" });
+    if (a === "betcancel") { lv.bet.state = "paid"; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 }); await pushCmd("betcancel", {}); return reply(res, 200, { ok: true }); }
+    const winner = text(req.body?.winner, 40); if (!NAMES.includes(winner)) return reply(res, 400, { error: "Unknown tribute" });
+    const b = await hash(P + "bets:" + lv.bet.id), results = [];
+    for (const [who, raw] of Object.entries(b)) { let x; try { x = JSON.parse(raw); } catch { continue; }
+      const n = x.on === winner ? x.amt : -x.amt; await redis.hincrby(P + "points", who, n); results.push({ who, on: x.on, amt: x.amt, n }); }
+    lv.bet.state = "paid"; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 });
+    await pushCmd("betpaid", { winner, game: lv.bet.game, results }); return reply(res, 200, { ok: true, results });
+  }
+  if (a === "betlock") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const lv = (await jget(P + "live")) || {}; if (!lv.bet || lv.bet.state !== "open") return reply(res, 409, { error: "No open betting" });
+    lv.bet.state = "locked"; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 }); await pushCmd("betlock", lv.bet); return reply(res, 200, { ok: true });
   }
 
   // ⚙ host menu on the TV: sign every phone out (they scan and tap their name again)
@@ -196,6 +265,7 @@ export default async function handler(req, res) {
         pts = ok ? Math.max(2, have) : -Math.max(2, have);
       }
       await redis.hincrby(P + "points", q.to, pts);
+      await stat((ok ? "qdone:" : "qfail:") + q.to);
       q.status = ok ? "done" : "fail"; q.pts = pts;
       await redis.set(P + "quest", JSON.stringify(q), { ex: 60 * 30 });
       await pushCmd("questdone", q);
@@ -208,7 +278,7 @@ export default async function handler(req, res) {
       await pushCmd("pointsadd", { to, n });
       return reply(res, 200, { ok: true, points: await points() });
     }
-    await redis.del(P + "points"); await redis.del(P + "quest"); await redis.del(P + "missions");
+    await redis.del(P + "points"); await redis.del(P + "quest"); await redis.del(P + "missions"); await redis.del(P + "stats"); await redis.del(P + "live");
     return reply(res, 200, { ok: true, points: {} });
   }
 
@@ -218,11 +288,37 @@ export default async function handler(req, res) {
 
   if (a === "cmd") {
     if (name !== "Carsyn" || req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
-    if (!CMDS.includes(req.body?.cmd)) return reply(res, 400, { error: "Unknown command" });
+    const c = req.body?.cmd;
+    if (!CMDS.includes(c) && !(typeof c === "string" && c.startsWith("sfx:") && SFX.includes(c.slice(4)))) return reply(res, 400, { error: "Unknown command" });
     await pushCmd(req.body.cmd);
     return reply(res, 200, { ok: true });
   }
   await redis.set(`${P}seen:${name}`, "1", { ex: 30 });
+
+  if (a === "vote") {
+    const lv = (await jget(P + "live")) || {};
+    if (!lv.poll || !lv.poll.open) return reply(res, 409, { error: "No vote open" });
+    const ch = text(req.body?.choice, 40); if (!NAMES.includes(ch)) return reply(res, 400, { error: "Unknown tribute" });
+    await redis.hset(P + "votes:" + lv.poll.id, { [name]: ch }); return reply(res, 200, { ok: true });
+  }
+  if (a === "bet") {
+    const lv = (await jget(P + "live")) || {};
+    if (!lv.bet || lv.bet.state !== "open") return reply(res, 409, { error: "Betting is closed" });
+    const on = text(req.body?.on, 40), amt = Math.round(Number(req.body?.amt));
+    if (!NAMES.includes(on) || ![1, 2, 3].includes(amt)) return reply(res, 400, { error: "Bad bet" });
+    await redis.hset(P + "bets:" + lv.bet.id, { [name]: JSON.stringify({ on, amt }) }); return reply(res, 200, { ok: true });
+  }
+  if (a === "snitch") {
+    const to = text(req.body?.to, 40), why = text(req.body?.why, 60);
+    if (!NAMES.includes(to) || !WHY.includes(why) || to === name) return reply(res, 400, { error: "Bad report" });
+    if (!(await redis.set(`${P}sn:${name}`, "1", { nx: true, ex: 30 }))) return reply(res, 429, { error: "Wait a bit before snitching again" });
+    await stat("snitcher:" + name); await stat("snitched:" + to);
+    await pushCmd("snitch", { from: name, to, why }); return reply(res, 200, { ok: true });
+  }
+  if (a === "walkup") {
+    const song = req.body?.song; if (!SONGS.includes(song)) return reply(res, 400, { error: "Unknown song" });
+    await redis.hset(P + "walkups", { [name]: song }); return reply(res, 200, { ok: true });
+  }
 
   if (a === "react") {
     if (!EMOJI.includes(req.body?.e)) return reply(res, 400, { error: "Unknown emoji" });
@@ -230,6 +326,7 @@ export default async function handler(req, res) {
     const id = await redis.incr(P + "reactid");
     await redis.lpush(P + "reactlog", JSON.stringify({ id, name, e: req.body.e }));
     await redis.ltrim(P + "reactlog", 0, 39);
+    await stat("react:" + name);
     return reply(res, 200, { ok: true });
   }
 
@@ -240,7 +337,7 @@ export default async function handler(req, res) {
     return reply(res, 200, { ok: true });
   }
 
-  if (a === "camoff") { await redis.hdel(P + "cams", name); return reply(res, 200, { ok: true }); }
+  if (a === "camoff") { await redis.hdel(P + "cams", name); await stat("live:" + name); return reply(res, 200, { ok: true }); }
 
   reply(res, 400, { error: "Unknown action" });
 }

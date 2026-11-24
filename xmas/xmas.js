@@ -53,6 +53,18 @@ XM.QUESTS=[
  ["🔄","Switch seats with the person across from you",10],["🍗","Name 5 Thanksgiving foods",10],["🎬","Name 5 Christmas movies",15],
  ["🗣️","Say \"May the odds be ever in your favor\" in an Effie Trinket voice",10],["🤫","Whisper a secret to the Gamemaker",15],["🧤","Find a mitten, glove or hat and put it on",30]];
 
+/* 🗳️ phone votes the Gamemaker can open */
+XM.POLLS=["Who's most likely to cheat?","Best dressed tribute?","Who would survive the longest in the arena?","Who would go out first in the arena?",
+ "Who's the best cook here?","Who's most likely to fall asleep first tonight?","Who would Effie Trinket adore?","Who's the biggest drama queen?",
+ "Who would win a real snowball fight?","Who's most likely to cry at a Christmas movie?","Who's Santa's favorite?","Who's on the naughty list?",
+ "Who would make the best Gamemaker?","Who tells the worst jokes?","Who's most likely to re-gift a present?","Who's the most competitive?"];
+/* 🎵 walk-up songs (the show's own music) */
+XM.WALKUPS=[["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
+ ["hh_secrets","Secret Agent"],["hh_lrc","Dice Roll"],["hh_bingo","Bingo Bounce"],["hh_lounge","Lounge Lo-fi"],["battle","Battle March"],["march","Tribute Parade"],["board","Deck the Halls"],["lobby","Jingle Bells"]];
+XM.SOUNDBOARD=[["airhorn","📯","Air horn"],["cheer","🙌","Cheer"],["applause","👏","Applause"],["gasp","😮","Ohhh!"],["laugh","😂","Laugh"],["rimshot","🥁","Rimshot"],
+ ["trombone","🎺","Sad trombone"],["cannon","💥","Cannon"],["drumroll","🪘","Drumroll"],["siren","🚨","Siren"],["fanfare","🎉","Fanfare"],["boom","🔊","Boom"]];
+XM.SNITCH=["fell asleep","is cheating","is on their phone","is talking trash","broke the rule","stole a snack","is hogging the snacks","didn't do their side quest"];
+
 /* Tiebreakers. tool decides what appears on screen. */
 XM.TB={
  cookie:{title:"Cookie Sudden Death",ic:"🍪",rules:"Fresh cookies on every forehead. Everyone goes at once, no hands. First to eat their cookie wins.",tool:"stopwatch"},
@@ -453,6 +465,7 @@ function startTB(k){
 }
 function winner(n){
   clearT();XM.stopSong();T.winner=n;if(T.onWinner)T.onWinner(n);view("win");XM.celebrate(n);
+  try{const L=store.get("xmas-ties",[]);L.push({game:T.game||"",tied:[...T.picked],winner:n,how:(XM.TB[T.tb]||{}).title||"",t:Date.now()});store.set("xmas-ties",L.slice(-40))}catch(e){}
   setTimeout(()=>{if(T&&T.view==="win")XM.playSong("lobby")},4200);
 }
 const WIRE={

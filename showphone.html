@@ -59,6 +59,14 @@ select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px
 .chips{display:flex;gap:6px;margin-bottom:8px}
 .chips button{flex:1;padding:9px 0;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800}
 .chips button.on{background:var(--gold);color:#13271f}
+.vfaces{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.vfaces button{display:grid;justify-items:center;gap:3px;padding:6px 2px;border-radius:12px;background:rgba(255,255,255,.05);font-size:.72rem;font-weight:800}
+.vfaces img{width:52px;height:52px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line)}
+.vfaces button.on{background:rgba(232,176,75,.28)}.vfaces button.on img{box-shadow:0 0 0 3px var(--gold)}
+.vote{box-shadow:0 0 0 2px var(--gold)}
+.sb{display:grid;gap:6px}
+.sb .g{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
+.sb .g b{color:var(--gold)}
 .mcard{box-shadow:0 0 0 2px #6a3c9c;background:rgba(40,20,60,.95)}
 .qov.spy{background:radial-gradient(ellipse at center,#3a1f5c,#0a0612)}
 .pin{display:flex;gap:8px;justify-content:center}
@@ -95,19 +103,71 @@ function render(){
   const t=TRIBUTES.find(x=>x.name===me);
   app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}</div><b>${esc(me)}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
+    <div id="extras" style="display:grid;gap:16px"></div>
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>
+      <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>
+      <select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
+      <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button><div class="tiny" id="snmsg"></div></div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">🎵 Your walk-up song (plays on the TV when you win)</div>
+      <select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny" id="wmsg"></div></div>
     <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>`;
   app.querySelector("#notme").onclick=e=>{e.preventDefault();stopLive();me=null;XM.store.set("xmas-sh-me",null);render()};
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
     if(navigator.vibrate)navigator.vibrate(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
   app.querySelector("#golive").onclick=goLive;
+  let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
+  app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
+    const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${sn}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
+  const ws=app.querySelector("#wsel");if(walkup)ws.value=walkup;
+  app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value);setTimeout(()=>XM.stopSong(),9000)};
+  app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});app.querySelector("#wmsg").textContent=r.ok?"🎵 Saved! It plays on the TV when you win.":"Couldn't save.";if(r.ok)walkup=ws.value};
+  lastExtras="";showExtras();
   showSlide();
-  if(me==="Carsyn")hostCard();
+  if(me==="Carsyn"){hostCard();scoreCard()}
+}
+/* ---- 📋 the Gamemaker's scoreboard: who won what, ties, points ---- */
+let scoreTimer=0;
+async function scoreCard(){
+  clearTimeout(scoreTimer);if(me!=="Carsyn")return;let box=document.getElementById("score");
+  if(!box){const h=document.getElementById("host");if(!h)return;box=document.createElement("div");box.className="card host";box.id="score";h.before(box)}
+  try{const j=await (await fetch("/api/show?a=results",{cache:"no-store"})).json();const r=j.results,pts=j.points||{};
+    if(!r){box.innerHTML=`<h3>📋 Scoreboard</h3><div class="tiny">Nothing yet. It fills in from the TV laptop as you record victors.</div>`}
+    else{const G=Object.entries(r.games||{}).sort((a,b)=>a[1].n-b[1].n);const AW={treasure:"💎",mystery:"❓",junk:"🗑️"};
+      const bingo=r.bingo||{};const bl={line:"Regular",corners:"Four Corners",x:"Big X",frame:"Picture Frame"};
+      const ties=(r.ties||[]).slice().reverse();const P=Object.entries(pts).filter(([,v])=>v).sort((a,b)=>b[1]-a[1]);
+      box.innerHTML=`<h3>📋 Scoreboard</h3><div class="sb">${G.map(([k,g])=>`<div class="g"><span>${g.n}. ${esc(g.name)}</span><span style="text-align:right">${k==="bingo"?
+          (Object.keys(bingo).length?Object.entries(bingo).map(([m,c])=>`${esc(bl[m]||m)}: <b>#${[].concat(c).join(", #")}</b>`).join("<br>"):"<i>no rounds yet</i>")
+          :`🥇 <b>${esc(r.victors[k]||"...")}</b>${r.awards&&r.awards[k]?" "+(AW[r.awards[k]]||""):""}${k==="mitten"?"":`<br>🥈 ${esc(r.seconds[k]||"...")}`}`}</span></div>`).join("")}</div>
+        ${r.ultimate?`<div style="margin-top:8px;font-weight:800">👑 Ultimate Victor: <b style="color:var(--gold)">${esc(r.ultimate.names.join(" & "))}</b> (${r.ultimate.max} wins)</div>`:""}
+        <div class="eyebrow" style="margin:10px 0 4px">⚔️ Tiebreakers</div>${ties.length?ties.map(t=>`<div class="tiny" style="text-align:left">${esc((r.games[t.game]||{}).name||"Tiebreaker")}: ${esc(t.tied.join(" vs "))} → <b style="color:var(--gold)">${esc(t.winner)}</b>${t.how?" ("+esc(t.how)+")":""}</div>`).join(""):`<div class="tiny" style="text-align:left">None yet</div>`}
+        <div class="eyebrow" style="margin:10px 0 4px">⭐ Capitol Points</div><div class="tiny" style="text-align:left">${P.length?P.map(([n,v])=>`${esc(n)} ${v>0?"+":""}${v}`).join(" · "):"None yet"}</div>
+        <div class="tiny" style="margin-top:6px">Updated ${new Date(r.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}</div>`}}
+  catch(e){}
+  scoreTimer=setTimeout(scoreCard,6000);
 }
 /* ---- secret mission: only this phone ever sees it ---- */
-let mission=null;
+let mission=null,vote=null,bet=null,walkup=null,lastExtras="";
+/* ---- votes and bets the Gamemaker opens ---- */
+function showExtras(){
+  const box=document.getElementById("extras");if(!box)return;const key=JSON.stringify([vote,bet]);if(key===lastExtras)return;lastExtras=key;let h="";
+  const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>`;
+  if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(vote.mine)}. Tap someone else to change it.`:"Tap a face to vote."}</div></div>`;
+  if(bet&&bet.state==="open")h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">💰 PLACE YOUR BET</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">Who wins ${esc(bet.game)}?</h2>
+    ${faces("data-bo",bet.mine&&bet.mine.on)}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-ba="${n}" class="${bet.mine&&bet.mine.amt===n?"on":""}">${n} point${n>1?"s":""}</button>`).join("")}</div>
+    <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(bet.mine.on)}. You can change it until the bets lock.`:"Right pick: win that many points. Wrong: lose them."}</div></div>`;
+  else if(bet&&bet.state==="locked")h+=`<div class="card"><div class="eyebrow">🔒 BETS LOCKED · ${esc(bet.game)}</div><div style="margin-top:6px;font-weight:800">${bet.mine?`You bet ${bet.mine.amt} on ${esc(bet.mine.on)}. Fingers crossed.`:"You didn't bet this round."}</div></div>`;
+  box.innerHTML=h;
+  box.querySelectorAll("[data-vt]").forEach(b=>b.onclick=async()=>{const r=await api({a:"vote",name:me,choice:b.dataset.vt});if(r.ok){vote.mine=b.dataset.vt;lastExtras="";showExtras();if(navigator.vibrate)navigator.vibrate(30)}});
+  let bo=bet&&bet.mine?bet.mine.on:null,ba=bet&&bet.mine?bet.mine.amt:null;
+  box.querySelectorAll("[data-bo]").forEach(b=>b.onclick=()=>{bo=b.dataset.bo;box.querySelectorAll("[data-bo]").forEach(x=>x.classList.toggle("on",x===b))});
+  box.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>{ba=+b.dataset.ba;box.querySelectorAll("[data-ba]").forEach(x=>x.classList.toggle("on",x===b))});
+  const bs=box.querySelector("#bsend");if(bs)bs.onclick=async()=>{const m=box.querySelector("#bmsg");if(!bo||!ba){m.textContent="Pick who and how many points.";return}
+    const r=await api({a:"bet",name:me,on:bo,amt:ba});if(r.ok){bet.mine={on:bo,amt:ba};lastExtras="";showExtras()}else m.textContent=r.status===409?"Too late, bets are locked.":"Couldn't place the bet."};
+}
 function myMission(m){
   const had=mission&&mission.id;mission=m;let card=document.getElementById("mcard");
   if(!m){if(card)card.remove();return}
@@ -166,6 +226,17 @@ function hostCard(){
     <div class="eyebrow" style="margin:4px 0 6px">🐺 Sabotage the online games (the tribute picked above)</div>
     <div class="hgrid twists">${SAB.map(([k,i,l])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}</button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Freeze everyone BUT picked</button></div>
     <div class="tiny" id="qmsg" style="margin-bottom:8px"></div>
+    <div class="eyebrow" style="margin:4px 0 6px">🎙️ Soundboard (plays on the TV)</div>
+    <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${XM.SOUNDBOARD.map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
+    <div class="eyebrow" style="margin:4px 0 6px">🗳️ Phone vote</div>
+    <select id="psel">${XM.POLLS.map(q=>`<option>${esc(q)}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
+    <textarea id="pown" rows="2" placeholder="Your question" style="display:none" maxlength="110"></textarea>
+    <div class="hgrid" style="grid-template-columns:repeat(2,1fr)"><button id="popen"><span class="i">🗳️</span>Open the vote</button><button id="pclose"><span class="i">🏁</span>Reveal the winner</button></div>
+    <div class="eyebrow" style="margin:4px 0 6px">💰 Betting</div>
+    <select id="bgame">${Object.values(XM.GAMES).map(g=>`<option>${esc(g.name)}</option>`).join("")}<option>the next game</option></select>
+    <div class="hgrid"><button id="bopen"><span class="i">💰</span>Open bets</button><button id="block"><span class="i">🔒</span>Lock bets</button><button id="bpay"><span class="i">🏆</span>Pay out (picked won)</button><button id="bcancel"><span class="i">↩️</span>Cancel bets</button></div>
+    <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
+    <div class="hgrid"><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
   let qn=null,qs=null;const qmsg=t=>{const m=box.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3000)};
@@ -186,6 +257,13 @@ function hostCard(){
     qmsg(!r.ok?"Couldn't send.":r.tw.mission?`🕵️ ${r.tw.to}'s mission: ${r.tw.mission}`:`${x.querySelector(".i").textContent} Sent${r.tw.to?" ("+r.tw.to+(r.tw.with?" + "+r.tw.with:"")+")":""}`)});
   box.querySelectorAll("[data-sab]").forEach(x=>x.onclick=async()=>{if(!qn||(x.dataset.allbut&&qn==="random")){qmsg("Tap a tribute first.");return}
     const r=await call({a:"sab",to:qn,kind:x.dataset.sab,allBut:!!x.dataset.allbut});qmsg(r.ok?`${x.querySelector(".i").textContent} Got ${r.sab.to}!`:"Couldn't send.")});
+  const ps=box.querySelector("#psel"),po=box.querySelector("#pown");ps.onchange=()=>po.style.display=ps.value==="own"?"":"none";
+  box.querySelector("#popen").onclick=async()=>{const q=ps.value==="own"?po.value.trim():ps.value;if(!q){qmsg("Type your question first.");return}const r=await call({a:"pollopen",q});qmsg(r.ok?"🗳️ Vote is open on everyone's phone":"Couldn't open the vote.")};
+  box.querySelector("#pclose").onclick=async()=>{const r=await call({a:"pollclose"});qmsg(r.ok?(r.win.length?`🏁 Winner: ${r.win.join(" & ")}`:"🏁 Nobody voted"):"No vote running.")};
+  box.querySelector("#bopen").onclick=async()=>{const r=await call({a:"betopen",game:box.querySelector("#bgame").value});qmsg(r.ok?"💰 Betting is open":"Couldn't open bets.")};
+  box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
+  box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Tap who WON at the top first.");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
+  box.querySelector("#bcancel").onclick=async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")};
   box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(navigator.vibrate)navigator.vibrate(20);const m=box.querySelector("#hmsg");
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
@@ -204,7 +282,7 @@ async function poll(){
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission)}catch(e){}
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){}
   setTimeout(poll,(quest&&quest.status==="live")?1000:2000);
 }
 

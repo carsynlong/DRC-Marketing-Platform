@@ -1440,7 +1440,7 @@ function factDeck(){const mix=a=>a.slice().sort(()=>Math.random()-.5);
   const out=[];for(let k=0;k<Math.max(...L.map(l=>l.length));k++)L.forEach(l=>{if(l[k])out.push(l[k])});return out}
 const FACT_MS=6500;
 const SLIDES=[
- {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
+ {id:"lobby",music:"lobbymix",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:${XM.dn(t.name).length>18?32:XM.dn(t.name).length>9?46:64}px;white-space:nowrap;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
       ${XM.aka(t.name)?`<div style="font-weight:800;font-size:30px;color:#fff;margin-top:-4px">a.k.a. ${esc(XM.aka(t.name))}</div>`:""}<div class="eb">DISTRICT ${t.d}</div></div>`).join("")}</div>
     <div class="jhead">📱 <b id="jcount">0</b> of ${TRIBUTES.length} tributes joined</div>

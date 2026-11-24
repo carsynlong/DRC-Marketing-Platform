@@ -15,7 +15,7 @@
   (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
     const SAY={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"Humble Pie One",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls the Third",Kyle:"Kachow",Carsyn:"Clo"};
     const NR=/\b(Jessie|Tinsley|Grandad(?! the Ancient)|Dash|Jonny|Natalie|Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g;
-    const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/HumblePie1/g,"Humble Pie One").replace(NR,m=>SAY[m]).replace(/\bKachow\b/gi,"Kuh-chow"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
+    const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/HumblePie1/g,"Humble Pie One").replace(NR,m=>SAY[m]).replace(/\bKachow\b/gi,"Kuh-chow").replace(/\bClo\b/g,"See-low"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
   const isPhone = /play(\.html)?$/.test(location.pathname);
   const LABEL = { freeze: ["❄️", "FROZEN!"], bite: ["🐕", "A MUTT BIT YOU!"], fog: ["🌫️", "FOG!"], flip: ["🙃", "FLIPPED!"], jackers: ["🐝", "TRACKER JACKERS!"] };
   const TVLINE = { freeze: "was FROZEN", bite: "got bitten by a mutt", fog: "is lost in the fog", flip: "got flipped upside down", jackers: "got swarmed by tracker jackers" };

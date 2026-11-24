@@ -594,7 +594,8 @@ function publishSlide(s,el){
   const lines=[...new Set(c.textContent.split("\n").map(t=>t.replace(/\s+/g," ").trim()).filter(t=>t.length>1&&!/^\d+ joined$/.test(t)))];
   const h=el.querySelector("h1");const title=(h?h.textContent.replace(/\s+/g," ").trim():lines[0]||"");
   const body=lines.filter(t=>t!==title).join("\n").slice(0,880);
-  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body}})}).catch(()=>{});
+  const pin=hostPin();if(!pin)return;
+  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",pin,slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body}})}).catch(()=>{});
 }
 function showMiniQR(on){let q=document.getElementById("miniqr");
   if(!q){const w=document.createElement("div");w.innerHTML=qrHTML(110);q=w.firstElementChild;q.id="miniqr";stage.appendChild(q)}
@@ -832,7 +833,8 @@ function publishResults(){
   const r={victors:XM.victors(),seconds:XM.seconds(),bingo:XM.store.get("xmas-bingo-winners",{}),ties:XM.store.get("xmas-ties",[]),awards:XM.store.get("xmas-awards",{}),
     games:Object.fromEntries(Object.entries(GAMES).map(([k,g])=>[k,{n:g.n,name:g.name}])),ultimate:(()=>{try{return ultimateList()}catch(e){return null}})()};
   const j=JSON.stringify(r);if(j===lastResults)return;
-  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"results",results:r})}).then(x=>{if(x.ok)lastResults=j}).catch(()=>{});
+  const pin=hostPin();if(!pin)return;
+  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"results",pin,results:r})}).then(x=>{if(x.ok)lastResults=j}).catch(()=>{});
 }
 setInterval(publishResults,5000);
 /* ---------- 🗳️ phone votes ---------- */
@@ -1195,17 +1197,18 @@ function netState(ok){
   netFails++;if(netFails===4&&!b){b=document.createElement("div");b.id="offline";
     b.style.cssText="position:fixed;left:18px;bottom:76px;z-index:59;background:rgba(110,23,18,.92);color:#fff;font-weight:800;font-size:15px;padding:8px 14px;border-radius:12px;box-shadow:0 0 0 2px var(--gold);pointer-events:none;max-width:300px;line-height:1.3";
     b.textContent="📴 Phone extras are offline (no internet). The show keeps going. They come back on their own.";document.body.appendChild(b);showLive({})}}
+let tvTick=0;
 function startPhonePoll(){
   if(phonePolling)return;phonePolling=true;
   const tick=async()=>{
-    try{const r=await fetch("/api/show?a=tv&since="+(reactSince||0)+"&csince="+(cmdSince||0),{cache:"no-store"});if(r.ok){const j=await r.json();
+    tvTick++;try{const r=await fetch("/api/show?a=tv&since="+(reactSince||0)+"&csince="+(cmdSince||0)+(tvTick%3===1?"&full=1":""),{cache:"no-store"});if(r.ok){const j=await r.json();
       if(cmdSince===null)cmdSince=Math.max(0,...(j.cmds||[]).map(x=>x.id));  // skip remote taps sent before the show opened
       else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd,x.data)}
       if(j.points)lastPoints=j.points;
-      if(j.poll)updateVote(j.poll);if(j.mercy)mercyUpdate(j.mercy);lastJoined=j.joined||[];if(j.race&&raceUI&&j.race.id===raceUI.id)raceLanes(j.race);betState=j.bets||null;if(j.bets)updateBets(j.bets);
+      if(j.poll)updateVote(j.poll);if(j.mercy)mercyUpdate(j.mercy);if(j.joined)lastJoined=j.joined;if(j.race&&raceUI&&j.race.id===raceUI.id)raceLanes(j.race);betState=j.bets||null;if(j.bets)updateBets(j.bets);
       if(reactSince===null){reactSince=Math.max(0,...(j.reacts||[]).map(x=>x.id))}  // skip reactions sent before the show opened
       else for(const x of j.reacts||[]){reactSince=Math.max(reactSince,x.id);phoneReact(x)}
-      showLive(j.live||{});showJoined(j.joined||[]);netState(true)}else netState(false)}catch(e){netState(false)}
+      showLive(j.live||{});if(j.joined)showJoined(j.joined);netState(true)}else netState(false)}catch(e){netState(false)}
     setTimeout(tick,netFails>=4?4000:1000)};
   tick();
 }
@@ -1557,7 +1560,9 @@ function wireSlide(el){
 }
 const next=()=>go(cur+1),prev=()=>go(cur-1);
 function begin(){
-  if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);startPhonePoll();scheduleSponsor();scheduleChaos();setTimeout(tickerLoop,4000);rehearsalBadge();
+  if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);
+  if(!hostPin())setTimeout(()=>{const v=prompt("Gamemaker PIN (lets phones follow along and your twists work). Cancel to skip.");if(v)try{localStorage.setItem("xmas-host-pin",v.trim())}catch(e){}},600);
+  startPhonePoll();scheduleSponsor();scheduleChaos();setTimeout(tickerLoop,4000);rehearsalBadge();
   const st=document.getElementById("start");st.remove();
   const i=cur;cur=-1;curEl&&curEl.remove();curEl=null;go(i);
 }

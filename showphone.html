@@ -414,13 +414,15 @@ function showSlide(){
   if(!slide){t.textContent="Waiting for the Gamemaker...";b.textContent="";n.textContent="";return}
   n.textContent=slide.total?`${slide.n} / ${slide.total}`:"";t.textContent=slide.title||"";b.textContent=slide.body||"";
 }
+let pollN=0;
 async function poll(){
-  try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):""),{cache:"no-store"});const j=await r.json();const s=j.slide;
+  pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%5===1?"&full=1":""),{cache:"no-store"});const j=await r.json();const s=j.slide;
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){online(false)}
-  setTimeout(poll,(quest&&quest.status==="live")||(race&&race.state==="live")?1000:2000);
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){online(false)}
+  const busyNow=(quest&&quest.status==="live")||(race&&race.state==="live");
+  setTimeout(poll,busyNow?1000:(vote||bet||mercy||hot||(predict&&predict.open))?2000:3000);
 }
 
 /* ---- go live: send a small camera frame about twice a second for 20 seconds ---- */

@@ -180,11 +180,21 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 @keyframes flash{0%{opacity:.95}100%{opacity:0}}
 #rulebar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:52;background:var(--red);color:#fff;font-weight:800;font-size:clamp(14px,1.5vw,24px);padding:6px 18px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);cursor:pointer}
 /* lobby */
-.lobbycard{position:relative;width:560px;height:700px}
+.lobbycard{position:relative;width:560px;height:520px}
+/* who's joined on their phone: all 12 tributes, dim until they join */
+.tgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px 10px;width:560px;margin-top:8px}
+.tgrid .t{display:grid;justify-items:center;gap:4px;opacity:.32;filter:grayscale(1);transition:opacity .5s,filter .5s}
+.tgrid .t img{width:70px;height:70px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
+.tgrid .t span{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;max-width:88px;overflow:hidden;text-overflow:ellipsis}
+.tgrid .t.in{opacity:1;filter:none}.tgrid .t.in img{box-shadow:0 0 0 4px var(--gold),0 0 18px rgba(232,176,75,.6)}
+.tgrid .t.in::after{content:"✓";position:absolute;margin:-4px 0 0 52px;width:24px;height:24px;border-radius:50%;background:#19a35a;color:#fff;display:grid;place-items:center;font-size:15px;font-weight:900}
+.tgrid .t{position:relative}.tgrid .t.pop{animation:popIn .6s cubic-bezier(.2,1.8,.4,1)}
+.jhead{font-size:26px;font-weight:800;margin-top:14px;text-align:center;width:560px}.jhead b{color:var(--gold);font-size:34px}
+.jnew{position:absolute;left:50%;top:-6px;transform:translateX(-50%);z-index:3;background:var(--gold);color:#2a1c05;font-weight:900;font-size:30px;padding:10px 26px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.5);white-space:nowrap;animation:popIn .5s cubic-bezier(.2,1.8,.4,1)}
 .lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
 .lobbycard .lc.on{transition-delay:.35s}
 .lobbycard .lc.on{opacity:1;transform:none}
-.lobbycard img{width:460px;height:460px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)}
+.lobbycard img{width:340px;height:340px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)}
 /* full-screen moments: intermission, unboxing, interview, photo */
 .moment{position:fixed;inset:0;z-index:53;display:grid;place-items:center;text-align:center;padding:50px 20px 20px;background:rgba(6,16,12,.96);animation:fade .25s both}
 .moment .inner{display:grid;justify-items:center;gap:clamp(10px,2vh,22px);max-width:1300px}
@@ -466,7 +476,7 @@ function qrHTML(size){let svg="";try{const q=qrcode(0,"M");q.addData(PHONE_URL);
   return `<div class="qrbox" style="--qs:${size}px">${svg}<b>📱 Scan to join</b>${size>180?`<span>${esc(location.host)}/showphone</span>`:""}</div>`}
 // what's on the TV, as plain text for the phones
 function publishSlide(s,el){
-  const c=el.cloneNode(true);c.querySelectorAll("button,a,.corner,.fly,.lobbycard,img,.qrbox,.joined,svg,input").forEach(n=>n.remove());
+  const c=el.cloneNode(true);c.querySelectorAll("button,a,.corner,.fly,.lobbycard,img,.qrbox,.joined,.tgrid,.jhead,.jnew,svg,input").forEach(n=>n.remove());
   c.querySelectorAll("div,p,h1,h2,h3,.pill,.k,.v,.eb,.n,.t").forEach(n=>n.append("\n"));
   const lines=[...new Set(c.textContent.split("\n").map(t=>t.replace(/\s+/g," ").trim()).filter(t=>t.length>1&&!/^\d+ joined$/.test(t)))];
   const h=el.querySelector("h1");const title=(h?h.textContent.replace(/\s+/g," ").trim():lines[0]||"");
@@ -554,10 +564,18 @@ function showLive(live){
     if(!n){n=document.createElement("div");n.className="livecam";n.dataset.live=name;n.innerHTML=`<img alt=""><b>🔴 LIVE · ${esc(name)}</b>`;box.appendChild(n);XM.sfx("stinger")}
     const img=n.querySelector("img");if(img.src!==live[name])img.src=live[name]});
 }
+// the lobby's tribute grid: faces light up gold (with a ✓) as each person joins on their phone
+let joinedSeen=null;
 function showJoined(list){
-  const c=document.getElementById("jcount"),f=document.getElementById("jfaces");if(!c||!f)return;
-  c.textContent=list.length;const have=[...f.children].map(i=>i.dataset.n);
-  if(have.join()!==list.join())f.innerHTML=list.map(n=>XM.photo(n)?`<img data-n="${esc(n)}" src="${XM.photo(n)}" alt="${esc(n)}" title="${esc(n)}">`:"").join("");
+  const c=document.getElementById("jcount"),g=document.getElementById("tgrid");
+  const low=new Set(list.map(n=>String(n).toLowerCase()));
+  const fresh=joinedSeen?list.filter(n=>!joinedSeen.has(String(n).toLowerCase())):[];joinedSeen=low;
+  if(!c||!g)return;
+  c.textContent=[...g.children].filter(t=>low.has(t.dataset.n.toLowerCase())).length;
+  g.querySelectorAll(".t").forEach(t=>t.classList.toggle("in",low.has(t.dataset.n.toLowerCase())));
+  fresh.forEach((n,k)=>setTimeout(()=>{const t=[...g.children].find(x=>x.dataset.n.toLowerCase()===String(n).toLowerCase());if(!t||!t.isConnected)return;
+    t.classList.remove("pop");void t.offsetWidth;t.classList.add("pop");XM.sfx("chirp");
+    const host=g.parentElement;host.querySelector(".jnew")?.remove();const b=document.createElement("div");b.className="jnew";b.textContent=`📱 ${n==="QUEEN MOTHER"?"The Queen Mother":n} just joined!`;host.appendChild(b);setTimeout(()=>b.remove(),2600)},k*900));
 }
 
 /* ---------- the slides, in show order ---------- */
@@ -593,8 +611,10 @@ const XMAS_FACTS=[
 ];
 const SLIDES=[
  {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
-    <div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:64px;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
+    <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:64px;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
       <div class="eb">DISTRICT ${t.d}</div></div>`).join("")}</div>
+    <div class="jhead">📱 <b id="jcount">0</b> of ${TRIBUTES.length} tributes joined</div>
+    <div class="tgrid" id="tgrid">${TRIBUTES.map(t=>`<div class="t" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><span>${esc(t.name==="QUEEN MOTHER"?"Queen":t.name)}</span></div>`).join("")}</div></div>
     <div style="display:grid;gap:26px;justify-items:start">
       <img src="/xmas/emblem.png" alt="" class="spin" style="width:200px">
       <div class="eb fd" ${d(.4)} style="letter-spacing:.5em;color:var(--ink)">THE 2026</div>
@@ -605,7 +625,6 @@ const SLIDES=[
         ${qrHTML(230)}
         <div style="display:grid;gap:14px;max-width:640px">
           <div class="card" style="padding:18px 24px;min-height:150px;transition:opacity .6s" id="hgfact"></div>
-          <div><div class="eb" style="margin-bottom:6px">On their phones: <span id="jcount">0</span> joined</div><div class="joined" id="jfaces"></div></div>
         </div></div>
     </div></div>`,
    enter(el){const cards=[...el.querySelectorAll(".lc")];let i=0;

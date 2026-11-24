@@ -224,7 +224,7 @@ const avOf=n=>`img/p${pad(D.game.names.indexOf(n)+1)}.jpg`;
 function header(){
   const v=(D.game.tally||{})[D.me]||0,bumped=shownVotes!=null&&v!==shownVotes;
   return `<div class="me"><div class="who"><img class="av" src="${avOf(D.me)}" alt=""><div class="nm">${esc(D.me)}</div></div>
-    <div class="pts${bumped?" bump":""}">🎁 ${v}<small>prize race</small></div></div>`;
+    <div class="pts${bumped?" bump":""}">🎁 ${v}<small>major award race</small></div></div>`;
 }
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
 const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">${sound?"🔊 Sounds on":"🔇 Sounds off"}</button></div>`;
@@ -242,7 +242,7 @@ function view(){
   if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>Ask the host to open District Feud on the TV. This page will update by itself.</p>")];
   if(!D.me){
     const away=new Set(D.away||[]),taken=new Set((D.taken||[]).filter(n=>!away.has(n)));
-    return ["pick:"+[...taken].join("|"),`<section class="signin"><div class="eyebrow">The Christmas</div><div class="logo">District<br><span>Feud</span></div><p>Who are you? Tap your name.</p></section>
+    return ["pick:"+[...taken].join("|"),`<section class="signin"><div class="eyebrow">The 2026 Christmas Games · Game 4</div><div class="logo">District<br><span>Feud</span></div><p>Who are you? Tap your name.</p></section>
       <div class="grid">${g.names.map((n,i)=>`<button class="nb" style="--i:${i}" data-name="${esc(n)}" ${taken.has(n)?"disabled":""}><img src="${avOf(n)}" alt=""><span>${esc(n)}${taken.has(n)?"<small>signed in</small>":""}</span></button>`).join("")}</div>`];
   }
   const key=`${g.gid}:${g.view}:${g.qi}`,notYou=`<button class="switch" id="leave">Not ${esc(D.me)}? Switch name</button>`;
@@ -252,12 +252,13 @@ function view(){
       <div class="plate"><img src="${avOf(D.me)}" alt=""><div class="nm">${esc(D.me)}</div></div>
       <p style="margin-top:10px">Welcome, <b>${esc(D.me)}</b>! Eyes on the TV. You'll guess the #1 answers right here.</p></section>${soundBtn()}${notYou}`,"welcome"];
 
+  if(g.view==="brief")return [key+"brief",header()+msg("📢","Listen up!",`<p><b>${esc(g.brief||"")}</b></p><p>Eyes on the TV. The rules are being read out loud.</p>`)];   // a briefing is being read on the TV
   if(g.kind==="guess"&&g.phase==="question"&&g.stump&&D.me===g.host){   // 🎯 Stump the Room: the host bets on who will miss it
-    if(mine)return [key+"stump:"+mine,header()+lockedCard(mine,`Your Stump bet: you think <b>${esc(mine)}</b> will miss it. They miss: <b>+1</b> for you. They call it: they steal it!`),"lock"];
+    if(mine)return [key+"stump:"+mine,header()+lockedCard(mine,`Your Stump bet: you think <b>${esc(mine)}</b> will miss it. They miss: <b>+${g.mult>1?2:1}</b> for you. They call it: they steal it!`),"lock"];
     if(g.locked)return [key+"slate",header()+msg("🥁","Survey says…","<p>No Stump bet this time. Watch the board!</p>")];
     if(!g.stump.length)return [key+"snone",header()+msg("🎯","Stump the Room","<p>Nobody's on a phone to bet on yet. Enjoy the show!</p>")];
     return [key+"sask",header()+qcard(g,`Question ${g.num} of ${g.total} · You know this one!`)+`<div class="ask">🎯 Who will MISS it?</div>`+
-      `<p class="priv" style="text-align:center;margin:-6px 0 0">They miss: <b>+1</b> for you · They call it: they steal +1</p>`+nameBtns(g.stump)];
+      `<p class="priv" style="text-align:center;margin:-6px 0 0">They miss: <b>+${g.mult>1?2:1}</b> for you · They call it: they steal +${g.mult>1?2:1}</p>`+nameBtns(g.stump)];
   }
   if(g.kind==="guess"&&g.phase==="question"){
     if(mine)return [key+"lock:"+mine+g.locked,header()+ptimer(g)+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
@@ -276,7 +277,7 @@ function view(){
     const top=g.answer||[],me=top.includes(D.me),right=mine&&top.includes(mine),who=top.map(esc).join(" & ");
     const e=(g.earn||{})[D.me],pts=e?e.pts:1;
     const perks=e?`<div class="earn"><span>🎯 +${pts} toward the major award</span>${e.speed?"<span>⚡ Speed bonus!</span>":""}${e.fire?`<span>🔥 On fire: ${e.streak} in a row!</span>`:e.streak>1?`<span>🎯 ${e.streak} in a row</span>`:""}${g.mult>1?"<span>💰 Double points</span>":""}</div>`:"";
-    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your prize race total.</p>${right?`<p>🎯 And you called it!</p>${perks}`:""}`,"right"),"right"];
+    if(me)return [key+"me",header()+msg("🏆",top.length>1?"It's you! (Tied)":"It's YOU!",`<p>The district picked <b>you</b>${top.length>1?" in a tie":""}! Those votes go into your major award race total.</p>${right?`<p>🎯 And you called it!</p>${perks}`:""}`,"right"),"right"];
     if(right)return [key+"right",header()+msg(e&&e.fire?"🔥":"🎯",`You called it! +${pts}`,`<p>The #1 answer: <b>${who}</b></p>${perks}`,"right"),"right"];
     return [key+"wrong",header()+msg("❌",mine?"Not this time":"Survey says…",`<p>The #1 answer: <b>${who}</b></p>${mine?`<p>You guessed ${esc(mine)}.</p>`:""}`,mine?"wrong":""),mine?"wrong":""];
   }
@@ -295,9 +296,9 @@ function view(){
     return [key+"tie",header()+msg("❌","Still tied!","<p>Get ready for another face-off…</p>","wrong"),"wrong"];
   }
   if(g.phase==="final"){
-    if(g.winner===D.me)return [key+"pkgme",header()+msg("🏆","You won the major award!","<p>Top of the prize race. Go claim your prize!</p>","win")+soundBtn(),"win"];
+    if(g.winner===D.me)return [key+"pkgme",header()+msg("🏆","You won the major award!","<p>Top of the major award race. Go claim your major award!</p>","win")+soundBtn(),"win"];
     if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the major award!`,"<p>Merry Christmas from District Feud!</p>")+soundBtn(),"ding"];
-    return [key,header()+msg("🎁","The prize round!","<p>Eyes on the TV. Who has the most points?</p>")+soundBtn()];
+    return [key,header()+msg("🎁","The major award round!","<p>Eyes on the TV. Who has the most points?</p>")+soundBtn()];
   }
   if(g.view==="intro"){
     if(g.spot===D.me)return [key+"spot",header()+msg("🎤","That's YOU on the TV!",`<p>Take a bow! ${g.cheer?"Everyone's cheering for you. Watch your crowd meter! 📣":"The crowd goes wild! 👏"}</p>`,"win"),"win"];
@@ -311,7 +312,7 @@ function view(){
   if(g.view==="double")return [key,header()+msg("💰","Double points!","<p>Final question! Everything counts twice: votes, correct guesses and speed bonuses.</p>","win"),"win"];
   if(g.view==="half"){
     const rows=Object.entries(g.tally||{}).sort((a,b)=>b[1]-a[1]),rank=rows.findIndex(r=>r[0]===D.me)+1;
-    return [key,header()+msg("📊","Halftime!",`<p>${rank?`You're <b>#${rank}</b> in the prize race.`:"You're not on the board yet. Plenty of time!"}</p>
+    return [key,header()+msg("📊","Halftime!",`<p>${rank?`You're <b>#${rank}</b> in the major award race.`:"You're not on the board yet. Plenty of time!"}</p>
       <div class="stand">${rows.slice(0,6).map(([n,v],i)=>`<div class="${n===D.me?"me":""}"><span>${i+1}. ${esc(n)}${(g.streak||{})[n]>=3?" 🔥":""}</span><span>${v}</span></div>`).join("")}</div>`)+soundBtn()];
   }
   return [key+"w",header()+msg("📺","Eyes on the TV","<p>The next question is coming up.</p>")+soundBtn()];

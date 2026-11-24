@@ -58,6 +58,17 @@
     tick(); return;
   }
 
+  // Phones show everyone's nickname instead of their real name (text only; the game itself still uses real names underneath)
+  (() => {
+    const AKA = { Elisha: "Lish", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls", Kyle: "Kachow", Carsyn: "Bitch" };
+    const re = /\b(Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g, skip = n => n && /^(SCRIPT|STYLE|TEXTAREA|INPUT|NOSCRIPT)$/.test(n.nodeName);
+    const swap = t => { if (skip(t.parentNode)) return; const v = t.nodeValue; if (v && re.test(v)) { re.lastIndex = 0; t.nodeValue = v.replace(re, m => AKA[m]); } re.lastIndex = 0; };
+    const fix = node => { if (node.nodeType === 3) return swap(node); if (node.nodeType !== 1 || skip(node)) return;
+      const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT); let t; while ((t = w.nextNode())) swap(t); };
+    fix(document.body);
+    new MutationObserver(ms => ms.forEach(m => m.type === "characterData" ? fix(m.target) : m.addedNodes.forEach(fix))).observe(document.body, { childList: true, subtree: true, characterData: true });
+  })();
+
   // Phone: who am I in this game?
   const me = () => { for (const k of ["tribute-name", "df-name", "ds-name", "xmas-sh-me"]) { try { let v = localStorage.getItem(k); if (!v) continue;
     if (v.startsWith("\"")) v = JSON.parse(v); if (v) return v; } catch (e) {} } return null; };

@@ -530,7 +530,7 @@ const DISTRICT_FX={
  9:{ind:"GRAIN",g:["rgba(250,215,120,.7)","rgba(190,140,40,.35)"],p:[["fall","🌾",16]]},
  10:{ind:"LIVESTOCK",g:["rgba(200,230,150,.6)","rgba(110,140,60,.35)"],p:[["across","🐄",4],["across","🐑",4],["fall","🌾",5]]},
  11:{ind:"AGRICULTURE",g:["rgba(255,140,120,.6)","rgba(80,150,60,.35)"],p:[["fall","🍎",10],["fall","🍑",5],["fall","🍃",5]]},
- 12:{ind:"COAL MINING",fire:true,p:[["rise","⛏️",4],["rise","🪨",5]]}};
+ 12:{ind:"COAL MINING",g:["rgba(255,150,70,.32)","rgba(30,30,34,.55)"],p:[["fall","🪨",8],["twinkle","⛏️",5],["across","🐦",2]]}};  // coal dust, pickaxes, a mockingjay (no flames)
 function districtFX(d){const f=DISTRICT_FX[d];if(!f)return fireHTML();const R=(a,b)=>a+Math.random()*(b-a);
   let h=f.fire?fireHTML().replace('<div class="fire">','').replace(/<\/div>$/,""):`<div class="aura" style="--g1:${f.g[0]};--g2:${f.g[1]}"></div>`;
   if(f.bolt)h+=`<div class="bolt" style="--d:${-R(0,2)}s"></div>`;

@@ -86,6 +86,22 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
     <div class="pin">PIN: 1185</div>
   </div>
 
+  <div class="sec"><h2>🧪 Rehearsal mode</h2>
+    <p>Fill the show with fake victors, 2nd places, bingo winners, tiebreakers and points so you can click through everything before Thanksgiving. The TV shows a purple "REHEARSAL MODE" badge while it's on. End rehearsal wipes it all (victors, points, phones, everything).</p>
+    <div class="tiles"><button id="rh-on"><span class="i">🧪</span>Fill with test data</button><button class="danger" id="rh-off"><span class="i">🧹</span>End rehearsal<small>Wipes everything. Click twice.</small></button></div>
+    <div class="msg" id="rhmsg"></div>
+  </div>
+
+  <div class="sec"><h2>🔊 Your voice · ⏰ Clock · 🎲 Chaos · 📺 Ticker</h2>
+    <div class="qrow"><input type="text" id="saytext" maxlength="200" placeholder="Type something for the announcer to say on the TV"><button class="chip on" id="saysend">🔊 Announce</button></div>
+        <div class="tiles" id="misc"></div><div class="msg" id="mmsg"></div>
+  </div>
+
+  <div class="sec"><h2>🎭 Hot seat · 🏳️ Mercy · 🔮 Predictions · 💌 Shout-outs</h2>
+    <p>These use the tribute picked in the Side quests section (nothing picked = random). Hot seat questions and shout-outs from phones show up below: click one to put it on the TV.</p>
+    <div class="tiles" id="hsm"></div><div id="hlists"></div><div class="msg" id="hmsg"></div>
+  </div>
+
   <div class="sec"><h2>🧹 Reset for game night</h2>
     <p>Clears all victors, 2nd places, major award ratings, bingo numbers and winners, wheel results and shuffled orders on this laptop. Do this once before everyone arrives.</p>
     <div class="tiles"><button class="danger" id="reset"><span class="i">🧹</span>Reset everything<small>Click twice to confirm</small></button></div>
@@ -93,6 +109,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
   </div>
 </div>
 <script src="/xmas/xmas.js"></script>
+<script>XM.useNicknames()</script>
 <script>
 document.getElementById("lights").outerHTML=XM.lights(14);
 XM.snow(document.getElementById("snow"));
@@ -183,7 +200,41 @@ const spState=()=>{let on=false;try{on=localStorage.getItem("xmas-sponsor-auto")
 document.getElementById("spon").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","1")}catch(e){}send("sponsor:on","tmsg");spState()};
 document.getElementById("spoff").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","0")}catch(e){}send("sponsor:off","tmsg");spState()};spState();
 // reset
-const KEYS=["xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
+// 🔊 voice, clock, chaos, ticker, recap (voice goes through the server, the rest straight to the show tab)
+document.getElementById("misc").innerHTML=[["clock:5","⏰","5 min clock"],["clock:10","⏰","10 min clock"],["clock:15","⏰","15 min clock"],["clock:20","⏰","20 min clock"],["clock:off","⏹️","Stop the clock"],
+  ["chaos:on","🎲","Chaos mode ON","A random twist every 4 to 8 min"],["chaos:off","😌","Chaos mode OFF"],["ticker:on","📺","News ticker ON"],["ticker:off","🚫","News ticker OFF"],["recap","📼","Night recap","Highlights slideshow"],["predictreveal","🔮","Reveal predictions","+3 to whoever called the Ultimate Victor"]]
+  .map(([c,i,l,d])=>`<button data-m="${c}"><span class="i">${i}</span>${l}${d?`<small>${d}</small>`:""}</button>`).join("");
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{if(b.dataset.m.startsWith("chaos:"))try{localStorage.setItem("xmas-chaos",b.dataset.m==="chaos:on"?"1":"0")}catch(e){}send(b.dataset.m,"mmsg")});
+const pinNow=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
+const hcall=async b=>{const pin=pinNow();if(!pin){alert("Unlock the Side quests section with your PIN first.");return {ok:false}}return api({pin,...b})};
+document.getElementById("saysend").onclick=async()=>{const t=document.getElementById("saytext");if(!t.value.trim())return;const r=await hcall({a:"say",text:t.value.trim()});const m=document.getElementById("mmsg");m.textContent=r.ok?"🔊 Announced":"Couldn't send.";if(r.ok)t.value=""};
+const picked=()=>{const b=document.querySelector("#qbody [data-qn].on");return b?b.dataset.qn:"random"};
+document.getElementById("hsm").innerHTML=[["hotseat","🎭","Hot seat","Picked tribute takes anonymous questions"],["hotend","⏹️","End hot seat"],["mercyopen","🏳️","Mercy vote","Room votes to spare or punish"],["mercyclose","⚖️","Mercy verdict"],
+  ["predictopen","🔮","Open predictions","Phones pick the Ultimate Victor"],["predictlock","🔒","Lock predictions"]].map(([c,i,l,d])=>`<button data-h="${c}"><span class="i">${i}</span>${l}${d?`<small>${d}</small>`:""}</button>`).join("");
+document.querySelectorAll("[data-h]").forEach(b=>b.onclick=async()=>{const r=await hcall({a:b.dataset.h,to:picked()});const m=document.getElementById("hmsg");m.textContent=r.ok?"✅ Done":(r.error||"Couldn't send.");setTimeout(()=>m.textContent="",3000);hostLists()});
+let hlT=0;async function hostLists(){clearTimeout(hlT);const pin=pinNow(),box=document.getElementById("hlists");if(pin)try{
+  const [a,sh]=await Promise.all([fetch("/api/show?a=asks&pin="+pin,{cache:"no-store"}).then(r=>r.json()),fetch("/api/show?a=shouts&pin="+pin,{cache:"no-store"}).then(r=>r.json())]);
+  const k=JSON.stringify([a,sh]);if(box.dataset.k!==k){box.dataset.k=k;
+    box.innerHTML=(a.hot?`<h2 style="font-size:1.1rem;margin-top:12px">🎭 Questions for ${esc(a.hot.to)}</h2>${(a.asks||[]).map(x=>`<button class="chip" data-ask="${esc(x.q)}" style="display:block;width:100%;text-align:left;margin-bottom:6px">${esc(x.q)}</button>`).join("")||"<p>No questions yet.</p>"}`:"")+
+      ((sh.shouts||[]).length?`<h2 style="font-size:1.1rem;margin-top:12px">💌 Shout-outs waiting</h2>${sh.shouts.map(x=>`<div class="qrow"><span style="flex:1"><b>${esc(x.from)}:</b> ${esc(x.text)}</span><button class="chip on" data-so="${x.id}">✅ Show</button><button class="chip" data-sx="${x.id}">✖</button></div>`).join("")}`:"");
+    box.querySelectorAll("[data-ask]").forEach(b=>b.onclick=async()=>{await hcall({a:"askshow",q:b.dataset.ask});b.style.opacity=.4});
+    box.querySelectorAll("[data-so]").forEach(b=>b.onclick=async()=>{await hcall({a:"shoutok",id:+b.dataset.so});box.dataset.k="";hostLists()});
+    box.querySelectorAll("[data-sx]").forEach(b=>b.onclick=async()=>{await hcall({a:"shoutno",id:+b.dataset.sx});box.dataset.k="";hostLists()})}}catch(e){}
+  hlT=setTimeout(hostLists,4000)}
+hostLists();
+// 🧪 rehearsal mode
+document.getElementById("rh-on").onclick=async()=>{
+  const N=XM.TRIBUTES.map(t=>t.name).filter(n=>n!=="Carsyn"),pick=()=>N[Math.floor(Math.random()*N.length)];const v={},sc={};
+  ["cookie","tribute","mitten","feud","scoop","secrets"].forEach(g=>{v[g]=pick();if(g!=="mitten"){let s2=pick();while(s2===v[g])s2=pick();sc[g]=s2}});
+  const set=(k,x)=>{try{localStorage.setItem(k,JSON.stringify(x))}catch(e){}};
+  set("xmas-victors",v);set("xmas-second",sc);set("xmas-bingo-winners",{line:[7],corners:[42]});set("xmas-ties",[{game:"scoop",tied:[pick(),pick()],winner:v.scoop,how:"10-Second Scoop-Off",t:Date.now()}]);set("xmas-rehearsal",true);
+  const pin=pinNow();if(pin)for(const n of N.slice(0,6))await api({a:"pointsadd",pin,to:n,n:Math.floor(Math.random()*7)-2});
+  document.getElementById("rhmsg").textContent="🧪 Test data loaded. Reload the show tab (Cmd+R) to see it."+(pin?"":" (Unlock the Side quests section to add test points too.)")};
+let rhArmed=0;document.getElementById("rh-off").onclick=async()=>{const m=document.getElementById("rhmsg");
+  if(Date.now()-rhArmed>4000){rhArmed=Date.now();m.textContent="Click again to wipe all test data.";return}rhArmed=0;
+  KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});const pin=pinNow();if(pin){await api({a:"pointsreset",pin});await api({a:"clearphones",pin})}
+  m.textContent="🧹 Rehearsal over. Everything is wiped. Reload the show tab.";};
+const KEYS=["xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
 let armed=0;const rb=document.getElementById("reset");
 rb.onclick=()=>{const m=document.getElementById("rmsg");
   if(Date.now()-armed>4000){armed=Date.now();m.textContent="Click again to really reset everything.";return}

@@ -67,6 +67,9 @@ select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px
 .sb{display:grid;gap:6px}
 .sb .g{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.92rem}
 .sb .g b{color:var(--gold)}
+.dlayer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.dlayer i{position:absolute;top:-60px;font-style:normal;opacity:.35;animation:dfall var(--s) linear var(--d) infinite}
+@keyframes dfall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
 .mcard{box-shadow:0 0 0 2px #6a3c9c;background:rgba(40,20,60,.95)}
 .qov.spy{background:radial-gradient(ellipse at center,#3a1f5c,#0a0612)}
 .pin{display:flex;gap:8px;justify-content:center}
@@ -78,6 +81,7 @@ select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px
 <div id="lights"></div>
 <div class="app" id="app"></div>
 <script src="/xmas/xmas.js"></script>
+<script>XM.useNicknames()</script>
 <script>
 /* Phone companion for the Christmas Games show: join as your tribute, read what's on the TV,
    send emoji reactions to the TV, and go live in a corner of the TV with your camera. */
@@ -95,13 +99,13 @@ function render(){
   if(!me){
     app.innerHTML=`<img src="/xmas/emblem.png" alt="" style="width:90px;justify-self:center"><h1 class="t">The 2026 Christmas Games</h1>
       <div class="sub">Tap your face to join, tribute.</div>
-      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>`;
+      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b>${XM.aka(t.name)?`<span style="font-size:.7rem;color:var(--gold);font-weight:700">${esc(XM.aka(t.name))}</span>`:""}</button>`).join("")}</div>`;
     app.querySelectorAll("[data-n]").forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await api({a:"join",name:b.dataset.n});
       if(r.ok){me=r.me;myEpoch=r.epoch||0;XM.store.set("xmas-sh-me",me);XM.store.set("xmas-sh-epoch",myEpoch);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute.":"Couldn't join. Check your internet and try again.")}});
     return;
   }
   const t=TRIBUTES.find(x=>x.name===me);
-  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}</div><b>${esc(me)}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
+  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(me)}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
     <div id="extras" style="display:grid;gap:16px"></div>
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
@@ -110,6 +114,12 @@ function render(){
       <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>
       <select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button><div class="tiny" id="snmsg"></div></div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">🤝 Send someone your points (bribes welcome)</div>
+      <div class="vfaces" id="gvf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-gv="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>
+      <div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
+      <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button><div class="tiny" id="gvmsg"></div></div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">💌 Shout-out on the TV</div>
+      <textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas Granny!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button><div class="tiny" id="somsg">The Gamemaker approves it first.</div></div>
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">🎵 Your walk-up song (plays on the TV when you win)</div>
       <select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
       <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny" id="wmsg"></div></div>
@@ -125,10 +135,28 @@ function render(){
   const ws=app.querySelector("#wsel");if(walkup)ws.value=walkup;
   app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value);setTimeout(()=>XM.stopSong(),9000)};
   app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});app.querySelector("#wmsg").textContent=r.ok?"🎵 Saved! It plays on the TV when you win.":"Couldn't save.";if(r.ok)walkup=ws.value};
-  lastExtras="";showExtras();
+  let gv=null,gn=null;app.querySelectorAll("[data-gv]").forEach(b=>b.onclick=()=>{gv=b.dataset.gv;app.querySelectorAll("[data-gv]").forEach(x=>x.classList.toggle("on",x===b))});
+  app.querySelectorAll("[data-gn]").forEach(b=>b.onclick=()=>{gn=+b.dataset.gn;app.querySelectorAll("[data-gn]").forEach(x=>x.classList.toggle("on",x===b))});
+  app.querySelector("#gvsend").onclick=async()=>{const m=app.querySelector("#gvmsg");if(!gv||!gn){m.textContent="Pick who and how many.";return}
+    const r=await api({a:"give",name:me,to:gv,n:gn});m.textContent=r.ok?`🤝 Sent ${gv} ${gn} point${gn>1?"s":""}.`:(r.error||"Couldn't send.")};
+  app.querySelector("#sosend").onclick=async()=>{const t=app.querySelector("#sotext"),m=app.querySelector("#somsg");if(!t.value.trim()){m.textContent="Type a message first.";return}
+    const r=await api({a:"shout",name:me,text:t.value.trim()});m.textContent=r.ok?"💌 Sent! It shows on the TV once the Gamemaker approves it.":(r.error||"Couldn't send.");if(r.ok)t.value=""};
+  districtLook();lastExtras="";showExtras();
   showSlide();
   if(me==="Carsyn"){hostCard();scoreCard()}
 }
+/* ---- hot seat questions and shout-outs waiting for the Gamemaker ---- */
+let listT=0;
+async function hostLists(){
+  clearTimeout(listT);const pin=XM.store.get("xmas-sh-pin",null);const A=document.getElementById("asks"),S=document.getElementById("shouts");if(!pin||!A||me!=="Carsyn")return;
+  try{const [a,sh]=await Promise.all([fetch("/api/show?a=asks&pin="+encodeURIComponent(pin),{cache:"no-store"}).then(r=>r.json()),fetch("/api/show?a=shouts&pin="+encodeURIComponent(pin),{cache:"no-store"}).then(r=>r.json())]);
+    const ak=JSON.stringify(a),sk=JSON.stringify(sh);
+    if(A.dataset.k!==ak){A.dataset.k=ak;A.innerHTML=a.hot?`<div class="eyebrow" style="margin:6px 0">🎭 Questions for ${esc(a.hot.to)} (tap to show on the TV)</div>${(a.asks||[]).map(x=>`<button class="btn ghost" data-ask="${esc(x.q)}" style="width:100%;text-align:left;margin-bottom:6px;font-size:.95rem">${esc(x.q)}</button>`).join("")||'<div class="tiny">No questions yet.</div>'}`:"";
+      A.querySelectorAll("[data-ask]").forEach(b=>b.onclick=async()=>{await api({a:"askshow",pin,q:b.dataset.ask});b.style.opacity=.4})}
+    if(S.dataset.k!==sk){S.dataset.k=sk;S.innerHTML=(sh.shouts||[]).length?`<div class="eyebrow" style="margin:6px 0">💌 Shout-outs waiting</div>${sh.shouts.map(x=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><div style="flex:1;font-size:.95rem"><b>${esc(x.from)}:</b> ${esc(x.text)}</div><button class="btn" data-so="${x.id}" style="padding:.4em .8em">✅</button><button class="btn ghost" data-sx="${x.id}" style="padding:.4em .8em">✖</button></div>`).join("")}`:"";
+      S.querySelectorAll("[data-so]").forEach(b=>b.onclick=async()=>{await api({a:"shoutok",pin,id:+b.dataset.so});S.dataset.k="";hostLists()});
+      S.querySelectorAll("[data-sx]").forEach(b=>b.onclick=async()=>{await api({a:"shoutno",pin,id:+b.dataset.sx});S.dataset.k="";hostLists()})}}catch(e){}
+  listT=setTimeout(hostLists,4000)}
 /* ---- 📋 the Gamemaker's scoreboard: who won what, ties, points ---- */
 let scoreTimer=0;
 async function scoreCard(){
@@ -150,10 +178,21 @@ async function scoreCard(){
   scoreTimer=setTimeout(scoreCard,6000);
 }
 /* ---- secret mission: only this phone ever sees it ---- */
-let mission=null,vote=null,bet=null,walkup=null,lastExtras="";
+let mission=null,vote=null,bet=null,walkup=null,lastExtras="",hot=null,mercy=null,predict=null;
+/* ---- your district's look (from the books) ---- */
+const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["🔥","#3a1a0e"]};
+function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove());const t=me&&TRIBUTES.find(x=>x.name===me);if(!t)return;const [em,col]=DLOOK[t.d]||[];if(!em)return;
+  document.body.style.background=`radial-gradient(ellipse at top,${col},var(--night) 70%)`;const R=(a,b)=>a+Math.random()*(b-a);
+  const l=document.createElement("div");l.className="dlayer";l.innerHTML=Array.from({length:12},()=>`<i style="left:${R(0,95)}%;font-size:${R(22,40)}px;--s:${R(9,16)}s;--d:${-R(0,16)}s;--dx:${R(-40,40)}px;--r:${R(-200,200)}deg">${em}</i>`).join("");document.body.prepend(l)}
 /* ---- votes and bets the Gamemaker opens ---- */
 function showExtras(){
-  const box=document.getElementById("extras");if(!box)return;const key=JSON.stringify([vote,bet]);if(key===lastExtras)return;lastExtras=key;let h="";
+  const box=document.getElementById("extras");if(!box)return;const key=JSON.stringify([vote,bet,hot,mercy,predict]);if(key===lastExtras)return;lastExtras=key;let h="";
+  if(mercy)h+=mercy.to===me?`<div class="card vote" style="text-align:center"><div class="ic" style="font-size:3rem">🏳️</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">Beg for mercy!</h2><div>Everyone is voting on whether to spare you. Plead your case, out loud.</div></div>`
+    :`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🏳️ SPARE ${esc(mercy.to)}?</div><div class="hgrid" style="grid-template-columns:1fr 1fr;margin-top:8px"><button data-mv="up" class="${mercy.mine==="up"?"on":""}" style="font-size:2rem;min-height:70px;${mercy.mine==="up"?"background:var(--gold)":""}">👍</button><button data-mv="down" style="font-size:2rem;min-height:70px;${mercy.mine==="down"?"background:var(--gold)":""}">👎</button></div><div class="tiny">${mercy.mine?`You voted ${mercy.mine==="up"?"spare":"punish"}.`:"Thumbs up spares them. Thumbs down, no mercy."}</div></div>`;
+  if(hot&&hot.to!==me)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🎭 ${esc(hot.to)} IS IN THE HOT SEAT</div><textarea id="askq" rows="2" maxlength="140" placeholder="Ask ${esc(hot.to)} anything (anonymous)" style="margin-top:8px"></textarea><button class="btn red" id="asksend" style="width:100%">Send question</button><div class="tiny" id="askmsg"></div></div>`;
+  else if(hot&&hot.to===me)h+=`<div class="card vote" style="text-align:center"><div style="font-size:3rem">🎭</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">You're in the hot seat!</h2><div>Questions will show up on the TV. Answer honestly.</div></div>`;
+  if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Who wins the most games tonight? Right = +3 points at the end.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div></div>`;
+  else if(predict&&predict.mine)h+=`<div class="card"><div class="eyebrow">🔮 Your prediction: ${esc(predict.mine)}</div></div>`;
   const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>`;
   if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(vote.mine)}. Tap someone else to change it.`:"Tap a face to vote."}</div></div>`;
   if(bet&&bet.state==="open")h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">💰 PLACE YOUR BET</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">Who wins ${esc(bet.game)}?</h2>
@@ -161,6 +200,10 @@ function showExtras(){
     <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(bet.mine.on)}. You can change it until the bets lock.`:"Right pick: win that many points. Wrong: lose them."}</div></div>`;
   else if(bet&&bet.state==="locked")h+=`<div class="card"><div class="eyebrow">🔒 BETS LOCKED · ${esc(bet.game)}</div><div style="margin-top:6px;font-weight:800">${bet.mine?`You bet ${bet.mine.amt} on ${esc(bet.mine.on)}. Fingers crossed.`:"You didn't bet this round."}</div></div>`;
   box.innerHTML=h;
+  box.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{const r=await api({a:"mvote",name:me,v:b.dataset.mv});if(r.ok){mercy.mine=b.dataset.mv;lastExtras="";showExtras();if(navigator.vibrate)navigator.vibrate(30)}});
+  box.querySelectorAll("[data-pr]").forEach(b=>b.onclick=async()=>{const r=await api({a:"predict",name:me,choice:b.dataset.pr});if(r.ok){predict.mine=b.dataset.pr;lastExtras="";showExtras()}});
+  const as=box.querySelector("#asksend");if(as)as.onclick=async()=>{const t=box.querySelector("#askq"),m=box.querySelector("#askmsg");const q=t.value.trim();if(!q){m.textContent="Type a question first.";return}
+    const r=await api({a:"ask",name:me,q});m.textContent=r.ok?"🎭 Sent! The Gamemaker decides if it goes on the TV.":(r.error||"Couldn't send.");if(r.ok)t.value=""};
   box.querySelectorAll("[data-vt]").forEach(b=>b.onclick=async()=>{const r=await api({a:"vote",name:me,choice:b.dataset.vt});if(r.ok){vote.mine=b.dataset.vt;lastExtras="";showExtras();if(navigator.vibrate)navigator.vibrate(30)}});
   let bo=bet&&bet.mine?bet.mine.on:null,ba=bet&&bet.mine?bet.mine.amt:null;
   box.querySelectorAll("[data-bo]").forEach(b=>b.onclick=()=>{bo=b.dataset.bo;box.querySelectorAll("[data-bo]").forEach(x=>x.classList.toggle("on",x===b))});
@@ -235,6 +278,14 @@ function hostCard(){
     <div class="eyebrow" style="margin:4px 0 6px">💰 Betting</div>
     <select id="bgame">${Object.values(XM.GAMES).map(g=>`<option>${esc(g.name)}</option>`).join("")}<option>the next game</option></select>
     <div class="hgrid"><button id="bopen"><span class="i">💰</span>Open bets</button><button id="block"><span class="i">🔒</span>Lock bets</button><button id="bpay"><span class="i">🏆</span>Pay out (picked won)</button><button id="bcancel"><span class="i">↩️</span>Cancel bets</button></div>
+    <div class="eyebrow" style="margin:4px 0 6px">🔊 Your voice on the TV</div>
+    <textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%;margin-bottom:8px">🔊 Announce it</button>
+    <div class="eyebrow" style="margin:4px 0 6px">🎭 Hot seat · 🏳️ Mercy · 🔮 Predictions (use the tribute picked at the top)</div>
+    <div class="hgrid"><button id="hotgo"><span class="i">🎭</span>Hot seat</button><button id="hotend"><span class="i">⏹️</span>End hot seat</button><button id="mgo"><span class="i">🏳️</span>Mercy vote</button>
+      <button id="mclose"><span class="i">⚖️</span>Mercy verdict</button><button id="pro"><span class="i">🔮</span>Open predictions</button><button id="prl"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal"><span class="i">🎉</span>Reveal predictions</button></div>
+    <div id="asks"></div><div id="shouts"></div>
+    <div class="eyebrow" style="margin:4px 0 6px">⏰ Arena clock · 🎲 Chaos · 📺 Ticker</div>
+    <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${[5,10,15,20,30].map(n=>`<button data-c="clock:${n}"><span class="i">⏰</span>${n} min</button>`).join("")}<button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button><button data-c="chaos:on"><span class="i">🎲</span>Chaos ON</button><button data-c="chaos:off"><span class="i">😌</span>Chaos OFF</button><button data-c="ticker:on"><span class="i">📺</span>Ticker ON</button><button data-c="ticker:off"><span class="i">🚫</span>Ticker OFF</button><button data-c="recap"><span class="i">📼</span>Night recap</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
     <div class="hgrid"><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
@@ -264,6 +315,14 @@ function hostCard(){
   box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
   box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Tap who WON at the top first.");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
   box.querySelector("#bcancel").onclick=async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")};
+  box.querySelector("#saysend").onclick=async()=>{const t=box.querySelector("#saytext");if(!t.value.trim())return;const r=await call({a:"say",text:t.value.trim()});qmsg(r.ok?"🔊 Announced":"Couldn't send.");if(r.ok)t.value=""};
+  box.querySelector("#hotgo").onclick=async()=>{const r=await call({a:"hotseat",to:qn||"random"});qmsg(r.ok?`🎭 ${r.hot.to} is in the hot seat`:"Couldn't start.");hostLists()};
+  box.querySelector("#hotend").onclick=async()=>{await call({a:"hotend"});qmsg("⏹️ Hot seat over");hostLists()};
+  box.querySelector("#mgo").onclick=async()=>{const r=await call({a:"mercyopen",to:qn||"random"});qmsg(r.ok?`🏳️ Mercy vote on ${r.mercy.to}`:"Couldn't start.")};
+  box.querySelector("#mclose").onclick=async()=>{const r=await call({a:"mercyclose"});qmsg(r.ok?(r.spared?`🏳️ ${r.to} spared (${r.up} to ${r.down})`:`⚔️ No mercy for ${r.to} (${r.up} to ${r.down})`):"No mercy vote running.")};
+  box.querySelector("#pro").onclick=async()=>{const r=await call({a:"predictopen"});qmsg(r.ok?"🔮 Predictions open":"Couldn't open.")};
+  box.querySelector("#prl").onclick=async()=>{const r=await call({a:"predictlock"});qmsg(r.ok?"🔒 Predictions locked":"Couldn't lock.")};
+  hostLists();
   box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(navigator.vibrate)navigator.vibrate(20);const m=box.querySelector("#hmsg");
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
@@ -282,7 +341,7 @@ async function poll(){
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){}
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){}
   setTimeout(poll,(quest&&quest.status==="live")?1000:2000);
 }
 

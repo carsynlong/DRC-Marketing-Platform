@@ -38,9 +38,25 @@ XM.GAMES={
  bingo:{n:8,name:"District Bingo",kind:"LUCK",tag:"LUCK · GRAND FINALE",color:"#17998a",tb:"bingo"},
 };
 
+// The announcer says "Game maker", not "Gamemaker"
+(function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
+  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
 XM.AKA={Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Bitch"};
-XM.aka=n=>XM.AKA[n]||"";
+// Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
+XM.dn=n=>XM.AKA[n]||n;
+XM.aka=n=>"";
+// Swap real names for nicknames in any text on the page, including text added later.
+XM.useNicknames=function(root){
+  const re=new RegExp("\\b("+Object.keys(XM.AKA).join("|")+")\\b","g");
+  const skip=n=>n&&/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(n.nodeName);
+  const fix=node=>{if(node.nodeType===3){if(skip(node.parentNode))return;if(re.test(node.nodeValue)){re.lastIndex=0;node.nodeValue=node.nodeValue.replace(re,m=>XM.AKA[m])}re.lastIndex=0;return}
+    if(node.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(node.nodeName))return;
+    const w=document.createTreeWalker(node,NodeFilter.SHOW_TEXT,{acceptNode:t=>skip(t.parentNode)?2:1});let t;
+    while((t=w.nextNode())){if(re.test(t.nodeValue)){re.lastIndex=0;t.nodeValue=t.nodeValue.replace(re,m=>XM.AKA[m])}re.lastIndex=0}};
+  root=root||document.body;fix(root);
+  new MutationObserver(ms=>ms.forEach(m=>{if(m.type==="characterData")fix(m.target);else m.addedNodes.forEach(fix)})).observe(root,{childList:true,subtree:true,characterData:true});
+};
 /* Side quests the Gamemaker sends to one tribute: [icon, quest, suggested seconds] */
 XM.QUESTS=[
  ["🍺","Bring the Gamemaker a beer",15],["🥤","Bring the Gamemaker a drink. Any drink.",15],["🍪","Bring the Gamemaker a snack",20],
@@ -336,7 +352,7 @@ XM.sfx=function(kind){
 
 /* ================= ANNOUNCER (laptop's built-in voice, pitched down) ================= */
 XM.SAY={"Elisha":"Alicia","QUEEN MOTHER":"Queen Mother","Kamdon":"Camden"};
-XM.spoken=n=>XM.SAY[n]||n;
+XM.spoken=n=>{const d=XM.dn(n);return XM.SAY[d]||(d===n?XM.SAY[n]:null)||d};
 let sayGen=0;
 const pickVoice=()=>{const sy=window.speechSynthesis;if(!sy)return null;const v=sy.getVoices().filter(v=>/^en/i.test(v.lang));
   return v.find(v=>/(Daniel|Google UK English Male|Microsoft (Guy|David|Mark|Ryan)|Fred|Alex|Aaron|Arthur|Rocko|Ralph)/i.test(v.name))||v.find(v=>/male/i.test(v.name)&&!/female/i.test(v.name))||v[0]||null};

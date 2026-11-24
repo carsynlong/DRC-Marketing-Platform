@@ -11,6 +11,9 @@
    Sent from the Gamemaker remote (/showphone as Carsyn) or the host menu (/host). Server: /api/show. */
 (() => {
   if (window.__sabotage) return; window.__sabotage = true;
+  // The announcer says "Game maker", not "Gamemaker"
+  (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
+    const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
   const isPhone = /play(\.html)?$/.test(location.pathname);
   const LABEL = { freeze: ["❄️", "FROZEN!"], bite: ["🐕", "A MUTT BIT YOU!"], fog: ["🌫️", "FOG!"], flip: ["🙃", "FLIPPED!"], jackers: ["🐝", "TRACKER JACKERS!"] };
   const TVLINE = { freeze: "was FROZEN", bite: "got bitten by a mutt", fog: "is lost in the fog", flip: "got flipped upside down", jackers: "got swarmed by tracker jackers" };

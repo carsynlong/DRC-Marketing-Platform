@@ -729,7 +729,7 @@ function view(){
     }
     if(st==="no"||st==="late")return [key+st,header()+msg(st==="late"?"⏰":"😱",st==="late"?`${esc(g.answer)} didn't answer`:`${esc(g.answer)} declined!`,mineS?`<p>That's −200 points.</p>`:"<p>Boo! No story this time.</p>",mineS?"wrong":"")+reactBar(),mineS?"wrong":""];
     if(st==="skip")return [key+st,header()+msg("🎭","Story skipped","<p>Eyes on the TV.</p>")+reactBar()];
-    if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!","<p class=\"said\">Tell everyone the story behind your secret.</p><p>+300 for taking the stage, +100 for every good vote, −50 for every 😴 or 👎.</p>","right"),"right"];
+    if(g.answer===D.me)return [key+"teller",header()+msg("🎤","You have the floor!",`<p class="said">Tell everyone the story behind your secret.</p><p>+300 for taking the stage, +${100*(g.mult||1)} for every good vote, −${50*(g.mult||1)} for every 😴 or 👎.</p>`,"right"),"right"];
     const k=`${g.gid}:${g.qi}`,v=myVote.key===k?myVote.v:null;
     return [key+"rate"+v,header()+`<section class="msg" style="flex:none"><div class="eyebrow">🎭 Story time</div><h1>🎤 ${esc(g.answer)}'s story</h1><p>How good is it? You can change your vote.</p></section>
       <div class="rate" style="grid-template-columns:1fr 1fr">${[["fire","🔥","Hot"],["lol","😂","Hilarious"],["wow","🤯","Mind-blown"],["sense","🤔","Makes sense"],["boring","😴","Boring"],["sucks","👎","That sucks"]].map(([x,e,l])=>`<button data-vote="${x}" aria-pressed="${v===x}"><span>${e}</span>${l}</button>`).join("")}</div>`+reactBar()];
@@ -749,7 +749,7 @@ function view(){
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer;
-    if(g.answer===D.me)return [key+"own",header()+(g.bonus?`<p class="note" style="text-align:center;margin:0">📝 Your bonus secret was played: +500 points!</p>`:"")+msg("🎭","Your secret is out!",g.fooled?`<p class="said">You fooled ${g.fooled} tribute${g.fooled>1?"s":""}!</p><p>That's 150 points each, coming up on the scoreboard.</p>`:`<p>Nobody was fooled, ${esc(D.me)}. They know you too well.</p>`,"right")+reactBar(),"right"];
+    if(g.answer===D.me)return [key+"own",header()+(g.bonus?`<p class="note" style="text-align:center;margin:0">📝 Your bonus secret was played: +500 points!</p>`:"")+msg("🎭","Your secret is out!",g.fooled?`<p class="said">You fooled ${g.fooled} tribute${g.fooled>1?"s":""}!</p><p>That's ${150*(g.mult||1)} points each, coming up on the scoreboard.</p>`:`<p>Nobody was fooled, ${esc(D.me)}. They know you too well.</p>`,"right")+reactBar(),"right"];
     const right=(g.correct||[]).includes(D.me),gold=g.golden?`<div class="goldnote">✨ GOLDEN FILE · TRIPLE POINTS ✨</div>`:"";
     if(g.fake)return [key+"fake"+right,header()+(right?msg("🃏","You spotted the fake!","<p class=\"said\">Nobody here said that. Nice work.</p>","right")
       :msg("🃏","It was FAKE!",`<p class="said">Nobody here said that.</p><p>${mine?`You said ${esc(mine)}.`:"You didn't seal a guess."}</p>`,"wrong"))+reactBar(),right?"right":"wrong"];

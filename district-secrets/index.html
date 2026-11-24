@@ -357,7 +357,7 @@ body.shake .app{animation:quake .5s}
 @keyframes swing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
 .room .tag{font-family:var(--type);letter-spacing:.2em;color:#cfd6d2;background:rgba(0,0,0,.45);padding:.35em 1em;border:1px solid rgba(255,255,255,.2);margin-top:7vh}
 .room .hotseat{z-index:1}
-.room:not(.briefing) .tag{margin-top:clamp(40px,11vh,130px)}   /* everything sits below the swinging lamp */
+.room:not(.briefing) .tag{margin-top:max(clamp(40px,11vh,130px),calc(12vh + 66px))}   /* everything sits below the swinging lamp */
 .room .hotseat img{width:clamp(110px,22vh,210px);height:clamp(110px,22vh,210px)}
 .room .hotseat .nm{font-size:clamp(1.6rem,3.4vw,2.6rem)}
 .room{gap:8px;min-height:0;padding-bottom:8px}
@@ -464,7 +464,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-24-1";
+const BUILD="ds-build-2026-11-24-2";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -823,7 +823,7 @@ async function pollX(){
     if(S.phase==="interro"&&S.roomOpen&&curX().fifth&&!S.fifthBy)pleadFifth(curX().fifth);
     if(S.phase==="showdown")checkDuel(d.duel||{});
     if(S.phase==="last"){const c=$("#lastcount"),nb=d.written||0,nt=Object.keys(d.ttl||{}).length;if(c)c.textContent=[S.opts?.bonus?`📝 ${nb} bonus secret${nb===1?"":"s"} written`:"",S.opts?.ttl?`🤥 ${nt} two truths & a lie`:""].filter(Boolean).join(" · ")}
-    if(S.phase==="likely"){const c=$("#likelycount"),n=Object.keys(d.likely||{}).length;if(c)c.textContent=`${n} vote${n===1?"":"s"} in · vote on your phone`;if(n&&n>=active().length&&!S.likely.show)likelyResults()}
+    if(S.phase==="likely"){const c=$("#likelycount"),n=Object.keys(d.likely||{}).length;if(c)c.textContent=`${n} vote${n===1?"":"s"} in · vote on your phone`;if(n&&n>=Math.max(1,active().filter(p=>hasPhone(p.name)).length)&&!S.likely.show)likelyResults()}
   }catch(e){}
   pollingX=false;
 }
@@ -1006,7 +1006,7 @@ function lastView(){
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
-  S.ttlDone=false;S.likelySeen={};S.briefed={};S.mole=null;S.deck=dressDeck(S.opts?.decoys?buildDeck():REAL.map(x=>({...x})));Q.splice(0,Q.length,...S.deck);S.fifthUsed={};S.champ=null;S.duel=null;S.duelDone=false;   // decoys shuffled in fresh each game
+  S.ttlDone=false;S.likelySeen={};S.likelyOwed=false;S.briefed={};S.mole=null;S.deck=dressDeck(S.opts?.decoys?buildDeck():REAL.map(x=>({...x})));Q.splice(0,Q.length,...S.deck);S.fifthUsed={};S.champ=null;S.duel=null;S.duelDone=false;   // decoys shuffled in fresh each game
   S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
   post({action:"reset",total:BASE+40}).catch(()=>{});dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
@@ -1075,15 +1075,17 @@ function timesUp(){
 }
 function lock(){S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();sfx("buzzer");setTimeout(()=>sfx("cannon"),350);timesUp();render();poll()}
 /* after the guesses lock: the Interrogation (if it's on and anyone was accused), then the reveal */
+let stepAt=0;const stepBusy=()=>{if(Date.now()-stepAt<2200)return true;stepAt=Date.now();return false};   // ignores a double Space
 async function afterLock(){
+  if(stepBusy())return;
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
-  if(!S.opts?.interro||cur().lightning||cur().ttl)return reveal();
+  if(!S.opts?.interro||cur().lightning||cur().ttl)return reveal(true);
   stopSong();await poll();
   const playing=new Set(active().map(p=>p.name)),t={};
   Object.entries(current()).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
     const n=NAMES.find(n=>matches(v,n));if(n&&playing.has(n))t[n]=(t[n]||0)+1});
   const max=Math.max(0,...Object.values(t));
-  if(!max)return reveal();
+  if(!max)return reveal(true);
   const tied=Object.keys(t).filter(n=>t[n]===max).sort((a,b)=>(b===cur().a)-(a===cur().a));   // a tie: the real owner always gets a seat
   S.hot=tied.slice(0,2);S.hotN=max;
   curtains(()=>{S.phase="interro";S.interroIntro=true;S.roomOpen=false;S.hotAt=null;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500);setTimeout(readRoomRules,1400)},"🔦 The Interrogation Room");
@@ -1098,7 +1100,7 @@ function roomSteps(){
     ["✅","Switch to the right person: <b>+250 bonus</b>.","Switch to the right person: plus 250 bonus."],
     ["❌","Switch away from the right person: <b>-500</b>. Switch and still wrong: <b>-250</b>.","Switch away from the right person: minus 500. Switch and still wrong: minus 250."]];
   if(S.opts?.fifth)st.push(["🤐","In the hot seat? <b>Plead the Fifth</b> on your phone, once per game. It ends the interrogation, but costs <b>100</b>.","In the hot seat? You can plead the Fifth on your phone, once per game. It ends the interrogation, but costs 100."]);
-  st.push(["🔒","When the clock hits zero, <b>votes are final</b> and the seal opens.","When the clock hits zero, votes are final, and the seal opens."]);
+  st.push(["🔒","When the clock hits zero, <b>votes are final</b>. Then we open the seal.","When the clock hits zero, votes are final. Then we open the seal."]);
   return st}
 let roomRun=0;
 function readRoomRules(){
@@ -1139,7 +1141,9 @@ function startClock(sel,secs,from,onOut){
     if(left>0){el.textContent=left;el.classList.remove("out")}else{el.textContent="Time!";el.classList.add("out");clearInterval(clockT);onOut&&onOut()}};
   tickC();clockT=setInterval(tickC,250);
 }
-async function reveal(){
+async function reveal(chain){
+  if(chain!==true&&stepBusy())return;
+  if(S.phase==="reveal")return;
   if(!S.locked){S.locked=true;cancelAnimationFrame(raf)}
   setTimeout(()=>{if(cur().golden&&S.phase==="reveal"){const g=document.createElement("div");g.className="golden";g.textContent="✨ GOLDEN FILE · TRIPLE POINTS ✨";document.body.appendChild(g);sfx("fanfare");setTimeout(()=>g.remove(),5000)}},1600);
   const fromRoom=S.phase==="interro";if(fromRoom)S.roomOpen=false;
@@ -1151,7 +1155,7 @@ async function reveal(){
 /* 🎤 Story time: the owner accepts (+300) or declines (−200) on their phone; the host can also start it or skip it (no penalty) */
 const STORY_YES=300,STORY_NO=200,STORY_ASK=15;
 const NO_GUESS=200;   // points lost for not sealing a guess in time (phone players only)   // 15 seconds to accept or decline; no answer counts as declining
-function storyTime(){if(S.phase!=="reveal")return;brief(storyBrief(),storyTimeNow)}
+function storyTime(){if(S.phase!=="reveal")return;S.briefed=S.briefed||{};if(!S.briefed.story){S.briefed.story=1;return brief(storyBrief(),storyTimeNow)}storyTimeNow()}
 function storyTimeNow(){if(S.phase!=="reveal")return;S.phase="story";S.storyState="ask";S.storyAt=null;S.askAt=Date.now();stopSong();sfx("mic");render()}
 function storyDecide(state){
   if(S.phase!=="story"||S.storyState!=="ask")return;
@@ -1286,9 +1290,12 @@ const LIKELY=["…secretly eat the last cookie","…cry at a Hallmark movie","�
   "…start a snowball fight","…burn the Christmas cookies","…win the actual Hunger Games","…forget someone's birthday","…talk their way out of a speeding ticket",
   "…hide snacks in their room","…be late to their own party","…sing the loudest at karaoke","…get lost in a mall","…adopt every stray animal"];
 const LIKELY_SECS=15;
-function likelyDue(){return S.opts?.mostlikely&&S.qi>0&&S.qi%3===0&&S.qi<Q.length&&!(S.likelySeen||{})[S.qi]&&active().length>=3}
+function likelyDue(){
+  if(!(S.opts?.mostlikely&&S.qi>0&&S.qi<Q.length&&active().length>=3)||(S.likelySeen||{})[S.qi])return false;
+  if(Q[S.qi]?.lightning&&Q[S.qi-1]?.lightning){if(S.qi%3===0)S.likelyOwed=true;return false}   // Lightning is back to back: the vote waits
+  return S.qi%3===0||!!S.likelyOwed}
 function startLikely(){
-  S.likelySeen={...(S.likelySeen||{}),[S.qi]:1};const used=Object.keys(S.likelySeen).length-1;
+  S.likelySeen={...(S.likelySeen||{}),[S.qi]:1};S.likelyOwed=false;const used=Object.keys(S.likelySeen).length-1;
   S.likely={round:S.qi,q:LIKELY[(S.gid/1000+used)%LIKELY.length|0],at:Date.now(),show:false};S.phase="likely";stopSong();sfx("mic");playSong("board");render();
 }
 const likelyTally=()=>{const t={};Object.values(dsx.likely||{}).forEach(v=>t[v]=(t[v]||0)+1);return Object.entries(t).sort((a,b)=>b[1]-a[1])};
@@ -1351,7 +1358,8 @@ function cardGo(){
 function storyBrief(){
   const a=cur().a,n=esc(a),mult=qMult(S.qi),st=[
     ["🎤",`It's <b>${n}</b>'s secret. Will they tell the story behind it?`,`It's ${a}'s secret. Will they tell the story behind it?`],
-    ["📱",`${n}: accept or decline on your phone. You have <b>${STORY_ASK} seconds</b>.`,`${a}: accept or decline on your phone. You have ${STORY_ASK} seconds.`],
+    hasPhone(a)?["📱",`${n}: accept or decline on your phone. You have <b>${STORY_ASK} seconds</b>.`,`${a}: accept or decline on your phone. You have ${STORY_ASK} seconds.`]
+      :["🗣️",`${n}: say yes or no out loud, and the Gamemaker taps it in.`,`${a}: say yes or no out loud, and the game maker taps it in.`],
     ["✅",`Accept: <b>+${STORY_YES}</b>, and you get the stage for <b>30 seconds</b>.`,`Accept, and you get plus ${STORY_YES}, and the stage for 30 seconds.`],
     ["❌",`Decline, or no answer in time: <b>-${STORY_NO}</b>.`,`Decline, or don't answer in time, and it's minus ${STORY_NO}.`],
     ["👏",`Everyone else rates the story on their phone. Every 🔥 😂 🤯 🤔 vote: <b>+100</b> for ${n}.`,`Everyone else rates the story on their phone. Every hot, hilarious, mind blown, or makes sense vote is plus 100 for ${a}.`],
@@ -1676,7 +1684,7 @@ function primary(){
   if(S.phase==="interro")return S.interroIntro?startRoom():reveal();
   if(S.phase==="reveal")return S.opts?.story&&!cur().fake&&!cur().lightning&&!cur().ttl?storyTime():score();
   if(S.phase==="showdown")return S.champ?finishShowdown():duelGo();
-  if(S.phase==="story")return S.storyState==="ask"?(S.storyState="skip",score()):score();
+  if(S.phase==="story"){if(S.storyState==="ask"&&Date.now()-(S.askAt||0)<1500)return;return S.storyState==="ask"?(S.storyState="skip",score()):score()}
   if(S.phase==="board")return next();
 }
 function wire(){
@@ -1684,7 +1692,7 @@ function wire(){
   document.querySelectorAll("[data-secs]").forEach(b=>b.onclick=()=>{S.secs=+b.dataset.secs;render()});
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
-  const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
+  const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();e.blur();fn()}};
   on("roomstart",startRoom);on("roomreread",readRoomRules);
   on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",cardGo);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("likelyshow",likelyResults);on("lastgo",newGame);on("likelynext",proceed);on("duelgo",duelGo);on("duelfinal",finishShowdown);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
@@ -1697,7 +1705,8 @@ function wire(){
 document.addEventListener("keydown",e=>{
   if(e.key==="m"||e.key==="M"){if($("#snd"))$("#snd").click();else if(window.toggleMusic){toggleMusic();render()}return}
   if(e.code!=="Space"&&e.key!=="Enter")return;
-  if(e.target.closest&&e.target.closest("button,input"))return;
+  const tb=e.target.closest&&e.target.closest("button,input,select,textarea");
+  if(tb){if(tb.tagName!=="BUTTON")return;tb.blur()}   // a button that still has focus doesn't get "clicked" again by Space
   e.preventDefault();primary();
 });
 /* a TV reload mid-question picks up where it left off */

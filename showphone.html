@@ -170,6 +170,7 @@ function render(){if(me!=="Carsyn")dropBar();
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
     <div id="extras" style="display:grid;gap:16px"></div>
+    ${me==="Natalie"?`<div class="card" style="text-align:center"><button class="btn red" id="notfair" style="width:100%;font-size:1.5rem;padding:.8em">😤 IT'S NOT FAIR!</button><div class="tiny" id="nfmsg">Your official catchphrase. Tap it and the TV hears your complaint.</div></div>`:""}
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>
     ${me==="Carsyn"?"":`<div class="card"><button class="btn helpbtn" id="helpme">🆘 I'm lost. Help!</button><div class="tiny" id="helpmsg">Tap it and the Gamemaker comes to help you.</div></div>
@@ -186,6 +187,8 @@ function render(){if(me!=="Carsyn")dropBar();
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">🎵 Your walk-up song (plays on the TV when you win)</div>
       <select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
       <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny" id="wmsg"></div></div></details>`}`;
+  const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
+    m.textContent=r.ok?"📨 Complaint filed. The Gamemaker will rule.":r.status===429?"The Capitol is still processing your last complaint. Try again in a bit.":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},r.ok?45000:3000)};
   app.querySelector("#notme").onclick=e=>{e.preventDefault();if(!confirm("Sign out of "+XM.dn(me)+" so someone else can use this phone?"))return;api({a:"leave",name:me});stopLive();me=null;walkup=null;quest=null;mission=null;predict=null;vote=null;bet=null;XM.store.set("xmas-sh-me",null);document.querySelectorAll(".qov,#race,#mcard").forEach(n=>n.remove());render()};
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);

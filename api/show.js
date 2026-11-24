@@ -527,6 +527,12 @@ async function main(req, res) {
     if (!NAMES.includes(on) || ![1, 2, 3].includes(amt)) return reply(res, 400, { error: "Bad bet" });
     await redis.hset(P + "bets:" + lv.bet.id, { [name]: JSON.stringify({ on, amt }) }); return reply(res, 200, { ok: true });
   }
+  // 😤 Buzz Buzz's catchphrase button (Natalie's phone only)
+  if (a === "notfair") {
+    if (name !== "Natalie") return reply(res, 403, { error: "Only Buzz Buzz can say that" });
+    if (!(await redis.set(`${P}nf`, "1", { nx: true, ex: 45 }))) return reply(res, 429, { error: "wait" });
+    await stat("notfair:" + name); await pushCmd("notfair", { from: name }); return reply(res, 200, { ok: true });
+  }
   if (a === "snitch") {
     const to = text(req.body?.to, 40), why = text(req.body?.why, 60);
     if (!NAMES.includes(to) || !WHY.includes(why) || to === name) return reply(res, 400, { error: "Bad report" });

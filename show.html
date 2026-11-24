@@ -943,6 +943,24 @@ function betPaid(r){if(busy()&&!betQueue&&!r._q){betQueue={...r,_q:1};toast(`�
   const won=res.filter(x=>x.n>0).map(x=>XM.spoken(x.who));announcer.say(won.length?`The bets are in! Winners: ${won.join(", ")}!`:"The bets are in! Nobody picked the winner!",null,{pitch:.1,rate:.9});
 }
 /* ---------- 🚨 snitches from phones ---------- */
+/* ---------- 😤 IT'S NOT FAIR! (Buzz Buzz's catchphrase, from her phone) ---------- */
+function notFair(){
+  news("😤 Buzz Buzz has filed an official complaint: IT'S NOT FAIR!");
+  if(!started||busy()){XM.sfx("trombone");toast("😤 Buzz Buzz says: IT'S NOT FAIR! (ruling after this pop-up)",7000);notFairOwed=true;return}
+  const {m,T,close}=openMoment("twist");
+  m.innerHTML=`<div class="in" style="display:grid;gap:14px;justify-items:center">${face("Natalie")?`<div style="width:220px;height:220px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 6px var(--gold)">${face("Natalie").replace("<img","<img style=\"width:100%;height:100%;object-fit:cover\"")}</div>`:""}
+    <div class="eb" style="letter-spacing:.3em">OFFICIAL COMPLAINT · DISTRICT 8</div>
+    <h1 style="font-size:clamp(3rem,8vw,7rem);color:#ff6a5a;transform:rotate(-4deg);text-shadow:0 6px 0 rgba(0,0,0,.5);margin:0">IT'S NOT FAIR!</h1>
+    <div class="say" style="font-size:1.6rem">Buzz Buzz objects. The Gamemaker must rule.</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center"><button class="btn" id="nfyes">⚖️ Appeal granted (+1)</button><button class="btn red" id="nfno">🚫 Appeal denied</button><button class="btn ghost" id="nfx">Close (Esc)</button></div></div>`;
+  XM.sfx("trombone");shake();announcer.say("Objection! Buzz Buzz says: it's not fair! The Game maker will now rule on this complaint.",null,{rate:.95});
+  let done=false;
+  m.querySelector("#nfyes").onclick=async e=>{e.stopPropagation();if(done)return;done=true;XM.sfx("fanfare");XM.confetti(120,true);announcer.say("Appeal granted. Buzz Buzz gets one point. Fine. It wasn't fair.",null,{rate:.95});addPoints("Natalie",1);T(close,4500)};
+  m.querySelector("#nfno").onclick=e=>{e.stopPropagation();if(done)return;done=true;XM.sfx("gong");m.querySelector("h1").textContent="DENIED";announcer.say(["Appeal denied. Life isn't fair, Buzz Buzz.","Denied. The Capitol has never once been fair.","Complaint received, and shredded. Denied."][Math.floor(Math.random()*3)],null,{rate:.95});T(close,4500)};
+  m.querySelector("#nfx").onclick=e=>{e.stopPropagation();close()};
+}
+let notFairOwed=false;
+setInterval(()=>{if(notFairOwed&&started&&!busy()){notFairOwed=false;notFair()}},1500);
 function snitchCard(x){const d=document.createElement("div");d.className="snitch";
   d.innerHTML=`${face(x.to)}<div>🚨 <span style="color:#ff8a7a">${esc(x.from)}</span> reports:<br>${esc(x.to)} ${esc(x.why)}!</div>`;document.body.appendChild(d);
   XM.sfx("siren");setTimeout(()=>d.remove(),7000)}
@@ -1249,6 +1267,7 @@ function runCmd(c,data){
   if(c==="betlock"&&data){if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;XM.sfx("gong");setBanner("bets",`💰 BETS LOCKED for ${data.game}`);toast("🔒 Bets are locked!");return}
   if(c==="betcancel"){if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;setBanner("bets",null);return}
   if(c==="betpaid"&&data)return betPaid(data);
+  if(c==="notfair")return notFair();
   if(c==="snitch"&&data){news(`🚨 ${data.from} reports ${data.to} ${data.why}`);return snitchCard(data)}
   if(c==="draft")return draftOrder();
   if(c==="awards")return void nightAwards();

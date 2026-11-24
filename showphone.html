@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Join the Christmas Games</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="/xmas/xmas.css">
+<style>
+body{min-height:100%;overflow-x:hidden}
+.app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:46px max(16px,env(safe-area-inset-left,0px)) max(24px,env(safe-area-inset-bottom,0px));display:grid;gap:16px}
+h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 3px 0 var(--red-d);font-size:clamp(1.8rem,8vw,2.4rem);line-height:1.05;text-align:center;margin:0}
+.sub{text-align:center;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid button{display:grid;justify-items:center;gap:6px;padding:10px 4px;border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 2px var(--line)}
+.grid button img{width:72px;height:72px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.grid button b{font-size:.9rem}
+.grid button:active{transform:scale(.96)}
+.grid button.taken{opacity:.35}
+.card{background:rgba(22,48,42,.95);border-radius:18px;padding:14px 16px;box-shadow:0 0 0 1px var(--line)}
+.me{display:flex;align-items:center;gap:12px}
+.me img{width:54px;height:54px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.me b{font-family:var(--display);font-weight:400;color:var(--gold);font-size:1.4rem}
+.me .x{margin-left:auto;font-size:.85rem;color:var(--muted);text-decoration:underline}
+.tv .eyebrow{display:flex;justify-content:space-between}
+.tv h2{font-family:var(--display);font-weight:400;color:var(--gold);font-size:1.5rem;margin:6px 0}
+.tv p{margin:0;white-space:pre-line;line-height:1.4;font-size:1.02rem}
+.reacts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.reacts button{font-size:2rem;min-height:64px;border-radius:14px;background:rgba(255,255,255,.06)}
+.reacts button:active{background:rgba(232,176,75,.3);transform:scale(.94)}
+.live{display:grid;gap:10px;justify-items:center}
+.live video{width:180px;height:180px;border-radius:50%;object-fit:cover;transform:scaleX(-1);box-shadow:0 0 0 4px #c41e1e}
+.pop{position:fixed;font-size:2.4rem;pointer-events:none;z-index:9;animation:up 1.2s ease-out forwards}
+@keyframes up{to{transform:translateY(-220px) scale(1.4);opacity:0}}
+.tiny{text-align:center}
+.host{box-shadow:0 0 0 2px var(--gold)}
+.host h3{font-family:var(--display);font-weight:400;color:var(--gold);margin:0 0 8px;text-align:center}
+.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.hgrid button{min-height:58px;border-radius:14px;background:rgba(255,255,255,.07);font-weight:800;font-size:.92rem;line-height:1.15}
+.hgrid button .i{display:block;font-size:1.5rem}
+.hgrid button:active{background:rgba(232,176,75,.35);transform:scale(.95)}
+.hgrid.twists button{background:rgba(196,30,30,.25)}
+.pin{display:flex;gap:8px;justify-content:center}
+.pin input{width:9ch;font:800 1.4rem var(--body,inherit);text-align:center;letter-spacing:.3em;border-radius:12px;border:0;padding:8px}
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="lights"></div>
+<div class="app" id="app"></div>
+<script src="/xmas/xmas.js"></script>
+<script>
+/* Phone companion for the Christmas Games show: join as your tribute, read what's on the TV,
+   send emoji reactions to the TV, and go live in a corner of the TV with your camera. */
+document.getElementById("lights").outerHTML=XM.lights(14);
+XM.snow(document.getElementById("snow"));
+const {esc,TRIBUTES}=XM;
+const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
+const pid=(()=>{try{let p=localStorage.getItem("xmas-sh-pid");if(!p){p=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("xmas-sh-pid",p)}return p}catch(e){return "p"+Math.random()}})();
+let me=XM.store.get("xmas-sh-me",null),slide=null,taken=[];
+const api=(body)=>fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({pid,...body})}).then(r=>r.json().then(j=>({ok:r.ok,status:r.status,...j}))).catch(()=>({ok:false}));
+
+function render(){
+  const app=document.getElementById("app");
+  if(!me){
+    app.innerHTML=`<img src="/xmas/emblem.png" alt="" style="width:90px;justify-self:center"><h1 class="t">The 2026 Christmas Games</h1>
+      <div class="sub">Tap your face to join, tribute.</div>
+      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>`;
+    app.querySelectorAll("[data-n]").forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await api({a:"join",name:b.dataset.n});
+      if(r.ok){me=r.me;XM.store.set("xmas-sh-me",me);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute.":"Couldn't join. Check your internet and try again.")}});
+    return;
+  }
+  const t=TRIBUTES.find(x=>x.name===me);
+  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}</div><b>${esc(me)}</b></div><a href="#" class="x" id="notme">Not you?</a></div>
+    <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
+    <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
+    ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
+    <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>`;
+  app.querySelector("#notme").onclick=e=>{e.preventDefault();stopLive();me=null;XM.store.set("xmas-sh-me",null);render()};
+  app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
+    f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
+    if(navigator.vibrate)navigator.vibrate(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
+  app.querySelector("#golive").onclick=goLive;
+  showSlide();
+  if(me==="Carsyn")hostCard();
+}
+/* ---- Gamemaker remote: only for Carsyn, locked with a PIN ---- */
+const SHOW_BTNS=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live cam"],["mute","🔇","Mute"]];
+const TWIST_BTNS=[["twist:fire","🔥","Fireballs"],["twist:storm","⚡","Lightning: swap seats"],["twist:mutts","🐺","Mutts: stand and spin"],["twist:freeze","❄️","Freeze!"],["twist:bonus","🎁","Bonus major award"],["twist:rule","📜","New rule"],["twist:feast","🍗","The Feast (snacks)"],["clearrule","🧽","Clear the rule"]];
+function hostCard(){
+  const box=document.getElementById("host");if(!box)return;const pin=XM.store.get("xmas-sh-pin",null);
+  if(!pin){box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="tiny" style="margin-bottom:8px">Enter your PIN to control the TV.</div>
+      <div class="pin"><input id="pin" inputmode="numeric" maxlength="4" autocomplete="off"><button class="btn" id="pinok">Unlock</button></div>`;
+    box.querySelector("#pinok").onclick=async()=>{const v=box.querySelector("#pin").value.trim();const r=await api({a:"pin",pin:v});
+      if(r.ok){XM.store.set("xmas-sh-pin",v);hostCard()}else alert("Wrong PIN.")};return}
+  const b=([c,i,l])=>`<button data-c="${c}"><span class="i">${i}</span>${l}</button>`;
+  box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
+    <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
+  box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(navigator.vibrate)navigator.vibrate(20);const m=box.querySelector("#hmsg");
+    const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
+    if(r.ok)m.textContent="✅ Sent to the TV";else if(r.status===403){XM.store.set("xmas-sh-pin",null);hostCard()}else m.textContent="Couldn't send. Try again.";
+    setTimeout(()=>{if(m)m.textContent=""},1500)});
+}
+function showSlide(){
+  const n=document.getElementById("tvn"),t=document.getElementById("tvt"),b=document.getElementById("tvb");if(!t)return;
+  if(!slide){t.textContent="Waiting for the Gamemaker...";b.textContent="";n.textContent="";return}
+  n.textContent=slide.total?`${slide.n} / ${slide.total}`:"";t.textContent=slide.title||"";b.textContent=slide.body||"";
+}
+async function poll(){
+  try{const r=await fetch("/api/show?a=phone",{cache:"no-store"});const j=await r.json();const s=j.slide;
+    if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}}catch(e){}
+  setTimeout(poll,2500);
+}
+
+/* ---- go live: send a small camera frame about twice a second for 20 seconds ---- */
+let stream=null,liveUntil=0,liveTimer=0;
+async function goLive(){
+  const box=document.getElementById("live");if(stream)return;
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:480},height:{ideal:480}},audio:false})}
+  catch(e){box.querySelector(".tiny").textContent="Camera blocked. Allow camera access for this site in your phone's settings, then try again.";return}
+  liveUntil=Date.now()+20000;
+  box.innerHTML=`<video autoplay playsinline muted></video><div class="eyebrow" id="lv" style="color:#ff8a7a">🔴 LIVE ON THE TV</div><button class="btn ghost" id="stop">Stop</button>`;
+  const v=box.querySelector("video");v.srcObject=stream;box.querySelector("#stop").onclick=stopLive;
+  const c=document.createElement("canvas");c.width=c.height=240;const x=c.getContext("2d");
+  const send=async()=>{if(!stream)return;const left=Math.ceil((liveUntil-Date.now())/1000);
+    if(left<=0){stopLive();return}
+    const lv=document.getElementById("lv");if(lv)lv.textContent=`🔴 LIVE ON THE TV · ${left}s`;
+    if(v.videoWidth){const s=Math.min(v.videoWidth,v.videoHeight);x.save();x.translate(240,0);x.scale(-1,1);
+      x.drawImage(v,(v.videoWidth-s)/2,(v.videoHeight-s)/2,s,s,0,0,240,240);x.restore();
+      await api({a:"cam",name:me,img:c.toDataURL("image/jpeg",.55)})}
+    liveTimer=setTimeout(send,450)};
+  send();
+}
+function stopLive(){
+  clearTimeout(liveTimer);if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;if(me)api({a:"camoff",name:me})}
+  const box=document.getElementById("live");if(box){box.innerHTML=`<button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div>`;box.querySelector("#golive").onclick=goLive}
+}
+addEventListener("pagehide",stopLive);
+render();poll();
+// keep our name claimed while the page is open
+setInterval(()=>{if(me)api({a:"join",name:me}).then(r=>{if(r.status===409){me=null;XM.store.set("xmas-sh-me",null);render()}})},20000);
+</script>
+</body>
+</html>

@@ -70,7 +70,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .hud button:hover{opacity:1}
 #count{font-weight:800;font-size:15px;color:var(--muted);background:rgba(13,31,24,.7);padding:6px 12px;border-radius:999px;opacity:.7;font-variant-numeric:tabular-nums}
 .tbcorner{position:absolute;top:64px;right:60px;font-size:26px;padding:14px 28px;z-index:3}
-.corner{position:absolute;top:60px;right:60px;display:flex;gap:14px;z-index:6}
+.corner{position:absolute;top:60px;right:200px;display:flex;gap:14px;z-index:6}
 .corner .btn{font-size:24px;padding:12px 24px}
 /* victor picker */
 .vpick{position:fixed;inset:0;z-index:52;background:rgba(6,16,12,.95);display:grid;place-items:center;padding:50px 20px 20px;text-align:center;animation:fade .3s both}
@@ -80,6 +80,10 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .vpick .face img{width:min(110px,12vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line)}
 .vpick .face.on img{box-shadow:0 0 0 6px var(--gold)}
 .vpick .face b{font-weight:800;font-size:1.1rem}
+.moment .face{display:grid;justify-items:center;gap:6px;padding:8px;border-radius:18px;transition:transform .15s;cursor:pointer}
+.moment .face:hover{transform:translateY(-4px);background:rgba(232,176,75,.15)}
+.moment .face img{width:min(150px,16vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)}
+.moment .face b{font-weight:800;font-size:1.3rem}
 .ultimate{display:flex;align-items:center;gap:30px;justify-content:center;padding:18px 40px;border-radius:30px;background:linear-gradient(160deg,rgba(232,176,75,.25),rgba(22,48,42,.95));box-shadow:0 0 0 4px var(--gold),0 0 60px rgba(232,176,75,.35)}
 .ultimate img{width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red)}
 
@@ -145,6 +149,36 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .tg{display:inline-block;animation:tgBob 1.4s ease-in-out infinite alternate;filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
 .tg.r{animation-delay:.7s}
 @keyframes tgBob{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(-10px) rotate(8deg)}}
+/* phones: QR, reactions, live corner */
+.qrbox{display:grid;justify-items:center;gap:8px;padding:16px 18px;background:#fbf6ea;color:#13271f;border-radius:22px;box-shadow:0 0 0 6px var(--gold),0 20px 50px rgba(0,0,0,.5)}
+.qrbox svg{width:var(--qs,230px);height:var(--qs,230px);display:block}
+.qrbox b{font-family:var(--display);font-weight:400;font-size:30px;color:var(--red)}
+.qrbox span{font-weight:800;font-size:18px}
+.joined{display:flex;flex-wrap:wrap;gap:6px;max-width:520px}
+.joined img{width:46px;height:46px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold);animation:popIn .5s both}
+.preact{position:fixed;z-index:57;pointer-events:none;display:grid;justify-items:center;animation:preact 3.2s ease-out forwards}
+.preact .e{font-size:clamp(40px,5vw,80px);filter:drop-shadow(0 6px 10px rgba(0,0,0,.5))}
+.preact .n{font-weight:800;font-size:clamp(14px,1.4vw,22px);background:rgba(13,31,24,.85);color:var(--gold);padding:2px 10px;border-radius:999px;margin-top:-6px}
+@keyframes preact{0%{transform:translateY(0) scale(.4);opacity:0}12%{transform:translateY(-6vh) scale(1.15);opacity:1}100%{transform:translateY(-70vh) scale(.9);opacity:0}}
+#livecorner{position:fixed;right:18px;bottom:70px;z-index:56;display:flex;flex-direction:column-reverse;gap:14px;pointer-events:none}
+.livecam{display:grid;justify-items:center;gap:4px;animation:popIn .5s both}
+.livecam img{width:clamp(120px,13vw,220px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px #c41e1e,0 0 0 9px var(--gold),0 14px 30px rgba(0,0,0,.6);background:#000}
+.livecam b{font-weight:800;font-size:clamp(13px,1.2vw,18px);background:#c41e1e;color:#fff;padding:2px 10px;border-radius:999px;letter-spacing:.04em}
+#miniqr{position:absolute;top:22px;right:22px;z-index:7;padding:8px 8px 6px;border-radius:14px;box-shadow:0 0 0 4px var(--gold),0 10px 24px rgba(0,0,0,.45)}
+#miniqr b{font-size:17px}
+#miniqr[hidden]{display:none}
+/* Gamemaker twists */
+.moment.twist{background:radial-gradient(ellipse at center,rgba(90,10,10,.94),rgba(6,10,8,.98))}
+.moment.twist.ice{background:radial-gradient(ellipse at center,rgba(40,110,160,.94),rgba(4,16,30,.98))}
+.moment.twist.feast{background:radial-gradient(ellipse at center,rgba(120,80,10,.94),rgba(20,12,4,.98))}
+.moment.twist .big{font-size:clamp(5rem,16vh,11rem);line-height:1}
+.moment.twist .say{font-size:clamp(1.4rem,3vw,2.6rem);font-weight:800;max-width:24ch}
+.moment.twist .rule{font-family:var(--display);font-size:clamp(2rem,5vw,4.4rem);color:#fff;background:var(--red);padding:.3em .8em;border-radius:24px;box-shadow:0 0 0 6px var(--gold)}
+.tfly{position:fixed;z-index:54;pointer-events:none;font-size:clamp(50px,7vw,120px);animation:tfly var(--t,1.6s) linear forwards}
+@keyframes tfly{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--x),var(--y)) rotate(var(--r,0deg))}}
+.flash{position:fixed;inset:0;z-index:55;background:#fff;pointer-events:none;animation:flash .5s ease-out forwards}
+@keyframes flash{0%{opacity:.95}100%{opacity:0}}
+#rulebar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:52;background:var(--red);color:#fff;font-weight:800;font-size:clamp(14px,1.5vw,24px);padding:6px 18px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);cursor:pointer}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:700px}
 .lobbycard .lc{position:absolute;inset:0;display:grid;justify-items:center;align-content:start;gap:18px;opacity:0;transition:opacity .35s ease,transform .6s ease;transform:scale(.94)}
@@ -248,6 +282,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 <div id="leaves" aria-hidden="true"></div>
 <div id="lights"></div>
 <div id="stage" aria-live="polite"></div>
+<div id="livecorner" aria-hidden="true"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="hud bl"><button id="intbtn" aria-label="Intermission" title="Intermission (I)">☕</button><button id="livebtn" aria-label="Live broadcast" title="Live broadcast (W)">🎥</button><button data-mute id="mute" aria-label="Mute sound" title="Mute (M)">🔊</button><button id="fs" aria-label="Fullscreen" title="Fullscreen (F)">⛶</button></div>
 <div class="hud br"><button id="prev" aria-label="Previous slide">◀</button><span id="count">1 / 1</span><button id="next" aria-label="Next slide">▶</button></div>
@@ -257,6 +292,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
   <p style="font-size:1rem">→ / Space / click: next · ←: back · F: fullscreen · M: mute</p></div>
 </div>
 <script src="/xmas/xmas.js"></script>
+<script src="/qrcode.js"></script>
 <script>
 const {esc,TRIBUTES,GAMES,TB}=XM;
 document.getElementById("lights").outerHTML=XM.lights(30);
@@ -424,6 +460,106 @@ function beginTrack(id){
 }
 {const set=XM.setSound;XM.setSound=on=>{set(on);BEGIN.muted=!on}}
 
+/* ---------- phones: join by QR, read along, react, go live ---------- */
+const PHONE_URL=location.origin+"/showphone";
+function qrHTML(size){let svg="";try{const q=qrcode(0,"M");q.addData(PHONE_URL);q.make();svg=q.createSvgTag({cellSize:6,margin:1,scalable:true})}catch(e){}
+  return `<div class="qrbox" style="--qs:${size}px">${svg}<b>📱 Scan to join</b>${size>180?`<span>${esc(location.host)}/showphone</span>`:""}</div>`}
+// what's on the TV, as plain text for the phones
+function publishSlide(s,el){
+  const c=el.cloneNode(true);c.querySelectorAll("button,a,.corner,.fly,.lobbycard,img,.qrbox,.joined,svg,input").forEach(n=>n.remove());
+  c.querySelectorAll("div,p,h1,h2,h3,.pill,.k,.v,.eb,.n,.t").forEach(n=>n.append("\n"));
+  const lines=[...new Set(c.textContent.split("\n").map(t=>t.replace(/\s+/g," ").trim()).filter(t=>t.length>1&&!/^\d+ joined$/.test(t)))];
+  const h=el.querySelector("h1");const title=(h?h.textContent.replace(/\s+/g," ").trim():lines[0]||"");
+  const body=lines.filter(t=>t!==title).join("\n").slice(0,880);
+  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body}})}).catch(()=>{});
+}
+function showMiniQR(on){let q=document.getElementById("miniqr");
+  if(!q){const w=document.createElement("div");w.innerHTML=qrHTML(110);q=w.firstElementChild;q.id="miniqr";stage.appendChild(q)}
+  q.hidden=!on}
+/* ---------- Gamemaker twists (from the host menu or Carsyn's phone) ---------- */
+const RULES=["Non-dominant hand only!","Everyone must talk in a British accent!","No saying anyone's name!","Stand on one foot!",
+ "Every answer must be whispered!","You must say \"May the odds be ever in your favor\" before your turn!","Swap seats with the person to your left!",
+ "No laughing! Laugh and you lose a turn!","Talk like a Capitol citizen!","Give a compliment before every turn!"];
+function flyAcross(item,n,{fromTop=false}={}){const R=(a,b)=>a+Math.random()*(b-a);
+  for(let k=0;k<n;k++)setTimeout(()=>{const f=document.createElement("div");f.className="tfly";f.innerHTML=item;
+    if(fromTop){f.style.left=R(0,95)+"vw";f.style.top="-15vh";f.style.setProperty("--x",R(-20,20)+"vw");f.style.setProperty("--y","130vh")}
+    else{const l=Math.random()<.5;f.style.left=l?"-12vw":"106vw";f.style.top=R(5,85)+"vh";f.style.setProperty("--x",(l?120:-120)+"vw");f.style.setProperty("--y",R(-20,20)+"vh");if(!l)f.style.transform="scaleX(-1)"}
+    f.style.setProperty("--t",R(1.2,2.2)+"s");f.style.setProperty("--r",R(-360,360)+"deg");document.body.appendChild(f);setTimeout(()=>f.remove(),2400)},k*R(90,200));
+}
+function setRule(txt){let b=document.getElementById("rulebar");if(!txt){if(b)b.remove();return}
+  if(!b){b=document.createElement("div");b.id="rulebar";b.title="Tap to clear";b.onclick=e=>{e.stopPropagation();setRule(null)};document.body.appendChild(b)}
+  b.textContent="📜 NEW RULE: "+txt}
+function arenaTwist(kind){
+  if(!started)return;
+  if(document.querySelector(".moment.twist"))document.querySelector(".moment.twist").remove();
+  if(busy())return;
+  const sp=(t,o)=>announcer.say(t,null,o||{pitch:.1,rate:.85});
+  const {m,T,close}=openMoment("twist"+(kind==="freeze"?" ice":kind==="feast"?" feast":""),{stopMusic:kind!=="fire"&&kind!=="mutts"&&kind!=="storm"});
+  const card=(big,title,say,extra="")=>{m.innerHTML=`<div class="inner"><div class="eb">⚠️ THE GAMEMAKER HAS SPOKEN</div><div class="big">${big}</div><h1>${title}</h1><div class="say">${say}</div>${extra}<button class="btn ghost" id="tclose">Close (Esc)</button></div>`;
+    m.querySelector("#tclose").onclick=e=>{e.stopPropagation();close()}};
+  XM.sfx("siren");
+  if(kind==="fire"){card("🔥","FIREBALLS!","Duck, tributes! The Gamemaker is not happy.");
+    for(let k=0;k<5;k++)T(()=>{XM.sfx("boom");shake()},300+k*500);T(()=>flyAcross("☄️",10),200);T(()=>flyAcross("🔥",8),900);
+    sp("Attention tributes! Incoming fireballs! Duck!");T(close,6000)}
+  else if(kind==="storm"){card("⚡","LIGHTNING STORM!","The clock strikes. Everyone swap seats. NOW!");
+    const strike=()=>{const f=document.createElement("div");f.className="flash";document.body.appendChild(f);setTimeout(()=>f.remove(),600);XM.sfx("boom");shake()};
+    [200,900,1300,2600,3200].forEach(t=>T(strike,t));sp("Lightning storm! Everyone, swap seats! Now!");T(close,7000)}
+  else if(kind==="mutts"){card("🐺","MUTTS RELEASED!","Run! Last one to stand up and spin around loses a turn!");
+    T(()=>flyAcross("🐺",12),300);[0,700,1400].forEach(t=>T(()=>XM.sfx("drum"),t));sp("The mutts have been released! Everyone stand up and spin around! Last one loses a turn!");T(close,7500)}
+  else if(kind==="freeze"){card("❄️","FREEZE!","Nobody move. Anyone who moves loses a turn.",`<div class="clock" id="fclock" style="font-family:var(--display);font-size:clamp(5rem,14vh,9rem);color:#fff">5</div>`);
+    sp("Freeze! Nobody move!");flyAcross("❄️",14,{fromTop:true});
+    for(let n=5;n>=0;n--)T(()=>{const c=m.querySelector("#fclock");if(c)c.textContent=n||"✅";if(n){XM.sfx("tick");sp(String(n),{rate:1})}else{XM.sfx("gong");sp("You may move.")}},2200+(5-n)*1100);
+    T(close,10500)}
+  else if(kind==="bonus"){card("🎁","BONUS MAJOR AWARD!","The Gamemaker has a surprise. A bonus major award goes to the next person who makes the Gamemaker laugh!");
+    XM.sfx("fanfare");T(()=>XM.sfx("cheer"),600);XM.confetti(200,true);sp("Surprise! A bonus major award! It goes to the next person who makes the Gamemaker laugh!");}
+  else if(kind==="rule"){const r=RULES[Math.floor(Math.random()*RULES.length)];card("📜","NEW RULE!",`<span class="rule">${esc(r)}</span>`,`<div class="sub">This rule stays on the screen until the Gamemaker clears it.</div>`);
+    XM.sfx("gong");sp("A new rule from the Gamemaker! "+r.replace(/"/g,""));setRule(r);}
+  else if(kind==="feast"){card("🍗","THE FEAST!","All tributes, report to the Cornucopia. Snack break! Everyone grab one treat.");
+    XM.sfx("gong");T(()=>XM.sfx("fanfare"),700);T(()=>flyAcross("🍗",6),300);T(()=>flyAcross("🥧",6),900);
+    sp("Attention tributes! There will be a feast at the Cornucopia! Everyone grab a treat!");}
+}
+function runCmd(c){
+  if(!started)return;
+  if(c.startsWith("twist:"))return arenaTwist(c.slice(6));
+  if(c==="close"){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));return}
+  if(c==="mute"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel();return}
+  if(c==="clearrule"){setRule(null);return}
+  if(busy())return;
+  if(c==="next")next();else if(c==="prev")prev();else if(c==="intermission")intermission();else if(c==="live")liveBroadcast();
+}
+try{new BroadcastChannel("xmas-show").onmessage=e=>{if(e.data&&typeof e.data.cmd==="string")runCmd(e.data.cmd)}}catch(e){}
+let reactSince=null,cmdSince=null,phonePolling=false;
+function startPhonePoll(){
+  if(phonePolling)return;phonePolling=true;
+  const tick=async()=>{
+    try{const r=await fetch("/api/show?a=tv&since="+(reactSince||0)+"&csince="+(cmdSince||0),{cache:"no-store"});if(r.ok){const j=await r.json();
+      if(cmdSince===null)cmdSince=Math.max(0,...(j.cmds||[]).map(x=>x.id));  // skip remote taps sent before the show opened
+      else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd)}
+      if(reactSince===null){reactSince=Math.max(0,...(j.reacts||[]).map(x=>x.id))}  // skip reactions sent before the show opened
+      else for(const x of j.reacts||[]){reactSince=Math.max(reactSince,x.id);phoneReact(x)}
+      showLive(j.live||{});showJoined(j.joined||[])}}catch(e){}
+    setTimeout(tick,1000)};
+  tick();
+}
+function phoneReact(x){
+  for(let k=0;k<2;k++)setTimeout(()=>{const f=document.createElement("div");f.className="preact";
+    f.innerHTML=`<div class="e">${esc(x.e)}</div>${k===0?`<div class="n">${esc(x.name)}</div>`:""}`;
+    f.style.left=(8+Math.random()*80)+"vw";f.style.bottom=(4+Math.random()*10)+"vh";document.body.appendChild(f);setTimeout(()=>f.remove(),3300)},k*110);
+  XM.sfx("pop");
+}
+function showLive(live){
+  const box=document.getElementById("livecorner");const names=Object.keys(live).slice(0,3);
+  box.querySelectorAll("[data-live]").forEach(n=>{if(!names.includes(n.dataset.live))n.remove()});
+  names.forEach(name=>{let n=box.querySelector(`[data-live="${CSS.escape(name)}"]`);
+    if(!n){n=document.createElement("div");n.className="livecam";n.dataset.live=name;n.innerHTML=`<img alt=""><b>🔴 LIVE · ${esc(name)}</b>`;box.appendChild(n);XM.sfx("stinger")}
+    const img=n.querySelector("img");if(img.src!==live[name])img.src=live[name]});
+}
+function showJoined(list){
+  const c=document.getElementById("jcount"),f=document.getElementById("jfaces");if(!c||!f)return;
+  c.textContent=list.length;const have=[...f.children].map(i=>i.dataset.n);
+  if(have.join()!==list.join())f.innerHTML=list.map(n=>XM.photo(n)?`<img data-n="${esc(n)}" src="${XM.photo(n)}" alt="${esc(n)}" title="${esc(n)}">`:"").join("");
+}
+
 /* ---------- the slides, in show order ---------- */
 const HG_FACTS=[
  "Before The Hunger Games, Suzanne Collins wrote for Nickelodeon shows, including \"Clarissa Explains It All.\"",
@@ -465,7 +601,12 @@ const SLIDES=[
       <h1 class="title-xl slam" ${d(.6)} style="font-size:120px">Christmas Games</h1>
       <div class="pop" ${d(1.1)} style="display:flex;align-items:center;gap:18px"><span class="tg" style="font-size:64px">🦃</span><span class="pill">Thanksmas Edition</span><span class="tg r" style="font-size:60px">🥧</span></div>
       <div class="fade" ${d(1.4)} style="font-size:44px;font-weight:600">The Games begin soon. Find your seat, tributes.</div>
-      <div class="card fade" ${d(1.8)} style="padding:22px 30px;max-width:980px;min-height:150px;transition:opacity .6s" id="hgfact"></div>
+      <div class="fade" ${d(1.6)} style="display:flex;gap:30px;align-items:center">
+        ${qrHTML(230)}
+        <div style="display:grid;gap:14px;max-width:640px">
+          <div class="card" style="padding:18px 24px;min-height:150px;transition:opacity .6s" id="hgfact"></div>
+          <div><div class="eb" style="margin-bottom:6px">On their phones: <span id="jcount">0</span> joined</div><div class="joined" id="jfaces"></div></div>
+        </div></div>
     </div></div>`,
    enter(el){const cards=[...el.querySelectorAll(".lc")];let i=0;
      const box=el.querySelector("#hgfact");const mix=a=>a.slice().sort(()=>Math.random()-.5);
@@ -630,6 +771,8 @@ function go(i){
     if(s.enter)s.enter(el);
   }
   wireSlide(el);
+  showMiniQR(s.id!=="lobby");
+  if(started)setTimeout(()=>{if(curEl===el)publishSlide(s,el)},400);
   if(s.id.endsWith("-cookie"))cookieStorm(el,s.id==="game-cookie");
   if(s.id.endsWith("-scoop"))snowballFight(el,s.id==="game-scoop");
   const light=s.id.startsWith("order-");
@@ -644,9 +787,9 @@ function go(i){
 // ❄️ snowballs thrown everywhere: arcs across the screen, plus hits that splat on the "glass" and melt
 function snowballFight(el,big){
   const R=(a,b)=>a+Math.random()*(b-a);let h="";
-  for(let k=0;k<14;k++){const fromLeft=k%2===0,size=R(40,90),y=R(250,950);
+  for(let k=0;k<6;k++){const fromLeft=k%2===0,size=R(40,90),y=R(250,950);
     h+=`<span class="sb arc" style="width:${size}px;height:${size}px;top:${y}px;left:${fromLeft?-120:1960}px;--dx:${fromLeft?2200:-2200}px;--up:${-R(250,600)}px;--down:${R(-150,250)}px;--t:${R(2.2,4)}s;--d:${-R(0,4)}s"></span>`}
-  if(big)for(let k=0;k<34;k++){const a=Math.random()*6.283,dist=R(500,1300),size=R(40,110);
+  if(big)for(let k=0;k<14;k++){const a=Math.random()*6.283,dist=R(500,1300),size=R(40,100);
     h+=`<span class="sb boomsb" style="width:${size}px;height:${size}px;left:50%;top:45%;animation:boomOut 1.5s cubic-bezier(.15,.8,.3,1) ${R(0,.3)}s both;--x:${Math.cos(a)*dist}px;--y:${Math.sin(a)*dist*.7}px;--r:0deg"></span>`}
   const f=document.createElement("div");f.className="fly";f.innerHTML=h;el.appendChild(f);
   const hit=()=>{if(curEl!==el||!f.isConnected){clearInterval(iv);return}
@@ -657,15 +800,15 @@ function snowballFight(el,big){
       let g="";for(let k=0;k<9;k++){const r=k?R(size*.12,size*.3):size*.55,a=Math.random()*6.283,d=k?R(size*.35,size*.75):0;
         g+=`<i style="width:${r*2}px;height:${r*2}px;left:${Math.cos(a)*d-r}px;top:${Math.sin(a)*d-r}px"></i>`}
       sp.innerHTML=g;f.appendChild(sp);setTimeout(()=>sp.remove(),2700)},550)};
-  const iv=setInterval(hit,big?700:1100);setTimeout(hit,big?600:300);
+  const iv=setInterval(hit,big?1800:2600);setTimeout(hit,big?900:600);
 }
 // 🍪 cookies raining, spinning and flying across the screen
 function cookieStorm(el,big){emojiStorm(el,big,()=>"🍪")}
 function emojiStorm(el,big,item,light){
-  const R=(a,b)=>a+Math.random()*(b-a);let h="";const nf=light?7:22,na=light?1:6,sz=light?.6:1;
+  const R=(a,b)=>a+Math.random()*(b-a);let h="";const nf=light?4:9,na=light?0:2,sz=light?.55:.8;
   for(let k=0;k<nf;k++)h+=`<i class="fall" style="left:${R(0,1880)}px;font-size:${R(50,120)*sz}px;--t:${R(4,8)}s;--d:${-R(0,8)}s;--dx:${R(-200,200)}px;--r:${R(-720,720)}deg">${item()}</i>`;
   for(let k=0;k<na;k++)h+=`<i class="across" style="top:${R(80,980)}px;font-size:${R(70,140)*sz}px;--t:${R(5,9)}s;--d:${-R(0,9)}s;--dy:${R(-300,300)}px;--r:${R(360,1440)}deg">${item()}</i>`;
-  if(big)for(let k=0;k<40;k++){const a=Math.random()*6.283,dist=R(500,1300);h+=`<i class="boom" style="font-size:${R(60,150)}px;--d:${R(0,.3)}s;--x:${Math.cos(a)*dist}px;--y:${Math.sin(a)*dist*.7}px;--r:${R(-900,900)}deg">${item()}</i>`}
+  if(big)for(let k=0;k<16;k++){const a=Math.random()*6.283,dist=R(500,1300);h+=`<i class="boom" style="font-size:${R(50,110)}px;--d:${R(0,.3)}s;--x:${Math.cos(a)*dist}px;--y:${Math.sin(a)*dist*.7}px;--r:${R(-900,900)}deg">${item()}</i>`}
   const f=document.createElement("div");f.className="fly";f.innerHTML=h;el.appendChild(f);
 }
 function wireSlide(el){
@@ -679,7 +822,7 @@ function wireSlide(el){
 }
 const next=()=>go(cur+1),prev=()=>go(cur-1);
 function begin(){
-  if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);
+  if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);startPhonePoll();
   const st=document.getElementById("start");st.remove();
   const i=cur;cur=-1;curEl&&curEl.remove();curEl=null;go(i);
 }
@@ -725,13 +868,20 @@ function pickVictor(g,place=1){
   if(document.querySelector(".vpick"))return;XM.ensureAudio();
   const first=XM.victors()[g],cur=place===1?first:XM.seconds()[g];const ov=document.createElement("div");ov.className="vpick";
   ov.innerHTML=`<div style="display:grid;gap:20px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(GAMES[g].name)}</div>
-    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">${place===1?"🥇 Who won?":"🥈 Who came in second?"}</h1>
-    ${place===2?`<div class="eyebrow" style="font-size:.95rem;color:var(--ink)">Second place wins a major award too</div>`:""}
+    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">${place===1?"🥇 Who won?":"🥈 The Battle for Silver"}</h1>
+    ${place===2?`<div class="eyebrow" style="font-size:.95rem;color:var(--ink)">Second place wins a major award, but you have to fight for it. Tap everyone who was close, then FIGHT.</div>`:""}
     <div class="faces">${TRIBUTES.filter(t=>place===1||t.name!==first).map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
-    <div style="display:flex;gap:12px">${cur?`<button class="btn ghost" id="vp-clear">Clear ${place===1?"victor":"second place"}</button>`:""}<button class="btn ghost" id="vp-x">${place===2?"Skip (Esc)":"Cancel (Esc)"}</button></div></div>`;
+    <div style="display:flex;gap:12px">${place===2?`<button class="btn red" id="vp-fight" disabled>⚔️ FIGHT!</button>`:""}${cur?`<button class="btn ghost" id="vp-clear">Clear ${place===1?"victor":"second place"}</button>`:""}<button class="btn ghost" id="vp-x">${place===2?"Skip (Esc)":"Cancel (Esc)"}</button></div></div>`;
   document.body.appendChild(ov);XM.sfx("whoosh");
   const close=()=>{ov.remove();document.removeEventListener("keydown",key,true)};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}};document.addEventListener("keydown",key,true);
+  if(place===2){const fb=ov.querySelector("#vp-fight");ov.querySelectorAll(".face").forEach(b=>b.classList.remove("on"));
+    const picked=()=>[...ov.querySelectorAll(".face.on")].map(b=>b.dataset.n);
+    const upd=()=>{const n=picked().length;fb.disabled=!n;fb.textContent=n===1?"🥈 Award 2nd place":"⚔️ FIGHT!"};
+    ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();b.classList.toggle("on");XM.sfx(b.classList.contains("on")?"tap":"untap");upd()});
+    fb.onclick=e=>{e.stopPropagation();const p=picked();if(!p.length)return;close();
+      if(p.length===1){XM.setSecond(g,p[0]);refreshCorners();XM.stopSong();XM.celebrate(p[0],{intro:"And in second place"})}else silverBattle(g,p)};
+  }else
   ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;
     if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
     close();refreshCorners();XM.stopSong();
@@ -740,6 +890,36 @@ function pickVictor(g,place=1){
   const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};
   ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};
   ov.onclick=e=>e.stopPropagation();
+}
+/* ---------- The Battle for Silver: contenders fight for the 2nd place major award ---------- */
+const SILVER=[["✊","Rock, Paper, Scissors","Best two out of three. Losers drop out until one is left."],
+ ["👀","Staring Contest","Eyes locked. First to blink or laugh is out."],
+ ["👍","Thumb War","One, two, three, four, I declare a thumb war. Pin their thumb for three seconds."],
+ ["🎄","Christmas Movie Showdown","Take turns naming Christmas movies. No repeats. Pause for 3 seconds and you're out."],
+ ["🥄","Spoon on the Nose","Hang a spoon on your nose. Last spoon standing wins."],
+ ["🦩","Flamingo Stand","Stand on one foot, eyes closed. Last one standing wins."],
+ ["🎤","Effie Trinket Impression","Everyone says \"May the odds be ever in your favor!\" The room cheers for the best one."],
+ ["🤫","Silent Treatment","The room tries to make them laugh. Last straight face wins."],
+ ["🦌","Name the Reindeer","Take turns naming one of Santa's reindeer. Miss or repeat one and you're out."],
+ ["🍬","Candy Cane Balance","Balance a candy cane (or a pen) on one finger. Longest wins."]];
+function silverBattle(g,names){
+  const {m,T,close}=openMoment("twist");const ch=SILVER[Math.floor(Math.random()*SILVER.length)];
+  const faces=names.map(n=>{const t=TRIBUTES.find(x=>x.name===n);return `<button class="face" data-n="${esc(n)}"><img src="${t?t.img:""}" alt=""><b>${esc(n)}</b></button>`}).join(`<div style="font-family:var(--display);font-size:clamp(2rem,4vw,3.4rem);color:var(--gold);align-self:center">VS</div>`);
+  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · 🥈 THE BATTLE FOR SILVER</div>
+    <div class="big">${ch[0]}</div><h1>${esc(ch[1])}</h1><div class="say">${esc(ch[2])}</div>
+    <div class="faces" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">${faces}</div>
+    <div class="eyebrow" id="sv-go" style="font-size:clamp(1.6rem,4vw,3rem);color:#fff;min-height:1.2em"></div>
+    <div class="row"><button class="btn ghost" id="sv-new">🔄 Different challenge</button><button class="btn ghost" id="sv-x">Cancel (Esc)</button></div>
+    <div class="sub" style="opacity:.8">Tap the winner's face when it's over.</div></div>`;
+  XM.playSong("battle");XM.sfx("siren");
+  announcer.say(`The battle for silver! ${names.map(XM.spoken).join(" versus ")}. The challenge: ${ch[1]}! ${ch[2].replace(/"/g,"")}`,null,{pitch:.1,rate:.85});
+  const est=4200+ch[2].length*65;const go=m.querySelector("#sv-go");
+  [3,2,1].forEach((n,k)=>T(()=>{go.textContent=n;XM.sfx("drum")},est+k*900));
+  T(()=>{go.textContent="⚔️ FIGHT!";XM.sfx("boom");shake();announcer.say("Fight!",null,{rate:1})},est+2700);
+  m.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;XM.setSecond(g,n);close();refreshCorners();XM.stopSong();
+    XM.celebrate(n,{intro:"The battle is over. In second place"})});
+  m.querySelector("#sv-new").onclick=e=>{e.stopPropagation();close();silverBattle(g,names)};
+  m.querySelector("#sv-x").onclick=e=>{e.stopPropagation();close()};
 }
 function refreshCorners(){document.querySelectorAll("[data-corner]").forEach(c=>{c.outerHTML=tbBtn(c.dataset.corner)});if(curEl)wireSlide(curEl);
   const g=document.getElementById("vgrid");if(g){drawVictors(g);const u=document.getElementById("ult");if(u&&!u.querySelector(".ultimate")){u.innerHTML="";revealUltimate(curEl)}}}
@@ -774,6 +954,7 @@ function intermission(){
     <div class="clock" id="iclock">☕</div><div id="imsg" style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--gold);min-height:1.2em"></div>
     <div class="row" id="ipick"><span class="eb" style="align-self:center">Timer:</span>${[5,10,15].map(n=>`<button class="btn ghost" data-min="${n}">${n} min</button>`).join("")}<button class="btn ghost" data-min="0">No timer</button></div>
     <div class="row" id="iadj" style="display:none"><button class="btn ghost" id="iminus">−1 min</button><button class="btn ghost" id="iplus">+1 min</button></div>
+    <div style="display:flex;gap:20px;align-items:center;justify-content:center">${qrHTML(130)}<div class="eb" style="max-width:16ch;text-align:left;color:var(--ink)">Not joined yet? Scan with your phone camera.</div></div>
     <div class="card fact" id="ifact" style="padding:16px 24px"></div>
     <button class="btn red" id="iresume" style="font-size:1.4rem;padding:.8em 2em">▶ Resume the Games (Esc)</button></div>`;
   const clock=m.querySelector("#iclock"),msg=m.querySelector("#imsg"),fact=m.querySelector("#ifact");

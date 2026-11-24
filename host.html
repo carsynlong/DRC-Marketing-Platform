@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gamemaker Menu</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
+<link rel="stylesheet" href="/xmas/xmas.css">
+<style>
+body{min-height:100%;overflow-x:hidden}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:40px 16px 50px;display:grid;gap:22px}
+h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 4px 0 var(--red-d);font-size:clamp(2rem,5vw,3.4rem);margin:0;text-align:center;line-height:1.05}
+.sub{text-align:center;color:var(--muted);margin-top:-10px}
+.sec{background:rgba(22,48,42,.95);border-radius:20px;padding:16px 18px;box-shadow:0 0 0 1px var(--line)}
+.sec h2{font-family:var(--display);font-weight:400;color:var(--gold);margin:0 0 12px;font-size:1.4rem}
+.sec p{margin:0 0 12px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.tiles a,.tiles button{display:grid;gap:4px;justify-items:center;text-align:center;padding:14px 10px;border-radius:16px;background:rgba(255,255,255,.07);color:var(--ink);text-decoration:none;font-weight:800;font-size:1rem;line-height:1.2;cursor:pointer;border:0;font-family:inherit}
+.tiles .i{font-size:2rem}
+.tiles small{font-weight:600;color:var(--muted);font-size:.8rem}
+.tiles a:hover,.tiles button:hover{background:rgba(232,176,75,.22)}
+.tiles button:active{transform:scale(.96)}
+.tiles.big a{background:var(--red);font-size:1.2rem}
+.tiles.twists button{background:rgba(196,30,30,.28)}
+.msg{min-height:1.3em;text-align:center;font-weight:800;color:var(--gold);margin-top:10px}
+.danger{background:#5a1410!important}
+.pin{font-size:1.6rem;font-family:var(--display);color:var(--gold)}
+</style>
+</head>
+<body>
+<canvas id="snow" aria-hidden="true"></canvas>
+<div id="lights"></div>
+<div class="wrap">
+  <img src="/xmas/emblem.png" alt="" style="width:90px;justify-self:center">
+  <h1 class="t">Gamemaker Menu</h1>
+  <div class="sub">Carsyn's host tools for the 2026 Christmas Games. Keep this tab open next to the show.</div>
+
+  <div class="sec"><h2>▶ The show</h2>
+    <div class="tiles big"><a href="/show" target="xmas-show"><span class="i">📺</span>Start the show<small>Opens in its own tab. Press F for fullscreen.</small></a></div>
+    <p style="margin-top:14px">Jump to a part of the show:</p>
+    <div class="tiles" id="jump"></div>
+  </div>
+
+  <div class="sec"><h2>🌀 Twists (only you can do these)</h2>
+    <p>Click one and it takes over the TV. The show tab must be open in this same browser. Esc on the show closes it.</p>
+    <div class="tiles twists" id="twists"></div>
+    <div class="msg" id="tmsg"></div>
+  </div>
+
+  <div class="sec"><h2>🎮 Control the show from here</h2>
+    <div class="tiles" id="ctrl"></div>
+  </div>
+
+  <div class="sec"><h2>🧰 Tools</h2>
+    <div class="tiles">
+      <a href="/wheel#cookie" target="_blank"><span class="i">🍪</span>Cookie matchup wheel</a>
+      <a href="/wheel#scoop" target="_blank"><span class="i">❄️</span>Snowball matchup wheel</a>
+      <a href="/bingo" target="_blank"><span class="i">🎱</span>Bingo board</a>
+      <a href="/" target="_blank"><span class="i">🔍</span>Who's That Tribute?</a>
+      <a href="/district-feud" target="_blank"><span class="i">🏆</span>District Feud</a>
+      <a href="/district-secrets" target="_blank"><span class="i">🕵️</span>District Secrets</a>
+      <a href="/cheatsheet" target="_blank"><span class="i">📋</span>Cheat sheet<small>Print it</small></a>
+      <a href="/showphone" target="_blank"><span class="i">📱</span>Phone page<small>What guests see</small></a>
+    </div>
+  </div>
+
+  <div class="sec"><h2>📱 Your phone remote</h2>
+    <p>On your phone, scan the QR code on the TV (or go to whos-that-tribute.vercel.app/showphone), tap your face (Carsyn), and enter this PIN to unlock the Gamemaker Remote with the same buttons and twists:</p>
+    <div class="pin">PIN: 1225</div>
+  </div>
+
+  <div class="sec"><h2>🧹 Reset for game night</h2>
+    <p>Clears all victors, 2nd places, major award ratings, bingo numbers and winners, wheel results and shuffled orders on this laptop. Do this once before everyone arrives.</p>
+    <div class="tiles"><button class="danger" id="reset"><span class="i">🧹</span>Reset everything<small>Click twice to confirm</small></button></div>
+    <div class="msg" id="rmsg"></div>
+  </div>
+</div>
+<script src="/xmas/xmas.js"></script>
+<script>
+document.getElementById("lights").outerHTML=XM.lights(14);
+XM.snow(document.getElementById("snow"));
+const {esc,GAMES}=XM;
+const tile=(i,l,s="")=>`<span class="i">${i}</span>${esc(l)}${s?`<small>${esc(s)}</small>`:""}`;
+// jump links
+const J=[["lobby","🛋️","Lobby"],["title","🏹","Title"],["rules","📜","Rules"],["tributes","👥","Meet the tributes"],["begin","🔥","Let the Games begin"]];
+Object.entries(GAMES).forEach(([k,g])=>J.push(["game-"+k,["🍪","🔍","🧤","🏆","❄️","🕵️","🎲","🎱"][g.n-1],`Game ${g.n}: ${g.name}`]));
+J.splice(9,0,["halftime","📊","Halftime report"]);J.push(["victors","👑","The Capitol Has Spoken"],["end","🎄","The end"]);
+document.getElementById("jump").innerHTML=J.map(([id,i,l])=>`<a href="/show#${id}" target="xmas-show">${tile(i,l)}</a>`).join("");
+// commands go to the show tab through BroadcastChannel (same browser)
+let ch=null;try{ch=new BroadcastChannel("xmas-show")}catch(e){}
+const send=(cmd,msg)=>{if(!ch){alert("This browser can't talk to the show tab. Use your phone remote instead.");return}ch.postMessage({cmd});
+  const m=document.getElementById(msg);m.textContent="✅ Sent to the show";setTimeout(()=>m.textContent="",1600)};
+const TW=[["twist:fire","🔥","Fireballs","Booms and flying fire"],["twist:storm","⚡","Lightning storm","Everyone swaps seats"],["twist:mutts","🐺","Mutts released","Stand and spin, last one loses a turn"],
+  ["twist:freeze","❄️","Freeze!","5-second countdown, nobody move"],["twist:bonus","🎁","Bonus major award","Next to make you laugh wins"],["twist:rule","📜","New rule","Random silly rule stays on screen"],
+  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["clearrule","🧽","Clear the rule","Removes the rule banner"]];
+document.getElementById("twists").innerHTML=TW.map(([c,i,l,s])=>`<button data-c="${c}">${tile(i,l,s)}</button>`).join("");
+const CT=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live broadcast"],["mute","🔇","Mute / unmute"]];
+document.getElementById("ctrl").innerHTML=CT.map(([c,i,l])=>`<button data-c="${c}">${tile(i,l)}</button>`).join("")+'<div class="msg" id="cmsg" style="grid-column:1/-1"></div>';
+document.querySelectorAll("#twists [data-c]").forEach(b=>b.onclick=()=>send(b.dataset.c,"tmsg"));
+document.querySelectorAll("#ctrl [data-c]").forEach(b=>b.onclick=()=>send(b.dataset.c,"cmsg"));
+// reset
+const KEYS=["xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
+let armed=0;const rb=document.getElementById("reset");
+rb.onclick=()=>{const m=document.getElementById("rmsg");
+  if(Date.now()-armed>4000){armed=Date.now();m.textContent="Click again to really reset everything.";return}
+  KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});armed=0;m.textContent="✅ All reset. Ready for game night! (Reload the show tab.)"};
+</script>
+</body>
+</html>

@@ -36,6 +36,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .chip{border:0;border-radius:999px;padding:9px 16px;background:rgba(255,255,255,.08);color:var(--ink);font:800 .95rem "Outfit",sans-serif;cursor:pointer}
 .chip.on{background:var(--gold);color:#13271f}
 .pinrow input{width:7em;font:800 1.2rem "Outfit",sans-serif;text-align:center;padding:8px;border-radius:12px;border:0}
+#helpbox{display:grid;gap:8px}#helpbox:empty{display:none}.helprow{background:#7a1010;border-radius:14px;padding:10px 14px;box-shadow:0 0 0 3px #e8b04b;font-size:1.15rem}
 </style>
 </head>
 <body>
@@ -46,6 +47,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
   <h1 class="t">Gamemaker Menu</h1>
   <div class="sub">Carsyn's host tools for the 2026 Christmas Games. Keep this tab open next to the show.</div>
 
+  <div id="helpbox"></div>
   <div class="sec"><h2>▶ The show</h2>
     <div class="tiles big"><a href="/show" target="xmas-show"><span class="i">📺</span>Start the show<small>Opens in its own tab. Press F for fullscreen.</small></a></div>
     <p style="margin-top:14px">Jump to a part of the show:</p>
@@ -105,7 +107,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 
   <div class="sec"><h2>🧹 Reset for game night</h2>
     <p>Clears all victors, 2nd places, major award ratings, bingo numbers and winners, wheel results and shuffled orders on this laptop. Do this once before everyone arrives.</p>
-    <div class="tiles"><button class="danger" id="statsclear"><span class="i">🏁</span>Clear award stats<small>End-of-night awards start fresh. Click twice.</small></button><button class="danger" id="reset"><span class="i">🧹</span>Reset everything<small>Click twice to confirm</small></button></div>
+    <div class="tiles"><button class="danger" id="statsclear"><span class="i">🏁</span>Clear award stats<small>End-of-night awards start fresh. Click twice.</small></button><button class="danger" id="reset"><span class="i">🧹</span>Reset everything<small>Clears this laptop and the Capitol Points. Click twice.</small></button></div>
     <div class="msg" id="rmsg"></div>
   </div>
 </div>
@@ -209,14 +211,17 @@ document.getElementById("misc").innerHTML=[["clock:5","⏰","5 min clock"],["clo
 document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{if(b.dataset.m.startsWith("chaos:"))try{localStorage.setItem("xmas-chaos",b.dataset.m==="chaos:on"?"1":"0")}catch(e){}send(b.dataset.m,"mmsg")});
 const pinNow=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
 const hcall=async b=>{const pin=pinNow();if(!pin){alert("Unlock the Side quests section with your PIN first.");return {ok:false}}return api({pin,...b})};
-document.getElementById("saysend").onclick=async()=>{const t=document.getElementById("saytext");if(!t.value.trim())return;const r=await hcall({a:"say",text:t.value.trim()});const m=document.getElementById("mmsg");m.textContent=r.ok?"🔊 Announced":"Couldn't send.";if(r.ok)t.value=""};
+document.getElementById("saysend").onclick=async()=>{const t=document.getElementById("saytext");if(!t.value.trim()){const m=document.getElementById("mmsg");m.textContent="Type something first.";t.focus();return}const r=await hcall({a:"say",text:t.value.trim()});const m=document.getElementById("mmsg");m.textContent=r.ok?"🔊 Announced":"Couldn't send.";if(r.ok)t.value=""};
 const picked=()=>{const b=document.querySelector("#qbody [data-qn].on");return b?b.dataset.qn:"random"};
 document.getElementById("hsm").innerHTML=[["hotseat","🎭","Hot seat","Picked tribute takes anonymous questions"],["hotend","⏹️","End hot seat"],["mercyopen","🏳️","Mercy vote","Room votes to spare or punish"],["mercyclose","⚖️","Mercy verdict"],
   ["predictopen","🔮","Open predictions","Phones pick the Ultimate Victor"],["predictlock","🔒","Lock predictions"],["raceopen","📲","Tap race","First to 50 taps on their phone wins a point"],["raceend","⏹️","End tap race"]].map(([c,i,l,d])=>`<button data-h="${c}"><span class="i">${i}</span>${l}${d?`<small>${d}</small>`:""}</button>`).join("");
 document.querySelectorAll("[data-h]").forEach(b=>b.onclick=async()=>{const r=await hcall({a:b.dataset.h,to:picked()});const m=document.getElementById("hmsg");m.textContent=r.ok?"✅ Done":(r.error||"Couldn't send.");setTimeout(()=>m.textContent="",3000);hostLists()});
 let hlT=0;async function hostLists(){clearTimeout(hlT);const pin=pinNow(),box=document.getElementById("hlists");if(pin)try{
   const [a,sh]=await Promise.all([fetch("/api/show?a=asks&pin="+pin,{cache:"no-store"}).then(r=>r.json()),fetch("/api/show?a=shouts&pin="+pin,{cache:"no-store"}).then(r=>r.json())]);
-  const k=JSON.stringify([a,sh]);if(box.dataset.k!==k){box.dataset.k=k;
+  const k=JSON.stringify([a,sh]);if(box.dataset.k!==k){const hadHelp=+(box.dataset.h||0);box.dataset.k=k;box.dataset.h=(sh.helps||[]).length;
+    if((sh.helps||[]).length>hadHelp)try{XM.ensureAudio&&XM.ensureAudio();XM.sfx&&XM.sfx("ding")}catch(e){}
+    const H=document.getElementById("helpbox");H.innerHTML=(sh.helps||[]).map(x=>`<div class="qrow helprow"><span style="flex:1;font-weight:800">🆘 ${esc(XM.dn(x.from))} needs help</span><button class="chip on" data-hd="${x.id}">On my way ✓</button></div>`).join("");
+    H.querySelectorAll("[data-hd]").forEach(b=>b.onclick=async()=>{await hcall({a:"helpdone",id:+b.dataset.hd});box.dataset.k="";hostLists()});
     box.innerHTML=(a.hot?`<h2 style="font-size:1.1rem;margin-top:12px">🎭 Questions for ${esc(a.hot.to)}</h2>${(a.asks||[]).map(x=>`<button class="chip" data-ask="${esc(x.q)}" style="display:block;width:100%;text-align:left;margin-bottom:6px">${esc(x.q)}</button>`).join("")||"<p>No questions yet.</p>"}`:"")+
       ((sh.shouts||[]).length?`<h2 style="font-size:1.1rem;margin-top:12px">💌 Shout-outs waiting</h2>${sh.shouts.map(x=>`<div class="qrow"><span style="flex:1"><b>${esc(x.from)}:</b> ${esc(x.text)}</span><button class="chip on" data-so="${x.id}">✅ Show</button><button class="chip" data-sx="${x.id}">✖</button></div>`).join("")}`:"");
     box.querySelectorAll("[data-ask]").forEach(b=>b.onclick=async()=>{await hcall({a:"askshow",q:b.dataset.ask});b.style.opacity=.4});
@@ -239,11 +244,12 @@ let rhArmed=0;document.getElementById("rh-off").onclick=async()=>{const m=docume
   if(Date.now()-rhArmed>4000){rhArmed=Date.now();m.textContent="Click again to wipe all test data.";return}rhArmed=0;
   KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{ch&&ch.postMessage({cmd:"chaos:off"});ch&&ch.postMessage({cmd:"sponsor:off"});ch&&ch.postMessage({cmd:"clock:off"})}catch(e){}const pin=pinNow();if(pin){await api({a:"pointsreset",pin});await api({a:"clearphones",pin})}
   m.textContent=pin?"🧹 Rehearsal over. Everything is wiped. Reload the show tab.":"🧹 Wiped this laptop. Points on the server were NOT reset: unlock the Side quests section with your PIN, then click End rehearsal again.";};
-const KEYS=["xmas-chaos","xmas-sponsor-auto","xmas-ticker","xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
+const KEYS=["xmas-chaos","xmas-sponsor-auto","xmas-ticker","xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide","xmas-muted","xmas-points-briefed","xmas-bingo-gm"];
 let armed=0;const rb=document.getElementById("reset");
 rb.onclick=()=>{const m=document.getElementById("rmsg");
   if(Date.now()-armed>4000){armed=Date.now();m.textContent="Click again to really reset everything.";return}
-  KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});armed=0;m.textContent="✅ All reset. Ready for game night! (Reload the show tab.)"};
+  KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});armed=0;const pin=pinNow();if(pin)api({a:"pointsreset",pin});
+  m.textContent=pin?"✅ All reset, Capitol Points too. Ready for game night! (Reload the show tab.)":"✅ This laptop is reset. Capitol Points were NOT reset: unlock the Side quests section with your PIN, then click Reset again. (Reload the show tab.)"};
 </script>
 </body>
 </html>

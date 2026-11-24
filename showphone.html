@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <title>Join the Christmas Games</title>
 <link rel="icon" href="/xmas/emblem.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,7 +81,8 @@ select,textarea{width:100%;font-size:16px;font-weight:600;font-family:inherit;pa
 .dlayer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .dlayer i{position:absolute;top:-60px;font-style:normal;opacity:.35;animation:dfall var(--s) linear var(--d) infinite}
 @keyframes dfall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
-.race{position:fixed;inset:0;z-index:25;display:grid;grid-template-rows:auto 1fr auto;padding:24px 16px max(24px,env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse at center,#1d3b32,#06100c);text-align:center;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+html{touch-action:manipulation}
+.race{position:fixed;inset:0;z-index:25;display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);overflow:hidden;padding:24px 16px max(24px,env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse at center,#1d3b32,#06100c);text-align:center;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .race .tapb{align-self:center;justify-self:center;width:min(78vw,340px);aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 40% 35%,#ff6a5a,#b8322a 60%,#6e1712);color:#fff;font-family:var(--display);font-size:3.4rem;box-shadow:0 0 0 8px var(--gold),0 20px 40px rgba(0,0,0,.6);touch-action:manipulation}
 .race .tapb:active{transform:scale(.94)}
 .race .tapb:disabled{filter:grayscale(.7);opacity:.6}
@@ -142,6 +143,8 @@ const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
 const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
+// if the phone got zoomed in, snap back to normal size (so full-screen pop-ups fit)
+function unzoom(){const m=document.querySelector('meta[name=viewport]');if(!m)return;const c=m.content;m.content=c.replace(/,?maximum-scale=[^,]*/,"")+",maximum-scale=1";window.scrollTo(0,window.scrollY);setTimeout(()=>{m.content=c},400)}
 function buzz(p){try{if(navigator.vibrate&&navigator.vibrate(p))return}catch(e){}
   const big=Array.isArray(p)||p>=150;if(!big)return;const f=document.createElement("div");f.style.cssText="position:fixed;inset:0;z-index:99;background:#fff;pointer-events:none;transition:opacity .5s";document.body.appendChild(f);
   requestAnimationFrame(()=>{f.style.opacity="0"});setTimeout(()=>f.remove(),600);try{XM.sfx("stinger")}catch(e){}}
@@ -283,7 +286,7 @@ function myRace(r){
     ov=document.createElement("div");ov.id="race";ov.className="race";
     ov.innerHTML=`<div><div class="eyebrow" style="color:var(--gold)">📲 TAP RACE · FIRST TO ${r.goal}</div><div id="rcd" style="font-family:var(--display);font-size:2.6rem;color:#fff;margin-top:6px">Get ready...</div></div>
       <button class="tapb" id="tapb" disabled>TAP!</button><div><div style="font-weight:900;font-size:2rem;margin-bottom:8px"><span id="rcount">${raceN}</span> / ${r.goal}</div><div class="bar"><i id="rbar"></i></div><button class="btn ghost" id="rclose" style="margin-top:12px;font-size:.9rem">Close</button></div>`;
-    document.body.appendChild(ov);ov.querySelector("#rclose").onclick=()=>{raceClosed=r.id;ov.remove();clearInterval(raceTimer);clearInterval(raceTick)};buzz([200,100,200]);
+    unzoom();document.body.appendChild(ov);ov.querySelector("#rclose").onclick=()=>{raceClosed=r.id;ov.remove();clearInterval(raceTimer);clearInterval(raceTick)};buzz([200,100,200]);
     const b=ov.querySelector("#tapb");
     b.addEventListener("pointerdown",e=>{e.preventDefault();if(b.disabled||!race||race.winner)return;if(raceN<race.goal){raceN++;ov.querySelector("#rcount").textContent=raceN;ov.querySelector("#rbar").style.width=(raceN/race.goal*100)+"%";if(raceN>=race.goal){b.disabled=true;flush()}}});
     const flush=async()=>{if(!ov.isConnected){clearInterval(raceTimer);return}if(raceN>raceSent){const want=raceN;const res=await api({a:"tap",name:me,n:want});if(res.ok)raceSent=Math.max(raceSent,res.n||0)}};

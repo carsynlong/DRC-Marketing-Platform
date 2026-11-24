@@ -11,14 +11,14 @@ XM.store=store;
 /* ================= DATA ================= */
 XM.TRIBUTES=[
  {d:1,name:"Jessie",weapon:"Shears in one hand, lash tweezers in the other",strategy:"Give everyone a fresh cut, then take them out",odds:"4 to 1"},
- {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1"},
+ {d:2,name:"Elisha",weapon:"The Mom Look",strategy:"Out-plank everyone. Core of steel.",odds:"2 to 1",label:"AKA LISH"},
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Offer to fix everyone's gear. Fix it wrong. On purpose.",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"Daily motivation, straight from JT Motivation",strategy:"Stay fresh. Stay motivated. Stay undefeated.",odds:"5 to 1"},
  {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER"},
  {d:7,name:"Tinsley",weapon:"A brand-new driver's permit. Stay off the roads when you see her coming.",strategy:"Make everyone laugh till they drop, then floor it",odds:"3 to 1"},
  {d:8,name:"Natalie",weapon:"A rolling pin and a fresh batch of cookies",strategy:"Bribe the arena with cookies, then randomly break into song",odds:"4 to 1"},
- {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)"},
+ {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)",label:"AKA BIG DADDY KAM"},
  {d:10,name:"Brandon",weapon:"The 5 D's: dodge, duck, dip, dive and dodge",strategy:"Never sit still. Will mow the lawn mid-game.",odds:"6 to 1",label:"AKA BUTCHUS BYRON MARVIN IRON BALLS III"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
  {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Rush the arena like it's pledge week",odds:"12 to 1"},

@@ -420,6 +420,7 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 
 <script src="/qrcode.js"></script>
 <script src="/showtime.js"></script>
+<script src="/briefing.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 
@@ -657,7 +658,7 @@ const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan 
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
-  forgetGame();S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;gid=Date.now()%1e7;answers={};answersQi=-1;
+  forgetGame();S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;S.brf={};gid=Date.now()%1e7;answers={};answersQi=-1;
   if(apiOk)post({action:"reset",total:100}).catch(()=>{});
   if(!window.Rules)return startIntro();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
@@ -708,6 +709,7 @@ const isFinal=()=>S.order.length>=3&&S.k===S.order.length-1;
 /* 💰 the last question is double points, with a big intro */
 function goQuestion(){
   clearTimers();
+  if(isFinal()&&S.phase!=="double"&&briefFinale())return;   // 📢 how the finale works, then Start runs the double-points intro
   if(isFinal()&&S.phase!=="double"){S.phase="double";stopSong();sfx("siren");later(()=>{sfx("fanfare");fireworks(3)},900);render();later(()=>S.phase==="double"&&showQuestion(),5200);return}
   showQuestion();
 }
@@ -725,7 +727,7 @@ function resumeGame(){
   gid=g.gid||gid;answers={};answersQi=-1;S.preAns=true;sfx("fanfare");
   if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
 }
-function showQuestion(){clearTimers();clearBanners();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
+function showQuestion(){if(window.Briefing&&Briefing.open())return;if(briefStump())return;clearTimers();clearBanners();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
 setInterval(()=>{
   const fo=S.tie&&S.tie.ends&&["tb","ballot","cast"].includes(S.phase);
@@ -787,7 +789,57 @@ function leaderCheck(){
   const n=rows[0][0];if(n===S.leader)return;S.leader=n;
   banner(`<img src="${AV(n)}" alt=""><div><small>🔥 New leader! 🔥</small><b>${esc(n)}</b><span>${plural(rows[0][1],"point")} in the prize race</span></div>`,"cheer");
 }
-function startTie(){const q=cur();S.tie={names:q.top.map(t=>t[0]),round:0,q:null,votes:{},voted:[]};nextTiebreaker();}
+/* 📢 BRIEFINGS: a spoken "how this works" screen the first time each special part comes up. Nothing starts
+   (no timers, no music) until the host presses Start. Without briefing.js everything runs exactly as before. */
+function brief(key,o){
+  if(!window.Briefing)return false;S.brf=S.brf||{};if(S.brf[key])return false;S.brf[key]=true;
+  clearTimers();stopSong();Briefing.show({muted:()=>!S.sound,...o});return true;
+}
+function briefStump(){   // the first question of the game where Carsyn is on her phone with someone to bet on
+  if(!stumpOn()||!stumpable().length)return false;
+  return brief("stump",{eyebrow:"🎯 STUMP THE ROOM",title:"Stump the Room",start:"▶ Start the question",onStart:showQuestion,
+    intro:`Clo is playing Stump the Room. Here's how it works.`,steps:[
+    ["📋",`<b>Clo</b> made the survey, so she already knows every #1 answer.`,`Clo made the survey, so she already knows every number one answer.`],
+    ["🎯",`Instead of guessing, she uses her phone to bet on one player to <b>miss</b> it.`,"Instead of guessing, she uses her phone to bet on one player to miss it."],
+    ["😈",`They miss it, or don't lock in: <b>Clo +${STUMP_PTS}</b>.`,`If they miss it, or don't lock in, Clo gets ${STUMP_PTS} point.`],
+    ["💥",`They call it: they <b>steal +${STUMP_PTS}</b>, on top of their usual points.`,`If they call it, they steal ${STUMP_PTS} point, on top of their usual points.`],
+    ["👀","Her bet stays secret until the answer is revealed.","Her bet stays secret until the answer is revealed."],
+    ["💰",`Doubled in the finale: <b>+${STUMP_PTS*2}</b> either way.`,`It's doubled in the finale: ${STUMP_PTS*2} points either way.`]]});
+}
+function briefFinale(){   // the last question (3+ questions) is double points
+  const st=stumpOn()&&stumpable().length;if(st&&window.Briefing){S.brf=S.brf||{};S.brf.stump=true}   // the finale briefing covers Stump the Room too
+  return brief("finale",{eyebrow:"💰 FINAL QUESTION",title:"Double Points Finale",start:"▶ Start the finale",onStart:goQuestion,
+    intro:"It's the final question, and it's worth double. Here's how it works.",steps:[
+    ["💰","The last question counts <b>double</b>.","The last question counts double."],
+    ["🗳️","Every survey vote you get is worth <b>2 points</b>.","Every survey vote you get is worth two points."],
+    ["📱",`Call the #1 answer on your phone: <b>+${GUESS_PTS*2}</b>. Speed bonus and on fire: <b>+2</b> each.`,`Call the number one answer on your phone for ${GUESS_PTS*2} points. The speed bonus and on fire are worth two each.`],
+    ["⚡","A tie? Every face-off vote is worth <b>2 points</b> too.","A tie? Every face-off vote is worth two points too."],
+    st?["🎯",`Stump the Room doubles: <b>+${STUMP_PTS*2}</b> to Clo, or <b>+${STUMP_PTS*2}</b> stolen by the player who calls it.`,`Stump the Room doubles too: ${STUMP_PTS*2} points to Clo, or ${STUMP_PTS*2} points stolen by the player who calls it.`]
+      :["⏰",`No guess in time still costs just <b>${SLOW_PEN} point</b>.`,`No guess in time still costs just ${SLOW_PEN} point.`],
+    ["🏆","Then the final board and the prize round. Most points wins the major award!","Then the final board and the prize round. Most points wins the major award!"]]});
+}
+function briefTie(){   // the first face-off of the game (skipped when nobody's left to vote)
+  const tied=cur().top.map(t=>t[0]);if(!NAMES.some(n=>S.present[n]&&!tied.includes(n)))return false;
+  return brief("tie",{eyebrow:"⚡ FACE-OFF",title:"It's a Face-off!",start:"▶ Start the face-off",onStart:startTie,
+    intro:"It's a tie, so it's time for a face-off. Here's how it works.",steps:[
+    ["🤝","The tied players can't vote. <b>Everyone else</b> decides.","The tied players can't vote. Everyone else decides."],
+    ["❓",`A face-off question pops up. You have <b>${FACEOFF_SECS} seconds</b> to vote in secret.`,`A face-off question pops up. You have ${FACEOFF_SECS} seconds to vote in secret.`],
+    ["📱","Vote on your phone, or tap your name on the TV and use the voting booth while everyone looks away.","Vote on your phone, or tap your name on the TV and use the voting booth while everyone looks away."],
+    ["🗳️",`Each vote is <b>+1 point</b> for that player (+2 in the finale). Most votes wins the question.`,"Each vote is one point for that player, two in the finale. Most votes wins the question."],
+    ["⏰",`On a phone and didn't vote in time? <b>-${SLOW_PEN} point</b>.`,`On a phone and didn't vote in time? You lose ${SLOW_PEN} point.`],
+    ["🎰",`Still tied? Up to <b>${TB_PER_TIE}</b> face-off questions, then a lucky spin.`,`Still tied? Up to ${TB_PER_TIE} face-off questions, then a lucky spin.`]]});
+}
+function briefPrizeTie(){   // tied for the major award: sudden-death face-off
+  const who=S.tie.names.map(esc).join(" and ");
+  return brief("prizeTie",{eyebrow:"🏆 SUDDEN DEATH",title:"Tied for the Major Award",start:"▶ Start the face-off",onStart:nextTiebreaker,
+    intro:"It's a tie for the major award. Here's how it works.",steps:[
+    ["🤝",`<b>${who}</b> are tied for the most points.`,`${S.tie.names.join(" and ")} are tied for the most points.`],
+    ["❓",`Everyone else votes in secret on one more question. <b>${FACEOFF_SECS} seconds</b>.`,`Everyone else votes in secret on one more question. You have ${FACEOFF_SECS} seconds.`],
+    ["📱","Vote on your phone, or tap your name on the TV to use the voting booth.","Vote on your phone, or tap your name on the TV to use the voting booth."],
+    ["🏆","Most votes wins the major award. These votes don't add points.","Most votes wins the major award. These votes don't add points."],
+    ["🎰",`Still tied? Up to <b>${TB_PER_TIE}</b> face-offs, then a lucky spin.`,`Still tied? Up to ${TB_PER_TIE} face-offs, then a lucky spin.`]]});
+}
+function startTie(){if(window.Briefing&&Briefing.open())return;if(briefTie())return;const q=cur();S.tie={names:q.top.map(t=>t[0]),round:0,q:null,votes:{},voted:[]};nextTiebreaker();}
 function nextTiebreaker(){
   clearTimers();const T=S.tie;T.round++;T.q=(S.tbq||TIEBREAKERS)[S.tbNext%TIEBREAKERS.length];S.tbNext++;
   T.votes=Object.fromEntries(T.names.map(n=>[n,0]));T.voted=[];T.voter=null;T.lead=null;T.qn=S.tbNext;T.enter=true;T.ends=Date.now()+FACEOFF_SECS*1000;
@@ -857,6 +909,7 @@ function packageReveal(){
 function prizeFaceoff(){   // tied for the major award: a face-off vote decides it (no random spin)
   const P=S.pkg;S.tie={names:P.lead.slice(),round:0,q:null,votes:{},voted:[],prize:true};
   if(!voters().length)return pkgFate();
+  if(briefPrizeTie())return;
   nextTiebreaker();
 }
 function pkgFate(){

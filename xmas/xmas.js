@@ -47,6 +47,9 @@ if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){cons
 XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Big Fat Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
+// typed name or nickname back to the real name: "kachow" -> "Kyle", "Iron Balls the Third" -> "Brandon". Unknown text comes back trimmed.
+XM.realName=s=>{const t=String(s==null?"":s).trim(),k=x=>String(x).toLowerCase().replace(/\bthe third\b/g,"iii").replace(/\bone\b/g,"1").replace(/[^a-z0-9]/g,"");if(!t)return t;const q=k(t);
+  for(const [n,a] of Object.entries(XM.AKA))if(k(n)===q||k(a)===q)return n;return t};
 // swap real names for nicknames in a string (for speech and canvas text)
 XM.nick=t=>String(t).replace(new RegExp("\\b("+Object.keys(XM.AKA).map(n=>n==="Grandad"?"Grandad(?! the Ancient)":n).join("|")+")\\b","g"),m=>XM.AKA[m]);
 XM.aka=n=>"";
@@ -417,7 +420,9 @@ XM.confetti=function(n=150,big){
 };
 
 /* ================= TIEBREAKER ================= */
-/* XM.tiebreaker({game:"cookie"|"scoop"|"lrc"|"bingo", tied:[names], onClose}) */
+/* XM.tiebreaker({game:"cookie"|"scoop"|"lrc"|"bingo", tied:[names], onClose, onWinner(name), noSave, lock, winLine, eyebrow})
+   noSave: no "Save as victor" button. winLine: the line under the winner's name (default "Go claim your major award!",
+   or "Wins the face-off and moves on!" with noSave). eyebrow: the small label on the win screen. */
 let T=null,tbTimer=0,tbRun=0;
 const clearT=()=>{tbRun++;clearInterval(tbTimer);tbTimer=0;if(T&&T.raf)cancelAnimationFrame(T.raf)};
 // run fn later only if nothing has changed in the tiebreaker since (no close, switch, still-tied, stop)
@@ -425,13 +430,14 @@ const later=(fn,ms)=>{const r=tbRun;setTimeout(()=>{if(T&&r===tbRun)fn()},ms)};
 XM.tiebreakerOpen=()=>!!T;
 XM.tiebreaker=function(opts={}){
   ensureAudio();
+  if(T)closeTB();   // one at a time: close the open one properly (its music comes back, its briefing goes)
   const g=opts.game&&XM.TB[opts.game]?opts.game:null;
-  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,lock:!!opts.lock,prevSong:XM.currentSong(),state:{}};
+  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,lock:!!opts.lock,winLine:opts.winLine||"",eyebrow:opts.eyebrow||"",prevSong:XM.currentSong(),state:{}};
   let el=document.getElementById("xm-tb");if(!el){el=document.createElement("div");el.id="xm-tb";el.className="tb";el.setAttribute("role","dialog");el.setAttribute("aria-label","Tiebreaker");document.body.appendChild(el)}
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
 };
-function closeTB(){clearT();XM.hush();XM.cancelCelebrate();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
+function closeTB(){clearT();if(window.Briefing&&Briefing.open())Briefing.close();XM.hush();XM.cancelCelebrate();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
 XM.closeTiebreaker=closeTB;
 const tied=()=>XM.NAMES.filter(n=>T.picked.has(n));
 const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">DISTRICT ${t.d}</span></button>`};
@@ -467,10 +473,10 @@ const VIEWS={
   fate:()=>`<h1 class="big ttl">Let Fate Decide</h1><p class="rules">The odds are about to be in someone's favor.</p>
     <button class="btn red" id="fate-spin" style="font-size:1.4rem;padding:.9em 2.2em">🎡 Spin the wheel of fate</button>
     <div class="fatebox"><div class="pointer"></div><canvas class="fate" id="fate" width="900" height="900"></canvas><div class="hub"></div></div>`,
-  win:()=>`<div class="eyebrow" style="font-size:1rem">${esc(T.game?XM.GAMES[T.game].name:"Tiebreaker")} · the tie is broken</div>
+  win:()=>`<div class="eyebrow" style="font-size:1rem">${esc(T.eyebrow||(T.game?XM.GAMES[T.game].name:"Tiebreaker"))} · the tie is broken</div>
     <div class="champ" style="display:grid;justify-items:center"><div class="crown">👑</div><img src="${XM.photo(T.winner)}" alt=""></div>
     <h1 class="big ttl" style="animation-delay:.6s">${esc(T.winner)}</h1>
-    <p class="who" style="font-size:clamp(1.6rem,3.4vw,2.8rem);color:var(--ink)">${T.noSave?"Wins the face-off and moves on!":"Go claim your major award!"}</p>
+    <p class="who" style="font-size:clamp(1.6rem,3.4vw,2.8rem);color:var(--ink)">${esc(T.winLine||(T.noSave?"Wins the face-off and moves on!":"Go claim your major award!"))}</p>
     <div class="row">${T.game&&!T.noSave?`<button class="btn" id="tb-save">🏆 Save as ${esc(XM.GAMES[T.game].name)} victor</button>`:""}<button class="btn ghost" id="tb-done">Done</button></div>`,
 };
 function suggest(){
@@ -489,7 +495,8 @@ function startTB(k){
     elim:"The Gamemaker taps each tribute out as they crack. Last one standing wins.",toss:"The Gamemaker counts each throw. Most in the cup wins."};
   Briefing.show({eyebrow:`⚔️ TIEBREAKER · ${tied.map(XM.esc).join(" vs ")}`,title:`${t.ic} ${XM.esc(t.title)}`,
     intro:`Tiebreaker! ${tied.join(" versus ")}. ${t.title}. Here's how it works.`,
-    steps:[["⚔️",`Tied: <b>${tied.map(XM.esc).join(", ")}</b>`,`Tied: ${tied.join(", ")}.`],...sentences.map((x,i)=>[i?"👉":t.ic,XM.esc(x),x]),...(HOW[t.tool]?[["🎛️",HOW[t.tool],HOW[t.tool]]]:[]),["🏆","The winner breaks the tie.","The winner breaks the tie."]],
+    // three steps keeps the briefing in one column, so it reads top to bottom
+    steps:[["⚔️",`Tied: <b>${tied.map(XM.esc).join(", ")}</b>`,`Tied: ${tied.join(", ")}.`],[t.ic,XM.esc(sentences.join(" ")),sentences.join(" ")],["🏆",(HOW[t.tool]?HOW[t.tool]+" ":"")+"The winner breaks the tie.",(HOW[t.tool]?HOW[t.tool]+" ":"")+"The winner breaks the tie."]],
     outro:"When you're ready, the Game maker will start.",start:"▶ Start the tiebreaker",muted:()=>!XM.sound,onStart:go});
 }
 function winner(n){
@@ -513,7 +520,7 @@ const WIRE={
     const names=tied();drawFate(names,0);
     el.querySelector("#fate-spin").onclick=e=>{e.target.disabled=true;e.target.textContent="Fate is deciding…";spinFate(names)};
   },
-  win(el){const s=el.querySelector("#tb-save");if(s)s.onclick=()=>{XM.setVictor(T.game,T.winner);s.textContent="✅ Saved to The Capitol Has Spoken";s.disabled=true;XM.sfx("sparkle");document.dispatchEvent(new Event("xmas-victors"))};
+  win(el){const s=el.querySelector("#tb-save");if(s)s.onclick=()=>{XM.setVictor(T.game,T.winner);if(XM.seconds()[T.game]===T.winner)XM.setSecond(T.game,"");s.textContent="✅ Saved to The Capitol Has Spoken";s.disabled=true;XM.sfx("sparkle");document.dispatchEvent(new Event("xmas-victors"))};
     el.querySelector("#tb-done").onclick=closeTB},
 };
 /* --- elimination (stare-off, candy cane): tap people out, last one standing wins --- */

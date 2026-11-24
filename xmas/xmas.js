@@ -42,15 +42,15 @@ XM.GAMES={
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
   const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Jessie:"Lucky PomPoms",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Clo"};
+XM.AKA={Jessie:"Lucky PomPoms",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Clo"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 // swap real names for nicknames in a string (for speech and canvas text)
-XM.nick=t=>String(t).replace(new RegExp("\\b("+Object.keys(XM.AKA).join("|")+")\\b","g"),m=>XM.AKA[m]);
+XM.nick=t=>String(t).replace(new RegExp("\\b("+Object.keys(XM.AKA).map(n=>n==="Grandad"?"Grandad(?! the Ancient)":n).join("|")+")\\b","g"),m=>XM.AKA[m]);
 XM.aka=n=>"";
 // Swap real names for nicknames in any text on the page, including text added later.
 XM.useNicknames=function(root){
-  const re=new RegExp("\\b("+Object.keys(XM.AKA).join("|")+")\\b","g");
+  const re=new RegExp("\\b("+Object.keys(XM.AKA).map(n=>n==="Grandad"?"Grandad(?! the Ancient)":n).join("|")+")\\b","g");
   const skip=n=>n&&/^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(n.nodeName);
   const fix=node=>{if(node.nodeType===3){if(skip(node.parentNode))return;if(re.test(node.nodeValue)){re.lastIndex=0;node.nodeValue=node.nodeValue.replace(re,m=>XM.AKA[m])}re.lastIndex=0;return}
     if(node.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/.test(node.nodeName))return;

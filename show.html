@@ -1339,7 +1339,7 @@ function factDeck(){const mix=a=>a.slice().sort(()=>Math.random()-.5);
 const FACT_MS=6500;
 const SLIDES=[
  {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
-    <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:${XM.dn(t.name).length>9?46:64}px;white-space:nowrap;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
+    <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:${XM.dn(t.name).length>18?32:XM.dn(t.name).length>9?46:64}px;white-space:nowrap;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
       ${XM.aka(t.name)?`<div style="font-weight:800;font-size:30px;color:#fff;margin-top:-4px">a.k.a. ${esc(XM.aka(t.name))}</div>`:""}<div class="eb">DISTRICT ${t.d}</div></div>`).join("")}</div>
     <div class="jhead">📱 <b id="jcount">0</b> of ${TRIBUTES.length} tributes joined</div>
     <div class="tgrid" id="tgrid">${TRIBUTES.map(t=>`<div class="t" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><span>${esc(t.name==="QUEEN MOTHER"?"Queen":t.name)}</span></div>`).join("")}</div></div>
@@ -1412,7 +1412,7 @@ const SLIDES=[
     <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${districtFX(t.d)}${t.d===11?`<div class="qcrown">👑</div>`:""}${DISTRICT_FX[t.d]?`<div class="dbadge">DISTRICT ${t.d} · ${DISTRICT_FX[t.d].ind}</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">DISTRICT ${t.d}</span></div>
     <div style="display:grid;gap:26px">
       <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.name==="Carsyn"?"YOUR GAMEMAKER":t.name==="Brandon"?t.label:XM.AKA[t.name]?"REAL NAME: "+t.name.toUpperCase():(t.label||"TRIBUTE PROFILE")}</div>
-      <h1 class="title-xl slam" ${d(.7)} style="font-size:${XM.dn(t.name).length>8?118:150}px">${esc(t.name)}</h1>
+      <h1 class="title-xl slam" ${d(.7)} style="font-size:${XM.dn(t.name).length>18?96:XM.dn(t.name).length>8?118:150}px">${esc(t.name)}</h1>
       ${[["canes","WEAPON OF CHOICE",t.weapon],["snowflake","SURVIVAL STRATEGY",t.strategy],["coins","CAPITOL ODDS",t.odds]].map(([ic,k,v],i)=>`<div class="card stat" data-stat="${i}" style="opacity:0"><img src="${ICON(ic)}" alt=""><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></div>`).join("")}
     </div></div>`,enter(el){XM.sfx("whoosh");XM.sfx("cheer");if(t.d===11){st(()=>XM.sfx("fanfare"),700);st(()=>XM.sfx("fanfare"),1500)}st(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
  {id:"begin",music:"stop",big:true,html:()=>`<div class="burst" style="--gc:#a32820;opacity:.6"></div><div class="vign"></div>

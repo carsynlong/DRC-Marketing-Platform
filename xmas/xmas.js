@@ -42,7 +42,7 @@ XM.GAMES={
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
   const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Bitch"};
+XM.AKA={Jessie:"Lucky PomPoms",Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Bitch"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 XM.aka=n=>"";

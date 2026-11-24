@@ -60,8 +60,8 @@
 
   // Phones show everyone's nickname instead of their real name (text only; the game itself still uses real names underneath)
   (() => {
-    const AKA = { Elisha: "Lish", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls", Kyle: "Kachow", Carsyn: "Bitch" };
-    const re = /\b(Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g, skip = n => n && /^(SCRIPT|STYLE|TEXTAREA|INPUT|NOSCRIPT)$/.test(n.nodeName);
+    const AKA = { Jessie: "Lucky PomPoms", Elisha: "Lish", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls", Kyle: "Kachow", Carsyn: "Bitch" };
+    const re = /\b(Jessie|Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g, skip = n => n && /^(SCRIPT|STYLE|TEXTAREA|INPUT|NOSCRIPT)$/.test(n.nodeName);
     const swap = t => { if (skip(t.parentNode)) return; const v = t.nodeValue; if (v && re.test(v)) { re.lastIndex = 0; t.nodeValue = v.replace(re, m => AKA[m]); } re.lastIndex = 0; };
     const fix = node => { if (node.nodeType === 3) return swap(node); if (node.nodeType !== 1 || skip(node)) return;
       const w = document.createTreeWalker(node, NodeFilter.SHOW_TEXT); let t; while ((t = w.nextNode())) swap(t); };

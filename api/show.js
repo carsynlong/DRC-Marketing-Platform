@@ -233,6 +233,11 @@ async function main(req, res) {
     lv.bet.state = "paid"; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 });
     await pushCmd("betpaid", { winner, game: lv.bet.game, results }); return reply(res, 200, { ok: true, results });
   }
+  // 🧹 wipe only the end-of-night award stats (emoji counts, sabotages, snitches, quests...)
+  if (a === "statsreset") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    await redis.del(P + "stats"); return reply(res, 200, { ok: true });
+  }
   if (a === "helpdone") {
     if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
     const id = Number(req.body?.id), l = (await redis.lrange(P + "helps", 0, 19)) || [];

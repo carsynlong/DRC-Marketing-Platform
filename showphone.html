@@ -385,7 +385,7 @@ function hostCard(){
     <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
     <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
-    <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
+    <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button id="statsclear"><span class="i">🧹</span>Clear award stats</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
   tabify(box);
@@ -414,6 +414,7 @@ function hostCard(){
   box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
   box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Tap who WON at the top first.");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
   box.querySelector("#bcancel").onclick=async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")};
+  box.querySelector("#statsclear").onclick=async()=>{if(!confirm("Clear the end-of-night award stats? (emoji counts, sabotages, snitches, quests)"))return;const r=await call({a:"statsreset"});qmsg(r.ok?"🧹 Award stats cleared":"Couldn't clear.")};
   box.querySelector("#bdaygo").onclick=async()=>{const r=await call({a:"bday"});qmsg(r.ok?"🎂 Happy birthday, QUEEN MOTHER!":"Couldn't send.")};
   box.querySelectorAll("[data-race]").forEach(x=>x.onclick=async()=>{const r=await call({a:"raceopen",goal:+x.dataset.race});qmsg(r.ok?`📲 Race to ${x.dataset.race} starts in 6 seconds!`:"Couldn't start.")});
   box.querySelector("#raceend").onclick=async()=>{await call({a:"raceend"});qmsg("⏹️ Race over")};

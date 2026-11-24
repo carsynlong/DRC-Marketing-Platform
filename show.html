@@ -842,6 +842,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🎲 Chaos mode on/off",()=>setChaos(!chaosOn()));
   item("🎁 Major award draft order",()=>draftOrder());
   item("🏁 End-of-night awards",()=>nightAwards());
+  item("🧹 Clear award stats",()=>{if(confirm("Clear the end-of-night award stats? Emoji counts, sabotages, snitches and quest results start over."))hostCall({a:"statsreset"}).then(r=>{if(r&&r.ok){closeMoments(".moment.twist");toast("🧹 Award stats cleared")}})});
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
   item("✕ Close",()=>{});
   b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};

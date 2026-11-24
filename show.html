@@ -260,6 +260,8 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 @media (max-height:900px){.fallen .pol img{max-height:52vh;width:min(420px,32vw)}.fallen .grp .faces img{width:84px;height:84px}}
 .polaroid{position:fixed;right:40px;bottom:90px;z-index:8;background:#fbf6ea;padding:14px 14px 50px;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);transform:rotate(4deg);width:min(460px,28vw)}
 .polaroid img{width:100%;display:block;border-radius:3px}
+.polaroid.drift{right:auto;bottom:auto;z-index:-1;width:min(250px,14vw);padding:9px 9px 34px;transition:left 14s ease-in-out,top 14s ease-in-out,transform 14s ease-in-out,opacity .9s;opacity:0;pointer-events:none}
+.polaroid.drift b{bottom:8px;font-size:clamp(11px,1vw,16px)}
 .polaroid b{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:#13271f;font-family:var(--display);font-size:clamp(14px,1.4vw,22px)}
 /* news ticker, arena clock, shout-outs, rehearsal badge */
 #ticker{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);width:min(1300px,66vw);height:56px;z-index:50;display:flex;align-items:center;overflow:hidden;border-radius:999px;background:rgba(10,20,16,.92);box-shadow:0 0 0 2px var(--gold);pointer-events:none}
@@ -719,7 +721,7 @@ function toast(t,ms=3500){const d=document.createElement("div");d.className="toa
 function sideQuest(q){
   if(!started)return;
   closeMoments(".moment.twist,.moment.quest");
-  if(busy()){toast(`⚔️ SIDE QUEST for ${q.to}: ${q.q}`,8000);return}
+  if(busy()){if(q.royal){XM.sfx("fanfare");toast(`👑 The QUEEN MOTHER orders ${XM.dn(q.to)}: ${q.q}`,12000);news(`👑 The QUEEN MOTHER orders ${XM.dn(q.to)}: ${q.q}`)}else toast(`⚔️ SIDE QUEST for ${q.to}: ${q.q}`,8000);return}
   const {m,T,close}=openMoment("twist quest");const ph=XM.photo(q.to);let left=q.secs,iv=0;
   const qm=q.royal&&XM.photo("QUEEN MOTHER");
   m.innerHTML=`<div class="inner"><div class="eb"${q.royal?' style="color:var(--gold);font-size:clamp(1.2rem,2.2vw,2rem)"':""}>${q.royal?"👑 BY ORDER OF THE QUEEN MOTHER":"⚔️ SIDE QUEST FROM THE GAMEMAKER"}</div>
@@ -1623,8 +1625,15 @@ const SLIDES=[
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
     <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div><div class="corner"><button class="btn ghost" id="fallenbtn">🕯️ Fallen Tributes</button></div>`,
    enter(el){SNOW.set(3.2);const fb=el.querySelector("#fallenbtn");if(fb)fb.onclick=e=>{e.stopPropagation();fallenTributes()};
-     const ph=XM.store.get("xmas-photos",[]);if(ph.length){const p=document.createElement("div");p.className="polaroid fade";el.appendChild(p);let i=0;
-       const nx=()=>{if(curEl!==el)return;const x=ph[i++%ph.length];p.innerHTML=`<img src="${x.img}" alt=""><b>${esc(x.cap.replace(/^🏆 /,""))}</b>`;st(nx,4000)};nx()}
+     // tonight's photos (TV booth + phones): a small polaroid drifting slowly behind the text
+     (async()=>{const ph=XM.store.get("xmas-photos",[]).map(x=>({img:x.img,cap:x.cap.replace(/^🏆 /,"")}));
+       try{const j=await (await fetch("/api/show?a=photos",{cache:"no-store"})).json();const by={};for(const x of j.photos||[])(by[x.name]=by[x.name]||[]).push(x);
+         for(const n in by){const x=by[n][Math.floor(Math.random()*by[n].length)];const img=await photoImg(x.id);if(img)ph.push({img,cap:XM.dn(n)})}}catch(e){}  // one random photo per tribute
+       if(!ph.length||curEl!==el)return;const p=document.createElement("div");p.className="polaroid drift";el.appendChild(p);let i=0;
+       const R=(a,b)=>a+Math.random()*(b-a);
+       const move=()=>{if(curEl!==el)return;p.style.left=R(3,80)+"vw";p.style.top=R(8,62)+"vh";p.style.transform=`rotate(${R(-8,8)}deg)`;st(move,14000)};
+       const nx=()=>{if(curEl!==el)return;const x=ph[i++%ph.length];p.style.opacity=0;st(()=>{p.innerHTML=`<img src="${x.img}" alt=""><b>${esc(x.cap)}</b>`;p.style.opacity=.85},900);st(nx,7000)};
+       p.style.left=R(3,80)+"vw";p.style.top=R(8,62)+"vh";nx();st(move,60)})();
      st(()=>{if(curEl!==el)return;XM.sfx("boom");st(()=>XM.sfx("boom"),380);st(()=>XM.sfx("cheer"),600);st(()=>XM.sfx("applause"),1800);
        [1200,1800,2400,3100,3800,4600].forEach(t=>st(()=>curEl===el&&XM.sfx("firework"),t));XM.confetti(260,true);st(()=>curEl===el&&XM.confetti(220,true),2500)},1000);
      announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;XM.duck(true);
@@ -2114,9 +2123,11 @@ async function fallenTributes(){
   XM.playSong("dirge",true);
   // tonight's photos: phones (from the server) + the TV photo booth (this laptop)
   let list=[];try{const j=await (await fetch("/api/show?a=photos",{cache:"no-store"})).json();list=(j.photos||[]).filter(p=>XM.NAMES.includes(p.name))}catch(e){}
-  const items=[];for(const p of list){if(!m.isConnected)return;const img=await photoImg(p.id);if(img)items.push({img,name:p.name})}
-  for(const p of XM.store.get("xmas-photos",[]))items.push({img:p.img,name:null,cap:p.cap});
-  if(!items.length)TRIBUTES.forEach(t=>items.push({img:t.full||t.img,name:t.name}));
+  // one photo per tribute: a random one of the photos they took tonight, or their profile photo if they took none
+  const items=[];
+  for(const t of TRIBUTES){if(!m.isConnected)return;const mine=list.filter(p=>p.name===t.name);let img=null;
+    while(mine.length&&!img){const p=mine.splice(Math.floor(Math.random()*mine.length),1)[0];img=await photoImg(p.id)}
+    items.push({img:img||t.full||t.img,name:t.name})}
   if(!m.isConnected)return;
   const lines=[...FALLEN_LINES].sort(()=>Math.random()-.5);let i=-1;
   const card=k=>{const x=items[k],t=x.name&&TRIBUTES.find(z=>z.name===x.name),fx=t&&DISTRICT_FX[t.d];

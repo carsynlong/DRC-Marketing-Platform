@@ -767,6 +767,22 @@ const HG_FACTS=[
  "Suzanne Collins wrote the lyrics to \"The Hanging Tree\" herself, in the book Mockingjay.",
  "Before Panem, Collins wrote a five-book series called The Underland Chronicles, about a boy who falls into a world under New York City.",
  "Anyone aged 12 to 18 could be reaped, and your name went in one more time every year you got older.",
+ "Mockingjays exist by accident: the Capitol's spy birds, jabberjays, were released into the wild and mated with mockingbirds.",
+ "Tracker jackers are Capitol-made wasps. Their venom causes hallucinations, and they hunt down anyone who disturbs their nest.",
+ "District 12's Victor's Village has a dozen houses. Before Katniss and Peeta, only Haymitch lived there.",
+ "Peeta was 11 when he burned bread on purpose and tossed it to a starving Katniss in the rain.",
+ "Finnick Odair won his Games at 14, which made him one of the youngest victors ever.",
+ "Panem is named after the Latin phrase \"panem et circenses\": bread and circuses.",
+ "Katniss is named after a real edible root, also called arrowhead. Her dad said as long as she could find herself, she'd never starve.",
+ "In the second Quarter Quell, the one Haymitch won, every district sent four tributes. 48 kids went into that arena.",
+ "Haymitch's story finally got its own book, Sunrise on the Reaping, in 2025.",
+ "The Ballad of Songbirds and Snakes shows an 18-year-old Coriolanus Snow mentoring a District 12 girl in the 10th Hunger Games.",
+ "Lucy Gray Baird, the District 12 tribute in Ballad, is the one who first sang \"The Hanging Tree.\"",
+ "Josh Hutcherson is shorter than Jennifer Lawrence, so in some scenes he stood on a box.",
+ "Donald Sutherland liked the script so much he wrote the director a long letter about who President Snow really was. They added scenes because of it.",
+ "The Games started as punishment for the Dark Days, a failed uprising by the districts against the Capitol.",
+ "Cinna's \"girl on fire\" costumes used synthetic flames that didn't burn.",
+ "District 11 is agriculture, District 4 is fishing, District 3 is technology, and District 12 is coal mining.",
 ];
 const XMAS_FACTS=[
  "Some historians think \"Jingle Bells\" was written for Thanksgiving, not Christmas. Very Thanksmas of it.",
@@ -782,7 +798,49 @@ const XMAS_FACTS=[
  "\"Jingle Bells\" was the first song played in space, on a tiny harmonica and bells smuggled aboard Gemini 6 in 1965.",
  "In Japan, a bucket of KFC is a Christmas dinner tradition. Families order it weeks ahead.",
  "In Norway, some families hide their brooms on Christmas Eve so witches can't steal them for a joyride.",
+ "Christmas was banned in Boston from 1659 to 1681. Celebrating it got you a five shilling fine.",
+ "Tinsel was first made from real, thin strips of silver. It tarnished fast.",
+ "Alabama was the first US state to make Christmas a legal holiday, in 1836. Oklahoma was the last, in 1907.",
+ "In Ukraine, spider web decorations on the tree are said to bring good luck.",
+ "The name mistletoe may come from Old English words meaning \"dung on a twig.\" Birds spread its seeds in their poop.",
+ "Santa's reindeer are probably all girls. Male reindeer drop their antlers in early winter. Females keep theirs until spring.",
+ "The tallest cut Christmas tree on record was a 221-foot Douglas fir at a Seattle mall in 1950.",
+ "The \"German\" Christmas pickle ornament is mostly an American thing. Most Germans have never heard of it.",
+ "\"'Twas the Night Before Christmas\" was first published without the author's name in 1823. Donner and Blitzen were originally Dunder and Blixem.",
+ "The Home Alone house is a real home in Winnetka, Illinois.",
+ "Nakatomi Plaza in Die Hard is really Fox Plaza in Los Angeles, the studio's own office building.",
+ "Legend says candy canes got their hook in 1670, when a German choirmaster handed them out to keep kids quiet during long services.",
+ "The Grinch's heart grew three sizes that day. Dr. Seuss said he was the Grinch: he wrote it at 53, feeling grumpy about Christmas.",
 ];
+const THANKS_FACTS=[
+ "Only male turkeys gobble. Females cluck.",
+ "The 1621 harvest feast with the Pilgrims and the Wampanoag lasted three days.",
+ "There was probably no pumpkin pie in 1621. The Pilgrims had no butter or wheat flour for a crust.",
+ "The Wampanoag brought five deer to the first Thanksgiving. Venison, not turkey, was the star.",
+ "Sarah Josepha Hale, who wrote \"Mary Had a Little Lamb,\" spent 17 years pushing for a national Thanksgiving. Lincoln made it official in 1863.",
+ "In 1939, FDR moved Thanksgiving a week earlier to give stores more shopping days. People mocked it as \"Franksgiving.\"",
+ "TV dinners exist because Swanson had about 260 tons of leftover Thanksgiving turkey in 1953.",
+ "The first Macy's parade in 1924 had no balloons. It had live animals borrowed from the Central Park Zoo.",
+ "Snoopy has been in the Macy's parade more than any other character.",
+ "Green bean casserole was invented in 1955 by Dorcas Reilly in the Campbell's test kitchen.",
+ "Ocean Spray started selling canned cranberry sauce in 1941. The can ridges are part of the tradition.",
+ "\"Black Friday\" was named by Philadelphia police in the 1950s and 60s, who dreaded the crowds and traffic.",
+ "The Detroit Lions have played on Thanksgiving almost every year since 1934.",
+ "Turkey doesn't make you sleepy. It has about as much tryptophan as chicken. Blame the giant meal and the pie.",
+ "Benjamin Franklin never officially proposed the turkey as the national bird. He just called it \"a much more respectable bird\" than the bald eagle in a letter to his daughter.",
+ "The presidential turkey pardon became a yearly tradition in 1989 under George H. W. Bush.",
+ "Wild turkeys can fly in short bursts at around 55 miles an hour, and they sleep in trees.",
+ "A turkey's wattle, the red flap under its beak, turns brighter red when it's excited or scared.",
+ "The Butterball Turkey Talk-Line answers over 100,000 panicked cooking questions every November and December.",
+ "Minnesota raises more turkeys than any other state.",
+ "Canada's Thanksgiving is the second Monday in October.",
+ "The wishbone tradition goes back to the Etruscans, who believed birds could predict the future.",
+];
+// one mixed deck: Hunger Games, Christmas and Thanksgiving facts, taking turns
+function factDeck(){const mix=a=>a.slice().sort(()=>Math.random()-.5);
+  const L=[mix(HG_FACTS).map(t=>["🏹 HUNGER GAMES FUN FACT",t,"var(--gold)"]),mix(XMAS_FACTS).map(t=>["🎄 CHRISTMAS FUN FACT",t,"#6fe38e"]),mix(THANKS_FACTS).map(t=>["🦃 THANKSGIVING FUN FACT",t,"#ffa64d"])];
+  const out=[];for(let k=0;k<Math.max(...L.map(l=>l.length));k++)L.forEach(l=>{if(l[k])out.push(l[k])});return out}
+const FACT_MS=6500;
 const SLIDES=[
  {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:64px;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
@@ -802,11 +860,9 @@ const SLIDES=[
         </div></div>
     </div></div>`,
    enter(el){const cards=[...el.querySelectorAll(".lc")];let i=0;
-     const box=el.querySelector("#hgfact");const mix=a=>a.slice().sort(()=>Math.random()-.5);
-     const hg=mix(HG_FACTS).map(t=>["🏹 HUNGER GAMES FUN FACT",t]),xm=mix(XMAS_FACTS).map(t=>["🎄 CHRISTMAS FUN FACT",t]);
-     const facts=[];for(let k=0;k<Math.max(hg.length,xm.length);k++){if(hg[k])facts.push(hg[k]);if(xm[k])facts.push(xm[k])}let f=0;
-     const fact=()=>{box.style.opacity=0;setTimeout(()=>{const [lab,txt]=facts[f%facts.length];box.innerHTML=`<div class="eb" style="color:${lab.startsWith("🎄")?"#6fe38e":"var(--gold)"}">${lab}</div><div style="font-size:32px;font-weight:600;line-height:1.3;margin-top:8px">${esc(txt)}</div>`;box.style.opacity=1;f++},600)};
-     fact();const fiv=setInterval(()=>{if(curEl!==el){clearInterval(fiv);return}fact()},9000);
+     const box=el.querySelector("#hgfact");const facts=factDeck();let f=0;
+     const fact=()=>{box.style.opacity=0;setTimeout(()=>{const [lab,txt,col]=facts[f%facts.length];box.innerHTML=`<div class="eb" style="color:${col}">${lab}</div><div style="font-size:32px;font-weight:600;line-height:1.3;margin-top:8px">${esc(txt)}</div>`;box.style.opacity=1;f++},600)};
+     fact();const fiv=setInterval(()=>{if(curEl!==el){clearInterval(fiv);return}fact()},FACT_MS);
      const show=()=>{cards.forEach((c,j)=>c.classList.toggle("on",j===i))};
      show();const iv=setInterval(()=>{if(curEl!==el){clearInterval(iv);return}i=(i+1)%cards.length;show()},4500)}},
  {id:"title",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:20px">
@@ -1139,8 +1195,7 @@ function revealUltimate(el){
 function intermission(){
   if(busy())return;XM.ensureAudio();const prev=XM.currentSong();XM.stopSong();announcer.stop();
   const m=document.createElement("div");m.className="moment inter";document.body.appendChild(m);let alive=true,left=0,end=0,iv=0;
-  const mix=a=>a.slice().sort(()=>Math.random()-.5);const facts=[];const hg=mix(HG_FACTS),xm=mix(XMAS_FACTS);
-  for(let k=0;k<Math.max(hg.length,xm.length);k++){if(hg[k])facts.push(["🏹 HUNGER GAMES FUN FACT",hg[k]]);if(xm[k])facts.push(["🎄 CHRISTMAS FUN FACT",xm[k]])}let f=0;
+  const facts=factDeck();let f=0;
   m.innerHTML=`<div class="inner" style="gap:clamp(6px,1.4vh,16px)">
     <div style="font-size:clamp(2.4rem,6vh,4rem)"><span class="tg">🦃</span> <span class="tg r">🥧</span> <span class="tg">🌽</span></div>
     <h1>☕ Intermission</h1><div style="font-size:clamp(1.2rem,2.6vw,2rem);font-weight:600">Grab a drink. Grab some pie. Take a break. The Games will resume shortly.</div>
@@ -1151,9 +1206,9 @@ function intermission(){
     <div class="card fact" id="ifact" style="padding:16px 24px"></div>
     <button class="btn red" id="iresume" style="font-size:1.4rem;padding:.8em 2em">▶ Resume the Games (Esc)</button></div>`;
   const clock=m.querySelector("#iclock"),msg=m.querySelector("#imsg"),fact=m.querySelector("#ifact");
-  const showFact=()=>{fact.style.opacity=0;setTimeout(()=>{if(!alive)return;const [l,t]=facts[f%facts.length];f++;
-    fact.innerHTML=`<div class="eb" style="color:${l.startsWith("🎄")?"#6fe38e":"var(--gold)"}">${l}</div><div style="margin-top:6px">${esc(t)}</div>`;fact.style.opacity=1},600)};
-  showFact();const fiv=setInterval(()=>alive&&showFact(),9000);
+  const showFact=()=>{fact.style.opacity=0;setTimeout(()=>{if(!alive)return;const [l,t,col]=facts[f%facts.length];f++;
+    fact.innerHTML=`<div class="eb" style="color:${col}">${l}</div><div style="margin-top:6px">${esc(t)}</div>`;fact.style.opacity=1},600)};
+  showFact();const fiv=setInterval(()=>alive&&showFact(),FACT_MS);
   const fmt=sec=>Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0");
   const tick=()=>{if(!alive)return;left=Math.max(0,Math.round((end-Date.now())/1000));clock.textContent=fmt(left);
     if(left===60&&!m.dataset.warned){m.dataset.warned=1;XM.sfx("sparkle");announcer.say("One minute left in the intermission!",null,{pitch:.15,rate:.88})}

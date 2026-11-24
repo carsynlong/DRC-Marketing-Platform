@@ -8,146 +8,213 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rye&family=Outfit:wght@400;600;800&display=swap">
 <style>
-:root{--ink:#16211c;--muted:#5d6b63;--gold:#b07a14;--red:#a52a22;--line:#e2ddd0;--bg:#fbf8f1}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 "Outfit",system-ui,sans-serif}
-main{max-width:1000px;margin:0 auto;padding:24px 16px 40px}
-h1{font-family:"Rye",Georgia,serif;font-weight:400;color:var(--red);margin:0;font-size:2rem}
-h2{font-family:"Rye",Georgia,serif;font-weight:400;color:var(--gold);font-size:1.25rem;margin:22px 0 8px;border-bottom:2px solid var(--line);padding-bottom:4px}
-.sub{color:var(--muted);margin:4px 0 0}
-.keys{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px}
-kbd{font:700 .8rem "Outfit",sans-serif;border:1px solid #bbb;border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:#fff}
-ol{margin:0;padding:0;list-style:none;columns:2;column-gap:28px}
-ol li{break-inside:avoid;display:grid;grid-template-columns:2.1em 1fr;gap:6px;padding:5px 0;border-bottom:1px dashed var(--line)}
-ol li .n{font-weight:800;color:var(--muted);text-align:right}
-ol li b{display:block}
-ol li span{color:var(--muted);font-size:.92rem}
-.box{border:2px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff}
-.box ul{margin:6px 0 0;padding-left:18px}
-.print{float:right;font:700 .9rem "Outfit",sans-serif;border:0;border-radius:999px;padding:8px 16px;background:var(--red);color:#fff;cursor:pointer}
-@media (max-width:700px){ol{columns:1}}
-@media print{.print{display:none}body{background:#fff;font-size:11.5px}main{padding:0}h2{margin-top:12px}ol li{padding:3px 0}}
+/* Four printed pages, one topic per page. Nothing splits across a page break. */
+:root{--ink:#16211c;--muted:#5d6b63;--gold:#b07a14;--red:#a52a22;--line:#e2ddd0;--bg:#fbf8f1;--green:#1f6b4a}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:#e9e4d8;color:var(--ink);font:14px/1.38 "Outfit",system-ui,sans-serif}
+.page{width:8.5in;min-height:11in;margin:18px auto;background:#fff;padding:.45in .5in;box-shadow:0 4px 18px rgba(0,0,0,.15);position:relative}
+.top{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--red);padding-bottom:8px;margin-bottom:12px}
+.top img{width:46px;height:46px}
+.top h1{font-family:"Rye",Georgia,serif;font-weight:400;color:var(--red);margin:0;font-size:1.7rem;line-height:1}
+.top .pg{margin-left:auto;text-align:right;font-weight:800;color:var(--muted);font-size:.8rem;letter-spacing:.08em}
+.top .sub{color:var(--muted);font-size:.85rem;margin-top:2px}
+h2{font-family:"Rye",Georgia,serif;font-weight:400;color:var(--gold);font-size:1.08rem;margin:0 0 6px}
+.box{border:2px solid var(--line);border-radius:10px;padding:9px 13px 10px;margin-bottom:10px;break-inside:avoid;page-break-inside:avoid}
+.box ul,.box ol{margin:0;padding-left:18px}
+.box li{margin:2px 0}
+.box.red{border-color:#e7b8b3;background:#fdf5f4}
+.box.green{border-color:#b9dcc7;background:#f4fbf6}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2 .box{margin-bottom:0}
+kbd{font:700 .78rem "Outfit",sans-serif;border:1px solid #bbb;border-bottom-width:2px;border-radius:5px;padding:0 5px;background:#fff}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px}
+.check li{list-style:none;margin-left:-18px}
+.check li::before{content:"☐ ";font-weight:800}
+/* slide by slide */
+.slides{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+.sl{display:grid;grid-template-columns:2.6em 1fr;gap:6px;padding:2.5px 0;border-bottom:1px dashed var(--line);break-inside:avoid;font-size:.84rem;line-height:1.24}
+.sl .n{font-weight:800;color:var(--red);text-align:right}
+.sl b{display:block}
+.sl span{color:var(--muted)}
+.sec{grid-column:1/-1;font-weight:800;color:var(--green);letter-spacing:.08em;font-size:.72rem;padding:6px 0 2px;border-bottom:2px solid var(--green)}
+/* remote tabs */
+.tab h2 span{font-family:"Outfit",sans-serif;font-weight:800;font-size:.8rem;color:var(--muted);margin-left:6px}
+.names{display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:.92rem}
+.names div{display:flex;gap:8px;padding:2px 0;border-bottom:1px dashed var(--line)}
+.names b{color:var(--red);min-width:2.2em}
+.page.dense{font-size:13.2px}.page.dense .box{padding:8px 12px 9px;margin-bottom:8px}
+.print{position:fixed;right:16px;top:16px;font:800 .95rem "Outfit",sans-serif;border:0;border-radius:999px;padding:10px 20px;background:var(--red);color:#fff;cursor:pointer;z-index:5}
+@page{size:letter portrait;margin:0}
+@media print{body{background:#fff}.page{margin:0;box-shadow:none;break-after:page;page-break-after:always;min-height:auto;height:11in;overflow:hidden}.page:last-child{break-after:auto}.print{display:none}}
+@media screen and (max-width:860px){.page{width:auto;min-height:0;margin:10px}.grid2,.slides,.keys,.names{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<main>
-<button class="print" onclick="print()">Print</button>
-<h1>Gamemaker Cheat Sheet</h1>
-<p class="sub">The 2026 Christmas Games, Thanksmas Edition. Show link: <b>whos-that-tribute.vercel.app/show</b></p>
+<button class="print" onclick="print()">🖨️ Print</button>
 
-<h2>Before everyone arrives</h2>
-<div class="box"><ul>
-<li><b>🩺 Run the Game Night Check first:</b> whos-that-tribute.vercel.app/check on the TV laptop. Fix anything red, test sound, voice and camera.</li>
-<li>Plug the laptop into the TV. Open the show link in Chrome and click to start. Press <kbd>F</kbd> for fullscreen.</li>
-<li>Turn the volume up. Test sound on the lobby screen (lo-fi music should be playing).</li>
-<li>Have ready: cookies, blindfolds, spoons, bowls and cotton snowballs, 3 dice and chips, bingo cards and pens, the bingo cage, major awards.</li>
-<li>Clear test names: on The Capitol Has Spoken (slide 43), tap each game, delete the name, press Enter.</li>
-</ul></div>
+<!-- ============ PAGE 1 ============ -->
+<section class="page">
+  <div class="top"><img src="/xmas/emblem.png" alt=""><div><h1>Gamemaker Cheat Sheet</h1><div class="sub">The 2026 Christmas Games, Thanksmas Edition</div></div><div class="pg">PAGE 1 OF 4<br>GAME NIGHT PLAN</div></div>
 
-<h2>⚙ Host menu on the show</h2>
-<div class="box"><ul><li>Faint ⚙ in the top left corner of the show (hover to see it). Go to the beginning, Skip to the end, Jump to The Capitol Has Spoken, Clear phone sign-ins (everyone scans and taps their face again), Open the Gamemaker menu.</li></ul></div>
-<h2>Keys</h2>
-<div class="keys"><span><kbd>→</kbd> <kbd>Space</kbd> or click: next</span><span><kbd>←</kbd>: back</span><span><kbd>F</kbd>: fullscreen</span><span><kbd>M</kbd>: mute</span><span><kbd>I</kbd> or ☕: Intermission</span><span><kbd>W</kbd> or 🎥: live broadcast</span><span><kbd>Esc</kbd>: close a pop-up</span><span><kbd>Home</kbd> / <kbd>End</kbd>: first / last slide</span></div>
-<p class="sub">Games, the wheel and bingo open in a new tab. When done, close that tab to come back to the same slide.</p>
+  <div class="box red"><h2>Before Friday</h2><ul class="check">
+    <li>On the laptop: open <b>whos-that-tribute.vercel.app/host</b>, unlock Side quests with your PIN, click <b>🧪 Fill with test data</b>, and click through the show with a couple of real phones.</li>
+    <li>Click <b>🧹 End rehearsal</b> twice. That wipes test victors, points, phones and turns off chaos, sponsor gifts and the clock.</li>
+    <li>Print the bingo cards (2 per page, landscape, Background graphics on, margins None).</li>
+  </ul></div>
 
-<h2>The show, slide by slide</h2>
-<ol>
-<li><span class="n">1</span><div><b>Lobby</b><span>Leave this up while people arrive. Everyone scans the QR code to join on their phones (tap their face). Press → when it's time.</span></div></li>
-<li><span class="n">2</span><div><b>Title</b><span>The announcer welcomes everyone. Wait for it.</span></div></li>
-<li><span class="n">3</span><div><b>Welcome (your speech)</b><span>Read it yourself: "Citizens of the living room!"</span></div></li>
-<li><span class="n">4</span><div><b>Rules of the Arena</b><span>Announcer reads the 5 rules, including "Touch it, it's yours": the first major award you touch is the one you open. Let it finish.</span></div></li>
-<li><span class="n">5</span><div><b>Eight Games. One Arena.</b><span>The lineup.</span></div></li>
-<li><span class="n">6</span><div><b>Meet the Tributes</b><span>All 12.</span></div></li>
-<li><span class="n">7-18</span><div><b>Tribute profiles, District 1 to 12</b><span>Announcer calls each name, then reads the weapon, strategy and odds. Let each finish before →.</span></div></li>
-<li><span class="n">19</span><div><b>Let the Games BEGIN!</b><span>Your song plays. It stops when you press →.</span></div></li>
-<li><span class="n">20</span><div><b>Game 1: Smart Cookie Showdown</b><span>Title slide.</span></div></li>
-<li><span class="n">21</span><div><b>How to Play</b><span>Announcer reads the steps.</span></div></li>
-<li><span class="n">22</span><div><b>Matchup Wheel</b><span>Click SPIN THE WHEEL. Spin twice per face-off, tap who won on the VS screen. Winners go back on until one champion. Save as victor, close the tab.</span></div></li>
-<li><span class="n">23</span><div><b>Was There a Tie?</b><span>Yes: tap who tied. No: skip.</span></div></li>
-<li><span class="n">24</span><div><b>Game 2: Who's That Tribute?</b><span>Click Play (new tab). Close it when done.</span></div></li>
-<li><span class="n">25</span><div><b>Game 3: Mitten Mayhem</b><span>Title slide.</span></div></li>
-<li><span class="n">26</span><div><b>How to Play... IDK. Ask Granny.</b><span>The joke slide.</span></div></li>
-<li><span class="n">27</span><div><b>Who Goes First?</b><span>Tap to sit people out, then Shuffle. Everyone wins this one.</span></div></li>
-<li><span class="n">28</span><div><b>Game 4: District Feud</b><span>Click Play (new tab). Close it when done.</span></div></li>
-<li><span class="n">29</span><div><b>Halftime Report</b><span>Shows Games 1 to 4 victors and who's leading. Record victors first so it fills in.</span></div></li>
-<li><span class="n">30</span><div><b>Game 5: Blind Snowball Scoop</b><span>Title slide.</span></div></li>
-<li><span class="n">31</span><div><b>How to Play</b><span>Announcer reads the steps.</span></div></li>
-<li><span class="n">32</span><div><b>Matchup Wheel</b><span>Same as Game 1 (30-second timer).</span></div></li>
-<li><span class="n">33</span><div><b>Was There a Tie?</b><span>Yes or skip.</span></div></li>
-<li><span class="n">34</span><div><b>Game 6: District Secrets</b><span>Click Play (new tab). Close it when done.</span></div></li>
-<li><span class="n">35</span><div><b>Game 7: Left, Right, Capitol</b><span>Title slide.</span></div></li>
-<li><span class="n">36</span><div><b>How to Play... IDK. Ask Elisha.</b><span>The joke slide.</span></div></li>
-<li><span class="n">37</span><div><b>Who Goes First?</b><span>Shuffle for the rolling order.</span></div></li>
-<li><span class="n">38</span><div><b>Was There a Tie?</b><span>Yes or skip.</span></div></li>
-<li><span class="n">39</span><div><b>Game 8: District Bingo</b><span>Title slide.</span></div></li>
-<li><span class="n">40</span><div><b>How to Play</b><span>Announcer reads the steps.</span></div></li>
-<li><span class="n">41</span><div><b>The Bingo Board</b><span>Click to open. Four rounds, one winner each: Regular, Four Corners, Big X, Picture Frame. Pick the type, tap New game between rounds (it keeps the round winners). Tap each number from the cage. Someone yells BINGO? Type their card number, Check card.</span></div></li>
-<li><span class="n">42</span><div><b>Was There a Tie?</b><span>Closest Call tiebreaker, or skip.</span></div></li>
-<li><span class="n">43</span><div><b>The Capitol Has Spoken</b><span>All victors. If someone won 2+ games, click Reveal the Ultimate Victor.</span></div></li>
-<li><span class="n">44</span><div><b>Congrats to All Our Victors!</b><span>The end. Merry Christmas!</span></div></li>
-</ol>
+  <div class="box"><h2>Game night, before everyone arrives</h2><ul class="check">
+    <li>Plug the laptop into the TV. Turn up the laptop and TV volume (sound must go to the TV).</li>
+    <li>Open <b>whos-that-tribute.vercel.app/check</b> in Chrome. Fix anything red. Click Test for sound, voice and camera.</li>
+    <li>Open <b>whos-that-tribute.vercel.app/show</b>, click to start, press <kbd>F</kbd> for fullscreen. Leave the Lobby up.</li>
+    <li>On your phone: scan the QR code, tap your face, enter your PIN. Your remote and scoreboard are at the top.</li>
+    <li>Have ready: cookies, blindfolds, spoons, bowls and cotton snowballs, 3 dice and chips, bingo cards and pens, the bingo cage, the major awards.</li>
+  </ul></div>
 
-<h2>Phones</h2>
-<div class="box"><ul>
-<li>Everyone scans the QR code on the Lobby (or Intermission) screen, or goes to <b>whos-that-tribute.vercel.app/showphone</b>, and taps their face.</li>
-<li>Their phone shows what's on the TV, and has emoji buttons that pop up on the TV with their name.</li>
-<li><b>🎥 Go live on the TV:</b> their phone camera shows in a round "LIVE" bubble on the right side of the TV for 20 seconds.</li>
-<li>A small QR code stays in the top right of every slide, so anyone who closes the page can scan back in.</li>
-<li><b>Your phone remote:</b> join as Carsyn and enter your PIN (keep it secret). You get side quests, points, Back, Next, Close pop-up, Intermission, Live cam, Mute and all the twists.</li>
-</ul></div>
-<h2>Gamemaker Menu and twists</h2>
-<div class="box"><ul>
-<li>Open <b>whos-that-tribute.vercel.app/host</b> on the laptop. It starts the show, jumps to any game, opens the wheel, bingo and games, and has <b>Reset everything</b> for game night.</li>
-<li><b>Twists</b> (only you): 🔥 Fireballs, ⚡ Lightning storm (swap seats), 🐺 Mutts (stand and spin, last one loses a turn), ❄️ Freeze (5-second countdown), 🎁 Bonus major award (next to make you laugh), 📜 New rule (stays on screen until you tap it or Clear the rule), 🍗 The Feast (snack break).</li>
-</ul></div>
-<h2>Side quests, sponsor gifts and Capitol Points</h2>
-<div class="box"><ul>
-<li><b>⚔️ Side quest:</b> on your phone remote or the host menu, tap a tribute (or 🎲 Random), pick a quest (or write your own), pick 10, 15, 30 or 60 seconds, Send. The TV and their phone count down. Then tap ✅ They did it (+1) or ❌ Failed (-1).</li>
-<li><b>🪂 Sponsor gift:</b> only tributes who haven't won a game yet. 3 of them face off in a quick challenge, and you tap the winner for +2 points. Drop one any time, or turn on Random sponsor gifts (one every 8 to 15 minutes).</li>
-<li><b>🐺 Sabotage</b> (during Who's That Tribute, District Feud and District Secrets): tap a tribute (or 🎲 Random), then ❄️ Freeze (no taps for 8 seconds), 🐕 Mutt bite (25 seconds where every tap makes them limp), 🌫️ Fog, 🙃 Flip, or 🐝 Tracker jackers. It hits their phone and the game's TV shows who got sabotaged.</li>
-<li><b>🌀 More twists</b> (tap a tribute first, or none for random): 🎰 Wheel of Punishment, 🔁 Body swap, 🤐 Silence, 👑 QUEEN MOTHER's decree (type your own on the host menu, or random), 🎯 Bounty on the points leader, 🐦 Alliance, 🕵️ Secret mission (only their phone sees it; your remote shows you what it was). Reminder banners stay at the top of the TV: tap one, or Clear banners.</li>
-<li><b>🎲 Double or nothing:</b> turn it on before sending a side quest. Done doubles their points (at least +2). Failed loses that much.</li>
-<li><b>🧊 Freeze everyone BUT picked:</b> in the online games, everyone except that tribute is frozen for 8 seconds.</li>
-<li><b>📊 Points on TV</b> shows the standings. ⭐ +1 / 💀 -1 gives or takes a point from whoever you tapped. Reset points on the host menu before game night.</li>
-</ul></div>
-<h2>Votes, bets and more (your phone remote or the host menu)</h2>
-<div class="box"><ul>
-<li><b>📋 Scoreboard</b> at the top of your phone remote: every game's 🥇 and 🥈, bingo rounds, tiebreakers, Capitol Points, Ultimate Victor. Updates on its own from the TV laptop.</li>
-<li><b>🗳️ Phone vote:</b> pick a question (or write one), Open the vote. Everyone taps a face on their phone, the TV counts live. Reveal the winner when ready.</li>
-<li><b>💰 Betting:</b> pick the game, Open bets. People bet 1 to 3 points on who wins. Lock bets when the game starts. When you record the victor on the show, it asks to pay out (or tap the winner at the top of the remote, then Pay out).</li>
-<li><b>🎙️ Soundboard:</b> air horn, Ohhh!, rimshot, sad trombone, cannon and more play on the TV.</li>
-<li><b>🚨 Snitch:</b> anyone can report someone from their phone (fell asleep, cheating...). It pops up on the TV. You decide the punishment.</li>
-<li><b>🎵 Walk-up songs:</b> everyone picks one on their phone. It plays on the TV a few seconds after you record them as a victor.</li>
-<li><b>📸 Photo booth</b> (only when you tap it): framed photo from the laptop camera. They play as a slideshow on the last slide.</li>
-<li><b>🎁 Major award draft order:</b> most Capitol Points picks first. <b>🏁 End-of-night awards:</b> Most Sabotaged, Biggest Snitch, Loudest Fan, Camera Hog and more. Both are also in the ⚙ menu on the show.</li>
-</ul></div>
-<h2>Even more (remote, host menu, ⚙ menu)</h2>
-<div class="box"><ul>
-<li><b>🧪 Rehearsal mode</b> (host menu): fills in fake victors and points so you can click through. Purple badge on the TV. <b>End rehearsal</b> wipes it all.</li>
-<li><b>🔊 Your voice:</b> type it, the announcer says it on the TV. <b>⏰ Arena clock:</b> 5 to 30 minute countdown in the top left, alarm at 0.</li>
-<li><b>🎲 Chaos mode:</b> a random twist, sabotage or sponsor gift every 4 to 8 minutes on its own. <b>📺 News ticker:</b> live headlines along the bottom.</li>
-<li><b>🎭 Hot seat:</b> phones send anonymous questions, you tap which ones go on the TV. <b>🏳️ Mercy vote:</b> they beg, the room votes 👍 or 👎.</li>
-<li><b>🔮 Predictions:</b> open early, phones pick the Ultimate Victor, Reveal at the end (+3 points if right). <b>💌 Shout-outs</b> and <b>🤝 point trades</b> come from phones; you approve shout-outs.</li>
-<li><b>📼 Night recap:</b> victors, points, funniest moments and photo booth pictures.</li>
-</ul></div>
-<h2>Last additions</h2>
-<div class="box"><ul>
-<li><b>Your phone remote has tabs:</b> 🎮 Show · ⚔️ Quests · 🌀 Twists · 📱 Phones · 🎉 Fun. Pick a tribute at the top first; every tab uses them.</li>
-<li><b>📲 Tap race</b> (Phones tab): first to 30, 50 or 100 taps on their phone wins a point, live race track on the TV.</li>
-<li><b>🎂 QUEEN MOTHER's birthday</b> (Fun tab): takeover with balloons and the Happy Birthday song. Every phone gets a cake to tap. Granny's phone says "Happy Birthday, Your Majesty!"</li>
-<li><b>📜 Bounty board</b> shows everything still in play. <b>👑 Crown the Ultimate Victor</b> for the big finish (before the last slide).</li>
-<li><b>📴 No internet?</b> The show keeps going. The TV shows a small "phone extras offline" note and phones say "Reconnecting". It all comes back on its own.</li>
-</ul></div>
-<h2>On every game slide (top right)</h2>
-<div class="box"><ul>
-<li><b>🏆 Record victor:</b> tap the winner's photo. Then comes <b>🥈 The Battle for Silver</b>: tap everyone who was close, press FIGHT, and they face off in a random challenge (thumb war, staring contest and more). Tap who won. Only one person close? Tap them and Award 2nd place. 1st and 2nd each win a major award.</li>
-<li><b>🎁 Unbox:</b> appears after a victor is recorded. They open the major award, you rate it Treasure, Mystery or Junk.</li>
-<li><b>⚔️ Tiebreaker:</b> on the physical and luck games. Tap who tied, pick a tiebreaker, tap who won.</li>
-<li><b>🎤 Interview:</b> appears after a victor is recorded. Caesar-style questions for the winner to answer out loud.</li>
-<li><b>🎥 Live broadcast</b> (bottom left, or <kbd>W</kbd>): the room on the TV through the laptop camera, as "LIVE FROM THE ARENA". Chrome asks to allow the camera the first time.</li>
-<li><b>☕ Intermission</b> (bottom left, or <kbd>I</kbd>): bathroom and drink break with an optional 5, 10 or 15 minute timer. Resume takes you back to the same slide.</li>
-</ul></div>
-</main>
+  <div class="grid2">
+    <div class="box"><h2>Keys on the laptop</h2><div class="keys">
+      <span><kbd>→</kbd> <kbd>Space</kbd> next slide</span><span><kbd>←</kbd> back</span>
+      <span><kbd>Esc</kbd> close any pop-up</span><span><kbd>F</kbd> fullscreen</span>
+      <span><kbd>M</kbd> mute</span><span><kbd>I</kbd> intermission</span>
+      <span><kbd>W</kbd> live camera</span><span><kbd>Home</kbd>/<kbd>End</kbd> first/last</span></div>
+      <p style="margin:6px 0 0;color:var(--muted);font-size:.85rem">Games, the wheel and bingo open in a new tab. Close that tab to come back to the same slide.</p></div>
+    <div class="box"><h2>⚙ Menu (top left of the show)</h2><ul>
+      <li>Go to the beginning / Skip to the end</li><li>Jump to The Capitol Has Spoken</li><li>Clear phone sign-ins</li>
+      <li>Photo booth, recap, awards, draft order, birthday, bounty board, crown</li><li>Chaos mode and ticker on/off</li></ul></div>
+  </div>
+
+  <div class="box" style="margin-top:10px"><h2>On every game slide (top right buttons)</h2><ul>
+    <li><b>🏆 Record victor:</b> tap the winner. Then <b>🥈 Battle for Silver</b>: tap everyone who was close, FIGHT, tap who won. Only one person close? Tap them, Award 2nd place.</li>
+    <li><b>🎁 Unbox</b> (after a victor): they open the major award, you rate it Treasure, Mystery or Junk. <b>🎤 Interview:</b> Caesar-style questions.</li>
+    <li><b>⚔️ Tiebreaker</b> (physical and luck games): tap who tied, pick a tiebreaker, tap who won.</li>
+    <li>Bets on that game pay out on their own when you record the victor.</li>
+  </ul></div>
+
+  <div class="grid2">
+    <div class="box"><h2>☕ Intermission (<kbd>I</kbd>)</h2>Break with an optional 5, 10 or 15 minute timer. <b>▶ Resume</b> is in the top right (or <kbd>Esc</kbd>).</div>
+    <div class="box"><h2>🎥 Live camera (<kbd>W</kbd>)</h2>The room on the TV as "LIVE FROM THE ARENA". Chrome asks for the camera the first time.</div>
+  </div>
+</section>
+
+<!-- ============ PAGE 2 ============ -->
+<section class="page">
+  <div class="top"><img src="/xmas/emblem.png" alt=""><div><h1>The Show, Slide by Slide</h1><div class="sub">Press → to move on. Let the announcer finish each slide.</div></div><div class="pg">PAGE 2 OF 4<br>44 SLIDES</div></div>
+  <div class="slides">
+    <div class="sec">OPENING</div>
+    <div class="sl"><span class="n">1</span><div><b>Lobby</b><span>Up while people arrive. Everyone scans the QR and taps their face.</span></div></div>
+    <div class="sl"><span class="n">2</span><div><b>Title</b><span>The announcer welcomes everyone.</span></div></div>
+    <div class="sl"><span class="n">3</span><div><b>Welcome (your speech)</b><span>Read it: "Citizens of the living room!"</span></div></div>
+    <div class="sl"><span class="n">4</span><div><b>Rules of the Arena</b><span>5 rules incl. "Touch it, it's yours".</span></div></div>
+    <div class="sl"><span class="n">5</span><div><b>Eight Games. One Arena.</b><span>The lineup.</span></div></div>
+    <div class="sl"><span class="n">6</span><div><b>Meet the Tributes</b><span>All 12.</span></div></div>
+    <div class="sl"><span class="n">7-18</span><div><b>Tribute profiles</b><span>Name, weapon, strategy, odds. Let each finish.</span></div></div>
+    <div class="sl"><span class="n">19</span><div><b>Let the Games BEGIN!</b><span>Your song. Stops when you press →.</span></div></div>
+    <div class="sec">FIRST HALF</div>
+    <div class="sl"><span class="n">20</span><div><b>Game 1: Smart Cookie Showdown</b><span>Title.</span></div></div>
+    <div class="sl"><span class="n">21</span><div><b>How to Play</b><span>Announcer reads it.</span></div></div>
+    <div class="sl"><span class="n">22</span><div><b>Matchup Wheel</b><span>SPIN THE WHEEL, tap who won each face-off. Save the champion, close the tab.</span></div></div>
+    <div class="sl"><span class="n">23</span><div><b>Was There a Tie?</b><span>Tap who tied, or skip.</span></div></div>
+    <div class="sl"><span class="n">24</span><div><b>Game 2: Who's That Tribute?</b><span>Play (new tab). Close when done.</span></div></div>
+    <div class="sl"><span class="n">25</span><div><b>Game 3: Mitten Mayhem</b><span>Title.</span></div></div>
+    <div class="sl"><span class="n">26</span><div><b>How to Play... IDK. Ask Granny.</b><span>The joke slide.</span></div></div>
+    <div class="sl"><span class="n">27</span><div><b>Who Goes First?</b><span>Sit people out, Shuffle. Everyone wins.</span></div></div>
+    <div class="sl"><span class="n">28</span><div><b>Game 4: District Feud</b><span>Play (new tab). Close when done.</span></div></div>
+    <div class="sl"><span class="n">29</span><div><b>Halftime Report</b><span>Games 1 to 4 victors and who's leading.</span></div></div>
+    <div class="sec">SECOND HALF</div>
+    <div class="sl"><span class="n">30</span><div><b>Game 5: Blind Snowball Scoop</b><span>Title.</span></div></div>
+    <div class="sl"><span class="n">31</span><div><b>How to Play</b><span>Announcer reads it.</span></div></div>
+    <div class="sl"><span class="n">32</span><div><b>Matchup Wheel</b><span>Same as Game 1 (30-second timer).</span></div></div>
+    <div class="sl"><span class="n">33</span><div><b>Was There a Tie?</b><span>Yes or skip.</span></div></div>
+    <div class="sl"><span class="n">34</span><div><b>Game 6: District Secrets</b><span>Play (new tab). Close when done.</span></div></div>
+    <div class="sl"><span class="n">35</span><div><b>Game 7: Left, Right, Capitol</b><span>Title.</span></div></div>
+    <div class="sl"><span class="n">36</span><div><b>IDK. Ask Bye Felicia.</b><span>The joke slide.</span></div></div>
+    <div class="sl"><span class="n">37</span><div><b>Who Goes First?</b><span>Shuffle for the rolling order.</span></div></div>
+    <div class="sl"><span class="n">38</span><div><b>Was There a Tie?</b><span>Yes or skip.</span></div></div>
+    <div class="sl"><span class="n">39</span><div><b>Game 8: District Bingo</b><span>Title.</span></div></div>
+    <div class="sl"><span class="n">40</span><div><b>How to Play</b><span>Announcer reads it.</span></div></div>
+    <div class="sl"><span class="n">41</span><div><b>The Bingo Board</b><span>4 rounds: Regular, Four Corners, Big X, Picture Frame. Tap each number. BINGO? Type the card #, Check card. New game between rounds.</span></div></div>
+    <div class="sl"><span class="n">42</span><div><b>Was There a Tie?</b><span>Closest Call tiebreaker, or skip.</span></div></div>
+    <div class="sec">THE FINISH</div>
+    <div class="sl"><span class="n">43</span><div><b>The Capitol Has Spoken</b><span>All victors. 2+ wins? Reveal the Ultimate Victor.</span></div></div>
+    <div class="sl"><span class="n">44</span><div><b>Congrats to All Our Victors!</b><span>The end. Photo booth pictures play here.</span></div></div>
+  </div>
+</section>
+
+<!-- ============ PAGE 3 ============ -->
+<section class="page dense">
+  <div class="top"><img src="/xmas/emblem.png" alt=""><div><h1>Your Phone Remote</h1><div class="sub">Join as Carsyn, enter your PIN (keep it secret). Pick a tribute at the top first; every tab uses them.</div></div><div class="pg">PAGE 3 OF 4<br>TAB BY TAB</div></div>
+
+  <div class="box"><h2>📋 Scoreboard <span>(tap to open, top of your phone)</span></h2>Every game's 🥇 and 🥈, bingo rounds, tiebreakers, Capitol Points and the Ultimate Victor. Fills in from the TV laptop.</div>
+
+  <div class="box tab"><h2>🎮 Show <span>TAB</span></h2><ul>
+    <li><b>The show:</b> Back, Next, Close pop-up, Intermission, Live cam, Mute.</li>
+    <li><b>⏰ Arena clock</b> 5 to 30 min (alarm at 0) · <b>🎲 Chaos ON/OFF</b> (random twist every 4 to 8 min) · <b>📺 Ticker ON/OFF</b> · <b>📼 Night recap</b>.</li>
+    <li><b>🔊 Your voice:</b> type it, the announcer says it on the TV.</li>
+  </ul></div>
+
+  <div class="box tab"><h2>⚔️ Quests <span>TAB</span></h2><ul>
+    <li><b>Side quest:</b> pick a quest (or write one), 10/15/30/60 seconds, Send. TV and their phone count down. Then ✅ They did it (+1) or ❌ Failed (-1).</li>
+    <li><b>🎲 Double or nothing:</b> turn on before Send. Done doubles their points, failed loses that much.</li>
+    <li><b>⭐ +1 / 💀 -1</b> to the picked tribute · <b>📊 Points on TV</b>.</li>
+  </ul></div>
+
+  <div class="box tab"><h2>🌀 Twists <span>TAB</span></h2><ul>
+    <li><b>On the TV:</b> 🎰 Wheel of Punishment · 🔁 Body swap · 🤐 Silence · 👑 QUEEN MOTHER decree · 🎯 Bounty (always the points leader) · 🐦 Alliance · 🕵️ Secret mission (only their phone sees it).</li>
+    <li><b>Quick twists:</b> 🔥 Fireballs · ⚡ Lightning (swap seats) · 🐺 Mutts · ❄️ Freeze · 🎁 Bonus major award · 📜 New rule · 🍗 The Feast · 🪂 Sponsor gift · 🧽 Clear banners.</li>
+    <li><b>🐺 Sabotage the online games:</b> ❄️ Freeze · 🐕 Mutt bite · 🌫️ Fog · 🙃 Flip · 🐝 Tracker jackers · 🧊 Freeze everyone BUT picked.</li>
+  </ul></div>
+
+  <div class="box tab"><h2>📱 Phones <span>TAB</span></h2><ul>
+    <li><b>🗳️ Vote:</b> pick a question, Open, then Reveal the winner. <b>💰 Bets:</b> pick the game, Open, Lock when it starts. Pays out when you record that game's victor.</li>
+    <li><b>📲 Tap race</b> to 30, 50 or 100 (+1 point) · <b>🎭 Hot seat</b> (tap a question to put it on the TV) · <b>🏳️ Mercy vote</b> then ⚖️ Verdict.</li>
+    <li><b>🔮 Predictions:</b> Open early, Lock, Reveal at the end (+3 if right). Shout-outs from phones show up here: ✅ to put one on the TV.</li>
+  </ul></div>
+
+  <div class="box tab"><h2>🎉 Fun <span>TAB</span></h2><ul>
+    <li><b>🎙️ Soundboard:</b> air horn, cheer, applause, Ohhh!, laugh, rimshot, sad trombone, cannon, drumroll, siren, fanfare, boom.</li>
+    <li><b>🎂 QUEEN MOTHER's birthday</b> · <b>📜 Bounty board</b> · <b>👑 Crown the Ultimate Victor</b> · <b>📸 Photo booth</b> · <b>🎁 Award draft order</b> · <b>🏁 End-of-night awards</b>.</li>
+  </ul></div>
+</section>
+
+<!-- ============ PAGE 4 ============ -->
+<section class="page">
+  <div class="top"><img src="/xmas/emblem.png" alt=""><div><h1>Guests, Names &amp; Help</h1><div class="sub">Phone page: whos-that-tribute.vercel.app/showphone (or scan the QR on the TV)</div></div><div class="pg">PAGE 4 OF 4<br>EVERYTHING ELSE</div></div>
+
+  <div class="box"><h2>📱 What guests can do on their phones</h2><ul>
+    <li>See what's on the TV · send emoji to the TV · 🎥 go live in a bubble on the TV for 20 seconds.</li>
+    <li>🚨 Snitch on someone · 🤝 send points to someone · 💌 send a shout-out (you approve it) · 🎵 pick a walk-up song (plays when they win).</li>
+    <li>Pop-ups when you start them: side quests, secret missions, votes, bets, mercy, hot seat, predictions, the tap race, the birthday.</li>
+    <li>A small QR code stays in the top right of every slide, so anyone who closes the page can scan back in.</li>
+  </ul></div>
+
+  <div class="box"><h2>🏹 The tributes</h2><div class="names">
+    <div><b>D1</b>Lucky PomPoms (Jessie)</div><div><b>D7</b>Big Fat Balls (Tinsley)</div>
+    <div><b>D2</b>Bye Felicia (Elisha)</div><div><b>D8</b>Buzz Buzz (Natalie)</div>
+    <div><b>D3</b>Grandad the Ancient and Wise</div><div><b>D9</b>Big Daddy Kam (Kamdon)</div>
+    <div><b>D4</b>Chad Thundercock (Dash)</div><div><b>D10</b>Iron Balls III (Brandon)</div>
+    <div><b>D5</b>HumblePie1 (Jonny)</div><div><b>D11</b>QUEEN MOTHER</div>
+    <div><b>D6</b>Clo (Carsyn, Gamemaker)</div><div><b>D12</b>Kachow (Kyle)</div>
+  </div></div>
+
+  <div class="box red"><h2>🧯 If something goes wrong</h2><ul>
+    <li><b>A pop-up won't close or the arrows stop working:</b> press <kbd>Esc</kbd>.</li>
+    <li><b>No sound:</b> check the laptop and TV volume and that sound goes to the TV. Press <kbd>M</kbd> in case it's muted.</li>
+    <li><b>The TV looks old or wrong:</b> press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> to reload. You land on the same slide.</li>
+    <li><b>A phone looks wrong:</b> reload the page. Name taken by someone else? Tap "Not you?" and pick again.</li>
+    <li><b>Phones stuck or someone's on the wrong name:</b> ⚙ menu, Clear phone sign-ins. Everyone scans again.</li>
+    <li><b>No internet:</b> the show keeps going. Phone extras pause and come back on their own.</li>
+    <li><b>Twists or points don't work from the laptop:</b> unlock the PIN on /host (Side quests).</li>
+  </ul></div>
+
+  <div class="box green" ><h2>Suggested big moments</h2><ul>
+    <li><b>Lobby:</b> 🔮 open predictions. <b>Before each game:</b> 💰 open bets, ⏰ start the arena clock.</li>
+    <li><b>During games:</b> ⚔️ a side quest, a 🌀 twist or 🐺 sabotage. <b>Halftime:</b> 🎂 QUEEN MOTHER's birthday, 📲 tap race.</li>
+    <li><b>Before slide 43:</b> 🏁 end-of-night awards, 📼 night recap, 🔮 reveal predictions, 👑 crown the Ultimate Victor, 🎁 award draft order.</li>
+  </ul></div>
+  <div class="box"><h2>🔗 Links</h2><ul>
+    <li><b>/show</b> the show · <b>/host</b> Gamemaker menu · <b>/check</b> game night check · <b>/showphone</b> guests' phone page</li>
+    <li><b>/wheel</b> matchup wheel · <b>/bingo</b> bingo board · <b>/bingocards</b> print bingo cards</li>
+  </ul></div>
+</section>
 <script>if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("/xmas-sw.js").catch(()=>{}));</script>
 </body>
 </html>

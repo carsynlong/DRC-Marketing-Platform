@@ -60,7 +60,7 @@
 
   // Phones show everyone's nickname instead of their real name (text only; the game itself still uses real names underneath)
   (() => {
-    const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
+    const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Big Fat Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
     const re = /\b(Jessie|Tinsley|Grandad(?! the Ancient)|Dash|Jonny|Natalie|Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g, skip = n => n && /^(SCRIPT|STYLE|TEXTAREA|INPUT|NOSCRIPT)$/.test(n.nodeName);
     const swap = t => { if (skip(t.parentNode)) return; const v = t.nodeValue; if (v && re.test(v)) { re.lastIndex = 0; t.nodeValue = v.replace(re, m => AKA[m]); } re.lastIndex = 0; };
     const fix = node => { if (node.nodeType === 3) return swap(node); if (node.nodeType !== 1 || skip(node)) return;

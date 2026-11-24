@@ -21,6 +21,24 @@ const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off"];
 
+const MISSIONS = [
+  "Get Grandad to say the word \"turkey\" without asking him to",
+  "Sneak the word \"Mockingjay\" into a normal sentence 3 times",
+  "Get QUEEN MOTHER to give you a hug",
+  "Get someone to hand you a napkin without asking for one",
+  "Make someone say \"Merry Christmas\" to you first",
+  "Get a high five from 3 different tributes",
+  "Get someone to sing any Christmas song",
+  "Steal one cookie without anyone noticing",
+  "Get Kyle to talk about cars",
+  "Get someone to say \"Gamemaker\"",
+  "Wink at the Gamemaker 5 times without getting caught",
+  "Get 2 people to switch seats without telling them why",
+  "Get someone to say \"I'm full\"",
+  "Start a slow clap and get 2 people to join"];
+const others = (not = []) => NAMES.filter(n => n !== "Carsyn" && !not.includes(n));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const TWISTS = ["wheel", "swap", "silence", "decree", "bounty", "alliance", "mission"];
 const pushCmd = async (cmd, data) => {
   const id = await redis.incr(P + "cmdid");
   await redis.lpush(P + "cmdlog", JSON.stringify({ id, cmd, data, t: Date.now() }));
@@ -40,7 +58,9 @@ export default async function handler(req, res) {
     const q = await readQuest();
     const quest = q && me && q.to === me && Date.now() - q.t < 5 * 60000 ? q : null;
     const pts = await points();
-    return reply(res, 200, { slide, quest, points: pts, now: Date.now() });
+    let mission = null;
+    if (me) { const m = await redis.hget(P + "missions", me); try { mission = m ? (typeof m === "string" ? JSON.parse(m) : m) : null; } catch {} }
+    return reply(res, 200, { slide, quest, points: pts, mission, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -99,13 +119,40 @@ export default async function handler(req, res) {
     const kind = req.body?.kind;
     if (!["freeze", "bite", "fog", "flip", "jackers"].includes(kind)) return reply(res, 400, { error: "Unknown sabotage" });
     let to = text(req.body?.to, 40);
-    if (to === "random") { const pool = NAMES.filter(n => n !== "Carsyn"); to = pool[Math.floor(Math.random() * pool.length)]; }
+    if (to === "random") to = pick(others());
     if (!NAMES.includes(to)) return reply(res, 400, { error: "Unknown tribute" });
-    const id = await redis.incr(P + "sabid"), s = { id, to, kind, t: Date.now() };
-    await redis.hset(P + "sab", { [to]: JSON.stringify(s) });
+    const id = await redis.incr(P + "sabid"), allBut = !!req.body?.allBut, s = { id, to, kind, allBut, t: Date.now() };
+    if (allBut) { const o = {}; for (const n of others([to])) o[n] = JSON.stringify(s); await redis.hset(P + "sab", o); }
+    else await redis.hset(P + "sab", { [to]: JSON.stringify(s) });
     await redis.lpush(P + "sablog", JSON.stringify(s)); await redis.ltrim(P + "sablog", 0, 9);
     await pushCmd("sab", s);
     return reply(res, 200, { ok: true, sab: s });
+  }
+
+  if (a === "tw") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const kind = req.body?.kind;
+    if (!TWISTS.includes(kind)) return reply(res, 400, { error: "Unknown twist" });
+    let to = text(req.body?.to, 40);
+    if (!to || to === "random" || !NAMES.includes(to)) to = null;
+    const data = { kind, t: Date.now() };
+    if (kind === "bounty") {
+      const pts = await points(); const top = Object.entries(pts).sort((x, y) => y[1] - x[1])[0];
+      data.to = to || (top && top[1] > 0 ? top[0] : pick(others()));
+    } else if (kind === "swap" || kind === "alliance") {
+      data.to = to || pick(others()); data.with = pick(others([data.to]));
+    } else if (kind === "silence" || kind === "wheel" || kind === "mission") {
+      data.to = to || pick(others());
+    }
+    if (kind === "mission") {
+      const m = { id: Date.now(), text: pick(MISSIONS) };
+      await redis.hset(P + "missions", { [data.to]: JSON.stringify(m) });
+      await pushCmd("tw", { kind, t: data.t });   // the TV never learns who
+      return reply(res, 200, { ok: true, tw: { ...data, mission: m.text } });
+    }
+    if (kind === "decree") data.text = text(req.body?.text, 140) || null;
+    await pushCmd("tw", data);
+    return reply(res, 200, { ok: true, tw: data });
   }
 
   if (a === "quest" || a === "questdone" || a === "pointsreset" || a === "pointsadd") {
@@ -122,7 +169,7 @@ export default async function handler(req, res) {
       if (!q) return reply(res, 400, { error: "Missing quest" });
       const secs = Math.min(120, Math.max(5, Number(req.body?.secs) || 15));
       const now = Date.now();
-      const quest = { id: now, to, q, ic, secs, t: now, start: now + 5000, status: "live" };
+      const quest = { id: now, to, q, ic, secs, t: now, start: now + 5000, status: "live", double: !!req.body?.double };
       await redis.set(P + "quest", JSON.stringify(quest), { ex: 60 * 30 });
       await pushCmd("quest", quest);
       return reply(res, 200, { ok: true, quest });
@@ -131,7 +178,11 @@ export default async function handler(req, res) {
       const q = await readQuest();
       if (!q || q.status !== "live") return reply(res, 409, { error: "No quest running" });
       const ok = req.body?.result === "done";
-      const pts = ok ? 1 : -1;
+      let pts = ok ? 1 : -1;
+      if (q.double) {   // double or nothing: win doubles what you have (at least +2), lose it all (at least -2)
+        const have = (await points())[q.to] || 0;
+        pts = ok ? Math.max(2, have) : -Math.max(2, have);
+      }
       await redis.hincrby(P + "points", q.to, pts);
       q.status = ok ? "done" : "fail"; q.pts = pts;
       await redis.set(P + "quest", JSON.stringify(q), { ex: 60 * 30 });
@@ -145,7 +196,7 @@ export default async function handler(req, res) {
       await pushCmd("pointsadd", { to, n });
       return reply(res, 200, { ok: true, points: await points() });
     }
-    await redis.del(P + "points"); await redis.del(P + "quest");
+    await redis.del(P + "points"); await redis.del(P + "quest"); await redis.del(P + "missions");
     return reply(res, 200, { ok: true, points: {} });
   }
 

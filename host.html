@@ -109,7 +109,7 @@ const send=(cmd,msg)=>{if(!ch){alert("This browser can't talk to the show tab. U
   const m=document.getElementById(msg);m.textContent="✅ Sent to the show";setTimeout(()=>m.textContent="",1600)};
 const TW=[["twist:fire","🔥","Fireballs","Booms and flying fire"],["twist:storm","⚡","Lightning storm","Everyone swaps seats"],["twist:mutts","🐺","Mutts released","Stand and spin, last one loses a turn"],
   ["twist:freeze","❄️","Freeze!","5-second countdown, nobody move"],["twist:bonus","🎁","Bonus major award","Next to make you laugh wins"],["twist:rule","📜","New rule","Random silly rule stays on screen"],
-  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["sponsor","🪂","Sponsor gift now","Non-winners fight for +2 points"],["clearrule","🧽","Clear the rule","Removes the rule banner"]];
+  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["sponsor","🪂","Sponsor gift now","Non-winners fight for +2 points"],["clearrule","🧽","Clear banners","Removes the reminders at the top of the TV"]];
 document.getElementById("twists").innerHTML=TW.map(([c,i,l,s])=>`<button data-c="${c}">${tile(i,l,s)}</button>`).join("");
 const CT=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live broadcast"],["mute","🔇","Mute / unmute"]];
 document.getElementById("ctrl").innerHTML=CT.map(([c,i,l])=>`<button data-c="${c}">${tile(i,l)}</button>`).join("")+'<div class="msg" id="cmsg" style="grid-column:1/-1"></div>';
@@ -118,6 +118,9 @@ document.querySelectorAll("#ctrl [data-c]").forEach(b=>b.onclick=()=>send(b.data
 // side quests go through the server (needs the PIN) so they also reach phones
 const HP=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
 const api=b=>fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(b)}).then(r=>r.json().then(j=>({ok:r.ok,status:r.status,...j}))).catch(()=>({ok:false}));
+const TW2=[["wheel","🎰","Wheel of Punishment","Spins a tribute AND a punishment"],["swap","🔁","Body swap","Picked + random swap places next game"],["silence","🤐","Silence","Picked can't talk till next game"],
+  ["decree","👑","QUEEN MOTHER's decree","Granny makes a rule (type one below)"],["bounty","🎯","Bounty","On the points leader: beat them, steal 2"],["alliance","🐦","Alliance","Picked + random: either wins, both +2"],
+  ["mission","🕵️","Secret mission","Only the picked tribute's phone sees it"]];
 const SAB=[["freeze","❄️","Freeze","Iced over, no taps for 8 seconds"],["bite","🐕","Mutt bite","25 seconds: every tap makes them limp"],["fog","🌫️","Fog","Blurry screen for 10 seconds"],["flip","🙃","Flip","Upside down for 12 seconds"],["jackers","🐝","Tracker jackers","Bees swarm their screen"]];
 function questUI(){
   const q=document.getElementById("qbody");const pin=HP();
@@ -126,23 +129,29 @@ function questUI(){
   q.innerHTML=`<div class="qfaces">${XM.TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name)}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
     <div class="qrow"><select id="qsel">${XM.QUESTS.map((x,i)=>`<option value="${i}">${x[0]} ${esc(x[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
       <input type="text" id="qown" placeholder="Your side quest" maxlength="150" style="display:none"></div>
-    <div class="qrow">Time: ${[10,15,30,60].map(n=>`<button class="chip" data-s="${n}">${n} sec</button>`).join("")}</div>
+    <div class="qrow">Time: ${[10,15,30,60].map(n=>`<button class="chip" data-s="${n}">${n} sec</button>`).join("")}<button class="chip" id="qdbl" style="margin-left:12px">🎲 Double or nothing: OFF</button></div>
     <div class="tiles twists"><button id="qsend"><span class="i">⚔️</span>Send the side quest</button><button id="qdone"><span class="i">✅</span>They did it<small>+1 point</small></button><button id="qfail"><span class="i">❌</span>Failed<small>-1 point</small></button>
       <button id="pplus"><span class="i">⭐</span>+1 point<small>to the tribute picked above</small></button><button id="pminus"><span class="i">💀</span>-1 point<small>to the tribute picked above</small></button>
       <button id="pshow"><span class="i">📊</span>Points on the TV</button><button id="preset" class="danger"><span class="i">🧹</span>Reset points<small>Click twice</small></button></div>
+    <h2 style="margin-top:16px">🌀 More twists on the TV</h2><p>Use the tribute picked above (or 🎲 Random / nothing picked = random). Banners stay at the top of the TV until you tap them or Clear banners.</p>
+    <div class="tiles twists">${TW2.map(([k,i,l,d])=>`<button data-tw="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}</div>
+    <div class="qrow" style="margin-top:10px"><input type="text" id="dtext" placeholder="Optional: type QUEEN MOTHER's decree (blank = random)" maxlength="130"></div>
     <h2 style="margin-top:16px">🐺 Sabotage the online games</h2><p>Hits the tribute picked above (or 🎲 Random) on their phone while they play Who's That Tribute, District Feud or District Secrets.</p>
-    <div class="tiles twists">${SAB.map(([k,i,l,d])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}</div>
+    <div class="tiles twists">${SAB.map(([k,i,l,d])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Freeze everyone BUT picked<small>Only they can play for 8 seconds</small></button></div>
     <div class="msg" id="qmsg"></div>`;
-  q.querySelectorAll("[data-sab]").forEach(b=>b.onclick=async()=>{if(!qn)return msg("Click who to sabotage first (or 🎲 Random).");const r=await call({a:"sab",to:qn,kind:b.dataset.sab});msg(r.ok?`${b.querySelector(".i").textContent} Got ${r.sab.to}!`:"Couldn't send.")});
-  let qn=null,qs=15,armedP=0;const msg=t=>{const m=q.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3500)};
+  q.querySelectorAll("[data-tw]").forEach(b=>b.onclick=async()=>{const r=await call({a:"tw",kind:b.dataset.tw,to:qn||"random",text:b.dataset.tw==="decree"?q.querySelector("#dtext").value.trim():undefined});
+    msg(!r.ok?"Couldn't send.":r.tw.mission?`🕵️ ${r.tw.to}'s secret mission: ${r.tw.mission}`:`${b.querySelector(".i").textContent} Sent${r.tw.to?" ("+r.tw.to+(r.tw.with?" + "+r.tw.with:"")+")":""}`)});
+  q.querySelectorAll("[data-sab]").forEach(b=>b.onclick=async()=>{if(!qn||(b.dataset.allbut&&qn==="random"))return msg("Click a tribute first.");const r=await call({a:"sab",to:qn,kind:b.dataset.sab,allBut:!!b.dataset.allbut});msg(r.ok?`${b.querySelector(".i").textContent} Got ${r.sab.to}!`:"Couldn't send.")});
+  let qn=null,qs=15,armedP=0,dbl=false;const msg=t=>{const m=q.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3500)};
   const call=async b=>{const r=await api({pin,...b});if(r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}questUI()}return r};
   q.querySelectorAll("[data-qn]").forEach(b=>b.onclick=()=>{qn=b.dataset.qn;q.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===b))});
   const sel=q.querySelector("#qsel"),own=q.querySelector("#qown");
   const setS=n=>{qs=n;q.querySelectorAll("[data-s]").forEach(y=>y.classList.toggle("on",+y.dataset.s===n))};setS(XM.QUESTS[0][2]);
   sel.onchange=()=>{own.style.display=sel.value==="own"?"":"none";if(sel.value!=="own")setS(XM.QUESTS[+sel.value][2])};
   q.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>setS(+b.dataset.s));
+  const db=q.querySelector("#qdbl");db.onclick=()=>{dbl=!dbl;db.classList.toggle("on",dbl);db.textContent=`🎲 Double or nothing: ${dbl?"ON":"OFF"}`};
   q.querySelector("#qsend").onclick=async()=>{if(!qn)return msg("Click who gets the quest first.");const Q=sel.value==="own"?["📜",own.value.trim()]:XM.QUESTS[+sel.value];if(!Q[1])return msg("Type your side quest first.");
-    const r=await call({a:"quest",to:qn,q:Q[1],ic:Q[0],secs:qs});msg(r.ok?`⚔️ Sent to ${r.quest.to}!`:"Couldn't send. Check the internet.")};
+    const r=await call({a:"quest",to:qn,q:Q[1],ic:Q[0],secs:qs,double:dbl});msg(r.ok?`⚔️ Sent to ${r.quest.to}!`:"Couldn't send. Check the internet.")};
   const res=v=>async()=>{const r=await call({a:"questdone",result:v});msg(r.ok?(v==="done"?`✅ +1 for ${r.quest.to}`:`❌ -1 for ${r.quest.to}`):r.status===409?"No side quest running.":"Couldn't send.")};
   q.querySelector("#qdone").onclick=res("done");q.querySelector("#qfail").onclick=res("fail");
   const pts=n=>async()=>{if(!qn||qn==="random")return msg("Click a tribute first.");const r=await call({a:"pointsadd",to:qn,n});msg(r.ok?`${n>0?"⭐ +1":"💀 -1"} for ${qn}`:"Couldn't send.")};

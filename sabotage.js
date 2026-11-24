@@ -44,7 +44,7 @@
         if (r.ok) { const j = await r.json(); const list = j.sabs || [];
           if (since === null) since = Math.max(0, ...list.map(x => x.id));
           else for (const x of list) { if (x.id <= since) continue; since = x.id;
-            const d = document.createElement("div"); d.className = "sabban"; d.textContent = `${(LABEL[x.kind] || ["⚠️"])[0]} ${x.to} ${TVLINE[x.kind] || "was sabotaged"} by the Gamemaker!`;
+            const d = document.createElement("div"); d.className = "sabban"; d.textContent = x.allBut ? `❄️ The Gamemaker FROZE everyone except ${x.to}!` : `${(LABEL[x.kind] || ["⚠️"])[0]} ${x.to} ${TVLINE[x.kind] || "was sabotaged"} by the Gamemaker!`;
             document.body.appendChild(d); setTimeout(() => d.remove(), 5000); } }
       } catch (e) {}
       setTimeout(tick, 2500);

@@ -179,7 +179,16 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 @keyframes tfly{from{transform:translate(0,0) rotate(0)}to{transform:translate(var(--x),var(--y)) rotate(var(--r,0deg))}}
 .flash{position:fixed;inset:0;z-index:55;background:#fff;pointer-events:none;animation:flash .5s ease-out forwards}
 @keyframes flash{0%{opacity:.95}100%{opacity:0}}
-#rulebar{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:52;background:var(--red);color:#fff;font-weight:800;font-size:clamp(14px,1.5vw,24px);padding:6px 18px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);cursor:pointer}
+#banners{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:52;display:grid;gap:6px;justify-items:center;width:max-content;max-width:70vw}
+#banners div{background:var(--red);color:#fff;font-weight:800;font-size:clamp(13px,1.3vw,22px);padding:5px 16px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);cursor:pointer;animation:popIn .4s both;text-align:center}
+#banners div[data-k="decree"]{background:#6a3c9c}#banners div[data-k="silence"]{background:#333}#banners div[data-k="bounty"]{background:#8a5a00}#banners div[data-k="alliance"]{background:#1f6b4a}#banners div[data-k="swap"]{background:#2d73a8}
+.reel{display:flex;gap:30px;align-items:center;justify-content:center;min-height:240px}
+.reel img{width:min(220px,24vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 7px var(--gold)}
+.reel .p{font-family:var(--display);font-size:clamp(2rem,4.6vw,4rem);color:#fff;max-width:18ch;line-height:1.1}
+.duo{display:flex;gap:26px;align-items:center;justify-content:center}
+.duo img{width:min(200px,22vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold)}
+.duo b{display:block;font-weight:800;font-size:1.4rem;margin-top:6px}
+.duo .x{font-size:clamp(3rem,7vh,5rem)}
 /* side quests + points */
 .moment.quest .qface{width:min(230px,24vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 7px var(--gold),0 0 50px rgba(232,176,75,.6)}
 .moment.quest .qclock{font-family:var(--display);font-size:clamp(5rem,16vh,10rem);line-height:1;color:#fff}
@@ -509,9 +518,12 @@ function flyAcross(item,n,{fromTop=false}={}){const R=(a,b)=>a+Math.random()*(b-
     else{const l=Math.random()<.5;f.style.left=l?"-12vw":"106vw";f.style.top=R(5,85)+"vh";f.style.setProperty("--x",(l?120:-120)+"vw");f.style.setProperty("--y",R(-20,20)+"vh");if(!l)f.style.transform="scaleX(-1)"}
     f.style.setProperty("--t",R(1.2,2.2)+"s");f.style.setProperty("--r",R(-360,360)+"deg");document.body.appendChild(f);setTimeout(()=>f.remove(),2400)},k*R(90,200));
 }
-function setRule(txt){let b=document.getElementById("rulebar");if(!txt){if(b)b.remove();return}
-  if(!b){b=document.createElement("div");b.id="rulebar";b.title="Tap to clear";b.onclick=e=>{e.stopPropagation();setRule(null)};document.body.appendChild(b)}
-  b.textContent="📜 NEW RULE: "+txt}
+// reminder banners along the top of the TV (tap one to clear it)
+function setBanner(k,txt){let box=document.getElementById("banners");if(!box){box=document.createElement("div");box.id="banners";document.body.appendChild(box)}
+  let b=box.querySelector(`[data-k="${k}"]`);if(!txt){if(b)b.remove();return}
+  if(!b){b=document.createElement("div");b.dataset.k=k;b.title="Tap to clear";b.onclick=e=>{e.stopPropagation();b.remove()};box.appendChild(b)}b.textContent=txt}
+function setRule(txt){setBanner("rule",txt?"📜 NEW RULE: "+txt:null)}
+function clearBanners(){const b=document.getElementById("banners");if(b)b.innerHTML=""}
 function arenaTwist(kind){
   if(!started)return;
   if(document.querySelector(".moment.twist"))document.querySelector(".moment.twist").remove();
@@ -556,14 +568,14 @@ function sideQuest(q){
   if(busy()){toast(`⚔️ SIDE QUEST for ${q.to}: ${q.q}`,8000);return}
   const {m,T,close}=openMoment("twist quest");const ph=XM.photo(q.to);let left=q.secs,iv=0;
   m.innerHTML=`<div class="inner"><div class="eb">⚔️ SIDE QUEST FROM THE GAMEMAKER</div>
-    ${ph?`<img class="qface" src="${ph}" alt="">`:""}<h1>${esc(q.to)}</h1>
-    <div class="say" style="max-width:30ch">${esc(q.ic||"📜")} ${esc(q.q)}</div>
+    ${ph?`<img class="qface" src="${ph}" alt="">`:""}<h1>${esc(q.to)}</h1>${XM.aka(q.to)?`<div class="eb" style="color:var(--gold)">a.k.a. ${esc(XM.aka(q.to))}</div>`:""}
+    <div class="say" style="max-width:30ch">${esc(q.ic||"📜")} ${esc(q.q)}</div>${q.double?`<div class="rule" style="font-size:clamp(1.4rem,3vw,2.6rem)">🎲 DOUBLE OR NOTHING</div>`:""}
     <div class="qclock" id="qclock">${q.secs}</div>
     <div class="row" id="qbtns"><button class="btn" data-r="done">✅ Done (+1)</button><button class="btn red" data-r="fail">❌ Failed (-1)</button><button class="btn ghost" id="qx">Close (Esc)</button></div></div>`;
   m.querySelectorAll("[data-r]").forEach(b=>b.onclick=e=>{e.stopPropagation();questResult(b.dataset.r)});
   m.querySelector("#qx").onclick=e=>{e.stopPropagation();close()};
   XM.sfx("siren");XM.playSong("battle");
-  announcer.say(`Side quest! ${XM.spoken(q.to)}! ${q.q.replace(/"/g,"")}. You have ${q.secs} seconds. Go!`,null,{pitch:.1,rate:.9});
+  announcer.say(`Side quest! ${q.double?"Double or nothing! ":""}${XM.spoken(q.to)}! ${q.q.replace(/"/g,"")}. You have ${q.secs} seconds. Go!`,null,{pitch:.1,rate:.9});
   const clock=m.querySelector("#qclock");clock.textContent="⏳";
   const run=()=>{left=q.secs;clock.textContent=left;XM.sfx("boom");
     iv=setInterval(()=>{if(!m.isConnected){clearInterval(iv);return}left--;clock.textContent=Math.max(0,left);
@@ -579,7 +591,7 @@ function questDone(q){
   ui.stop();const tot=(lastPoints[q.to]||0)+0;const ph=XM.photo(q.to);
   ui.m.innerHTML=`<div class="inner">${ph?`<img class="qface" src="${ph}" alt="" style="${ok?"":"filter:grayscale(1)"}">`:""}<h1>${esc(q.to)}</h1>
     <div class="res" style="color:${ok?"#6fe38e":"#ff6b5b"}">${ok?"✅ QUEST COMPLETE":"❌ QUEST FAILED"}</div>
-    <div class="say">${ok?"+1 point":"-1 point"}</div></div>`;
+    <div class="say">${(q.pts||(ok?1:-1))>0?"+":""}${q.pts||(ok?1:-1)} point${Math.abs(q.pts||1)===1?"":"s"}${q.double?" (double or nothing)":""}</div></div>`;
   XM.stopSong();
   if(ok){XM.sfx("fanfare");XM.confetti(140,true);announcer.say(`Quest complete! Plus one point for ${XM.spoken(q.to)}!`,null,{pitch:.1,rate:.9})}
   else{XM.sfx("cannon");shake();XM.sfx("trombone");announcer.say(`Quest failed! ${XM.spoken(q.to)} loses a point!`,null,{pitch:.1,rate:.9})}
@@ -632,9 +644,58 @@ function scheduleSponsor(ms){clearTimeout(sponsorTimer);if(!sponsorAuto())return
     scheduleSponsor()},ms||(8+Math.random()*7)*60000)}
 function setSponsorAuto(on){try{localStorage.setItem("xmas-sponsor-auto",on?"1":"0")}catch(e){}toast(on?"🪂 Random sponsor gifts: ON (every 8 to 15 min)":"🪂 Random sponsor gifts: OFF");scheduleSponsor()}
 addEventListener("storage",e=>{if(e.key==="xmas-sponsor-auto")scheduleSponsor()});
+/* ---------- More Gamemaker twists (sent with a target through the server) ---------- */
+const PUNISH=[["🎤","Sing a Christmas song, loud"],["💀","Lose 1 Capitol Point",-1],["🧤","Wear a mitten until the next game"],["🗣️","Talk in a British accent until the next game"],
+ ["🍺","Bring the Gamemaker a drink"],["🏋️","Do 10 squats right now"],["🪑","Sit on the floor for the next game"],["👑","Give QUEEN MOTHER a compliment"],["🔄","Swap seats with the Gamemaker's choice"],
+ ["🦃","Gobble like a turkey after every turn"],["🐦","Whistle the Mockingjay call"],["💀","Lose 2 Capitol Points",-2],["🎅","Say \"Ho ho ho\" before every turn"]];
+const DECREES=["Everyone must call me Your Majesty until the next game","No elbows on the table. Elbows cost a point.","Everyone raise a glass to QUEEN MOTHER. Now.",
+ "Grandad must fetch QUEEN MOTHER a drink","Whoever laughs first loses a point","Everyone bows when QUEEN MOTHER speaks","No phones out except to play",
+ "The Gamemaker must give QUEEN MOTHER a major award hug","Everyone must say please and thank you. Forget and lose a point."];
+const face=n=>XM.photo(n)?`<img src="${XM.photo(n)}" alt="">`:"";
+const nick=n=>XM.aka&&XM.aka(n)?` <span style="color:var(--gold)">(${esc(XM.aka(n))})</span>`:"";
+function twistTo(d){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return toast("🌀 The Gamemaker has a twist... (close this pop-up to see it)",5000);
+  const sp=(t,o)=>announcer.say(t,null,o||{pitch:.1,rate:.88});const {m,T,close}=openMoment("twist"+(d.kind==="decree"?" feast":""));
+  const shell=(eb,body)=>{m.innerHTML=`<div class="inner"><div class="eb">${eb}</div>${body}<button class="btn ghost" id="tclose">Close (Esc)</button></div>`;m.querySelector("#tclose").onclick=e=>{e.stopPropagation();close()}};
+  const N=XM.spoken,to=d.to,w=d.with;
+  if(d.kind==="wheel"){
+    shell("🎰 THE WHEEL OF PUNISHMENT",`<h1>Wheel of Punishment</h1><div class="reel" id="reel"></div><div class="say" id="rsay"></div>`);
+    const reel=m.querySelector("#reel"),rs=m.querySelector("#rsay");const all=TRIBUTES.map(t=>t.name).filter(n=>n!=="Carsyn");
+    XM.playSong("battle");sp("Spin the wheel of punishment!");let k=0;
+    const spin=(list,show,land,done)=>{let i=0,delay=70;const step=()=>{if(!m.isConnected)return;reel.innerHTML=show(list[i++%list.length]);XM.sfx("tick");
+      if(delay<420){delay*=1.12;T(step,delay)}else{reel.innerHTML=show(land);XM.sfx("boom");shake();done()}};step()};
+    const pun=PUNISH[Math.floor(Math.random()*PUNISH.length)];
+    T(()=>spin(all,n=>`${face(n)}<div class="p">${esc(n)}</div>`,to,()=>{sp(N(to)+"!");
+      T(()=>spin(PUNISH,p=>`${face(to)}<div class="p">${p[0]} ${esc(p[1])}</div>`,pun,async()=>{XM.stopSong();XM.sfx("trombone");rs.textContent="The wheel has spoken.";
+        sp(`${N(to)}: ${pun[1].replace(/"/g,"")}!`);if(pun[2])await addPoints(to,pun[2])}),1600)}),1200)}
+  else if(d.kind==="swap"){
+    shell("🔁 BODY SWAP",`<h1>Body Swap!</h1><div class="duo"><div>${face(to)}<b>${esc(to)}</b></div><div class="x">⇄</div><div>${face(w)}<b>${esc(w)}</b></div></div>
+      <div class="say">For the next game, ${esc(to)} plays as ${esc(w)} and ${esc(w)} plays as ${esc(to)}. Swap seats. Swap phones. Any points go to who you're playing as.</div>`);
+    XM.sfx("whoosh");sp(`Body swap! ${N(to)} and ${N(w)}, you are now each other. Swap seats and phones for the next game!`);setBanner("swap",`🔁 BODY SWAP: ${to} ⇄ ${w}`)}
+  else if(d.kind==="silence"){
+    shell("🤐 SILENCED BY THE GAMEMAKER",`<div class="duo"><div>${face(to)}<b>${esc(to)}${nick(to)}</b></div><div class="x">🤐</div></div><h1>Silence!</h1>
+      <div class="say">${esc(to)} cannot talk until the next game starts. Every word costs a point. Everyone else: try to make them talk.</div>`);
+    XM.sfx("gong");sp(`${N(to)}, you have been silenced! No talking until the next game. Every word costs you a point.`);setBanner("silence",`🤐 ${to} is SILENCED (every word costs a point)`)}
+  else if(d.kind==="decree"){
+    const t=d.text||DECREES[Math.floor(Math.random()*DECREES.length)];
+    shell("👑 A ROYAL DECREE",`<div class="duo"><div>${face("QUEEN MOTHER")}</div></div><h1>QUEEN MOTHER Decrees</h1><div class="rule">${esc(t)}</div>`);
+    XM.sfx("fanfare");sp(`Hear ye, hear ye! By order of QUEEN MOTHER: ${t.replace(/"/g,"")}`);setBanner("decree",`👑 QUEEN MOTHER DECREES: ${t}`)}
+  else if(d.kind==="bounty"){
+    shell("🎯 A BOUNTY HAS BEEN PLACED",`<div class="duo"><div style="position:relative">${face(to)}<div style="position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(5rem,12vh,8rem);opacity:.85">🎯</div><b>${esc(to)}${nick(to)}</b></div></div>
+      <h1>Bounty: ${esc(to)}</h1><div class="say">💰 Whoever beats ${esc(to)} in the next game steals 2 of their Capitol Points.</div>`);
+    XM.sfx("siren");sp(`A bounty has been placed on ${N(to)}! Whoever beats them in the next game steals two of their points!`);setBanner("bounty",`🎯 BOUNTY on ${to}: beat them next game to steal 2 points`)}
+  else if(d.kind==="alliance"){
+    shell("🐦 A MOCKINGJAY ALLIANCE",`<h1>Alliance!</h1><div class="duo"><div>${face(to)}<b>${esc(to)}</b></div><div class="x">🤝</div><div>${face(w)}<b>${esc(w)}</b></div></div>
+      <div class="say">If either of them wins the next game, BOTH get +2 Capitol Points.</div>`);
+    XM.sfx("sparkle");sp(`The Gamemaker has formed an alliance! ${N(to)} and ${N(w)}. If either one wins the next game, you both get two points!`);setBanner("alliance",`🐦 ALLIANCE: ${to} + ${w} (either wins next game, both +2)`)}
+  else if(d.kind==="mission"){
+    shell("🕵️ TOP SECRET",`<div class="big">🕵️</div><h1>A Secret Mission</h1><div class="say">Someone in this room just got a secret mission on their phone. Complete it without getting caught to earn Capitol Points. Watch your backs.</div>`);
+    XM.sfx("reveal");sp("Someone in this room just received a secret mission. Watch your backs.")}
+}
 function runCmd(c,data){
   if(!started)return;
-  if(c==="sab"&&data){XM.sfx("stinger");toast(`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"⚠️"} The Gamemaker sabotaged ${data.to}!`);return}
+  if(c==="tw"&&data)return twistTo(data);
+  if(c==="sab"&&data){XM.sfx("stinger");toast(data.allBut?`❄️ The Gamemaker froze EVERYONE except ${data.to}!`:`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"⚠️"} The Gamemaker sabotaged ${data.to}!`);return}
   if(c==="sponsor")return void sponsorDrop();
   if(c==="sponsor:on")return setSponsorAuto(true);
   if(c==="sponsor:off")return setSponsorAuto(false);
@@ -645,7 +706,7 @@ function runCmd(c,data){
   if(c.startsWith("twist:"))return arenaTwist(c.slice(6));
   if(c==="close"){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));return}
   if(c==="mute"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel();return}
-  if(c==="clearrule"){setRule(null);return}
+  if(c==="clearrule"){clearBanners();return}
   if(busy())return;
   if(c==="next")next();else if(c==="prev")prev();else if(c==="intermission")intermission();else if(c==="live")liveBroadcast();
 }

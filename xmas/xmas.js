@@ -38,6 +38,9 @@ XM.GAMES={
  bingo:{n:8,name:"District Bingo",kind:"LUCK",tag:"LUCK · GRAND FINALE",color:"#17998a",tb:"bingo"},
 };
 
+/* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
+XM.AKA={Elisha:"Lish",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls",Kyle:"Kachow",Carsyn:"Bitch"};
+XM.aka=n=>XM.AKA[n]||"";
 /* Side quests the Gamemaker sends to one tribute: [icon, quest, suggested seconds] */
 XM.QUESTS=[
  ["🍺","Bring the Gamemaker a beer",15],["🥤","Bring the Gamemaker a drink. Any drink.",15],["🍪","Bring the Gamemaker a snack",20],

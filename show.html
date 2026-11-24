@@ -20,6 +20,29 @@ body{cursor:default}
 /* The stage is designed at 1920x1080 and scaled to fit any screen (TV or laptop). */
 #stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;z-index:5}
 .slide{isolation:isolate;position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 130px 70px;text-align:center}
+/* 📱 Your Phone, Explained */
+.pg{position:relative;display:grid;grid-template-columns:420px 1fr;gap:120px;align-items:center;width:100%;height:100%;text-align:left}
+.pg-phone{position:relative;justify-self:end;width:420px;padding:16px;border-radius:58px;background:#0b0b0d;box-shadow:0 0 0 3px #2a2a30,0 30px 80px rgba(0,0,0,.65)}
+.pg-phone::before{content:"";position:absolute;left:50%;top:22px;width:110px;height:26px;border-radius:14px;background:#0b0b0d;transform:translateX(-50%);z-index:3}
+.pg-screen{position:relative;border-radius:44px;overflow:hidden;aspect-ratio:390/844}
+.pg-screen img{display:block;width:100%;height:100%;object-fit:cover}
+.pg-screen .dim{position:absolute;inset:0;background:rgba(0,0,0,.45);opacity:0;transition:opacity .5s}
+.pg.on .pg-screen .dim{opacity:1}
+.pg-hl{position:absolute;border-radius:18px;box-shadow:0 0 0 5px var(--gold),0 0 28px 10px rgba(232,176,75,.85),0 0 0 2000px rgba(0,0,0,.42);opacity:0;
+  transition:left .55s cubic-bezier(.3,1.3,.5,1),top .55s cubic-bezier(.3,1.3,.5,1),width .55s,height .55s,opacity .35s;z-index:2;animation:pgpulse 1.4s ease-in-out infinite}
+@keyframes pgpulse{50%{box-shadow:0 0 0 7px #ffd36b,0 0 40px 16px rgba(255,211,107,.9),0 0 0 2000px rgba(0,0,0,.42)}}
+.pg-right{position:relative;height:100%;display:grid;grid-template-rows:auto 1fr auto}
+.pg-right h1{margin:0 0 10px}
+.pg-capwrap{position:relative}
+.pg-cap{position:absolute;left:0;right:30px;background:rgba(22,48,42,.96);border-radius:28px;padding:30px 40px;box-shadow:0 0 0 3px var(--gold),0 20px 50px rgba(0,0,0,.5);
+  transition:top .55s cubic-bezier(.3,1.3,.5,1),opacity .3s;display:grid;grid-template-columns:110px 1fr;gap:26px;align-items:center}
+.pg-cap .e{font-size:92px;line-height:1;text-align:center}
+.pg-cap b{display:block;font-family:var(--display);font-weight:400;color:var(--gold);font-size:60px;line-height:1.05}
+.pg-cap span{display:block;font-size:38px;line-height:1.3;margin-top:10px}
+.pg-cap small{display:block;font-size:28px;opacity:.85;margin-top:14px}
+.pg-dots{display:flex;gap:12px;padding-top:12px}.pg-dots i{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.22);transition:.3s}.pg-dots i.on{background:var(--gold);transform:scale(1.3)}
+.pg svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:4}
+.pg svg path{fill:none;stroke:var(--gold);stroke-width:7;stroke-linecap:round;filter:drop-shadow(0 0 8px rgba(232,176,75,.8))}
 .slide.leaving{animation:leave .35s ease-in both;pointer-events:none}
 @keyframes leave{to{opacity:0;transform:scale(.94);filter:blur(4px)}}
 #stage.shake{animation:shake .45s cubic-bezier(.36,.07,.19,.97)}
@@ -604,6 +627,45 @@ function announce(t,el){
     announcer.say(`District ${NUM[t.d]}.`,()=>{if(!ok())return;st(()=>ok()&&announcer.say(`${spoken}!`,()=>step(0),{pitch:.05,rate:.7,fallback:1200}),350)},{pitch:.1,rate:.8,fallback:700});
   },900);
 }
+/* 📱 "Your Phone, Explained": a snapshot of a guest phone (xmas/phone-guide.jpg), circle one button at a time and explain it.
+   Boxes are [left, top, width, height] in % of the screenshot (390x844 phone). */
+const PG_STEPS=[
+ [[4.1,5.5,91.8,9.7],"👤","Your name card","That's you. Wrong person? Tap Not you."],
+ [[4.1,17.1,91.8,14],"📺","Now on the TV","Shows what's happening on the TV, and what to do right now."],
+ [[4.1,34.8,44.6,7.1],"😀","Send emojis","Tap one and it pops up on the TV. You get your own district's emojis too."],
+ [[51.3,34.8,44.6,7.1],"📸","Photo booth","Take a selfie. It goes on the TV, and comes back at the end of the night."],
+ [[4.1,43.1,44.6,7.1],"🎥","Go live","Your camera shows in a corner of the TV for 20 seconds."],
+ [[51.3,43.1,44.6,7.1],"🚨","Snitch","Report someone (just for fun). It pops up on the TV."],
+ [[4.1,51.4,44.6,7.1],"🤝","Send points","Give your Capitol Points to someone. Bribes welcome."],
+ [[51.3,51.4,44.6,7.1],"💌","Shout-out","Send a message to the TV. The Gamemaker approves it first."],
+ [[4.1,59.7,44.6,7.3],"🎵","Walk-up song","Pick your victory song. It plays when you win a game."],
+ [[51.3,59.7,44.6,7.3],"🆘","I'm lost","Tap it and the Gamemaker comes to help."],
+ [[4.1,34.8,91.8,32.2],"🗳️","Votes and bets","Votes and bets pop up on their own. Tap a face. You get 10 seconds to change it, then it locks.","👑 QUEEN MOTHER and 😤 Buzz Buzz have their own special buttons."]];
+function phoneGuide(el){
+  const hl=el.querySelector(".pg-hl"),cap=el.querySelector(".pg-cap"),wrap=el.querySelector(".pg-capwrap"),line=el.querySelector("#pgline"),dots=[...el.querySelectorAll(".pg-dots i")],box=el.querySelector(".pg");
+  let i=-1,tok=0;const ok=t=>t===tok&&curEl===el;
+  // draw the arrow from the circled button to the caption card (in the slide's own 1920x1080 coordinates)
+  const arrow=()=>{const sc=box.getBoundingClientRect().width/box.offsetWidth||1,B=box.getBoundingClientRect(),h=hl.getBoundingClientRect(),c=cap.getBoundingClientRect();
+    const P=el.querySelector(".pg-phone").getBoundingClientRect(),x1=(P.right-B.left)/sc+6,y1=(h.top+h.height/2-B.top)/sc,x2=(c.left-B.left)/sc-8,y2=(c.top+c.height/2-B.top)/sc,mx=(x1+x2)/2;
+    line.setAttribute("d",`M${x2},${y2} C${mx},${y2} ${mx},${y1} ${x1},${y1}`);const L=line.getTotalLength();line.style.transition="none";line.style.strokeDasharray=L;line.style.strokeDashoffset=L;
+    void line.getBoundingClientRect();line.style.transition="stroke-dashoffset .6s ease-out";line.style.strokeDashoffset=0};
+  const show=k=>{const [b,e,t,d,small]=PG_STEPS[k];
+    hl.style.left=b[0]+"%";hl.style.top=b[1]+"%";hl.style.width=b[2]+"%";hl.style.height=b[3]+"%";hl.style.opacity=1;
+    cap.style.opacity=0;line.style.strokeDashoffset=9999;
+    setTimeout(()=>{if(curEl!==el||i!==k)return;cap.querySelector(".e").textContent=e;cap.querySelector("b").textContent=t;cap.querySelector("span").textContent=d;cap.querySelector("small").textContent=small||"";
+      // line the caption up with the circled button
+      const sc=box.getBoundingClientRect().width/box.offsetWidth||1,W=wrap.getBoundingClientRect(),h=hl.getBoundingClientRect();
+      const want=(h.top+h.height/2-W.top)/sc-cap.offsetHeight/2;cap.style.top=Math.max(0,Math.min(wrap.offsetHeight-cap.offsetHeight,want))+"px";cap.style.opacity=1;
+      setTimeout(()=>{if(curEl===el&&i===k)arrow()},560)},380);
+    dots.forEach((n,j)=>n.classList.toggle("on",j===k));XM.sfx("whoosh")};
+  const go=k=>{if(k<0||k>=PG_STEPS.length)return false;announcer.stop();const t=++tok;i=k;show(k);
+    const [,,title,d,small]=PG_STEPS[k],say=`${title}. ${d}${small?" "+small.replace(/[👑😤]/gu,""):""}`;
+    st(()=>ok(t)&&announcer.say(say,()=>{if(ok(t)&&i<PG_STEPS.length-1)st(()=>ok(t)&&go(i+1),700);else if(ok(t))XM.sfx("sparkle")},{pitch:1.05,rate:.95,fallback:Math.max(4500,say.split(" ").length*330),female:true}),900);
+    return true};
+  el._pg={step:dir=>go(i+dir)};
+  XM.duck(true);const t0=++tok;
+  st(()=>ok(t0)&&announcer.say("Your phone, explained. Here's what every button does.",()=>ok(t0)&&go(0),{pitch:1,rate:.9,fallback:2200,female:true}),900);
+}
 // Rules and How to Play: the announcer reads each item as it pops in, one at a time
 function narrate(el,intro){
   announcer.stop();const my=announcer.gen(),ok=()=>my===announcer.gen()&&curEl===el;
@@ -634,7 +696,7 @@ function qrHTML(size){let svg="";try{const q=qrcode(0,"M");q.addData(PHONE_URL);
 function slideTodo(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,"");
   const T={lobby:"Tap your face to join if you haven't. Then grab a drink and a seat.",title:"Find a seat. The Games are starting!",welcome:"Listen to the Gamemaker's welcome.",
-    rules:"Listen to the rules. Remember: touch a major award and it's yours.",lineup:"Here are tonight's 8 games.",tributes:"Meet the tributes. Send emojis for your favorites!",
+    rules:"Listen to the rules. Remember: touch a major award and it's yours.",phoneguide:"Listen to how your phone works.",lineup:"Here are tonight's 8 games.",tributes:"Meet the tributes. Send emojis for your favorites!",
     begin:"Let the Games begin! Cheer!",halftime:"Halftime standings. Bathroom or snack break if you need one.",victors:"The winners of every game. Cheer for them!",end:"Merry Christmas, tributes!","bingo-board":"Mark every number called. Got the pattern on the TV? Yell BINGO!"};
   if(T[id])return T[id];
   if(/^d\d+$/.test(id))return "Meet this tribute. Send emojis to cheer or boo!";
@@ -1069,7 +1131,7 @@ function tickerLoop(){
   let el=document.getElementById("ticker");
   if(!started||!tickerOn()){if(el)el.remove();return setTimeout(tickerLoop,3000)}
   if(!el){el=document.createElement("div");el.id="ticker";el.innerHTML=`<b>📺 CAPITOL NEWS</b><div class="tk"><span></span></div>`;document.body.appendChild(el)}
-  const sid=SLIDES[cur]&&SLIDES[cur].id;el.style.display=sid==="lobby"||(SLIDES[cur]&&SLIDES[cur].big)||/^(idk|video)-/.test(sid)?"none":"";if(el.style.display==="none")return setTimeout(tickerLoop,2000);
+  const sid=SLIDES[cur]&&SLIDES[cur].id;el.style.display=sid==="lobby"||sid==="phoneguide"||(SLIDES[cur]&&SLIDES[cur].big)||/^(idk|video)-/.test(sid)?"none":"";if(el.style.display==="none")return setTimeout(tickerLoop,2000);
   const items=newsLog.slice(-8).reverse().map(x=>x.t);
   const lead=Object.entries(lastPoints||{}).sort((a,b)=>b[1]-a[1])[0];if(lead&&lead[1]>0)items.unshift(`⭐ ${lead[0]} leads the Capitol Points with ${lead[1]}`);
   const V=XM.victors();const vs=Object.entries(V).filter(([,n])=>n).map(([g,n])=>`🏆 ${n} won ${GAMES[g].name}`);items.push(...vs.slice(-3));
@@ -1243,13 +1305,9 @@ function birthday(queen){
 /* ---------- 📱 what your phone does tonight (spoken tour) ---------- */
 function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
   Briefing.show({eyebrow:"📱 YOUR PHONE TONIGHT",title:"Here's What Your Phone Does",intro:"Here's what your phone can do tonight.",
-    steps:[["📺","It shows what's on the TV, and <b>what to do right now</b>.","It shows what's on the TV, and what to do right now."],
-      ["😂","Tap an emoji and it pops up on the TV with your name.","Tap an emoji, and it pops up on the TV with your name."],
-      ["🎥","<b>Go live</b>: your face shows in a bubble on the TV for 20 seconds.","Go live: your face shows in a bubble on the TV for twenty seconds."],
-      ["🚨","<b>Snitch</b> on someone who's cheating or asleep. It shows on the TV.","Snitch on someone who's cheating, or asleep. It shows on the TV."],
-      ["🤝","<b>Send points</b> to someone. Bribes welcome.","Send points to someone. Bribes welcome."],
-      ["💌","<b>Shout-outs</b> scroll across the TV once the Gamemaker approves them.","Shout outs scroll across the TV once the Game maker approves them."],
-      ["🎵","Pick a <b>walk-up song</b>. It plays when you win.","Pick a walk-up song. It plays when you win."],
+    steps:[["📺","Your phone shows <b>what's on the TV</b>, and what to do right now.","Your phone shows what's on the TV, and what to do right now."],
+      ["😀","Tap a button to open it: <b>emojis, photo booth, go live</b> and more. Tap it again to close it.","Tap a button to open it: emojis, photo booth, go live, and more. Tap it again to close it."],
+      ["🗳️","<b>Votes and bets</b> pop up on their own. You get 10 seconds to change your pick.","Votes and bets pop up on their own. You get ten seconds to change your pick."],
       ["🆘","Lost? Tap <b>I'm lost</b> and the Gamemaker comes to help.","Lost? Tap I'm lost, and the Game maker will come help."]],
     outro:"That's it. Have fun, tributes.",start:"▶ Got it",muted:()=>!XM.sound})}
 function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-points-briefed","1")}catch(e){}
@@ -1532,6 +1590,10 @@ const SLIDES=[
       <div style="width:124px;height:124px;border-radius:28px;background:${c};display:grid;place-items:center;flex:none;box-shadow:0 8px 0 rgba(0,0,0,.35)">${ic.length<3?`<span style="font-size:70px">${ic}</span>`:`<img src="${ICON(ic)}" alt="" style="width:62%">`}</div>
       <div><div style="font-family:var(--display);font-size:50px;color:var(--gold);line-height:1.1">${h}</div><div style="font-size:32px;line-height:1.3;margin-top:10px">${t}</div></div></div>`).join("")}</div></div>`},
    enter(el){narrate(el,"Rules of the Arena.")}},
+ {id:"phoneguide",music:null,html:()=>`<div class="pg"><div class="pg-phone"><div class="pg-screen"><img src="/xmas/phone-guide.jpg" alt="A tribute's phone"><div class="pg-hl"></div></div></div>
+    <div class="pg-right"><h1 class="title-l slam" style="font-size:84px">Your Phone, Explained</h1><div class="pg-capwrap"><div class="pg-cap" style="opacity:0;top:0"><div class="e"></div><div><b></b><span></span><small></small></div></div></div>
+    <div class="pg-dots">${PG_STEPS.map(()=>"<i></i>").join("")}</div></div><svg><defs><marker id="pgarr" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5" style="stroke-width:1.2"/></marker></defs><path id="pgline" marker-end="url(#pgarr)"/></svg></div>`,
+   enter(el){phoneGuide(el)},onNext:el=>el._pg&&el._pg.step(1),onPrev:el=>el._pg&&el._pg.step(-1)},
  {id:"lineup",music:"board",html:()=>`<div style="display:grid;gap:50px;width:100%"><h1 class="title-l slam">Eight Games. One Arena.</h1>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:30px">${Object.entries(GAMES).map(([k,g],i)=>`<div class="${i%2?"fd":"fu"}" ${d(.5+i*.15)} style="background:${g.color};border-radius:28px;padding:30px;text-align:left;display:grid;gap:12px;box-shadow:0 10px 0 rgba(0,0,0,.35),0 20px 40px rgba(0,0,0,.4);min-height:290px">
       <div style="display:flex;justify-content:space-between;align-items:start"><span style="font-family:var(--display);font-size:72px;line-height:1">${g.n}</span><img src="${ICON(k+"-w")}" alt="" style="width:96px"></div>
@@ -1652,7 +1714,7 @@ function go(i){
   const el=document.createElement("section");el.className="slide";el.setAttribute("aria-label",s.id);el.innerHTML=s.html();el.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));stage.appendChild(el);curEl=el;
   try{history.replaceState(null,"","#"+s.id)}catch(e){}XM.store.set("xmas-slide",s.id);
   document.getElementById("count").textContent=`${i+1} / ${SLIDES.length}`;
-  {const tk=document.getElementById("ticker");if(tk)tk.style.display=s.id==="lobby"||s.big||/^(idk|video)-/.test(s.id)?"none":""}
+  {const tk=document.getElementById("ticker");if(tk)tk.style.display=s.id==="lobby"||s.id==="phoneguide"||s.big||/^(idk|video)-/.test(s.id)?"none":""}
   if(started){
     // "until the next game" reminders go away when a game starts
     if(s.id.startsWith("game-"))document.querySelectorAll('#banners [data-k^="swap:"],#banners [data-k^="silence:"],#banners [data-k^="bounty:"],#banners [data-k^="alliance:"]').forEach(b=>b.remove());
@@ -1718,7 +1780,8 @@ function wireSlide(el){
       if(XM.victors()[k]&&XM.victors()[k]!==was&&free>=3000){clearInterval(iv);next()}},400)});
   const m=el.querySelector("#memo");if(m)m.onclick=e=>{e.stopPropagation();memorial()};
 }
-const next=()=>go(cur+1),prev=()=>go(cur-1);
+const next=()=>{const s=SLIDES[cur];if(s&&s.onNext&&curEl&&s.onNext(curEl))return;go(cur+1)},
+  prev=()=>{const s=SLIDES[cur];if(s&&s.onPrev&&curEl&&s.onPrev(curEl))return;go(cur-1)};
 function begin(){
   if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);
   if(!hostPin())setTimeout(()=>toast("🔑 Unlock your PIN on /host (Side quests) so phones can follow along",9000),1500);

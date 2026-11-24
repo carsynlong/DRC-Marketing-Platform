@@ -44,7 +44,7 @@ XM.GAMES={
 // the shared "how this works" briefing screen (/briefing.js) on every page that uses these helpers
 if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){const s=document.createElement("script");s.src="/briefing.js";document.head.appendChild(s)}
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Big Fat Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
+XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 // typed name or nickname back to the real name: "kachow" -> "Kyle", "Iron Balls the Third" -> "Brandon". Unknown text comes back trimmed.

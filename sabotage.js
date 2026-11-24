@@ -13,7 +13,7 @@
   if (window.__sabotage) return; window.__sabotage = true;
   // The announcer says "Game maker", not "Gamemaker"
   (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
-    const SAY={Jessie:"Lucky PomPoms",Tinsley:"Big Fat Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"Humble Pie One",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls the Third",Kyle:"Kachow",Carsyn:"Clo"};
+    const SAY={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"Humble Pie One",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls the Third",Kyle:"Kachow",Carsyn:"Clo"};
     const NR=/\b(Jessie|Tinsley|Grandad(?! the Ancient)|Dash|Jonny|Natalie|Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g;
     const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/HumblePie1/g,"Humble Pie One").replace(NR,m=>SAY[m]):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
   const isPhone = /play(\.html)?$/.test(location.pathname);
@@ -46,7 +46,7 @@
   // Phones AND game TVs show everyone's nickname instead of their real name (text only: the games still use real names underneath,
   // and typed answers are matched against the game's data, never the screen). Scripts, styles and typing boxes are left alone.
   (() => {
-    const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Big Fat Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
+    const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
     const re = /\b(Jessie|Tinsley|Grandad(?! the Ancient)|Dash|Jonny|Natalie|Elisha|Kamdon|Brandon|Kyle|Carsyn)\b/g, skip = n => n && /^(SCRIPT|STYLE|TEXTAREA|INPUT|NOSCRIPT)$/.test(n.nodeName);
     const swap = t => { if (skip(t.parentNode)) return; const v = t.nodeValue; if (v && re.test(v)) { re.lastIndex = 0; t.nodeValue = v.replace(re, m => AKA[m]); } re.lastIndex = 0; };
     const fix = node => { if (node.nodeType === 3) return swap(node); if (node.nodeType !== 1 || skip(node)) return;

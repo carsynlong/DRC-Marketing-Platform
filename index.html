@@ -1,4 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}.ctl.stick,.settings.stick{position:sticky;bottom:62px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}.settings.stick{bottom:12px;padding:8px 12px}
+details.opts{margin:6px 0}details.opts summary{cursor:pointer;font-weight:800;opacity:.8;list-style:none}details.opts summary::-webkit-details-marker{display:none}
 </style></head><body>
 <meta charset="utf-8">
 <title>Who's That Tribute?</title>
@@ -566,15 +567,15 @@ function lobbyView(){
     ${EMBLEM}
     <div class="eyebrow">The 2026 Christmas Games · Game 2</div>
     <h1>Who's That Tribute?</h1>
-    <p>A tribute's face appears way too close for comfort. Sign in on your phone, then type who you think it is before the cannon fires. Your guess is sealed: nobody sees it until the reveal. Spelling slips and nicknames count. Each right answer is worth 1,000 points, plus 100 for every answer in a row. Yes, you can score on your own face.</p>
+    <p>A face appears up close. Type who it is on your phone before the cannon. 1,000 points per right answer.</p>
     ${Sync.joinCard()}
     ${Sync.roster()}
-    <div class="eyebrow">Who's playing? Tap to sit someone out</div>
+    <div class="eyebrow">Tap a face to sit them out</div>
     <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
-    <div class="settings"><span class="tiny">Seconds per face</span>
+    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options</summary><div class="settings"><span class="tiny">Seconds per face</span>
       <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30,45].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
-      ${sndBtn()}</div>
-    <div class="settings stick"><button class="btn red" id="music">🔔 Play lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
+      <button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button></div></details>
+    <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
 }

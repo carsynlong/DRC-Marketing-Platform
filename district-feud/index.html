@@ -1017,7 +1017,7 @@ function resumeCard(){
 function lobby(){
   return `<section class="lobby">${logo()}${resumeCard()}
     ${joinCard()}
-    <p class="intro">We surveyed the district. Every question has a <b>#1 answer</b>, and it's one of you. Shout your guesses, then hit <b>Survey says</b>. Ties go to a secret <b>Face-off</b>.</p>
+    <p class="intro">Every question's <b>#1 answer</b> is someone in this room. Guess it.</p>
     <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the major award!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     ${checkinLine()}
@@ -1153,7 +1153,7 @@ function wire(){
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});
 }
 /* ================= PHONES =================
-   Scan the QR code, tap your name. Phones guess the #1 answer and vote in secret during face-offs.
+   Scan, tap your name, guess on your phone.
    The TV publishes only what phones need: never the answer before the reveal, never anyone's face-off vote. */
 const G="df";
 let pollFails=0,lastSeq=-1,phones=[],answers={},answersQi=-1,apiOk=false,firstPoll=true,lastPushed="",pushing=false,polling=false,lastPoll=0,gid=Date.now()%1e7;
@@ -1249,7 +1249,7 @@ function joinCard(){
   let qr="";try{const q=qrcode(0,"M");q.addData(joinUrl());q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
   return `<div class="join"><div class="qr" aria-label="QR code for ${esc(joinUrl())}">${qr||"📱"}</div>
     <div><div class="eyebrow">Join on your phone</div><div class="jurl">${esc(joinUrl().replace(/^https?:\/\//,""))}</div>
-    <p>Scan the code and tap your name. Guess the #1 answer on your phone, vote in secret during face-offs, and tap emojis to send them up the TV!</p>
+    <p>Scan, tap your name, guess on your phone.</p>
     <div class="jcount">${apiOk?`<b>${phones.length}</b> of ${NAMES.length} signed in`:pollFails>=3?"⚠️ Phones can't connect right now. Reload this page.":"Connecting to phones…"}</div>
     ${phones.length?'<button class="linkbtn" id="clearphones">Clear phone sign-ins</button>':""}</div></div>`;
 }

@@ -19,7 +19,7 @@ html,body{overflow:hidden}
 body{cursor:default}
 /* The stage is designed at 1920x1080 and scaled to fit any screen (TV or laptop). */
 #stage{position:fixed;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;z-index:5}
-.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 130px 70px;text-align:center}
+.slide{isolation:isolate;position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 130px 70px;text-align:center}
 .slide.leaving{animation:leave .35s ease-in both;pointer-events:none}
 @keyframes leave{to{opacity:0;transform:scale(.94);filter:blur(4px)}}
 #stage.shake{animation:shake .45s cubic-bezier(.36,.07,.19,.97)}
@@ -88,7 +88,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .ultimate img{width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red)}
 
 /* themed flying things (cookies on the Smart Cookie Showdown slides) */
-.fly{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.fly{position:absolute;inset:0;pointer-events:none;z-index:-1;overflow:hidden}  /* behind the slide text */
 .fly i{position:absolute;font-style:normal;line-height:1;filter:drop-shadow(0 6px 8px rgba(0,0,0,.45));will-change:transform}
 .fly i.fall{top:-160px;animation:fall var(--t) linear var(--d) infinite}
 .fly i.across{left:-200px;animation:across var(--t) linear var(--d) infinite}
@@ -471,7 +471,7 @@ function gameTitle(k){
       <div class="gicon spin" ${d(.3)}><img src="${ICON(k)}" alt=""></div>
       <h1 class="title-xl slam" ${d(.9)} style="font-size:130px;color:#fff;text-shadow:0 8px 0 rgba(0,0,0,.45),0 20px 50px rgba(0,0,0,.6)">${esc(g.name)}</h1>
       ${g.url?openBtn(g.url,`▶ Play ${esc(g.name)}`,"pop"):`<span class="pill gold pop" ${d(1.4)}>${esc(g.tag)}</span>`}
-      ${g.url?`<div class="fade" ${d(1.6)} style="font-size:24px;color:var(--ink);opacity:.85">Opens in a new tab. When the game is over, close that tab to come back here.</div>`:""}
+      ${g.url?`<div class="fade" ${d(1.6)} style="font-size:24px;color:var(--ink);opacity:.85">Close that tab when the game ends.</div>`:""}
     </div>`};
 }
 function howTo(k,steps,win,extra=""){
@@ -492,9 +492,9 @@ function wheelSlide(k){
     <div style="display:grid;gap:28px;justify-items:start">
       <div class="eb fr" ${d(.2)}>WHO'S FACING WHO?</div>
       <h1 class="title-l slam" ${d(.4)}>Spin the Matchup Wheel</h1>
-      <p class="fr" ${d(.8)} style="font-size:38px;line-height:1.3;margin:0;max-width:24ch">The wheel pairs tributes one on one. Win your face-off and you go back on the wheel. Last tribute standing is the champion.</p>
+      <p class="fr" ${d(.8)} style="font-size:38px;line-height:1.3;margin:0;max-width:24ch">Win your face-off, stay on the wheel. Last one standing wins.</p>
       <div class="pop" ${d(1.2)}>${openBtn("/wheel#"+k,"🎡 SPIN THE WHEEL","red")}</div>
-      <div class="fade" ${d(1.4)} style="font-size:24px;opacity:.8">Opens ${esc(g.name)} on the wheel in a new tab. Close it to come back.</div>
+      <div class="fade" ${d(1.4)} style="font-size:24px;opacity:.8">Close the wheel tab to come back.</div>
     </div></div>`,
     enter(el){const w=el.querySelector("#wimg");XM.sfx("whoosh");w.animate([{transform:"rotate(0)"},{transform:"rotate(1440deg)"}],{duration:3500,easing:"cubic-bezier(.1,.7,.2,1)",fill:"forwards"});
       let n=0;const t=setInterval(()=>{if(curEl!==el){clearInterval(t);return}XM.sfx("tick");if(++n>18)clearInterval(t)},90+n*4);st(()=>clearInterval(t),3000)}};
@@ -518,7 +518,7 @@ function tieSlide(k){
       <div style="font-family:var(--display);font-size:64px;color:var(--gold)">${esc(t.title)}</div>
       <div style="font-size:34px;line-height:1.3">${esc(t.rules)}</div></div>
     <div class="pop" ${d(1.6)} style="display:flex;gap:30px"><button class="btn red bigbtn" data-tb="${k}">⚔️ Yes, there's a tie</button><button class="btn bigbtn" data-notie="${k}">No tie: record the victor ▶</button></div>
-    <div class="fade" ${d(1.9)} style="font-size:24px;opacity:.8">Yes: tap who tied and the tie-breaking starts. No: tap the victor, then it's on to the next slide.</div></div>`,
+    </div>`,
     enter(){st(()=>XM.sfx("thud"),400)}};
 }
 // "HOW TO PLAY... IDK. ASK ___." joke slide (Mitten Mayhem, Left Right Capitol)
@@ -1254,13 +1254,10 @@ function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
     outro:"That's it. Have fun, tributes.",start:"▶ Got it",muted:()=>!XM.sound})}
 function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-points-briefed","1")}catch(e){}
   Briefing.show({eyebrow:"⭐ CAPITOL POINTS",title:"What Are Capitol Points?",intro:"Capitol points. Here's how they work.",
-    steps:[["⭐","A side game all night long, separate from winning the 8 games.","A side game all night long, separate from winning the eight games."],
-      ["🚫","Points <b>never carry over</b> into the in-person games (Cookie, Mitten, Snowball, Left Right Capitol, Bingo). Those are won fair and square.","Points never carry over into the in-person games, like the cookie showdown, mitten mayhem, snowball scoop, left right capitol, and bingo. Those are won fair and square."],
-      ["⚔️","Earn them with <b>side quests</b>, the <b>tap race</b>, <b>sponsor gifts</b>, <b>bets</b> and <b>predictions</b>.","Earn them with side quests, the tap race, sponsor gifts, bets, and predictions."],
-      ["💀","Lose them by failing side quests, bad bets and the Wheel of Punishment.","Lose them by failing side quests, bad bets, and the wheel of punishment."],
-      ["🤝","You can send your points to someone else from your phone.","You can send your points to someone else from your phone."],
-      ["🎁","Most points picks their <b>major award first</b> in the draft at the end.","Most points picks their major award first, in the draft at the end."],
-      ["🏁","Points also decide the <b>end-of-night awards</b>. Check your total on your phone.","Points also decide the end of night awards. Check your total on your phone."]],
+    steps:[["⭐","A side game all night. It <b>never counts</b> in the in-person games.","A side game all night. It never counts in the in-person games."],
+      ["⚔️","Earn them: side quests, tap races, sponsor gifts, bets.","Earn them with side quests, tap races, sponsor gifts, and bets."],
+      ["💀","Lose them: failed quests, bad bets, the Wheel of Punishment.","Lose them with failed quests, bad bets, and the wheel of punishment."],
+      ["🎁","Most points picks their <b>major award first</b>.","Most points picks their major award first."]],
     outro:"Go earn some points.",start:"▶ Got it",muted:()=>!XM.sound})}
 let pointsPending=false;
 setInterval(()=>{if(pointsPending&&!busy()&&!twistQ.length&&!(window.Briefing&&Briefing.open())&&!(window.speechSynthesis&&speechSynthesis.speaking)){pointsPending=false;pointsInfo()}},1500);
@@ -1522,15 +1519,13 @@ const SLIDES=[
     </div>
     <div style="display:grid;gap:30px">
       <h1 class="title-l slam" ${d(.6)}>Citizens of the living room!</h1>
-      <p class="fr" ${d(1.2)} style="font-size:38px;line-height:1.35;margin:0">Welcome to the 2026 Christmas Games, where the turkey is digested, the stakes are high, and the pie counts as a sponsor gift.</p>
-      <p class="fr" ${d(1.6)} style="font-size:38px;line-height:1.35;margin:0">Twelve tributes. Eight games. A pile of major awards made of real lost mail that nobody has seen inside. Not even me.</p>
-      <p class="fr" ${d(2)} style="font-size:38px;line-height:1.35;margin:0">Play fair, trash talk responsibly, and remember: what happens at Thanksmas stays at Thanksmas.</p>
+      <p class="fr" ${d(1.2)} style="font-size:44px;line-height:1.35;margin:0">Welcome to the 2026 Christmas Games, where the pie counts as a sponsor gift.</p>
     </div></div>`,enter(){XM.sfx("whoosh");st(()=>XM.sfx("thud"),1000)}},
- {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","1st and 2nd place each win a major award. Bingo crowns 4 round winners, and Mitten Mayhem pays everyone."],
-    ["lock","#3e8a52","What's inside? No idea","They're real unclaimed mail. Nobody knows what's inside. Not even the Gamemaker."],
-    ["cannon","#2f6fb3","Tie? Sudden death","Tied tributes face off again until only one is left standing."],
-    ["mitten-w","#d79a1f","Mitten Mayhem pays","That game is its own major award. Whatever you unwrap, you keep."],
-    ["⭐","#c9862a","Points don't cross over","Side quest and screen-game points (Who's That Tribute, Feud, Secrets) never count in the in-person games."],
+ {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","1st and 2nd place each win a major award."],
+    ["lock","#3e8a52","What's inside? No idea","Real unclaimed mail. Nobody knows what's inside."],
+    ["cannon","#2f6fb3","Tie? Sudden death","Tied? Face off until one is left."],
+    ["mitten-w","#d79a1f","Mitten Mayhem pays","Its own major award. Whatever you unwrap, you keep."],
+    ["⭐","#c9862a","Points don't cross over","Capitol Points and screen-game scores never count in the in-person games."],
     ["✋","#7a3fb0","Touch it, it's yours","The first major award you touch is the one you open. No shaking, no swapping, no take-backs."]];
    return `<div style="display:grid;gap:30px;width:100%"><h1 class="title-l slam">Rules of the Arena</h1>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px 30px">${R.map(([ic,c,h,t],i)=>`<div class="card" data-say="${h}. ${t}" data-anim="${i===R.length-1?"pop":i%2?"fr":"fl"}" style="opacity:0;display:flex;gap:30px;align-items:center;padding:22px 30px;text-align:left;${i===R.length-1?"box-shadow:0 0 0 4px var(--gold),0 20px 50px rgba(0,0,0,.45)":""}">
@@ -1565,14 +1560,14 @@ const SLIDES=[
 
  // GAME 1
  gameTitle("cookie"),
- howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Winners go back on the wheel until one cookie champion is left. The champion and the runner-up each win a major award."),
+ howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Last one standing wins. 1st and 2nd win a major award."),
  wheelSlide("cookie"),tieSlide("cookie"),
  // GAME 2
  gameTitle("tribute"),
  // GAME 3
  gameTitle("mitten"),
  idkSlide("mitten","/xmas/past/granny-idk.jpg","QUEEN MOTHER","QUEEN MOTHER"),
- orderSlide("mitten","Everyone gets a turn. Shuffle to see who unwraps first."),
+ orderSlide("mitten","Shuffle to see who goes first."),
  // GAME 4
  gameTitle("feud"),
  // GAME 5
@@ -1583,7 +1578,7 @@ const SLIDES=[
         <div style="width:90px;height:90px;border-radius:22px;background:${GAMES[g].color};display:grid;place-items:center"><img src="${ICON(g+"-w")}" alt="" style="width:62%"></div>
         <div style="font-size:26px;font-weight:800;color:var(--muted)">${esc(GAMES[g].name)}</div>
         ${ph?`<img src="${ph}" alt="" style="width:140px;height:140px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)">`:`<div style="width:140px;height:140px;border-radius:50%;display:grid;place-items:center;font-size:64px;background:rgba(255,255,255,.06)">${g==="mitten"?"🧤":"❔"}</div>`}
-        <div style="font-family:var(--display);font-size:40px;color:var(--gold)">${v?esc(v):"Not recorded"}</div>
+        <div style="font-family:var(--display);font-size:40px;color:var(--gold)">${v?esc(v):"No winner yet"}</div>
         ${g!=="mitten"&&XM.seconds()[g]?`<div style="font-size:26px;font-weight:800;color:var(--muted)">🥈 ${esc(XM.seconds()[g])}</div>`:""}</div>`}).join("")}</div>
     <div id="htlead" style="min-height:90px;display:grid;justify-items:center"></div>
     <div class="fade" ${d(2.2)} style="font-size:28px;color:var(--muted)">Still to come: ${rest.map(g=>esc(GAMES[g].name)).join(" · ")}</div></div>`},
@@ -1594,18 +1589,18 @@ const SLIDES=[
      st(()=>ok()&&announcer.say("Halftime report!",()=>{if(!ok())return;if(max>0)announcer.say(`${lead.length>1&&max>=2?"Tied for the lead":lead.length>1?"Winners so far":"Leading the games"}... ${lead.map(XM.spoken).join(" and ")}!`,()=>XM.duck(false),{pitch:.1,rate:.82});else XM.duck(false)},{pitch:.1,rate:.82}),900);
      st(()=>XM.sfx("fanfare"),400)}},
  gameTitle("scoop"),
- howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Winners go back on the wheel until one scoop champion is left. The champion and the runner-up each win a major award."),
+ howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Last one standing wins. 1st and 2nd win a major award."),
  wheelSlide("scoop"),tieSlide("scoop"),
  // GAME 6
  gameTitle("secrets"),
  // GAME 7
  gameTitle("lrc"),
  idkSlide("lrc","/xmas/past/elisha-idk.jpg","BYE FELICIA","Bye Felicia"),
- orderSlide("lrc","Shuffle to see who rolls first. Play goes in this order."),
+ orderSlide("lrc","Shuffle to see who goes first."),
  tieSlide("lrc"),
  // GAME 8
  gameTitle("bingo"),
- howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV: a row, four corners, a big X, or the picture frame","Yell BINGO! We check your card number on screen"],"Four rounds: Regular, Four Corners, Big X and Picture Frame. The first bingo in each round wins a major award.",
+ howTo("bingo",["Grab a card and write your name on it","The Gamemaker draws numbers and puts them on the TV","Match the pattern on the TV","Yell BINGO! We check your card number on screen"],"4 rounds, 4 major awards. First bingo each round wins.",
    `<a class="btn red" href="/bingo" target="_blank" rel="noopener" style="font-size:28px">Open the Bingo Board</a>`),
  {id:"bingo-board",music:null,html:()=>`${tbBtn("bingo")}<div style="display:grid;grid-template-columns:auto 1fr;gap:90px;align-items:center;text-align:left">
     <div class="ball drop" style="--r:0deg"><div class="face"><span style="font-family:var(--display);font-size:80px;color:#17998a">B</span><span style="font-weight:800;font-size:170px">7</span></div></div>
@@ -1618,7 +1613,7 @@ const SLIDES=[
  tieSlide("bingo"),
 
  {id:"victors",music:"board",big:true,html:()=>`<div style="display:grid;gap:22px;width:100%"><div><h1 class="title-l slam">The Capitol Has Spoken</h1>
-    <div class="fade" ${d(.5)} style="font-size:22px;color:var(--muted);margin-top:8px">Tap a game to change its victor. Saved on this laptop.</div></div>
+    <div class="fade" ${d(.5)} style="font-size:22px;color:var(--muted);margin-top:8px">Tap a game to fix its winner.</div></div>
     <div id="vgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 30px"></div><div id="ult" style="min-height:10px;display:grid;justify-items:center"></div></div>`,
    enter(el){drawVictors(el.querySelector("#vgrid"),true);st(()=>XM.sfx("fanfare"),400);st(()=>XM.confetti(160,true),900);revealUltimate(el)}},
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
@@ -1672,7 +1667,7 @@ function go(i){
   if(started)setTimeout(()=>{if(curEl===el)publishSlide(s,el)},400);
   if(s.id.endsWith("-cookie"))cookieStorm(el,s.id==="game-cookie");
   if(s.id.endsWith("-scoop"))snowballFight(el,s.id==="game-scoop");
-  const light=s.id.startsWith("order-");
+  const light=!s.id.startsWith("game-");
   if(s.id==="game-tribute")emojiStorm(el,true,()=>"🔍",true);
   if(s.id==="game-feud")emojiStorm(el,true,()=>"🏆",true);
   if(s.id==="game-secrets")emojiStorm(el,true,()=>"🕵️",true);
@@ -1700,7 +1695,7 @@ function snowballFight(el,big){
   const iv=setInterval(hit,big?1800:2600);setTimeout(hit,big?900:600);
 }
 // 🍪 cookies raining, spinning and flying across the screen
-function cookieStorm(el,big){emojiStorm(el,big,()=>"🍪")}
+function cookieStorm(el,big){emojiStorm(el,big,()=>"🍪",!big)}  // fewer, smaller cookies on the how-to / wheel / tie slides
 function emojiStorm(el,big,item,light){
   const R=(a,b)=>a+Math.random()*(b-a);let h="";const nf=light?4:9,na=light?0:2,sz=light?.55:.8;
   for(let k=0;k<nf;k++)h+=`<i class="fall" style="left:${R(0,1880)}px;font-size:${R(50,120)*sz}px;--t:${R(4,8)}s;--d:${-R(0,8)}s;--dx:${R(-200,200)}px;--r:${R(-720,720)}deg">${item()}</i>`;
@@ -1873,11 +1868,9 @@ function revealUltimate(el){
     if(!window.Briefing)return reveal();
     // 👑 how the Ultimate Victor is decided, read out before the reveal
     Briefing.show({eyebrow:"👑 THE ULTIMATE VICTOR",title:"How the Ultimate Victor Is Decided",intro:"Before we crown anyone, here's how the ultimate victor is decided.",
-      steps:[["🏆","Whoever <b>won the most games</b> tonight is the Ultimate Victor.","Whoever won the most games tonight is the ultimate victor."],
-        ["🧤","Mitten Mayhem doesn't count: everyone won that one.","Mitten Mayhem doesn't count. Everyone won that one."],
-        ["2️⃣","You need at least <b>2 game wins</b> to qualify.","You need at least two game wins to qualify."],
-        ["⚔️","Tied for the most wins? It's settled with a <b>tiebreaker</b>.","Tied for the most wins? It's settled with a tiebreaker."],
-        ["👑","There's no major award for this one. Just the crown and <b>eternal bragging rights</b>.","There's no major award for this one. Just the crown, and eternal bragging rights."]],
+      steps:[["🏆","<b>Most game wins</b> tonight (at least 2). Mitten Mayhem doesn't count.","Most game wins tonight, at least two. Mitten Mayhem doesn't count."],
+        ["⚔️","Tied? A <b>tiebreaker</b> settles it.","Tied? A tiebreaker settles it."],
+        ["👑","No major award. Just the crown and <b>eternal bragging rights</b>.","No major award. Just the crown, and eternal bragging rights."]],
       outro:"Drumroll, please.",start:"▶ Reveal the Ultimate Victor",muted:()=>!XM.sound,onStart:reveal})};
 }
 /* ---------- Intermission: bathroom and drink break ---------- */
@@ -2063,7 +2056,7 @@ function orderView(k,area,blurb,slideEl){
   const draw0=(order,reveal)=>{
     if(!order){
       area.innerHTML=`<div class="fade" style="font-size:34px">${esc(blurb)}</div>
-        <div class="eb fade">Who's playing? Tap to sit someone out</div>
+        <div class="eb fade">Tap a face to sit them out</div>
         <div class="ochips">${TRIBUTES.map((t,i)=>`<button class="ochip pop" ${d(.3+i*.05)} data-p="${esc(t.name)}" aria-pressed="${present[t.name]!==false}"><img src="${t.img}" alt="">${esc(t.name)}</button>`).join("")}</div>
         <button class="btn red bigbtn pop" ${d(1)} id="shuf">🔀 Shuffle the order</button>`;
       area.querySelectorAll("[data-p]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.p;present[n]=present[n]===false;XM.store.set("xmas-present",present);b.setAttribute("aria-pressed",present[n]!==false);XM.sfx(present[n]!==false?"tap":"untap")});

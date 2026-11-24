@@ -266,11 +266,11 @@ function setup(){
   return `<div class="bar" style="justify-content:flex-end">${topBtns()}</div>
   <section style="display:grid;gap:18px;justify-items:center;text-align:center"><img class="emblem" src="/xmas/emblem.png" alt="">
     <div class="eyebrow">The 2026 Christmas Games</div><h1 class="title">The Matchup Wheel</h1>
-    <p class="tiny" style="max-width:56ch;font-size:1.05rem">Spin twice to pair up two tributes. Winners go back on the wheel for the next round until one champion is left standing.</p>
+    <p class="tiny" style="max-width:56ch;font-size:1.05rem">Spin to pair up. Winners stay on. Last one standing wins.</p>
     <div class="seg" role="group" aria-label="Which game">${Object.entries(GAMES).map(([k,g])=>`<button data-game="${k}" aria-pressed="${S.game===k}">${g.name}</button>`).join("")}</div>
     <div class="eyebrow">Who's playing? Tap to sit someone out</div>
     <div class="chips">${NAMES.map(n=>`<button class="chip" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt="">${esc(n)}</button>`).join("")}</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn red" id="music">🔔 Play music</button><button class="btn" id="start" style="font-size:1.2rem">Load the wheel</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><button class="btn" id="start" style="font-size:1.2rem">Load the wheel</button><button class="btn ghost" id="music" style="font-size:.85rem;opacity:.7">🔔 Music</button></div>
   </section>`;
 }
 function arena(){

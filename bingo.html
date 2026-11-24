@@ -145,7 +145,7 @@ function render(){
   else if(C){const win=new Set(C.ln.flat().map(p=>p.join()));
     res=`<div class="verdict" style="color:${C.ln.length?"var(--good)":"#ff8a7a"}">${C.ln.length?"🎉 BINGO! Card "+C.k+" wins a major award!":"🪦 Not yet, Card "+C.k+". Keep playing."}</div>`;resCard=miniCard(CARDS[C.k-1],win)}
   document.getElementById("app").innerHTML=`<div class="bar"><div><div class="eyebrow">The 2026 Christmas Games · Game 8</div><h1 class="title">District Bingo</h1></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button><button class="btn ghost" id="music">🔔 Music</button><button class="btn ghost" id="tb">⚔️ Tiebreaker</button><button class="btn ghost" id="reset">New game</button><button class="btn ghost" id="back">← Back to the show</button></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" data-mute aria-label="Mute">${XM.sound?"🔊":"🔇"}</button><button class="btn ghost" id="music">🔔 Music</button><button class="btn ghost" id="tb">⚔️ Tiebreaker</button><button class="btn ghost" id="back">← Back to the show</button><button class="btn ghost" id="reset" style="font-size:.8rem;opacity:.6;padding:.4em .9em">New game</button></div></div>
   <div class="layout"><div class="ballzone"><div class="nowmode">${shapeMini(S.mode)}<div style="text-align:left"><div class="eyebrow">Now playing</div><b style="font-family:var(--display);font-size:1.4rem;color:var(--gold)">${MODES[S.mode].name}</b><div class="tiny">${MODES[S.mode].desc}</div></div></div>${ball}
     <div class="tiny" style="font-size:1rem">Tap each number on the board as it comes out of the cage.<br>${S.called.length} called · ${75-S.called.length} left</div>
     <div class="last">${S.called.slice(-6,-1).reverse().map(n=>`<span>${LET[letterOf(n)]} ${n}</span>`).join("")}</div>
@@ -153,11 +153,11 @@ function render(){
       <div class="panel" style="width:100%;text-align:left"><div class="eyebrow">Someone yelled BINGO? Check their card</div>
       <div style="display:flex;gap:14px;align-items:flex-start;justify-content:space-between"><div style="display:grid;gap:8px">
       <div class="check"><input id="cardno" type="number" step="1" min="1" max="${CARDS.length}" placeholder="Card #" value="${C&&!C.err?C.k:""}"><button class="btn" id="chk">Check card</button></div>${res.replace('class="verdict"','class="verdict" style="font-size:1.25rem"').replace('style="font-size:1.25rem" style="','style="font-size:1.25rem;')}
-      <div class="tiny">4 rounds, one winner each: the first bingo in each round wins a major award.</div>
+      <div class="tiny">4 rounds. First bingo each round wins a major award.</div>
       <div class="tiny" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><b style="color:var(--ink)">Round winners:</b>${Object.keys(MODES).map(k=>`<span>${MODES[k].name}: ${(S.bingos[k]||[])[0]?`<b style="color:var(--gold)">🏆 Card ${S.bingos[k][0]}</b>`:"open"}</span>`).join(" · ")}${Object.values(S.bingos).some(a=>a&&a.length)?`<button class="btn ghost" id="resetwin" style="font-size:.8rem;padding:.3em .8em">Reset winners</button>`:""}</div></div>${resCard}</div></div>
     </div>
     <div style="display:grid;gap:14px">
-      <div class="panel"><div class="eyebrow">Game type · pick before you start</div><div class="modes">${Object.entries(MODES).map(([k,m])=>`<button data-mode="${k}" aria-pressed="${S.mode===k}" title="${m.desc}">${shapeMini(k)}${m.name}</button>`).join("")}</div></div>
+      <div class="panel"><div class="eyebrow">Game type</div><div class="modes">${Object.entries(MODES).map(([k,m])=>`<button data-mode="${k}" aria-pressed="${S.mode===k}" title="${m.desc}">${shapeMini(k)}${m.name}</button>`).join("")}</div></div>
       <div class="board">${board}</div>
       </div></div>`;
   wire();

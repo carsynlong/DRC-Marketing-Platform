@@ -349,7 +349,7 @@ function myMission(m){
 let offN=0;function online(ok){let b=document.getElementById("offbar");if(ok){offN=0;if(b)b.remove();return}
   if(++offN<3||b)return;b=document.createElement("div");b.id="offbar";b.style.cssText="position:fixed;left:0;right:0;top:0;z-index:50;padding-top:calc(env(safe-area-inset-top,0px) + 8px)!important;background:#6e1712;color:#fff;font-weight:800;text-align:center;padding:8px 12px;font-size:.9rem";
   b.textContent="📶 Reconnecting... Check your Wi-Fi. The show on the TV keeps going.";document.body.appendChild(b)}
-function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"}`:""}
+function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"} (screen games only)`:""}
 /* ---- side quest sent to me: full screen with a countdown ---- */
 function myQuest(q){
   const prevId=quest&&quest.id,prevSt=quest&&quest.status;quest=q;

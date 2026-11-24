@@ -1225,6 +1225,7 @@ function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
 function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-points-briefed","1")}catch(e){}
   Briefing.show({eyebrow:"⭐ CAPITOL POINTS",title:"What Are Capitol Points?",intro:"Capitol points. Here's how they work.",
     steps:[["⭐","A side game all night long, separate from winning the 8 games.","A side game all night long, separate from winning the eight games."],
+      ["🚫","Points <b>never carry over</b> into the in-person games (Cookie, Mitten, Snowball, Left Right Capitol, Bingo). Those are won fair and square.","Points never carry over into the in-person games, like the cookie showdown, mitten mayhem, snowball scoop, left right capitol, and bingo. Those are won fair and square."],
       ["⚔️","Earn them with <b>side quests</b>, the <b>tap race</b>, <b>sponsor gifts</b>, <b>bets</b> and <b>predictions</b>.","Earn them with side quests, the tap race, sponsor gifts, bets, and predictions."],
       ["💀","Lose them by failing side quests, bad bets and the Wheel of Punishment.","Lose them by failing side quests, bad bets, and the wheel of punishment."],
       ["🤝","You can send your points to someone else from your phone.","You can send your points to someone else from your phone."],
@@ -1495,9 +1496,10 @@ const SLIDES=[
     ["lock","#3e8a52","What's inside? No idea","They're real unclaimed mail. Nobody knows what's inside. Not even the Gamemaker."],
     ["cannon","#2f6fb3","Tie? Sudden death","Tied tributes face off again until only one is left standing."],
     ["mitten-w","#d79a1f","Mitten Mayhem pays","That game is its own major award. Whatever you unwrap, you keep."],
+    ["⭐","#c9862a","Points don't cross over","Side quest and screen-game points (Who's That Tribute, Feud, Secrets) never count in the in-person games."],
     ["✋","#7a3fb0","Touch it, it's yours","The first major award you touch is the one you open. No shaking, no swapping, no take-backs."]];
    return `<div style="display:grid;gap:30px;width:100%"><h1 class="title-l slam">Rules of the Arena</h1>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px 30px">${R.map(([ic,c,h,t],i)=>`<div class="card" data-say="${h}. ${t}" data-anim="${i===4?"pop":i%2?"fr":"fl"}" style="opacity:0;display:flex;gap:30px;align-items:center;padding:22px 30px;text-align:left;${i===4?"grid-column:1/-1;box-shadow:0 0 0 4px var(--gold),0 20px 50px rgba(0,0,0,.45)":""}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px 30px">${R.map(([ic,c,h,t],i)=>`<div class="card" data-say="${h}. ${t}" data-anim="${i===R.length-1?"pop":i%2?"fr":"fl"}" style="opacity:0;display:flex;gap:30px;align-items:center;padding:22px 30px;text-align:left;${i===R.length-1?"box-shadow:0 0 0 4px var(--gold),0 20px 50px rgba(0,0,0,.45)":""}">
       <div style="width:124px;height:124px;border-radius:28px;background:${c};display:grid;place-items:center;flex:none;box-shadow:0 8px 0 rgba(0,0,0,.35)">${ic.length<3?`<span style="font-size:70px">${ic}</span>`:`<img src="${ICON(ic)}" alt="" style="width:62%">`}</div>
       <div><div style="font-family:var(--display);font-size:50px;color:var(--gold);line-height:1.1">${h}</div><div style="font-size:32px;line-height:1.3;margin-top:10px">${t}</div></div></div>`).join("")}</div></div>`},
    enter(el){narrate(el,"Rules of the Arena.")}},

@@ -700,6 +700,7 @@ function view(){
         :`<h1 style="font-size:1.5rem">${(g.hot||[]).map(esc).join(" & ")} ${g.hot?.length>1?"are":"is"} in the hot seat</h1>`}
       ${g.roomOpen?`<div class="hurry" id="roomclock">⏱ Room closes in <b>${g.roomLeft||""}</b></div>`:""}
       ${hot&&g.roomOpen&&g.fifthOk&&!fifthUsed()?`<button class="btn" id="fifth" style="background:#2b1d12;box-shadow:0 4px 0 #000;margin-top:6px">🤐 Plead the Fifth · −100 · once per game</button>`:""}</section>`;
+    if(g.roomIntro)return [key+"brief",header()+top+msg("👂","Listen up","<p>The rules are being read on the TV. When the Gamemaker starts the clock, you can keep or change your vote here.</p>")+reactBar()];
     if(mineSecret)return [key+"own"+g.roomOpen+fifthUsed(),header()+top+msg("🤫","They're trying to crack YOU","<p>Keep a straight face… or point the finger at someone else!</p>")+reactBar(),"shh"];
     if(!mine)return [key+"none"+g.roomOpen,header()+top+msg("","You didn't seal a guess","<p>Sit back and watch the interrogation.</p>")+reactBar()];
     const mn=moleTarget(g)&&g.roomOpen?moleNote(g):"";   // the mole still gets to change their own vote

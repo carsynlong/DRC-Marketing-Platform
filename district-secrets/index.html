@@ -348,7 +348,7 @@ body.shake .app{animation:quake .5s}
     repeating-linear-gradient(0deg,rgba(0,0,0,.25) 0 2px,transparent 2px 46px),repeating-linear-gradient(90deg,rgba(0,0,0,.18) 0 2px,transparent 2px 92px),
     linear-gradient(180deg,#2a2b30,#15161a 70%,#0c0c0f)}
 .room::after{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 40%,transparent 35%,rgba(0,0,0,.75))}
-.room .lamp{position:fixed;left:50%;top:0;width:0;height:0;z-index:0;transform-origin:0 0;animation:swing 3.2s ease-in-out infinite}
+.room .lamp{position:fixed;left:50%;top:0;width:0;height:0;z-index:3;pointer-events:none;transform-origin:0 0;animation:swing 3.2s ease-in-out infinite}
 .room .lamp .cord{position:absolute;left:-1px;top:0;width:2px;height:12vh;background:#111}
 .room .lamp .shade{position:absolute;left:-42px;top:12vh;width:84px;height:40px;background:linear-gradient(180deg,#3d4b45,#1d2622);clip-path:polygon(25% 0,75% 0,100% 100%,0 100%);border-radius:4px}
 .room .lamp .bulb{position:absolute;left:-12px;top:calc(12vh + 32px);width:24px;height:24px;border-radius:50%;background:#fff6c8;box-shadow:0 0 40px 18px rgba(255,240,180,.7)}
@@ -356,7 +356,8 @@ body.shake .app{animation:quake .5s}
 @keyframes swing{0%,100%{transform:rotate(-7deg)}50%{transform:rotate(7deg)}}
 .room .tag{font-family:var(--type);letter-spacing:.2em;color:#cfd6d2;background:rgba(0,0,0,.45);padding:.35em 1em;border:1px solid rgba(255,255,255,.2);margin-top:7vh}
 .room .hotseat{z-index:1}
-.room .hotseat img{width:clamp(120px,24vh,210px);height:clamp(120px,24vh,210px)}
+.room:not(.briefing) .tag{margin-top:clamp(40px,11vh,130px)}   /* everything sits below the swinging lamp */
+.room .hotseat img{width:clamp(110px,22vh,210px);height:clamp(110px,22vh,210px)}
 .room .hotseat .nm{font-size:clamp(1.6rem,3.4vw,2.6rem)}
 .room{gap:8px;min-height:0;padding-bottom:8px}
 .room .hotseat img{box-shadow:0 0 0 6px #e9eadf,0 0 70px 24px rgba(255,240,190,.35)}
@@ -366,6 +367,20 @@ body.shake .app{animation:quake .5s}
 .room .switched{font-family:var(--display);font-weight:900;font-size:clamp(1.2rem,2.6vw,1.9rem);color:var(--gold-hi);z-index:1;min-height:1.3em}
 .room .switched.bump{animation:bump .6s}
 .room .paper{background:var(--parch);color:var(--parch-ink);font-family:var(--type);padding:.5em 1em;transform:rotate(-1.5deg);box-shadow:0 8px 20px rgba(0,0,0,.6);max-width:60ch;z-index:1}
+.room .brief{display:grid;gap:8px;max-width:820px;width:100%;text-align:left;z-index:1;margin:4px 0}
+.room .brief .bs{display:grid;grid-template-columns:2.2em 1fr;gap:10px;align-items:center;background:rgba(0,0,0,.45);border-radius:12px;padding:8px 14px;color:#cfd6d2;font-size:clamp(1rem,1.6vw,1.3rem);transition:.3s;opacity:.65}
+.room .brief .bs .i{font-size:1.5em;text-align:center}
+.room .brief .bs.on{opacity:1;color:#fff;box-shadow:0 0 0 2px var(--gold-hi),0 0 24px rgba(255,220,140,.25);transform:scale(1.02)}
+.room .brief .bs.done{opacity:.9}
+.room.briefing{padding-top:clamp(70px,10vh,140px);align-content:start;gap:6px}
+@media (max-height:900px){.room.briefing .welcome{font-size:clamp(1.6rem,3.4vw,2.4rem)}.room.briefing .brief .bs{padding:5px 10px}.room.briefing .brief{gap:6px}}
+.room.briefing .hotseat{margin-top:0}
+.room.briefing .hotseat img{width:clamp(80px,12vh,130px);height:clamp(80px,12vh,130px)}
+.room.briefing .hotseat .nm{font-size:clamp(1.2rem,2.4vw,1.8rem)}
+.room.briefing .brief{grid-template-columns:1fr 1fr;max-width:1200px}
+.room.briefing .brief .bs{font-size:clamp(.95rem,1.35vw,1.15rem);padding:7px 12px}
+@media (max-width:900px){.room.briefing .brief{grid-template-columns:1fr}}
+.room .welcome{font-family:var(--deco);color:var(--gold-hi);font-size:clamp(1.8rem,4vw,3rem);line-height:1.05;z-index:1}
 .room .how{color:#cfd6d2;max-width:60ch;z-index:1}
 .room .how b{color:#fff}
 .switches{display:grid;gap:4px;font-family:var(--type);font-size:clamp(.95rem,1.6vw,1.15rem);animation:pop .6s 1.9s both}
@@ -745,7 +760,7 @@ function snapshot(){
   if(S.mole&&["question","interro"].includes(S.phase))g.mole={tag:ownTag(g.gid,S.qi,"mole:"+S.mole.name),t:btoa(unescape(encodeURIComponent(S.mole.target)))};   // only the mole's phone can tell it's them
   if(S.phase==="showdown"&&S.duel)g.duel={a:S.duel.a,b:S.duel.b,round:S.duel.round,state:S.duel.state,winner:S.champ||null};
   if(S.phase==="story"){g.storyState=S.storyState;if(S.storyState==="ask")g.askLeft=Math.max(0,Math.ceil(STORY_ASK-(Date.now()-(S.askAt||Date.now()))/1000))}
-  if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
+  if(S.phase==="interro"){g.hot=S.hot;g.roomOpen=!!S.roomOpen;g.roomIntro=!!S.interroIntro;g.roomLeft=Math.max(0,Math.ceil(ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000))}
   if(S.phase==="question"&&!S.locked){const left=Math.ceil(qs()-S.elapsed);if(left<=10)g.left=left}
   if(S.phase==="howto")g.howI=howI;
   if(S.phase==="last")g.lastId=S.lastAt;
@@ -1059,9 +1074,36 @@ async function afterLock(){
   if(!max)return reveal();
   const tied=Object.keys(t).filter(n=>t[n]===max).sort((a,b)=>(b===cur().a)-(a===cur().a));   // a tie: the real owner always gets a seat
   S.hot=tied.slice(0,2);S.hotN=max;
-  curtains(()=>{S.phase="interro";S.hotAt=Date.now();S.roomOpen=true;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500)},"🔦 The Interrogation Room");
+  curtains(()=>{S.phase="interro";S.interroIntro=true;S.roomOpen=false;S.hotAt=null;switchSeen=0;sfx("clank");render();setTimeout(()=>sfx("spot"),500);setTimeout(readRoomRules,1400)},"🔦 The Interrogation Room");
 }
 const ROOM_SECS=30;   // how long the Interrogation Room stays open
+/* 🔦 the briefing: every interrogation starts with the rules read out loud; the Gamemaker presses Start */
+function roomSteps(){
+  const names=(S.hot||[]).join(" and "),two=(S.hot||[]).length>1,st=[
+    ["🔦",`<b>${esc(names)}</b> got the most votes, so ${two?"they're":"they're"} in the hot seat.`,`${names} got the most votes, so ${two?"they are":"they're"} in the hot seat.`],
+    ["🗣️",`${two?"They get":"They get"} <b>${ROOM_SECS} seconds</b> to defend ${two?"themselves":"themselves"}. Out loud. Convince us.`,`They get ${ROOM_SECS} seconds to defend themselves. Out loud. Convince us.`],
+    ["📱","Everyone else: <b>keep your vote or change it</b> on your phone while the clock runs.","Everyone else: keep your vote, or change it on your phone while the clock runs."],
+    ["✅","Switch to the right person: <b>+250 bonus</b>.","Switch to the right person: plus 250 bonus."],
+    ["❌","Switch away from the right person: <b>-500</b>. Switch and still wrong: <b>-250</b>.","Switch away from the right person: minus 500. Switch and still wrong: minus 250."]];
+  if(S.opts?.fifth)st.push(["🤐","In the hot seat? <b>Plead the Fifth</b> on your phone, once per game. It ends the interrogation, but costs <b>100</b>.","In the hot seat? You can plead the Fifth on your phone, once per game. It ends the interrogation, but costs 100."]);
+  st.push(["🔒","When the clock hits zero, <b>votes are final</b> and the seal opens.","When the clock hits zero, votes are final, and the seal opens."]);
+  return st}
+let roomRun=0;
+function readRoomRules(){
+  if(S.phase!=="interro"||!S.interroIntro)return;
+  const run=++roomRun,st=roomSteps(),voice=pickVoice();
+  const mark=i=>{document.querySelectorAll(".room .bs").forEach((el,k)=>{el.classList.toggle("on",k===i);el.classList.toggle("done",k<i)})};
+  try{speechSynthesis.cancel()}catch(e){}
+  if(!musicOn||!window.speechSynthesis){mark(st.length);return}
+  const lines=[["Welcome to the Interrogation Room. Here's how it works.",-1],...st.map((x,i)=>[x[2],i]),["When everyone is ready, the Game maker will start the clock.",st.length]];
+  lines.forEach(([t,i])=>{const u=new SpeechSynthesisUtterance(t);if(voice)u.voice=voice;u.rate=1;u.pitch=.95;
+    u.onstart=()=>{if(run===roomRun&&S.interroIntro)mark(i)};speechSynthesis.speak(u)});
+}
+function startRoom(){
+  if(S.phase!=="interro"||!S.interroIntro)return;
+  roomRun++;try{speechSynthesis.cancel()}catch(e){}
+  S.interroIntro=false;S.roomOpen=true;S.hotAt=Date.now();sfx("clank");render();setTimeout(()=>sfx("spot"),300);
+}
 /* velvet curtains sweep shut, something changes behind them, then they open again */
 function curtains(fn,sign=""){
   let c=$("#curtains");if(!c){c=document.createElement("div");c.id="curtains";c.setAttribute("aria-hidden","true");c.innerHTML="<i class='l'></i><i class='r'></i><div class='sign'></div>";document.body.appendChild(c)}
@@ -1288,7 +1330,7 @@ function render(){
   if(S.phase!=="question"||S.locked)clearRedzone();
   const v={last:lastView,likely:likelyView,lightcard:lightView,ttlcard:ttlCardView,showdown:duelView,howto:howView,lobby:lobbyView,roundcard:roundView,ready:readyView,question:questionView,interro:interroView,reveal:revealView,story:storyView,board:boardView,final:finalView,bonuscard:bonusView}[S.phase]||lobbyView;
   $("#app").innerHTML=v();wire();
-  if(S.phase==="interro"){startClock(".room .clock",ROOM_SECS,S.hotAt||Date.now(),closeRoom);showSwitches();
+  if(S.phase==="interro"&&!S.interroIntro){startClock(".room .clock",ROOM_SECS,S.hotAt||Date.now(),closeRoom);showSwitches();
     // tense music while the room is open; the drumroll builds over the last 8 seconds
     if(S.roomOpen)playSong("count");
     if(!drumT)drumT=setInterval(()=>{const left=ROOM_SECS-(Date.now()-(S.hotAt||Date.now()))/1000;if(left<=0){clearInterval(drumT);drumT=0;return}if(left<=8)sfx("roll",1-left/8)},90)}
@@ -1352,6 +1394,11 @@ function bonusView(){
 }
 function interroView(){
   const names=S.hot||[],n=S.hotN||0,who=names.map(esc).join(" and ");
+  if(S.interroIntro)return `<section class="room briefing"><div class="lamp" aria-hidden="true"><div class="cord"></div><div class="shade"></div><div class="bulb"></div><div class="beam"></div></div>
+    <div class="tag">🔦 THE INTERROGATION ROOM</div><div class="welcome">Welcome to the Interrogation Room</div>
+    <div class="hotseat">${names.map(nm=>`<div class="s"><img src="${RV(nm)}" alt=""><div class="nm">${esc(nm)}</div></div>`).join("")}</div>
+    <div class="brief">${roomSteps().map(([i,t])=>`<div class="bs"><span class="i">${i}</span><span>${t}</span></div>`).join("")}</div>
+    <div class="ctl" style="justify-content:center;gap:12px"><button class="btn ghost" id="roomreread">🔁 Read the steps again</button><button class="btn wax" id="roomstart">▶ Start the interrogation</button><span class="hint tiny" style="margin:0">Space: start</span></div></section>`;
   return `<section class="room"><div class="lamp" aria-hidden="true"><div class="cord"></div><div class="shade"></div><div class="bulb"></div><div class="beam"></div></div>
     <div class="tag">🔦 THE INTERROGATION ROOM</div>
     <div class="hotseat">${names.map(nm=>`<div class="s"><img src="${RV(nm)}" alt=""><div class="nm">${esc(nm)}</div></div>`).join("")}</div>
@@ -1532,7 +1579,7 @@ function primary(){
   if(S.phase==="last")return newGame();
   if(S.phase==="ready")return (clearInterval(readyT),sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?afterLock():lock();
-  if(S.phase==="interro")return reveal();
+  if(S.phase==="interro")return S.interroIntro?startRoom():reveal();
   if(S.phase==="reveal")return S.opts?.story&&!cur().fake&&!cur().lightning&&!cur().ttl?storyTime():score();
   if(S.phase==="showdown")return S.champ?finishShowdown():duelGo();
   if(S.phase==="story")return S.storyState==="ask"?(S.storyState="skip",score()):score();
@@ -1544,6 +1591,7 @@ function wire(){
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
+  on("roomstart",startRoom);on("roomreread",readRoomRules);
   on("go",howTo);on("reread",readRules);on("hush",()=>{stopReading();howI=99;render()});on("readygo",readyGo);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("unseal",afterLock);on("story",storyTime);on("likelyshow",likelyResults);on("lastgo",newGame);on("likelynext",proceed);on("duelgo",duelGo);on("duelfinal",finishShowdown);on("storyyes",()=>storyDecide("on"));on("storyno",()=>storyDecide("skip"));on("score",score);on("next",next);on("again",newGame);
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});

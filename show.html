@@ -895,7 +895,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🎲 Chaos mode on/off",()=>setChaos(!chaosOn()));
   item("🎁 Major award draft order",()=>draftOrder());
   item("🏁 End-of-night awards",()=>nightAwards());
-  item("🧹 Clear award stats",()=>{if(confirm("Clear the end-of-night award stats? Emoji counts, sabotages, snitches and quest results start over."))hostCall({a:"statsreset"}).then(r=>{if(r&&r.ok){closeMoments(".moment.twist");toast("🧹 Award stats cleared")}})});
+  item("🧹 Clear winners and award stats",()=>{if(confirm("Clear ALL game winners, 2nd places, tiebreakers and the end-of-night award stats? Use this after practicing."))clearResults()});
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
   item("✕ Close",()=>{});
   b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};
@@ -1301,6 +1301,7 @@ function runCmd(c,data){
   if(c==="betpaid"&&data)return betPaid(data);
   if(c==="notfair")return notFair();
   if(c==="snitch"&&data){news(`🚨 ${data.from} reports ${data.to} ${data.why}`);return snitchCard(data)}
+  if(c==="clearresults")return clearResults();
   if(c==="draft")return draftOrder();
   if(c==="awards")return void nightAwards();
   if(c==="photo")return void photoBooth();
@@ -1832,6 +1833,9 @@ function silverBattle(g,names){
   m.querySelector("#sv-new").onclick=e=>{e.stopPropagation();close();silverBattle(g,names)};
   m.querySelector("#sv-x").onclick=e=>{e.stopPropagation();close()};
 }
+// 🧹 wipe every result on this laptop (winners, 2nd places, bingo rounds, tiebreakers, Ultimate Victor) and the server's award stats
+function clearResults(){["xmas-victors","xmas-second","xmas-seconds","xmas-awards","xmas-bingo-winners","xmas-ties","xmas-ultimate"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+  hostCall({a:"statsreset"});closeMoments(".moment.twist");refreshCorners();if(SLIDES[cur])go(cur);toast("🧹 Winners and award stats cleared")}
 function refreshCorners(){document.querySelectorAll("[data-corner]").forEach(c=>{c.outerHTML=tbBtn(c.dataset.corner)});if(curEl)wireSlide(curEl);
   const g=document.getElementById("vgrid");if(g){drawVictors(g);const u=document.getElementById("ult");if(u&&!u.querySelector(".ultimate")){u.innerHTML="";revealUltimate(curEl)}}}
 document.addEventListener("xmas-victors",refreshCorners);

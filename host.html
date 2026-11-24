@@ -107,7 +107,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 
   <div class="sec"><h2>🧹 Reset for game night</h2>
     <p>Clears all victors, 2nd places, major award ratings, bingo numbers and winners, wheel results and shuffled orders on this laptop. Do this once before everyone arrives.</p>
-    <div class="tiles"><button class="danger" id="statsclear"><span class="i">🏁</span>Clear award stats<small>End-of-night awards start fresh. Click twice.</small></button><button class="danger" id="reset"><span class="i">🧹</span>Reset everything<small>Clears this laptop and the Capitol Points. Click twice.</small></button></div>
+    <div class="tiles"><button class="danger" id="statsclear"><span class="i">🏁</span>Clear winners and award stats<small>All game winners, 2nd places and awards start fresh. Click twice.</small></button><button class="danger" id="reset"><span class="i">🧹</span>Reset everything<small>Clears this laptop and the Capitol Points. Click twice.</small></button></div>
     <div class="msg" id="rmsg"></div>
   </div>
 </div>
@@ -231,7 +231,7 @@ let hlT=0;async function hostLists(){clearTimeout(hlT);const pin=pinNow(),box=do
 hostLists();
 // 🏁 clear only the end-of-night award stats (two clicks)
 let scArmed=0;document.getElementById("statsclear").onclick=async()=>{const m=document.getElementById("rmsg");if(Date.now()-scArmed>4000){scArmed=Date.now();m.textContent="Click again to clear the end-of-night award stats.";return}scArmed=0;
-  const pin=pinNow();if(!pin){m.textContent="Unlock the Side quests section with your PIN first.";return}const r=await api({a:"statsreset",pin});m.textContent=r.ok?"🏁 Award stats cleared. The awards start fresh.":"Couldn't clear. Check the internet."};
+  const pin=pinNow();if(!pin){m.textContent="Unlock the Side quests section with your PIN first.";return}const r=await api({a:"statsreset",pin});["xmas-victors","xmas-second","xmas-seconds","xmas-awards","xmas-bingo-winners","xmas-ties","xmas-ultimate"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});try{new BroadcastChannel("xmas-show").postMessage({cmd:"clearresults"})}catch(e){}m.textContent=r.ok?"🏁 Winners and award stats cleared.":"Winners cleared on this laptop. Award stats couldn't clear (check the internet)."};
 // 🧪 rehearsal mode
 document.getElementById("rh-on").onclick=async()=>{
   const N=XM.TRIBUTES.map(t=>t.name).filter(n=>n!=="Carsyn"),pick=()=>N[Math.floor(Math.random()*N.length)];const v={},sc={};

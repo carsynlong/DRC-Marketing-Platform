@@ -124,7 +124,7 @@ document.getElementById("jump").innerHTML=J.map(([id,i,l])=>`<a href="/show#${id
 // commands go to the show tab through BroadcastChannel (same browser)
 let ch=null;try{ch=new BroadcastChannel("xmas-show")}catch(e){}
 const send=(cmd,msg)=>{if(!ch){alert("This browser can't talk to the show tab. Use your phone remote instead.");return}ch.postMessage({cmd});
-  const m=document.getElementById(msg);m.textContent="✅ Sent to the show";setTimeout(()=>m.textContent="",1600)};
+  const m=document.getElementById(msg);m.textContent="✅ Sent (the show must be open in another tab of this browser)";setTimeout(()=>m.textContent="",1600)};
 const TW=[["twist:fire","🔥","Fireballs","Booms and flying fire"],["twist:storm","⚡","Lightning storm","Everyone swaps seats"],["twist:mutts","🐺","Mutts released","Stand and spin, last one loses a turn"],
   ["twist:freeze","❄️","Freeze!","5-second countdown, nobody move"],["twist:bonus","🎁","Bonus major award","Next to make you laugh wins"],["twist:rule","📜","New rule","Random silly rule stays on screen"],
   ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["sponsor","🪂","Sponsor gift now","Non-winners fight for +2 points"],["clearrule","🧽","Clear banners","Removes the reminders at the top of the TV"]];
@@ -235,7 +235,7 @@ document.getElementById("rh-on").onclick=async()=>{
 let rhArmed=0;document.getElementById("rh-off").onclick=async()=>{const m=document.getElementById("rhmsg");
   if(Date.now()-rhArmed>4000){rhArmed=Date.now();m.textContent="Click again to wipe all test data.";return}rhArmed=0;
   KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});const pin=pinNow();if(pin){await api({a:"pointsreset",pin});await api({a:"clearphones",pin})}
-  m.textContent="🧹 Rehearsal over. Everything is wiped. Reload the show tab.";};
+  m.textContent=pin?"🧹 Rehearsal over. Everything is wiped. Reload the show tab.":"🧹 Wiped this laptop. Points on the server were NOT reset: unlock the Side quests section with your PIN, then click End rehearsal again.";};
 const KEYS=["xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide"];
 let armed=0;const rb=document.getElementById("reset");
 rb.onclick=()=>{const m=document.getElementById("rmsg");

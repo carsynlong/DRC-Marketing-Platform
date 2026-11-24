@@ -70,7 +70,8 @@
   })();
 
   // Phone: who am I in this game?
-  const me = () => { for (const k of ["tribute-name", "df-name", "ds-name", "xmas-sh-me"]) { try { let v = localStorage.getItem(k); if (!v) continue;
+  const me = () => { const path = location.pathname, first = /district-feud/.test(path) ? "df-name" : /district-secrets/.test(path) ? "ds-name" : "tribute-name";
+    for (const k of [first]) { try { let v = localStorage.getItem(k); if (!v || v === "null") continue;
     if (v.startsWith("\"")) v = JSON.parse(v); if (v) return v; } catch (e) {} } return null; };
   let seen = null, biteUntil = 0, limpUntil = 0, flipT = 0;
   const overlay = (cls, html, ms) => { const o = document.createElement("div"); o.className = "sab " + cls; o.innerHTML = `<div class="b">${html}</div>`; document.body.appendChild(o); if (ms) setTimeout(() => o.remove(), ms); return o; };

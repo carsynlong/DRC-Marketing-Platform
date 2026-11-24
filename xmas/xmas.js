@@ -113,7 +113,7 @@ function ensureAudio(){
       musicBus=AC.createGain();musicBus.gain.value=.5;musicBus.connect(master);
       sfxBus=AC.createGain();sfxBus.gain.value=.9;sfxBus.connect(master);
       noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}
-    if(AC.state==="suspended")AC.resume();
+    if(AC.state!=="running"&&AC.state!=="closed")AC.resume();
     return true;
   }catch(e){return false}
 }

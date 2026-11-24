@@ -14,7 +14,7 @@
      muted: () => false,                       // return true to skip speaking (optional)
      onStart: () => { ... },                   // runs when Start is pressed
    });
-   Briefing.open() tells you if one is showing. Briefing.close() closes it without starting. */
+   Briefing.open() tells you if one is showing. Briefing.close() closes it without starting. Briefing.start() presses Start. */
 (() => {
   if (window.Briefing) return;
   const css = document.createElement("style");
@@ -64,11 +64,13 @@
     const ov = document.createElement("div"); ov.className = "brf";
     ov.innerHTML = `<div class="in">${o.eyebrow ? `<div class="eb">${o.eyebrow}</div>` : ""}<h1>${o.title}</h1>
       <div class="steps ${o.steps.length <= 3 ? "one" : ""}">${o.steps.map(s => `<div class="st"><span class="i">${s[0]}</span><span>${s[1]}</span></div>`).join("")}</div>
-      <div class="row"><button class="again">🔁 Read the steps again</button><button class="go">${o.start || "▶ Start"}</button><span class="hint">Space: start</span></div></div>`;
+      <div class="row"><button class="again">🔁 Read the steps again</button><button class="go">${o.start || "▶ Start"}</button><span class="hint">Space: start · Esc: close</span></div></div>`;
     document.body.appendChild(ov);
     // the game behind doesn't get keys while the briefing is up
+    // Space/Enter start, Esc closes, and no other key reaches the page underneath (F for fullscreen still works)
     const key = e => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); close(true); }
-      else if (["ArrowRight", "ArrowLeft", "PageDown", "PageUp"].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); } };
+      else if (e.key === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); close(false); }
+      else if (!/^[fF]$/.test(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); } };
     document.addEventListener("keydown", key, true);
     ov.addEventListener("click", e => e.stopPropagation());
     ov.querySelector(".go").onclick = e => { e.stopPropagation(); close(true); };
@@ -77,5 +79,5 @@
     setTimeout(() => { if (cur && cur.ov === ov) speak(o, ov); }, 450);
     return ov;
   }
-  window.Briefing = { show, close: () => close(false), open: () => !!cur };
+  window.Briefing = { show, close: () => close(false), start: () => close(true), open: () => !!cur };
 })();

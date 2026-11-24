@@ -76,6 +76,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
       <a href="/" target="_blank"><span class="i">🔍</span>Who's That Tribute?</a>
       <a href="/district-feud" target="_blank"><span class="i">🏆</span>District Feud</a>
       <a href="/district-secrets" target="_blank"><span class="i">🕵️</span>District Secrets</a>
+      <a href="/check" target="_blank"><span class="i">🩺</span>Game night check<small>Run it on the day</small></a>
       <a href="/cheatsheet" target="_blank"><span class="i">📋</span>Cheat sheet<small>Print it</small></a>
       <a href="/showphone" target="_blank"><span class="i">📱</span>Phone page<small>What guests see</small></a>
     </div>
@@ -164,9 +165,10 @@ function questUI(){
     <div class="tiles"><button id="bopen"><span class="i">💰</span>Open bets<small>Bet 1 to 3 points on who wins</small></button><button id="block"><span class="i">🔒</span>Lock bets</button>
       <button id="bpay"><span class="i">🏆</span>Pay out<small>The tribute picked above won (or just record the victor on the show)</small></button><button id="bcancel"><span class="i">↩️</span>Cancel bets</button></div>
     <h2 style="margin-top:16px">🎉 Big moments</h2>
-    <div class="tiles"><button data-big="photo"><span class="i">📸</span>Photo booth<small>Laptop camera, framed photo, slideshow at the end</small></button><button data-big="draft"><span class="i">🎁</span>Major award draft order<small>Most points picks first</small></button><button data-big="awards"><span class="i">🏁</span>End-of-night awards<small>Most Sabotaged, Biggest Snitch and more</small></button></div>
+    <div class="tiles"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday<small>Takeover on the TV and every phone, Happy Birthday song</small></button><button data-big="board"><span class="i">📜</span>Bounty board<small>Everything still in play</small></button><button data-big="crown"><span class="i">👑</span>Crown the Ultimate Victor<small>The big finish</small></button><button data-big="photo"><span class="i">📸</span>Photo booth<small>Laptop camera, framed photo, slideshow at the end</small></button><button data-big="draft"><span class="i">🎁</span>Major award draft order<small>Most points picks first</small></button><button data-big="awards"><span class="i">🏁</span>End-of-night awards<small>Most Sabotaged, Biggest Snitch and more</small></button></div>
     <div class="msg" id="qmsg"></div>`;
   q.querySelectorAll("[data-snd]").forEach(b=>b.onclick=()=>send("sfx:"+b.dataset.snd,"qmsg"));
+  q.querySelector("#bdaygo").onclick=async()=>{const r=await call({a:"bday"});msg(r.ok?"🎂 Happy birthday, QUEEN MOTHER!":"Couldn't send.")};
   q.querySelectorAll("[data-big]").forEach(b=>b.onclick=()=>send(b.dataset.big,"qmsg"));
   const ps=q.querySelector("#psel"),po=q.querySelector("#pown");ps.onchange=()=>po.style.display=ps.value==="own"?"":"none";
   q.querySelector("#popen").onclick=async()=>{const t=ps.value==="own"?po.value.trim():ps.value;if(!t)return msg("Type your question first.");const r=await call({a:"pollopen",q:t});msg(r.ok?"🗳️ Vote is open":"Couldn't open the vote.")};

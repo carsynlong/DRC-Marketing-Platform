@@ -197,6 +197,16 @@ async function scoreCard(){
   catch(e){}
   scoreTimer=setTimeout(scoreCard,6000);
 }
+/* ---- 🎂 QUEEN MOTHER's birthday ---- */
+let bdaySeen=XM.store.get("xmas-bday-seen",null);
+function myBday(b){if(!b||b.id===bdaySeen||me==="Carsyn")return;bdaySeen=b.id;XM.store.set("xmas-bday-seen",b.id);
+  const ov=document.createElement("div");ov.className="qov ok";ov.style.background="radial-gradient(ellipse at center,#7a3fb0,#1a0a24)";
+  const queen=me==="QUEEN MOTHER";
+  ov.innerHTML=`<div class="in"><div class="ic">${queen?"👑":"🎂"}</div><h2>${queen?"Happy Birthday, Your Majesty!":"Sing to QUEEN MOTHER!"}</h2><div class="q">${queen?"The whole arena is singing for you.":"Happy (belated) birthday! Tap the cake to send it to the TV."}</div>
+    ${queen?"":`<button class="tapb" id="cake" style="width:180px;height:180px;border-radius:50%;border:0;font-size:5rem;background:rgba(255,255,255,.12)">🎂</button>`}<button class="btn ghost" id="bok">Close</button></div>`;
+  document.body.appendChild(ov);buzz([100,60,100,60,300]);
+  const c=ov.querySelector("#cake");if(c)c.onclick=()=>{api({a:"react",name:me,e:"🎂"});c.animate([{transform:"scale(1)"},{transform:"scale(1.2)"},{transform:"scale(1)"}],{duration:250})};
+  ov.querySelector("#bok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),90000)}
 /* ---- 📲 tap race ---- */
 let race=null,raceN=0,raceSent=0,raceTimer=0,raceTick=0,raceShown=null;
 function myRace(r){
@@ -259,6 +269,10 @@ function myMission(m){
     ov.innerHTML=`<div class="in"><div class="ic">🕵️</div><h2>Secret Mission</h2><div class="q">${esc(m.text)}</div><div class="tiny">Don't let anyone see your screen. Don't get caught.</div><button class="btn" id="mok">Got it</button></div>`;
     document.body.appendChild(ov);buzz([100,80,100]);ov.querySelector("#mok").onclick=()=>ov.remove()}
 }
+// 📶 no internet? say so instead of looking frozen
+let offN=0;function online(ok){let b=document.getElementById("offbar");if(ok){offN=0;if(b)b.remove();return}
+  if(++offN<3||b)return;b=document.createElement("div");b.id="offbar";b.style.cssText="position:fixed;left:0;right:0;top:0;z-index:30;background:#6e1712;color:#fff;font-weight:800;text-align:center;padding:8px 12px;font-size:.9rem";
+  b.textContent="📶 Reconnecting... Check your Wi-Fi. The show on the TV keeps going.";document.body.appendChild(b)}
 function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"}`:""}
 /* ---- side quest sent to me: full screen with a countdown ---- */
 function myQuest(q){
@@ -347,7 +361,7 @@ function hostCard(){
     <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
     <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
-    <div class="hgrid"><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
+    <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
   tabify(box);
@@ -376,6 +390,7 @@ function hostCard(){
   box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
   box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Tap who WON at the top first.");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
   box.querySelector("#bcancel").onclick=async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")};
+  box.querySelector("#bdaygo").onclick=async()=>{const r=await call({a:"bday"});qmsg(r.ok?"🎂 Happy birthday, QUEEN MOTHER!":"Couldn't send.")};
   box.querySelectorAll("[data-race]").forEach(x=>x.onclick=async()=>{const r=await call({a:"raceopen",goal:+x.dataset.race});qmsg(r.ok?`📲 Race to ${x.dataset.race} starts in 6 seconds!`:"Couldn't start.")});
   box.querySelector("#raceend").onclick=async()=>{await call({a:"raceend"});qmsg("⏹️ Race over")};
   box.querySelector("#saysend").onclick=async()=>{const t=box.querySelector("#saytext");if(!t.value.trim())return;const r=await call({a:"say",text:t.value.trim()});qmsg(r.ok?"🔊 Announced":"Couldn't send.");if(r.ok)t.value=""};
@@ -404,7 +419,7 @@ async function poll(){
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){}
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){online(false)}
   setTimeout(poll,(quest&&quest.status==="live")||(race&&race.state==="live")?1000:2000);
 }
 

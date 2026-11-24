@@ -14,13 +14,13 @@
 import { redis, hash, reply, text } from "../lib/redis.js";
 
 const NAMES = ["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
-const EMOJI = ["🏹", "🔥", "🌹", "🍞", "🐦", "🎁", "😱", "😂"];
+const EMOJI = ["🏹", "🔥", "🌹", "🍞", "🐦", "🎁", "😱", "😂", "🎂"];
 const P = "sh:";
 // The Gamemaker's phone remote and twists need this PIN (only Carsyn knows it).
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "draft", "awards", "photo", "pollreveal", "betlock",
-  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
+  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
 const SONGS = ["hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
@@ -77,9 +77,10 @@ export default async function handler(req, res) {
     let mercy = null, predict = null;
     if (live.mercy && live.mercy.open) mercy = { ...live.mercy, mine: me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null };
     if (live.predict) predict = { open: !!live.predict.open, mine: me ? await redis.hget(P + "predict", me) : null };
+    const bday = live.bday && Date.now() - live.bday.t < 120000 ? live.bday : null;
     let race = null;
     if (live.race && Date.now() - live.race.start < 120000) race = { ...live.race, mine: me ? Number(await redis.hget(P + "race:" + live.race.id, me)) || 0 : 0 };
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, now: Date.now() });
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -105,6 +106,13 @@ export default async function handler(req, res) {
       const l = (await redis.lrange(P + "asks:" + lv.hot.id, 0, 49)) || []; return reply(res, 200, { hot: lv.hot, asks: l.map((x, i) => { try { const o = typeof x === "string" ? JSON.parse(x) : x; return { i: o.i, q: o.q }; } catch { return null; } }).filter(Boolean) }); }
     const l = (await redis.lrange(P + "shouts", 0, 29)) || [];
     return reply(res, 200, { shouts: l.map(x => { try { return typeof x === "string" ? JSON.parse(x) : x; } catch { return null; } }).filter(Boolean) });
+  }
+
+  // 🩺 health check page: can we write to and read from the database?
+  if (req.method === "GET" && a === "ping") {
+    const t0 = Date.now(), v = String(t0);
+    await redis.set(P + "ping", v, { ex: 600 }); const back = await redis.get(P + "ping");
+    return reply(res, 200, { ok: String(back) === v, ms: Date.now() - t0, joined: Object.keys(await hash(P + "players")).length });
   }
 
   if (req.method === "GET" && a === "stats") {
@@ -239,6 +247,13 @@ export default async function handler(req, res) {
     await redis.del(P + "shouts"); for (const o of keep.reverse()) await redis.lpush(P + "shouts", JSON.stringify(o));
     if (a === "shoutok" && found) await pushCmd("shout", found);
     return reply(res, 200, { ok: !!found });
+  }
+
+  // 🎂 QUEEN MOTHER's (belated) birthday takeover: the TV and every phone
+  if (a === "bday") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const lv = (await jget(P + "live")) || {}; lv.bday = { id: Date.now(), t: Date.now() };
+    await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 }); await pushCmd("bday", lv.bday); return reply(res, 200, { ok: true });
   }
 
   if (a === "raceopen" || a === "raceend") {

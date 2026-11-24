@@ -36,7 +36,10 @@
   @keyframes sabin{from{opacity:0;transform:translate(-50%,-30px)}}`;
   document.head.appendChild(css);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+  // Android vibrates; iPhones can't (Apple blocks it), so they get a white flash instead
+  const buzz = p => { try { if (navigator.vibrate && navigator.vibrate(p)) return; } catch (e) {}
+    if (!(Array.isArray(p) || p >= 150)) return; const f = document.createElement("div"); f.style.cssText = "position:fixed;inset:0;z-index:2147483646;background:#fff;pointer-events:none;transition:opacity .5s";
+    document.body.appendChild(f); requestAnimationFrame(() => { f.style.opacity = "0"; }); setTimeout(() => f.remove(), 600); };
 
   if (!isPhone) {
     // TV: banner for each new sabotage

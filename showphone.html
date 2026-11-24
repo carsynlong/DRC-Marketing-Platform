@@ -50,9 +50,9 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .qov .ic{font-size:4.5rem;line-height:1}
 .qov .clk{font-family:var(--display);font-size:5.5rem;line-height:1;color:#fff}
 @keyframes qin{from{opacity:0;transform:scale(1.1)}}
-.qfaces{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
+.qfaces{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:6px}
 .qfaces button{display:grid;justify-items:center;gap:2px;padding:4px 0;border-radius:12px;font-size:.68rem;font-weight:800;background:rgba(255,255,255,.05)}
-.qfaces img,.qfaces .r{width:44px;height:44px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:1.6rem}
+.qfaces img,.qfaces .r{width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:1.6rem}
 .qfaces button.on img,.qfaces button.on .r{box-shadow:0 0 0 3px var(--gold)}
 .qfaces button.on{background:rgba(232,176,75,.25)}
 select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px;border:0;margin-bottom:8px}
@@ -70,6 +70,19 @@ select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px
 .dlayer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .dlayer i{position:absolute;top:-60px;font-style:normal;opacity:.35;animation:dfall var(--s) linear var(--d) infinite}
 @keyframes dfall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
+.race{position:fixed;inset:0;z-index:25;display:grid;grid-template-rows:auto 1fr auto;padding:24px 16px max(24px,env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse at center,#1d3b32,#06100c);text-align:center;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.race .tapb{align-self:center;justify-self:center;width:min(78vw,340px);aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 40% 35%,#ff6a5a,#b8322a 60%,#6e1712);color:#fff;font-family:var(--display);font-size:3.4rem;box-shadow:0 0 0 8px var(--gold),0 20px 40px rgba(0,0,0,.6);touch-action:manipulation}
+.race .tapb:active{transform:scale(.94)}
+.race .tapb:disabled{filter:grayscale(.7);opacity:.6}
+.race .bar{height:18px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}
+.race .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ffd36b);width:0;transition:width .15s}
+.htabs{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px -6px 10px;padding:6px;background:rgba(13,31,24,.97);border-radius:14px;box-shadow:0 0 0 1px var(--line)}
+.htabs button{padding:8px 0;border-radius:10px;font-weight:800;font-size:.72rem;line-height:1.1;background:transparent;color:var(--ink)}
+.htabs button .i{display:block;font-size:1.3rem}
+.htabs button.on{background:var(--gold);color:#13271f}
+.hpane{display:none}.hpane.on{display:block}
+#score summary{cursor:pointer;list-style:none;font-family:var(--display);color:var(--gold);font-size:1.2rem;text-align:center}
+#score summary::-webkit-details-marker{display:none}
 .mcard{box-shadow:0 0 0 2px #6a3c9c;background:rgba(40,20,60,.95)}
 .qov.spy{background:radial-gradient(ellipse at center,#3a1f5c,#0a0612)}
 .pin{display:flex;gap:8px;justify-content:center}
@@ -89,6 +102,10 @@ document.getElementById("lights").outerHTML=XM.lights(14);
 XM.snow(document.getElementById("snow"));
 const {esc,TRIBUTES}=XM;
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
+// Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
+function buzz(p){try{if(navigator.vibrate&&navigator.vibrate(p))return}catch(e){}
+  const big=Array.isArray(p)||p>=150;if(!big)return;const f=document.createElement("div");f.style.cssText="position:fixed;inset:0;z-index:99;background:#fff;pointer-events:none;transition:opacity .5s";document.body.appendChild(f);
+  requestAnimationFrame(()=>{f.style.opacity="0"});setTimeout(()=>f.remove(),600);try{XM.sfx("stinger")}catch(e){}}
 const pid=(()=>{try{let p=localStorage.getItem("xmas-sh-pid");if(!p){p=Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem("xmas-sh-pid",p)}return p}catch(e){return "p"+Math.random()}})();
 let myEpoch=XM.store.get("xmas-sh-epoch",null);
 let me=XM.store.get("xmas-sh-me",null),slide=null,taken=[],skew=0,points={},quest=null,qTimer=0;
@@ -106,11 +123,11 @@ function render(){
   }
   const t=TRIBUTES.find(x=>x.name===me);
   app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(me)}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
+    ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
     <div id="extras" style="display:grid;gap:16px"></div>
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
-    ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
-    <div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>
+    ${me==="Carsyn"?"":`<div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>
       <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":t.name)}</button>`).join("")}</div>
       <select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button><div class="tiny" id="snmsg"></div></div>
@@ -122,14 +139,14 @@ function render(){
       <textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas Granny!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button><div class="tiny" id="somsg">The Gamemaker approves it first.</div></div>
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">🎵 Your walk-up song (plays on the TV when you win)</div>
       <select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
-      <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny" id="wmsg"></div></div>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny" id="wmsg"></div></div>`}
     <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>`;
   app.querySelector("#notme").onclick=e=>{e.preventDefault();stopLive();me=null;XM.store.set("xmas-sh-me",null);render()};
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
-    if(navigator.vibrate)navigator.vibrate(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
+    buzz(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
   app.querySelector("#golive").onclick=goLive;
-  let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
+  if(app.querySelector("#snsend")){let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
     const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${sn}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
   const ws=app.querySelector("#wsel");if(walkup)ws.value=walkup;
@@ -141,6 +158,7 @@ function render(){
     const r=await api({a:"give",name:me,to:gv,n:gn});m.textContent=r.ok?`🤝 Sent ${gv} ${gn} point${gn>1?"s":""}.`:(r.error||"Couldn't send.")};
   app.querySelector("#sosend").onclick=async()=>{const t=app.querySelector("#sotext"),m=app.querySelector("#somsg");if(!t.value.trim()){m.textContent="Type a message first.";return}
     const r=await api({a:"shout",name:me,text:t.value.trim()});m.textContent=r.ok?"💌 Sent! It shows on the TV once the Gamemaker approves it.":(r.error||"Couldn't send.");if(r.ok)t.value=""};
+  }
   districtLook();lastExtras="";showExtras();
   showSlide();
   if(me==="Carsyn"){hostCard();scoreCard()}
@@ -158,7 +176,7 @@ async function hostLists(){
       S.querySelectorAll("[data-sx]").forEach(b=>b.onclick=async()=>{await api({a:"shoutno",pin,id:+b.dataset.sx});S.dataset.k="";hostLists()})}}catch(e){}
   listT=setTimeout(hostLists,4000)}
 /* ---- 📋 the Gamemaker's scoreboard: who won what, ties, points ---- */
-let scoreTimer=0;
+let scoreTimer=0,scoreOpen=false;
 async function scoreCard(){
   clearTimeout(scoreTimer);if(me!=="Carsyn")return;let box=document.getElementById("score");
   if(!box){const h=document.getElementById("host");if(!h)return;box=document.createElement("div");box.className="card host";box.id="score";h.before(box)}
@@ -167,15 +185,36 @@ async function scoreCard(){
     else{const G=Object.entries(r.games||{}).sort((a,b)=>a[1].n-b[1].n);const AW={treasure:"💎",mystery:"❓",junk:"🗑️"};
       const bingo=r.bingo||{};const bl={line:"Regular",corners:"Four Corners",x:"Big X",frame:"Picture Frame"};
       const ties=(r.ties||[]).slice().reverse();const P=Object.entries(pts).filter(([,v])=>v).sort((a,b)=>b[1]-a[1]);
-      box.innerHTML=`<h3>📋 Scoreboard</h3><div class="sb">${G.map(([k,g])=>`<div class="g"><span>${g.n}. ${esc(g.name)}</span><span style="text-align:right">${k==="bingo"?
+      const led=Object.entries(r.victors||{}).filter(([,n])=>n).length;
+      box.innerHTML=`<details ${scoreOpen?"open":""}><summary>📋 Scoreboard <span style="font-family:var(--body,inherit);font-size:.8rem;color:var(--muted)">(${led} of ${G.length} games recorded · tap)</span></summary><div class="sb">${G.map(([k,g])=>`<div class="g"><span>${g.n}. ${esc(g.name)}</span><span style="text-align:right">${k==="bingo"?
           (Object.keys(bingo).length?Object.entries(bingo).map(([m,c])=>`${esc(bl[m]||m)}: <b>#${[].concat(c).join(", #")}</b>`).join("<br>"):"<i>no rounds yet</i>")
           :`🥇 <b>${esc(r.victors[k]||"...")}</b>${r.awards&&r.awards[k]?" "+(AW[r.awards[k]]||""):""}${k==="mitten"?"":`<br>🥈 ${esc(r.seconds[k]||"...")}`}`}</span></div>`).join("")}</div>
         ${r.ultimate?`<div style="margin-top:8px;font-weight:800">👑 Ultimate Victor: <b style="color:var(--gold)">${esc(r.ultimate.names.join(" & "))}</b> (${r.ultimate.max} wins)</div>`:""}
         <div class="eyebrow" style="margin:10px 0 4px">⚔️ Tiebreakers</div>${ties.length?ties.map(t=>`<div class="tiny" style="text-align:left">${esc((r.games[t.game]||{}).name||"Tiebreaker")}: ${esc(t.tied.join(" vs "))} → <b style="color:var(--gold)">${esc(t.winner)}</b>${t.how?" ("+esc(t.how)+")":""}</div>`).join(""):`<div class="tiny" style="text-align:left">None yet</div>`}
         <div class="eyebrow" style="margin:10px 0 4px">⭐ Capitol Points</div><div class="tiny" style="text-align:left">${P.length?P.map(([n,v])=>`${esc(n)} ${v>0?"+":""}${v}`).join(" · "):"None yet"}</div>
-        <div class="tiny" style="margin-top:6px">Updated ${new Date(r.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}</div>`}}
+        <div class="tiny" style="margin-top:6px">Updated ${new Date(r.t).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})}</div></details>`;
+      box.querySelector("details").ontoggle=e=>{scoreOpen=e.target.open}}}
   catch(e){}
   scoreTimer=setTimeout(scoreCard,6000);
+}
+/* ---- 📲 tap race ---- */
+let race=null,raceN=0,raceSent=0,raceTimer=0,raceTick=0,raceShown=null;
+function myRace(r){
+  race=r;let ov=document.getElementById("race");
+  if(!r||r.state!=="live"||(r.winner&&raceShown!==r.id)){if(ov&&!(r&&r.winner&&raceShown===r.id))ov.remove();if(!r||r.state!=="live")return}
+  if(!ov){if(raceShown===r.id&&r.winner)return;raceShown=r.id;raceN=r.mine||0;raceSent=raceN;
+    ov=document.createElement("div");ov.id="race";ov.className="race";
+    ov.innerHTML=`<div><div class="eyebrow" style="color:var(--gold)">📲 TAP RACE · FIRST TO ${r.goal}</div><div id="rcd" style="font-family:var(--display);font-size:2.6rem;color:#fff;margin-top:6px">Get ready...</div></div>
+      <button class="tapb" id="tapb" disabled>TAP!</button><div><div style="font-weight:900;font-size:2rem;margin-bottom:8px"><span id="rcount">${raceN}</span> / ${r.goal}</div><div class="bar"><i id="rbar"></i></div></div>`;
+    document.body.appendChild(ov);buzz([200,100,200]);
+    const b=ov.querySelector("#tapb");
+    b.addEventListener("pointerdown",e=>{e.preventDefault();if(b.disabled||!race||race.winner)return;if(raceN<race.goal){raceN++;ov.querySelector("#rcount").textContent=raceN;ov.querySelector("#rbar").style.width=(raceN/race.goal*100)+"%";if(raceN>=race.goal){b.disabled=true;flush()}}});
+    const flush=async()=>{if(raceN>raceSent){const want=raceN;const res=await api({a:"tap",name:me,n:want});if(res.ok)raceSent=Math.max(raceSent,res.n||0)}};
+    clearInterval(raceTimer);raceTimer=setInterval(flush,350);
+    clearInterval(raceTick);raceTick=setInterval(()=>{const now=Date.now()+skew,c=ov.querySelector("#rcd");if(!c)return clearInterval(raceTick);
+      if(race&&race.winner){c.textContent=race.winner===me?"🏆 YOU WON!":`🏆 ${race.winner} won!`;b.disabled=true;clearInterval(raceTimer);setTimeout(()=>ov.remove(),6000);clearInterval(raceTick);return}
+      if(now<r.start){c.textContent=Math.ceil((r.start-now)/1000);b.disabled=true}else{if(b.disabled&&raceN<r.goal){b.disabled=false;c.textContent="GO! TAP!";buzz(150)}}},150);
+  }
 }
 /* ---- secret mission: only this phone ever sees it ---- */
 let mission=null,vote=null,bet=null,walkup=null,lastExtras="",hot=null,mercy=null,predict=null;
@@ -200,11 +239,11 @@ function showExtras(){
     <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(bet.mine.on)}. You can change it until the bets lock.`:"Right pick: win that many points. Wrong: lose them."}</div></div>`;
   else if(bet&&bet.state==="locked")h+=`<div class="card"><div class="eyebrow">🔒 BETS LOCKED · ${esc(bet.game)}</div><div style="margin-top:6px;font-weight:800">${bet.mine?`You bet ${bet.mine.amt} on ${esc(bet.mine.on)}. Fingers crossed.`:"You didn't bet this round."}</div></div>`;
   box.innerHTML=h;
-  box.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{const r=await api({a:"mvote",name:me,v:b.dataset.mv});if(r.ok){mercy.mine=b.dataset.mv;lastExtras="";showExtras();if(navigator.vibrate)navigator.vibrate(30)}});
+  box.querySelectorAll("[data-mv]").forEach(b=>b.onclick=async()=>{const r=await api({a:"mvote",name:me,v:b.dataset.mv});if(r.ok){mercy.mine=b.dataset.mv;lastExtras="";showExtras();buzz(30)}});
   box.querySelectorAll("[data-pr]").forEach(b=>b.onclick=async()=>{const r=await api({a:"predict",name:me,choice:b.dataset.pr});if(r.ok){predict.mine=b.dataset.pr;lastExtras="";showExtras()}});
   const as=box.querySelector("#asksend");if(as)as.onclick=async()=>{const t=box.querySelector("#askq"),m=box.querySelector("#askmsg");const q=t.value.trim();if(!q){m.textContent="Type a question first.";return}
     const r=await api({a:"ask",name:me,q});m.textContent=r.ok?"🎭 Sent! The Gamemaker decides if it goes on the TV.":(r.error||"Couldn't send.");if(r.ok)t.value=""};
-  box.querySelectorAll("[data-vt]").forEach(b=>b.onclick=async()=>{const r=await api({a:"vote",name:me,choice:b.dataset.vt});if(r.ok){vote.mine=b.dataset.vt;lastExtras="";showExtras();if(navigator.vibrate)navigator.vibrate(30)}});
+  box.querySelectorAll("[data-vt]").forEach(b=>b.onclick=async()=>{const r=await api({a:"vote",name:me,choice:b.dataset.vt});if(r.ok){vote.mine=b.dataset.vt;lastExtras="";showExtras();buzz(30)}});
   let bo=bet&&bet.mine?bet.mine.on:null,ba=bet&&bet.mine?bet.mine.amt:null;
   box.querySelectorAll("[data-bo]").forEach(b=>b.onclick=()=>{bo=b.dataset.bo;box.querySelectorAll("[data-bo]").forEach(x=>x.classList.toggle("on",x===b))});
   box.querySelectorAll("[data-ba]").forEach(b=>b.onclick=()=>{ba=+b.dataset.ba;box.querySelectorAll("[data-ba]").forEach(x=>x.classList.toggle("on",x===b))});
@@ -218,7 +257,7 @@ function myMission(m){
   card.innerHTML=`<div class="eyebrow" style="color:#c9a8ff">🕵️ Your secret mission (tell no one)</div><div style="font-weight:800;font-size:1.1rem;margin-top:4px">${esc(m.text)}</div><div class="tiny" style="text-align:left;margin-top:4px">Pull it off without getting caught, then tell the Gamemaker to earn points.</div>`;
   if(m.id!==had&&had!==undefined){const ov=document.createElement("div");ov.className="qov spy";
     ov.innerHTML=`<div class="in"><div class="ic">🕵️</div><h2>Secret Mission</h2><div class="q">${esc(m.text)}</div><div class="tiny">Don't let anyone see your screen. Don't get caught.</div><button class="btn" id="mok">Got it</button></div>`;
-    document.body.appendChild(ov);if(navigator.vibrate)navigator.vibrate([100,80,100]);ov.querySelector("#mok").onclick=()=>ov.remove()}
+    document.body.appendChild(ov);buzz([100,80,100]);ov.querySelector("#mok").onclick=()=>ov.remove()}
 }
 function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"}`:""}
 /* ---- side quest sent to me: full screen with a countdown ---- */
@@ -231,7 +270,7 @@ function myQuest(q){
   clearInterval(qTimer);
   if(q.status==="live"){ov.className="qov";
     ov.innerHTML=`<div class="in"><div class="eyebrow" style="color:#ffd7d0">⚔️ SIDE QUEST FROM THE GAMEMAKER</div><h2>${esc(me)}!</h2><div class="ic">${esc(q.ic||"📜")}</div><div class="q">${esc(q.q)}</div>${q.double?`<div class="eyebrow" style="color:var(--gold);font-size:1rem">🎲 DOUBLE OR NOTHING</div>`:""}<div class="clk" id="qclk"></div></div>`;
-    if(navigator.vibrate)navigator.vibrate([300,120,300,120,600]);
+    buzz([300,120,300,120,600]);
     const tick=()=>{const now=Date.now()+skew,c=document.getElementById("qclk");if(!c)return;
       if(now<q.start){c.textContent="Get ready...";c.style.fontSize="2.2rem";return}
       const left=Math.ceil((q.start+q.secs*1000-now)/1000);c.style.fontSize="";
@@ -239,8 +278,27 @@ function myQuest(q){
     tick();qTimer=setInterval(tick,250)}
   else{const ok=q.status==="done";ov.className="qov"+(ok?" ok":"");
     ov.innerHTML=`<div class="in"><div class="ic">${ok?"✅":"❌"}</div><h2>${ok?"Quest complete!":"Quest failed!"}</h2><div class="q">${(q.pts||(ok?1:-1))>0?"+":""}${q.pts||(ok?1:-1)} point${Math.abs(q.pts||1)===1?"":"s"}</div><button class="btn ghost" id="qok">OK</button></div>`;
-    if(navigator.vibrate)navigator.vibrate(ok?[80,60,80]:[500]);
+    buzz(ok?[80,60,80]:[500]);
     ov.querySelector("#qok").onclick=()=>ov.remove();setTimeout(()=>ov.isConnected&&ov.remove(),8000)}
+}
+/* ---- split the remote into tabs so it's quick to use in the moment ---- */
+const TABS=[["show","🎮","Show"],["quests","⚔️","Quests"],["twists","🌀","Twists"],["phones","📱","Phones"],["fun","🎉","Fun"]];
+const SECT=[["pick who","top"],["The show","show",1],["Arena clock","show",2],["Your voice","show",3],["Twists on the TV","twists",1],["Twists (only you","twists",2],["Sabotage","twists",3],
+  ["Phone vote","phones",1],["Betting","phones",2],["Tap race","phones",3],["Hot seat","phones",4],["Soundboard","fun",1],["Big moments","fun",2]];
+function tabify(box){
+  const kids=[...box.children];const secs=[];let cur=null;
+  kids.forEach(el=>{if(el.tagName==="H3")return;if(el.classList.contains("eyebrow")){const t=el.textContent;const m=SECT.find(([k])=>t.includes(k))||["","fun",9];cur={tab:m[1],o:m[2]||0,els:[el]};secs.push(cur)}else if(cur)cur.els.push(el)});
+  const top=secs.find(x=>x.tab==="top");
+  // the picker stays on top; the side quest controls after it go in the Quests tab
+  const quest={tab:"quests",o:1,els:top.els.splice(2)};top.els[0].textContent="👤 Pick a tribute (quests, twists, sabotage, hot seat, points...)";
+  const msg=box.querySelector("#qmsg");
+  const bar=document.createElement("div");bar.className="htabs";bar.innerHTML=TABS.map(([k,i,l])=>`<button data-tab="${k}"><span class="i">${i}</span>${l}</button>`).join("");
+  const panes={};TABS.forEach(([k])=>{const d=document.createElement("div");d.className="hpane";d.dataset.pane=k;panes[k]=d});
+  [quest,...secs.filter(x=>x.tab!=="top")].sort((a,b)=>a.o-b.o).forEach(x=>x.els.forEach(e=>{if(e!==msg)panes[x.tab].appendChild(e)}));
+  top.els.forEach(e=>box.appendChild(e));if(msg){msg.style.cssText="position:sticky;top:64px;z-index:4;min-height:1.2em;font-weight:800;color:var(--gold);text-align:center;margin:4px 0";box.appendChild(msg)}
+  box.appendChild(bar);TABS.forEach(([k])=>box.appendChild(panes[k]));
+  const show=k=>{bar.querySelectorAll("[data-tab]").forEach(b=>b.classList.toggle("on",b.dataset.tab===k));Object.entries(panes).forEach(([n,d])=>d.classList.toggle("on",n===k));XM.store.set("xmas-sh-tab",k)};
+  bar.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>show(b.dataset.tab));show(XM.store.get("xmas-sh-tab","quests"));
 }
 /* ---- Gamemaker remote: only for Carsyn, locked with a PIN ---- */
 const SAB=[["freeze","❄️","Freeze (8s)"],["bite","🐕","Mutt bite (25s slow)"],["fog","🌫️","Fog (10s)"],["flip","🙃","Flip upside down"],["jackers","🐝","Tracker jackers"]];
@@ -286,10 +344,13 @@ function hostCard(){
     <div id="asks"></div><div id="shouts"></div>
     <div class="eyebrow" style="margin:4px 0 6px">⏰ Arena clock · 🎲 Chaos · 📺 Ticker</div>
     <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${[5,10,15,20,30].map(n=>`<button data-c="clock:${n}"><span class="i">⏰</span>${n} min</button>`).join("")}<button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button><button data-c="chaos:on"><span class="i">🎲</span>Chaos ON</button><button data-c="chaos:off"><span class="i">😌</span>Chaos OFF</button><button data-c="ticker:on"><span class="i">📺</span>Ticker ON</button><button data-c="ticker:off"><span class="i">🚫</span>Ticker OFF</button><button data-c="recap"><span class="i">📼</span>Night recap</button></div>
+    <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
+    <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
     <div class="hgrid"><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
+  tabify(box);
   let qn=null,qs=null;const qmsg=t=>{const m=box.querySelector("#qmsg");m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3000)};
   const call=async body=>{const r=await api({pin,...body});if(r.status===403){XM.store.set("xmas-sh-pin",null);hostCard()}return r};
   box.querySelectorAll("[data-qn]").forEach(x=>x.onclick=()=>{qn=x.dataset.qn;box.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===x))});
@@ -315,6 +376,8 @@ function hostCard(){
   box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
   box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Tap who WON at the top first.");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
   box.querySelector("#bcancel").onclick=async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")};
+  box.querySelectorAll("[data-race]").forEach(x=>x.onclick=async()=>{const r=await call({a:"raceopen",goal:+x.dataset.race});qmsg(r.ok?`📲 Race to ${x.dataset.race} starts in 6 seconds!`:"Couldn't start.")});
+  box.querySelector("#raceend").onclick=async()=>{await call({a:"raceend"});qmsg("⏹️ Race over")};
   box.querySelector("#saysend").onclick=async()=>{const t=box.querySelector("#saytext");if(!t.value.trim())return;const r=await call({a:"say",text:t.value.trim()});qmsg(r.ok?"🔊 Announced":"Couldn't send.");if(r.ok)t.value=""};
   box.querySelector("#hotgo").onclick=async()=>{const r=await call({a:"hotseat",to:qn||"random"});qmsg(r.ok?`🎭 ${r.hot.to} is in the hot seat`:"Couldn't start.");hostLists()};
   box.querySelector("#hotend").onclick=async()=>{await call({a:"hotend"});qmsg("⏹️ Hot seat over");hostLists()};
@@ -324,7 +387,7 @@ function hostCard(){
   box.querySelector("#prl").onclick=async()=>{const r=await call({a:"predictlock"});qmsg(r.ok?"🔒 Predictions locked":"Couldn't lock.")};
   hostLists();
   box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
-  box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{if(navigator.vibrate)navigator.vibrate(20);const m=box.querySelector("#hmsg");
+  box.querySelectorAll("[data-c]").forEach(x=>x.onclick=async()=>{buzz(20);const m=box.querySelector("#hmsg");
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
     if(r.ok)m.textContent="✅ Sent to the TV";else if(r.status===403){XM.store.set("xmas-sh-pin",null);hostCard()}else m.textContent="Couldn't send. Try again.";
     setTimeout(()=>{if(m)m.textContent=""},1500)});
@@ -341,8 +404,8 @@ async function poll(){
     if(JSON.stringify(s)!==JSON.stringify(slide)){slide=s;showSlide()}
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch!==myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){}
-  setTimeout(poll,(quest&&quest.status==="live")?1000:2000);
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};showMyPoints();myQuest(j.quest);myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras()}catch(e){}
+  setTimeout(poll,(quest&&quest.status==="live")||(race&&race.state==="live")?1000:2000);
 }
 
 /* ---- go live: send a small camera frame about twice a second for 20 seconds ---- */
@@ -369,6 +432,7 @@ function stopLive(){
   const box=document.getElementById("live");if(box){box.innerHTML=`<button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div>`;box.querySelector("#golive").onclick=goLive}
 }
 addEventListener("pagehide",stopLive);
+addEventListener("pointerdown",()=>{try{XM.ensureAudio()}catch(e){}},{once:true});
 render();poll();
 // keep our name claimed while the page is open
 setInterval(()=>{if(me)api({a:"join",name:me,epoch:myEpoch}).then(r=>{if(r.status===410)signedOut();else if(r.status===409){me=null;XM.store.set("xmas-sh-me",null);render()}})},20000);

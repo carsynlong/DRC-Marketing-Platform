@@ -77,7 +77,9 @@ export default async function handler(req, res) {
     let mercy = null, predict = null;
     if (live.mercy && live.mercy.open) mercy = { ...live.mercy, mine: me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null };
     if (live.predict) predict = { open: !!live.predict.open, mine: me ? await redis.hget(P + "predict", me) : null };
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, now: Date.now() });
+    let race = null;
+    if (live.race && Date.now() - live.race.start < 120000) race = { ...live.race, mine: me ? Number(await redis.hget(P + "race:" + live.race.id, me)) || 0 : 0 };
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -129,7 +131,9 @@ export default async function handler(req, res) {
     if (lv.bet && lv.bet.state !== "paid") { const b = await hash(P + "bets:" + lv.bet.id); const o = {}; for (const [k, x] of Object.entries(b)) { try { o[k] = JSON.parse(x); } catch {} } bets = { ...lv.bet, bets: o }; }
     let mercy = null;
     if (lv.mercy && lv.mercy.open) { const v = await hash(P + "mercy:" + lv.mercy.id); let up = 0, down = 0; Object.values(v).forEach(x => x === "up" ? up++ : down++); mercy = { ...lv.mercy, up, down }; }
-    return reply(res, 200, { reacts: reacts.reverse(), live, joined: Object.keys(players), cmds: cmds.reverse(), points: await points(), poll, bets, mercy });
+    let race = null;
+    if (lv.race && lv.race.state === "live") { const t = await hash(P + "race:" + lv.race.id); const o = {}; for (const [k, v] of Object.entries(t)) o[k] = Number(v) || 0; race = { ...lv.race, taps: o }; }
+    return reply(res, 200, { reacts: reacts.reverse(), live, joined: Object.keys(players), cmds: cmds.reverse(), points: await points(), poll, bets, mercy, race });
   }
 
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
@@ -237,6 +241,18 @@ export default async function handler(req, res) {
     return reply(res, 200, { ok: !!found });
   }
 
+  if (a === "raceopen" || a === "raceend") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const lv = (await jget(P + "live")) || {};
+    if (a === "raceopen") {
+      const goal = [30, 50, 75, 100].includes(Number(req.body?.goal)) ? Number(req.body.goal) : 50;
+      lv.race = { id: Date.now(), start: Date.now() + 6000, goal, state: "live", winner: null };
+      await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 }); await pushCmd("race", lv.race); return reply(res, 200, { ok: true, race: lv.race });
+    }
+    if (lv.race) { lv.race.state = "done"; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 }); }
+    await pushCmd("raceend", {}); return reply(res, 200, { ok: true });
+  }
+
   if (a === "betlock") {
     if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
     const lv = (await jget(P + "live")) || {}; if (!lv.bet || lv.bet.state !== "open") return reply(res, 409, { error: "No open betting" });
@@ -336,6 +352,20 @@ export default async function handler(req, res) {
     return reply(res, 200, { ok: true });
   }
   await redis.set(`${P}seen:${name}`, "1", { ex: 30 });
+
+  if (a === "tap") {
+    const lv = (await jget(P + "live")) || {}; const r = lv.race;
+    if (!r || r.state !== "live" || Date.now() < r.start - 300) return reply(res, 409, { error: "No race" });
+    const k = P + "race:" + r.id, had = Number(await redis.hget(k, name)) || 0;
+    const n = Math.min(r.goal, Math.max(had, Math.min(had + 14, Math.round(Number(req.body?.n) || 0))));   // no more than ~14 taps per send
+    if (n > had) await redis.hset(k, { [name]: n });
+    if (n >= r.goal && !r.winner && (await redis.set(P + "racewin:" + r.id, name, { nx: true, ex: 3600 }))) {
+      r.winner = name; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 });
+      await redis.hincrby(P + "points", name, 1); await stat("racewin:" + name);
+      await pushCmd("racewin", { name, goal: r.goal, secs: Math.round((Date.now() - r.start) / 100) / 10 });
+    }
+    return reply(res, 200, { ok: true, n });
+  }
 
   if (a === "ask") {
     const lv = (await jget(P + "live")) || {}; if (!lv.hot) return reply(res, 409, { error: "No hot seat" });

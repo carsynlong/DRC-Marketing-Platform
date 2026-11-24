@@ -251,6 +251,15 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .shout{position:fixed;z-index:57;left:100vw;white-space:nowrap;font-weight:900;font-size:clamp(24px,3vw,48px);color:#fff;background:rgba(110,23,18,.9);padding:10px 26px;border-radius:999px;box-shadow:0 0 0 4px var(--gold);animation:shout 11s linear forwards;pointer-events:none}
 @keyframes shout{to{transform:translateX(calc(-100vw - 110%))}}
 #rehearsal{position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:62;background:#7a3fb0;color:#fff;font-weight:900;letter-spacing:.2em;font-size:14px;padding:3px 14px;border-radius:999px;pointer-events:none}
+/* 📲 tap race */
+.track{display:grid;gap:8px;width:min(1240px,86vw)}
+.lane{position:relative;height:clamp(44px,6vh,66px);border-radius:999px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.06) 0 40px,rgba(255,255,255,.02) 40px 80px);box-shadow:inset 0 0 0 2px var(--line)}
+.lane::after{content:"🏁";position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:clamp(24px,3vh,38px)}
+.lane .rn{position:absolute;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;transition:left .9s linear;white-space:nowrap}
+.lane img{width:clamp(40px,5.4vh,60px);height:clamp(40px,5.4vh,60px);border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
+.lane b{font-weight:800;font-size:clamp(14px,1.4vw,22px);background:rgba(13,31,24,.85);padding:2px 10px;border-radius:999px}
+.lane.win{box-shadow:inset 0 0 0 3px var(--gold),0 0 30px rgba(232,176,75,.6)}
+.racego{font-family:var(--display);font-size:clamp(4rem,12vh,8rem);color:#fff;line-height:1;min-height:1em}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:520px}
 /* who's joined on their phone: all 12 tributes, dim until they join */
@@ -792,6 +801,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
     else if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}else alert("Couldn't reach the server. Check the internet.")});
   item("📸 Photo booth",()=>photoBooth());
   item("📼 Night recap",()=>nightRecap());
+  item("📲 Start a tap race",()=>hostCall({a:"raceopen",goal:50}));
   item("🔮 Reveal the predictions",()=>predictReveal());
   item("📺 News ticker on/off",()=>{const on=!tickerOn();try{localStorage.setItem("xmas-ticker",on?"1":"0")}catch(e){}toast(on?"📺 News ticker on":"📺 News ticker off")});
   item("🎲 Chaos mode on/off",()=>setChaos(!chaosOn()));
@@ -1037,8 +1047,37 @@ function nightRecap(){
     m.querySelector("#rx").onclick=e=>{e.stopPropagation();close()};const n=m.querySelector("#rn");if(n)n.onclick=e=>{e.stopPropagation();i++;show()};XM.sfx("whoosh");
     if(i<frames.length-1)T(()=>{if(m.isConnected&&m.querySelector("#rn")){i++;show()}},7000)};
   show()}
+/* ---------- 📲 tap race: first to the goal on their phone wins a point ---------- */
+let raceUI=null,lastJoined=[];
+function raceOpen(r){
+  if(!started)return;document.querySelectorAll(".moment.twist").forEach(n=>n.remove());if(busy())return toast("📲 TAP RACE! Grab your phones!",6000);
+  const {m,T,close}=openMoment("twist");
+  m.innerHTML=`<div class="inner" style="gap:clamp(6px,1.4vh,14px)"><div class="eb">📲 THE TAP RACE · FIRST TO ${r.goal} TAPS WINS A POINT</div><h1 style="font-size:clamp(2.4rem,5.4vw,4.6rem)">Grab Your Phones!</h1>
+    <div class="racego" id="rgo">Get ready...</div><div class="track" id="rtrack"></div><button class="btn ghost" id="rx">Close (Esc)</button></div>`;
+  m.querySelector("#rx").onclick=e=>{e.stopPropagation();close()};
+  XM.sfx("siren");XM.playSong("battle");announcer.say(`Tap race! Grab your phones. First to ${r.goal} taps wins a point!`,null,{pitch:.1,rate:.95});
+  const go=m.querySelector("#rgo"),lead=Math.max(0,r.start-Date.now());
+  [3,2,1].forEach(n=>T(()=>{go.textContent=n;XM.sfx("tick")},Math.max(0,lead-n*1000)));
+  T(()=>{go.textContent="TAP! TAP! TAP!";XM.sfx("boom");shake()},lead);
+  raceUI={id:r.id,goal:r.goal,m,close,done:false};raceLanes({taps:{}});
+}
+function raceLanes(r){
+  if(!raceUI||!raceUI.m.isConnected)return;const tr=raceUI.m.querySelector("#rtrack");const taps=r.taps||{};
+  const names=[...new Set([...lastJoined.filter(n=>n!=="Carsyn"||taps[n]),...Object.keys(taps)])];
+  names.forEach(n=>{let ln=tr.querySelector(`[data-r="${CSS.escape(n)}"]`);
+    if(!ln){ln=document.createElement("div");ln.className="lane";ln.dataset.r=n;ln.innerHTML=`<div class="rn" style="left:5%">${face(n)}<b>${esc(n)} · <span>0</span></b></div>`;tr.appendChild(ln)}
+    const v=taps[n]||0;ln.querySelector(".rn").style.left=(5+Math.min(1,v/raceUI.goal)*80)+"%";ln.querySelector("span").textContent=v});
+}
+function raceWin(x){
+  if(raceUI&&raceUI.m.isConnected){raceUI.done=true;const go=raceUI.m.querySelector("#rgo");go.textContent=`🏆 ${x.name}!`;
+    const ln=raceUI.m.querySelector(`[data-r="${CSS.escape(x.name)}"]`);if(ln){ln.classList.add("win");ln.querySelector(".rn").style.left="85%"}}
+  XM.stopSong();XM.celebrate(x.name,{line:`${XM.spoken(x.name)} wins the tap race in ${x.secs} seconds! Plus one point!`});news(`📲 ${x.name} won the tap race in ${x.secs} seconds`);
+}
 function runCmd(c,data){
   if(!started)return;
+  if(c==="race"&&data)return raceOpen(data);
+  if(c==="racewin"&&data)return raceWin(data);
+  if(c==="raceend"){if(raceUI&&raceUI.m.isConnected)raceUI.close();raceUI=null;return}
   if(c.startsWith("clock:"))return arenaClock(c==="clock:off"?0:+c.slice(6));
   if(c==="chaos:on"||c==="chaos:off")return setChaos(c==="chaos:on");
   if(c==="ticker:on"||c==="ticker:off"){try{localStorage.setItem("xmas-ticker",c==="ticker:on"?"1":"0")}catch(e){}return}
@@ -1092,7 +1131,7 @@ function startPhonePoll(){
       if(cmdSince===null)cmdSince=Math.max(0,...(j.cmds||[]).map(x=>x.id));  // skip remote taps sent before the show opened
       else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd,x.data)}
       if(j.points)lastPoints=j.points;
-      if(j.poll)updateVote(j.poll);if(j.mercy)mercyUpdate(j.mercy);betState=j.bets||null;if(j.bets)updateBets(j.bets);
+      if(j.poll)updateVote(j.poll);if(j.mercy)mercyUpdate(j.mercy);lastJoined=j.joined||[];if(j.race&&raceUI&&j.race.id===raceUI.id)raceLanes(j.race);betState=j.bets||null;if(j.bets)updateBets(j.bets);
       if(reactSince===null){reactSince=Math.max(0,...(j.reacts||[]).map(x=>x.id))}  // skip reactions sent before the show opened
       else for(const x of j.reacts||[]){reactSince=Math.max(reactSince,x.id);phoneReact(x)}
       showLive(j.live||{});showJoined(j.joined||[])}}catch(e){}

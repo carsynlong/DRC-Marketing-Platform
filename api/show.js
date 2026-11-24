@@ -4,6 +4,7 @@
 // Phones:
 //   POST { a:"join",  pid, name }          claim a tribute (one phone per name)
 //   POST { a:"leave", pid, name }          give the tribute back ("Not you?")
+//   POST { a:"photo", pid, name, img }     phone photo booth (JPEG data URL); GET a=photos (list), a=photo&id= (one image)
 //   POST { a:"react", pid, name, e }       emoji burst on the TV
 //   POST { a:"cam",   pid, name, img }     one camera frame (small JPEG data URL) for the live corner on the TV
 //   POST { a:"camoff",pid, name }          stop being live
@@ -23,7 +24,7 @@ const P = "sh:";
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "draft", "awards", "photo", "pollreveal", "betlock",
-  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
+  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "fallen", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
 const SONGS = ["wu_ride", "wu_snap", "wu_walk", "wu_thunder", "wu_country", "wu_crazytrain", "wu_gangsta", "wu_goingbad", "wu_boom", "wu_hypnotize", "wu_jump", "wu_throat", "hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
@@ -154,6 +155,18 @@ async function main(req, res) {
     const t0 = Date.now(), v = String(t0);
     await redis.set(P + "ping", v, { ex: 600 }); const back = await redis.get(P + "ping");
     return reply(res, 200, { ok: String(back) === v, ms: Date.now() - t0, joined: Object.keys(await hash(P + "players")).length });
+  }
+
+  // 📸 phone photo booth: list of tonight's photos (no images) and one image at a time
+  if (req.method === "GET" && a === "photos") {
+    const out = [];
+    for (const r of (await redis.lrange(P + "photolist", 0, 39)) || []) { try { out.push(typeof r === "string" ? JSON.parse(r) : r); } catch {} }
+    return reply(res, 200, { photos: out.reverse() });
+  }
+  if (req.method === "GET" && a === "photo") {
+    const id = Number(req.query.id) || 0; if (!id) return reply(res, 400, { error: "Missing id" });
+    const img = await redis.get(P + "photo:" + id);
+    return img ? reply(res, 200, { img }) : reply(res, 404, { error: "Gone" });
   }
 
   if (req.method === "GET" && a === "stats") {
@@ -435,6 +448,7 @@ async function main(req, res) {
       await pushCmd("pointsadd", { to, n });
       return reply(res, 200, { ok: true, points: await points() });
     }
+    await redis.del(P + "photolist");
     await redis.del(P + "points"); await redis.del(P + "quest"); await redis.del(P + "missions"); await redis.del(P + "stats"); for (const k of LVK) await redis.del(k); await redis.del(P + "helps"); await redis.del(P + "predict"); await redis.del(P + "shouts");
     return reply(res, 200, { ok: true, points: {} });
   }
@@ -555,6 +569,18 @@ async function main(req, res) {
     await redis.ltrim(P + "reactlog", 0, 39);
     await stat("react:" + name);
     return reply(res, 200, { ok: true });
+  }
+
+  if (a === "photo") {
+    const img = req.body?.img;
+    if (typeof img !== "string" || !img.startsWith("data:image/jpeg;base64,") || img.length > 150000) return reply(res, 400, { error: "Bad photo" });
+    if (!(await redis.set(`${P}ph:${name}`, "1", { nx: true, ex: 20 }))) return reply(res, 429, { error: "wait" });
+    const id = await redis.incr(P + "photoid"), t = Date.now(), DAYS3 = 60 * 60 * 24 * 3;
+    await redis.set(P + "photo:" + id, img, { ex: DAYS3 });
+    await redis.lpush(P + "photolist", JSON.stringify({ id, name, t }));
+    await redis.ltrim(P + "photolist", 0, 39); await redis.expire(P + "photolist", DAYS3);
+    await stat("photo:" + name); await pushCmd("photo_in", { name, id });
+    return reply(res, 200, { ok: true, id });
   }
 
   if (a === "cam") {

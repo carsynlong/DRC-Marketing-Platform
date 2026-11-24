@@ -238,6 +238,26 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .booth .cap{position:absolute;left:0;right:0;bottom:0;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,.75));font-family:var(--display);font-size:clamp(1.6rem,3.4vw,3rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d)}
 .booth .cd{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-size:clamp(6rem,18vh,12rem);color:#fff;text-shadow:0 6px 20px rgba(0,0,0,.6)}
 .flashw{position:fixed;inset:0;background:#fff;z-index:70;pointer-events:none;animation:flash .6s ease-out forwards}
+/* 📸 phone photo toast + 🕯️ fallen tributes */
+.phtoast{position:fixed;left:40px;bottom:96px;z-index:57;background:#fbf6ea;padding:12px 12px 44px;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);transform:rotate(-4deg);width:min(300px,20vw);animation:phin .5s both}
+.phtoast img{width:100%;display:block;border-radius:2px}.phtoast b{position:absolute;left:0;right:0;bottom:10px;text-align:center;color:#2a1a10;font:800 20px Outfit,sans-serif}
+@keyframes phin{from{opacity:0;transform:translateY(40px) rotate(-12deg)}}
+.moment.fallen{background:radial-gradient(ellipse at 50% 35%,rgba(30,34,48,.96),rgba(3,5,8,.99))}
+.fallen .fl{display:grid;grid-template-columns:auto auto;gap:60px;align-items:center;justify-content:center;animation:flin 1.6s both}
+@keyframes flin{from{opacity:0;filter:blur(8px)}}
+.fallen .pol{background:#f3ecdc;padding:18px 18px 70px;border-radius:6px;box-shadow:0 30px 70px rgba(0,0,0,.7);transform:rotate(var(--r,-4deg));filter:grayscale(.55) sepia(.25);position:relative}
+.fallen .pol img{width:min(520px,34vw);max-height:62vh;object-fit:cover;display:block}
+.fallen .pol b{position:absolute;left:0;right:0;bottom:18px;text-align:center;font:400 30px Rye,Georgia,serif;color:#3a2a1a}
+.fallen .txt{text-align:left;display:grid;gap:14px;max-width:640px}
+.fallen .eb2{letter-spacing:.4em;font-weight:800;color:#c9c2b0;font-size:22px}
+.fallen h1{font-family:var(--display);font-weight:400;color:#e8dcc0;font-size:clamp(3rem,6vw,6rem);line-height:1;margin:0;text-shadow:0 6px 0 rgba(0,0,0,.6)}
+.fallen .dist{font-weight:800;letter-spacing:.2em;color:var(--gold);font-size:24px}
+.fallen .line{font-size:clamp(1.4rem,2.4vw,2.2rem);font-style:italic;color:#ddd5c4}
+.fallen .bar{position:fixed;bottom:22px;left:0;right:0;display:flex;gap:12px;justify-content:center}
+.fallen .grp{display:grid;gap:26px;justify-items:center;animation:flin 2s both}
+.fallen .grp .faces{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:1100px}
+.fallen .grp .faces img{width:110px;height:110px;border-radius:50%;object-fit:cover;filter:grayscale(.6);box-shadow:0 0 0 4px rgba(232,176,75,.6)}
+@media (max-height:900px){.fallen .pol img{max-height:52vh;width:min(420px,32vw)}.fallen .grp .faces img{width:84px;height:84px}}
 .polaroid{position:fixed;right:40px;bottom:90px;z-index:8;background:#fbf6ea;padding:14px 14px 50px;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);transform:rotate(4deg);width:min(460px,28vw)}
 .polaroid img{width:100%;display:block;border-radius:3px}
 .polaroid b{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:#13271f;font-family:var(--display);font-size:clamp(14px,1.4vw,22px)}
@@ -854,6 +874,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
     if(r&&r.ok){toast("📱 All phones cleared. Everyone scans to join again.");showLive({});showJoined([])}
     else if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}else alert("Couldn't reach the server. Check the internet.")});
   item("📸 Photo booth",()=>photoBooth());
+  item("🕯️ Fallen Tributes slideshow",()=>fallenTributes());
   item("📼 Night recap",()=>nightRecap());
   item("🎂 QUEEN MOTHER's birthday",()=>hostCall({a:"bday"}).then(r=>{if(!r||!r.ok)birthday()}));
   item("📜 Bounty board",()=>bountyBoard());
@@ -1275,6 +1296,8 @@ function runCmd(c,data){
   if(c==="draft")return draftOrder();
   if(c==="awards")return void nightAwards();
   if(c==="photo")return void photoBooth();
+  if(c==="photo_in"&&data)return void photoIn(data);
+  if(c==="fallen")return void fallenTributes();
   if(c==="tw"&&data)return twistTo(data);
   if(c==="sab"&&data){news(data.allBut?`❄️ Everyone but ${data.to} got frozen`:`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"🐺"} ${data.to} got sabotaged by the Gamemaker`);XM.sfx("stinger");toast(data.allBut?`❄️ The Gamemaker froze EVERYONE except ${data.to}!`:`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"⚠️"} The Gamemaker sabotaged ${data.to}!`);return}
   if(c==="sponsor")return void sponsorDrop();
@@ -1592,8 +1615,8 @@ const SLIDES=[
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
     <h2 class="title-l fd" ${d(1.8)} style="color:#fff;font-size:84px"><span class="tg" style="font-size:.8em">🦃</span> Merry Christmas, Tributes <span class="tg r" style="font-size:.8em">🥧</span></h2>
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
-    <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div>`,
-   enter(el){SNOW.set(3.2);
+    <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div><div class="corner"><button class="btn ghost" id="fallenbtn">🕯️ Fallen Tributes</button></div>`,
+   enter(el){SNOW.set(3.2);const fb=el.querySelector("#fallenbtn");if(fb)fb.onclick=e=>{e.stopPropagation();fallenTributes()};
      const ph=XM.store.get("xmas-photos",[]);if(ph.length){const p=document.createElement("div");p.className="polaroid fade";el.appendChild(p);let i=0;
        const nx=()=>{if(curEl!==el)return;const x=ph[i++%ph.length];p.innerHTML=`<img src="${x.img}" alt=""><b>${esc(x.cap.replace(/^🏆 /,""))}</b>`;st(nx,4000)};nx()}
      st(()=>{if(curEl!==el)return;XM.sfx("boom");st(()=>XM.sfx("boom"),380);st(()=>XM.sfx("cheer"),600);st(()=>XM.sfx("applause"),1800);
@@ -2059,6 +2082,55 @@ async function loadVideo(k,box){
 }
 
 /* ---------- Fallen Tributes slideshow ---------- */
+/* ---------- 📸 photos from phones: a polaroid pops up in the corner ---------- */
+const photoCache=new Map();
+async function photoImg(id){if(photoCache.has(id))return photoCache.get(id);
+  try{const r=await fetch("/api/show?a=photo&id="+encodeURIComponent(id),{cache:"no-store"});if(!r.ok)return null;const j=await r.json();if(j.img)photoCache.set(id,j.img);return j.img||null}catch(e){return null}}
+async function photoIn(x){const img=await photoImg(x.id);news(`📸 ${XM.dn(x.name)} sent a photo to the Capitol`);if(!img)return;
+  document.querySelectorAll(".phtoast").forEach(n=>n.remove());const d=document.createElement("div");d.className="phtoast";
+  d.innerHTML=`<img src="${img}" alt=""><b>📸 ${esc(XM.dn(x.name))} sent a photo</b>`;document.body.appendChild(d);XM.sfx("shutter");setTimeout(()=>d.remove(),7000)}
+
+/* ---------- 🕯️ Fallen Tributes: a sad slideshow of tonight's photos ---------- */
+const FALLEN_LINES=["Taken too soon. Mostly by the cookie.","Survived the Games. Did not survive the leftovers.","Never once read the rules. Respect.","Fought bravely. Lost to a mitten.",
+ "Gone, but their trash talk lives on.","Bet everything. Kept nothing.","Their final words: it's not fair.","Outplayed by a 4-year-old card. Rest easy.","They died as they lived: arguing about points.",
+ "Brought snacks to the arena. A true hero.","Too pure for the Capitol.","Last seen guarding the pie.","Sponsors are still not returning their calls."];
+let mjCtx=null;
+function mockingjay(){try{if(!XM.sound)return;mjCtx=mjCtx||new (window.AudioContext||window.webkitAudioContext)();const ac=mjCtx;if(ac.state!=="running")ac.resume();
+  const t0=ac.currentTime+.05;[[784,.45],[932,.45],[880,.45],[587,.9]].reduce((t,[f,d])=>{const o=ac.createOscillator(),g=ac.createGain(),v=ac.createOscillator(),vg=ac.createGain();
+    o.type="sine";o.frequency.value=f;v.frequency.value=6;vg.gain.value=f*.012;v.connect(vg).connect(o.frequency);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.18,t+.05);g.gain.setValueAtTime(.18,t+d*.7);g.gain.linearRampToValueAtTime(0,t+d);
+    o.connect(g).connect(ac.destination);o.start(t);v.start(t);o.stop(t+d+.05);v.stop(t+d+.05);return t+d+.04},t0)}catch(e){}}
+async function fallenTributes(){
+  if(!started)return;closeMoments(".moment.twist");if(busy())return busyToast();
+  document.querySelectorAll(".phtoast").forEach(n=>n.remove());
+  let adv=0;const {m,T,close}=openMoment("fallen");SNOW.set(.5);m.onClose=()=>{SNOW.set(1);clearTimeout(adv)};
+  m.innerHTML=`<div class="eb2" style="letter-spacing:.5em;color:#c9c2b0;font-weight:800">🕯️ GATHERING THE FALLEN...</div>`;
+  XM.playSong("dirge",true);
+  // tonight's photos: phones (from the server) + the TV photo booth (this laptop)
+  let list=[];try{const j=await (await fetch("/api/show?a=photos",{cache:"no-store"})).json();list=(j.photos||[]).filter(p=>XM.NAMES.includes(p.name))}catch(e){}
+  const items=[];for(const p of list){if(!m.isConnected)return;const img=await photoImg(p.id);if(img)items.push({img,name:p.name})}
+  for(const p of XM.store.get("xmas-photos",[]))items.push({img:p.img,name:null,cap:p.cap});
+  if(!items.length)TRIBUTES.forEach(t=>items.push({img:t.full||t.img,name:t.name}));
+  if(!m.isConnected)return;
+  const lines=[...FALLEN_LINES].sort(()=>Math.random()-.5);let i=-1;
+  const card=k=>{const x=items[k],t=x.name&&TRIBUTES.find(z=>z.name===x.name),fx=t&&DISTRICT_FX[t.d];
+    return `<div class="fl"><div class="pol" style="--r:${k%2?3.5:-4}deg"><img src="${x.img}" alt="" onerror="this.src='/xmas/emblem.png'"><b>${x.name?esc(XM.dn(x.name)):"The Capitol Photo Booth"}</b></div>
+      <div class="txt"><div class="eb2">${x.name?"FALLEN TRIBUTE":"FALLEN TRIBUTES"}</div><h1>${x.name?esc(XM.dn(x.name)):"Captured on camera"}</h1>
+      ${t?`<div class="dist">DISTRICT ${t.d}${fx?" · "+fx.ind:""}</div>`:x.cap?`<div class="dist">${esc(XM.nick(x.cap.replace(/^🏆 /,"")))}</div>`:""}<div class="line">${esc(lines[k%lines.length])}</div></div></div>`};
+  const group=()=>`<div class="grp"><div class="eb2">🕯️ IN LOVING MEMORY OF TONIGHT</div><div class="faces">${TRIBUTES.map(t=>`<img src="${t.img}" alt="">`).join("")}</div>
+      <h1>May the odds be ever in your favor.</h1><div class="line" style="text-align:center">See you at the 2027 Games.</div></div>`;
+  const bar=`<div class="bar"><button class="btn ghost" id="flprev">◀ Back</button><button class="btn ghost" id="flnext">Next ▶</button><button class="btn ghost" id="flx">Close (Esc)</button></div>`;
+  const show=k=>{if(!m.isConnected)return;clearTimeout(adv);i=Math.max(0,Math.min(items.length,k));
+    if(i===items.length){m.innerHTML=group()+bar;mockingjay();announcer.say("May the odds be ever in your favor. See you at the 2027 Games.",null,{rate:.85,pitch:.6})}
+    else{m.innerHTML=card(i)+bar;XM.sfx("cannon");if(i===0)T(mockingjay,1200);adv=setTimeout(()=>show(i+1),7000)}
+    m.querySelector("#flprev").onclick=e=>{e.stopPropagation();show(i-1)};m.querySelector("#flnext").onclick=e=>{e.stopPropagation();show(i+1)};m.querySelector("#flx").onclick=e=>{e.stopPropagation();close()}};
+  const key=e=>{if(!m.isConnected){document.removeEventListener("keydown",key,true);return}
+    if(e.key==="ArrowRight"||e.key===" "||e.key==="Enter")show(i+1);else if(e.key==="ArrowLeft")show(i-1)};
+  document.addEventListener("keydown",key,true);
+  m.innerHTML=`<div class="grp"><div class="eb2">🕯️ A MOMENT OF SILENCE</div><h1>Let us remember the fallen.</h1><div class="line" style="text-align:center">Tributes, please rise.</div></div>`+bar;
+  m.querySelector("#flprev").onclick=e=>{e.stopPropagation()};m.querySelector("#flnext").onclick=e=>{e.stopPropagation();show(0)};m.querySelector("#flx").onclick=e=>{e.stopPropagation();close()};
+  announcer.say("Tributes, please rise. Let us remember the fallen.",null,{rate:.82,pitch:.6});adv=setTimeout(()=>show(0),5500);
+}
 function memorial(){
   const m=document.createElement("div");m.className="memorial";
   m.innerHTML=[1,2,3,4,5,6].map((i,j)=>`<div class="ph" style="--r:${j%2?3:-3}deg"><div class="pola"><img src="/xmas/past/past${i}.jpg" alt=""></div></div>`).join("")+

@@ -82,6 +82,8 @@ select,textarea{width:100%;font-size:16px;font-weight:600;font-family:inherit;pa
 .dlayer i{position:absolute;top:-60px;font-style:normal;opacity:.35;animation:dfall var(--s) linear var(--d) infinite}
 @keyframes dfall{to{transform:translate(var(--dx),115vh) rotate(var(--r))}}
 html{touch-action:manipulation}
+.booth .phprev{margin-bottom:10px;text-align:center}.booth .phprev img{max-width:100%;max-height:52vh;border-radius:8px;box-shadow:0 10px 24px rgba(0,0,0,.5)}
+.booth [hidden]{display:none!important}.booth .phrow{display:flex;gap:8px;margin-top:4px}.booth .phrow .btn{flex:1}
 .race{position:fixed;inset:0;z-index:25;display:grid;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);overflow:hidden;padding:24px 16px max(24px,env(safe-area-inset-bottom,0px));background:radial-gradient(ellipse at center,#1d3b32,#06100c);text-align:center;touch-action:manipulation;user-select:none;-webkit-user-select:none}
 .race .tapb{align-self:center;justify-self:center;width:min(78vw,340px);aspect-ratio:1;border-radius:50%;border:0;background:radial-gradient(circle at 40% 35%,#ff6a5a,#b8322a 60%,#6e1712);color:#fff;font-family:var(--display);font-size:3.4rem;box-shadow:0 0 0 8px var(--gold),0 20px 40px rgba(0,0,0,.6);touch-action:manipulation}
 .race .tapb:active{transform:scale(.94)}
@@ -145,6 +147,28 @@ const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Trans
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
 // if the phone got zoomed in, snap back to normal size (so full-screen pop-ups fit)
 function unzoom(){const m=document.querySelector('meta[name=viewport]');if(!m)return;const c=m.content;m.content=c.replace(/,?maximum-scale=[^,]*/,"")+",maximum-scale=1";window.scrollTo(0,window.scrollY);setTimeout(()=>{m.content=c},400)}
+// 📸 phone photo booth: take a selfie, frame it like the TV booth, send it to the Capitol
+async function framePhoto(file){
+  const url=URL.createObjectURL(file);try{
+  const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=url});
+  try{await document.fonts.load('40px Rye')}catch(e){}
+  const W=600,H=750,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  const sc=Math.max(W/im.naturalWidth,H/im.naturalHeight);x.drawImage(im,(W-im.naturalWidth*sc)/2,(H-im.naturalHeight*sc)/2,im.naturalWidth*sc,im.naturalHeight*sc);
+  x.lineWidth=26;x.strokeStyle="#b8322a";x.strokeRect(13,13,W-26,H-26);x.lineWidth=10;x.strokeStyle="#e8b04b";x.strokeRect(29,29,W-58,H-58);
+  const g=x.createLinearGradient(0,H-200,0,H-34);g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.8)");x.fillStyle=g;x.fillRect(34,H-200,W-68,166);
+  x.textAlign="center";x.fillStyle="#fff";x.font="800 30px Outfit, system-ui, sans-serif";x.fillText(XM.dn(me),W/2,H-102);
+  x.fillStyle="#e8b04b";x.font="34px Rye, Georgia, serif";x.fillText("The 2026 Christmas Games",W/2,H-58);
+  let q=.72,out=c.toDataURL("image/jpeg",q);while(out.length>110000&&q>.35){q-=.1;out=c.toDataURL("image/jpeg",q)}return out}finally{URL.revokeObjectURL(url)}}
+function wireBooth(){const app=document.getElementById("app");const f=app.querySelector("#phfile");if(!f)return;let shot=null;
+  const msg=t=>{app.querySelector("#phmsg").textContent=t};
+  const reset=()=>{shot=null;app.querySelector("#phprev").hidden=true;app.querySelector("#phrow").hidden=true;app.querySelector("#phtake").hidden=false;f.value=""};
+  app.querySelector("#phtake").onclick=()=>f.click();app.querySelector("#phretake").onclick=()=>{reset();f.click()};
+  f.onchange=async()=>{const file=f.files&&f.files[0];if(!file)return;msg("Developing your photo...");
+    try{shot=await framePhoto(file)}catch(e){msg("Couldn't read that photo. Try again.");return}
+    app.querySelector("#phimg").src=shot;app.querySelector("#phprev").hidden=false;app.querySelector("#phrow").hidden=false;app.querySelector("#phtake").hidden=true;msg("Looking good. Send it?")};
+  app.querySelector("#phsend").onclick=async()=>{if(!shot)return;const b=app.querySelector("#phsend");b.disabled=true;msg("Sending...");
+    const r=await api({a:"photo",name:me,img:shot});b.disabled=false;
+    if(r.ok){buzz(60);reset();msg("📸 Sent! Watch the TV.")}else msg(r.status===429?"The Capitol is still developing your last photo. Try again in a few seconds.":r.status===400?"That photo was too big. Tap Retake.":"Couldn't send. Check your internet.")}}
 function buzz(p){try{if(navigator.vibrate&&navigator.vibrate(p))return}catch(e){}
   const big=Array.isArray(p)||p>=150;if(!big)return;const f=document.createElement("div");f.style.cssText="position:fixed;inset:0;z-index:99;background:#fff;pointer-events:none;transition:opacity .5s";document.body.appendChild(f);
   requestAnimationFrame(()=>{f.style.opacity="0"});setTimeout(()=>f.remove(),600);try{XM.sfx("stinger")}catch(e){}}
@@ -179,6 +203,12 @@ function render(){if(me!=="Carsyn")dropBar();
     ${me==="Natalie"?`<div class="card" style="text-align:center"><button class="btn red" id="notfair" style="width:100%;font-size:1.5rem;padding:.8em">😤 IT'S NOT FAIR!</button><div class="tiny" id="nfmsg">Your official catchphrase. Tap it and the TV hears your complaint.</div></div>`:""}
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div>${DEMOJI[me]?`<div class="eyebrow" style="text-align:center;margin:2px 0 8px">Your district: D${t.d} · ${DIND[t.d]||""}</div><div class="reacts">${DEMOJI[me].map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div><div class="eyebrow" style="text-align:center;margin:12px 0 8px">Arena classics</div>`:""}<div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     <div class="card live" id="live"><button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div></div>
+    <div class="card booth" id="booth"><div class="eyebrow" style="text-align:center;margin-bottom:8px">📸 Capitol Photo Booth</div>
+      <input type="file" id="phfile" accept="image/*" capture="user" hidden>
+      <div id="phprev" class="phprev" hidden><img id="phimg" alt=""></div>
+      <button class="btn red" id="phtake" style="width:100%;font-size:1.1rem">📸 Take a photo</button>
+      <div class="phrow" id="phrow" hidden><button class="btn" id="phsend">📨 Send to the Capitol</button><button class="btn ghost" id="phretake">🔁 Retake</button></div>
+      <div class="tiny" id="phmsg">It pops up on the TV, and stars in the Fallen Tributes slideshow at the end.</div></div>
     ${me==="Carsyn"?"":`<div class="card"><button class="btn helpbtn" id="helpme">🆘 I'm lost. Help!</button><div class="tiny" id="helpmsg">Tap it and the Gamemaker comes to help you.</div></div>
     <details class="card more"><summary>🎉 More fun stuff <span class="tiny">(snitch, send points, shout-outs, walk-up song)</span></summary><div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>
       <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div>
@@ -200,6 +230,7 @@ function render(){if(me!=="Carsyn")dropBar();
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
     buzz(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
   app.querySelector("#golive").onclick=goLive;
+  wireBooth();
   if(app.querySelector("#helpme"))app.querySelector("#helpme").onclick=async()=>{const r=await api({a:"help",name:me});app.querySelector("#helpmsg").textContent=r.ok||r.status===429?"🆘 The Gamemaker got your message. Help is on the way!":"Couldn't send. Wave at the Gamemaker!";buzz(60)};
   if(app.querySelector("#snsend")){let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
@@ -438,7 +469,7 @@ function hostCard(){
       <button id="mclose"><span class="i">⚖️</span>Mercy verdict</button><button id="pro"><span class="i">🔮</span>Open predictions</button><button id="prl"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal"><span class="i">🎉</span>Reveal predictions</button></div>
     <div id="asks"></div><div id="shouts"></div>
     <div class="eyebrow" style="margin:4px 0 6px">⏰ Arena clock · 🎲 Chaos · 📺 Ticker</div>
-    <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${[5,10,15,20,30].map(n=>`<button data-c="clock:${n}"><span class="i">⏰</span>${n} min</button>`).join("")}<button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button><button data-c="chaos:on"><span class="i">🎲</span>Chaos ON</button><button data-c="chaos:off"><span class="i">😌</span>Chaos OFF</button><button data-c="ticker:on"><span class="i">📺</span>Ticker ON</button><button data-c="ticker:off"><span class="i">🚫</span>Ticker OFF</button><button data-c="recap"><span class="i">📼</span>Night recap</button></div>
+    <div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${[5,10,15,20,30].map(n=>`<button data-c="clock:${n}"><span class="i">⏰</span>${n} min</button>`).join("")}<button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button><button data-c="chaos:on"><span class="i">🎲</span>Chaos ON</button><button data-c="chaos:off"><span class="i">😌</span>Chaos OFF</button><button data-c="ticker:on"><span class="i">📺</span>Ticker ON</button><button data-c="ticker:off"><span class="i">🚫</span>Ticker OFF</button><button data-c="recap"><span class="i">📼</span>Night recap</button><button data-c="fallen"><span class="i">🕯️</span>Fallen Tributes</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
     <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">📱 Phone sign-ins</div>

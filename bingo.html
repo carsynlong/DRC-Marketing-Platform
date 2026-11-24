@@ -102,7 +102,18 @@ function shapeMini(k){const m=MODES[k];const on=new Set((m.cells||[[0,2],[1,2],[
   let g="";for(let r=0;r<5;r++)for(let c=0;c<5;c++)g+=`<i style="background:${on.has(c+","+r)?"var(--gold)":"rgba(255,255,255,.12)"}"></i>`;
   return `<span class="shape">${g}</span>`}
 function setMode(k){S.mode=k;S.checked=null;XM.store.set("xmas-bingo-mode",k);S.gmBingo=S.gm?lines(CARDS[S.gm-1]).length>0:false;sfx("reveal");render();
+  if(window.Briefing){briefRound(k);return}
   XM.say(k==="line"?"Regular bingo!":`${MODES[k].name} bingo!`,null,{pitch:.1,rate:.85,interrupt:true})}
+// 🎱 read out what this round's pattern needs, with Reread; Start just closes it
+function briefRound(k){const m=MODES[k],won=(S.bingos&&S.bingos[k]||[]).length;
+  const pat={line:["5 in a row: across, down or diagonal.","Five in a row. Across, down, or diagonal."],corners:["All <b>4 corner squares</b>. Nothing else matters.","All four corner squares. Nothing else matters."],
+    x:["Both diagonals: a <b>big X</b> through the middle.","Both diagonals. A big X through the middle."],frame:["The whole <b>outside edge</b> of your card: all 16 squares.","The whole outside edge of your card. All sixteen squares."]}[k]||[m.desc,m.desc];
+  Briefing.show({eyebrow:"🎱 DISTRICT BINGO",title:`${m.name} Bingo`,intro:`${m.name} bingo. Here's what you need.`,
+    steps:[["🎯",`To win this round: ${pat[0]}`,`To win this round: ${pat[1]}`],["⭐","The middle <b>FREE</b> square counts for everyone.","The middle free square counts for everyone."],
+      ["🔊","Mark every number the Gamemaker calls. Got it? Yell <b>BINGO!</b>","Mark every number that gets called. Got it? Yell bingo!"],
+      ["🔍","The Gamemaker checks your card number on the TV.","The Gamemaker checks your card number on the TV."],
+      ["🎁",`First real bingo wins this round's <b>major award</b>.${won?" (This round already has a winner.)":""}`,"First real bingo wins this round's major award."]],
+    outro:"Good luck, tributes.",start:"▶ Let's play",muted:()=>!XM.sound})}
 function check(){const k=+document.getElementById("cardno").value;if(!(Number.isInteger(k)&&k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
   const ln=lines(CARDS[k-1]);S.checked={k,ln};
   if(ln.length){const list=S.bingos[S.mode]=S.bingos[S.mode]||[];if(!list.includes(k)){list.push(k);XM.store.set("xmas-bingo-winners",S.bingos)}const place=list.indexOf(k)+1;

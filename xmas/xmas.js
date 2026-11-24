@@ -41,6 +41,8 @@ XM.GAMES={
 // The announcer says "Game maker", not "Gamemaker"
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
   const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
+// the shared "how this works" briefing screen (/briefing.js) on every page that uses these helpers
+if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){const s=document.createElement("script");s.src="/briefing.js";document.head.appendChild(s)}
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
 XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Big Fat Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
@@ -478,8 +480,17 @@ function suggest(){
 function startTB(k){
   T.tb=k;T.used.push(k);T.state={};
   if(k==="fate"){view("fate");return}
-  view("play");XM.sfx("stinger");
-  if(XM.TB[k].song)later(()=>XM.playSong(XM.TB[k].song),900);
+  const go=()=>{if(!T)return;view("play");XM.sfx("stinger");if(XM.TB[k].song)later(()=>XM.playSong(XM.TB[k].song),900)};
+  if(!window.Briefing)return go();
+  // ⚔️ read the tiebreaker's rules out loud first; the Gamemaker presses Start
+  const t=XM.TB[k],tied=[...T.picked].map(XM.dn),sentences=t.rules.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const HOW={stopwatch:"The Gamemaker starts the stopwatch, then taps whoever finishes first.",timer:`The Gamemaker starts a ${t.secs||10}-second timer. When it ends, tap who won.`,
+    dice:"Roll, then the Gamemaker taps the highest roll. Ties roll again.",closest:"Each guess gets typed in on the TV. The closest one wins.",
+    elim:"The Gamemaker taps each tribute out as they crack. Last one standing wins.",toss:"The Gamemaker counts each throw. Most in the cup wins."};
+  Briefing.show({eyebrow:`⚔️ TIEBREAKER · ${tied.map(XM.esc).join(" vs ")}`,title:`${t.ic} ${XM.esc(t.title)}`,
+    intro:`Tiebreaker! ${tied.join(" versus ")}. ${t.title}. Here's how it works.`,
+    steps:[["⚔️",`Tied: <b>${tied.map(XM.esc).join(", ")}</b>`,`Tied: ${tied.join(", ")}.`],...sentences.map((x,i)=>[i?"👉":t.ic,XM.esc(x),x]),...(HOW[t.tool]?[["🎛️",HOW[t.tool],HOW[t.tool]]]:[]),["🏆","The winner breaks the tie.","The winner breaks the tie."]],
+    outro:"When you're ready, the Game maker will start.",start:"▶ Start the tiebreaker",muted:()=>!XM.sound,onStart:go});
 }
 function winner(n){
   clearT();XM.stopSong();T.winner=n;if(T.onWinner)T.onWinner(n);view("win");XM.celebrate(n);

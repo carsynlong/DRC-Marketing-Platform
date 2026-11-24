@@ -590,6 +590,23 @@ function beginTrack(id){
 const PHONE_URL=location.origin+"/showphone";
 function qrHTML(size){let svg="";try{const q=qrcode(0,"M");q.addData(PHONE_URL);q.make();svg=q.createSvgTag({cellSize:6,margin:1,scalable:true})}catch(e){}
   return `<div class="qrbox" style="--qs:${size}px">${svg}<b>📱 Scan to join</b>${size>180?`<span>${esc(location.host)}/showphone</span>`:""}</div>`}
+// 👉 what guests should be doing right now (shown on every phone)
+function slideTodo(id){
+  const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,"");
+  const T={lobby:"Tap your face to join if you haven't. Then grab a drink and a seat.",title:"Find a seat. The Games are starting!",welcome:"Listen to the Gamemaker's welcome.",
+    rules:"Listen to the rules. Remember: touch a major award and it's yours.",lineup:"Here are tonight's 8 games.",tributes:"Meet the tributes. Send emojis for your favorites!",
+    begin:"Let the Games begin! Cheer!",halftime:"Halftime standings. Bathroom or snack break if you need one.",victors:"The winners of every game. Cheer for them!",end:"Merry Christmas, tributes!","bingo-board":"Mark every number called. Got the pattern on the TV? Yell BINGO!"};
+  if(T[id])return T[id];
+  if(/^d\d+$/.test(id))return "Meet this tribute. Send emojis to cheer or boo!";
+  const G={cookie:{game:"Next up: Smart Cookie Showdown. Get ready to be picked!",how:"Listen: cookie on your forehead, no hands.",wheel:"Watch the wheel. If it picks you, tilt your head back: cookie on your forehead, no hands!",tie:"Tied? Get ready for a tiebreaker."},
+    scoop:{game:"Next up: Blind Snowball Scoop.",how:"Listen: blindfold on, scoop the snowballs into your bowl.",wheel:"Watch the wheel. If it picks you: blindfold on, spoon in hand!",tie:"Tied? Get ready for a tiebreaker."},
+    tribute:{game:"Scan the QR code on the TV to play Who's That Tribute on your phone."},feud:{game:"Scan the QR code on the TV to play District Feud on your phone."},
+    secrets:{game:"Scan the QR code on the TV to play District Secrets on your phone."},
+    mitten:{game:"Next up: Mitten Mayhem.",idk:"Listen to the Gamemaker for the real rules.",order:"Find your turn in the order on the TV. Wait for your turn."},
+    lrc:{game:"Next up: Left, Right, Capitol. Grab your chips.",idk:"Listen to the Gamemaker for the real rules.",order:"Find your turn in the order on the TV. Roll when it's your turn.",tie:"Tied? Get ready for a tiebreaker."},
+    bingo:{game:"Next up: District Bingo. Grab a card and a pen.",how:"Grab a bingo card and a pen. Write your name on it.",tie:"Tied? Get ready for a tiebreaker."}};
+  const k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];return (G[g]&&k&&G[g][k])||"";
+}
 // what's on the TV, as plain text for the phones
 function publishSlide(s,el){
   const c=el.cloneNode(true);c.querySelectorAll("button,a,.corner,.fly,.lobbycard,img,.qrbox,.joined,.tgrid,.jhead,.jnew,svg,input").forEach(n=>n.remove());
@@ -598,7 +615,7 @@ function publishSlide(s,el){
   const h=el.querySelector("h1");const title=(h?h.textContent.replace(/\s+/g," ").trim():lines[0]||"");
   const body=lines.filter(t=>t!==title).join("\n").slice(0,880);
   const pin=hostPin();if(!pin)return;
-  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",pin,slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body}})}).catch(()=>{});
+  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",pin,slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body,todo:slideTodo(s.id)}})}).catch(()=>{});
 }
 function showMiniQR(on){let q=document.getElementById("miniqr");
   if(!q){const w=document.createElement("div");w.innerHTML=qrHTML(110);q=w.firstElementChild;q.id="miniqr";stage.appendChild(q)}
@@ -817,6 +834,8 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🎂 QUEEN MOTHER's birthday",()=>hostCall({a:"bday"}).then(r=>{if(!r||!r.ok)birthday()}));
   item("📜 Bounty board",()=>bountyBoard());
   item("👑 Crown the Ultimate Victor",()=>coronation());
+  item("📱 Phone tour (what your phone does)",()=>phoneTour());
+  item("⭐ Explain Capitol Points",()=>pointsInfo());
   item("📲 Start a tap race",()=>hostCall({a:"raceopen",goal:50}));
   item("🔮 Reveal the predictions",()=>predictReveal());
   item("📺 News ticker on/off",()=>{const on=!tickerOn();try{localStorage.setItem("xmas-ticker",on?"1":"0")}catch(e){}toast(on?"📺 News ticker on":"📺 News ticker off")});
@@ -1144,8 +1163,35 @@ function birthday(){
   XM.sfx("fanfare");balloons();XM.confetti(220,true);
   announcer.say("Attention, tributes! Yesterday was QUEEN MOTHER's birthday! Everyone, sing!",null,{pitch:.1,rate:.88});
   T(()=>{happyBirthdaySong();T(balloons,4000)},5200);T(()=>{XM.sfx("cheer");XM.sfx("applause");XM.confetti(200,true)},19000);news("🎂 Happy belated birthday, QUEEN MOTHER!")}
+/* ---------- 📱 what your phone does tonight (spoken tour) ---------- */
+function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
+  Briefing.show({eyebrow:"📱 YOUR PHONE TONIGHT",title:"Here's What Your Phone Does",intro:"Here's what your phone can do tonight.",
+    steps:[["📺","It shows what's on the TV, and <b>what to do right now</b>.","It shows what's on the TV, and what to do right now."],
+      ["😂","Tap an emoji and it pops up on the TV with your name.","Tap an emoji, and it pops up on the TV with your name."],
+      ["🎥","<b>Go live</b>: your face shows in a bubble on the TV for 20 seconds.","Go live: your face shows in a bubble on the TV for twenty seconds."],
+      ["🚨","<b>Snitch</b> on someone who's cheating or asleep. It shows on the TV.","Snitch on someone who's cheating, or asleep. It shows on the TV."],
+      ["🤝","<b>Send points</b> to someone. Bribes welcome.","Send points to someone. Bribes welcome."],
+      ["💌","<b>Shout-outs</b> scroll across the TV once the Gamemaker approves them.","Shout outs scroll across the TV once the Game maker approves them."],
+      ["🎵","Pick a <b>walk-up song</b>. It plays when you win.","Pick a walk-up song. It plays when you win."],
+      ["🆘","Lost? Tap <b>I'm lost</b> and the Gamemaker comes to help.","Lost? Tap I'm lost, and the Game maker will come help."]],
+    outro:"That's it. Have fun, tributes.",start:"▶ Got it",muted:()=>!XM.sound})}
+function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-points-briefed","1")}catch(e){}
+  Briefing.show({eyebrow:"⭐ CAPITOL POINTS",title:"What Are Capitol Points?",intro:"Capitol points. Here's how they work.",
+    steps:[["⭐","A side game all night long, separate from winning the 8 games.","A side game all night long, separate from winning the eight games."],
+      ["⚔️","Earn them with <b>side quests</b>, the <b>tap race</b>, <b>sponsor gifts</b>, <b>bets</b> and <b>predictions</b>.","Earn them with side quests, the tap race, sponsor gifts, bets, and predictions."],
+      ["💀","Lose them by failing side quests, bad bets and the Wheel of Punishment.","Lose them by failing side quests, bad bets, and the wheel of punishment."],
+      ["🤝","You can send your points to someone else from your phone.","You can send your points to someone else from your phone."],
+      ["🎁","Most points picks their <b>major award first</b> in the draft at the end.","Most points picks their major award first, in the draft at the end."],
+      ["🏁","Points also decide the <b>end-of-night awards</b>. Check your total on your phone.","Points also decide the end of night awards. Check your total on your phone."]],
+    outro:"Go earn some points.",start:"▶ Got it",muted:()=>!XM.sound})}
+let pointsPending=false;
+setInterval(()=>{if(pointsPending&&!busy()&&!(window.Briefing&&Briefing.open())){pointsPending=false;pointsInfo()}},1500);
+function firstPoints(){try{if(localStorage.getItem("xmas-points-briefed"))return}catch(e){}pointsPending=true}
 function runCmd(c,data){
   if(!started)return;
+  if(c==="phonetour")return phoneTour();
+  if(c==="pointsinfo")return pointsInfo();
+  if(["questdone","pointsadd","betpaid","racewin","predictpaid"].includes(c))firstPoints();
   if(c==="board")return bountyBoard();
   if(c==="crown")return coronation();
   if(c==="bday")return birthday();
@@ -1682,7 +1728,7 @@ function revealUltimate(el){
   const box=el.querySelector("#ult");if(!box)return;const u0=ultimateList();if(!u0){box.innerHTML="";return}if(box.querySelector(".ultimate,#ult-go"))return;
   box.innerHTML=`<button class="btn red bigbtn pop" ${d(1.6)} id="ult-go" style="font-size:32px">👑 Reveal the Ultimate Victor</button>`;
   box.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
-  box.querySelector("#ult-go").onclick=e=>{e.stopPropagation();const u=ultimateList();if(!u){box.innerHTML="";return}XM.stopSong();XM.sfx("drumroll");box.innerHTML=`<div class="title-m" style="animation:pulse .4s infinite alternate">🥁 And the Ultimate Victor is...</div>`;
+  box.querySelector("#ult-go").onclick=e=>{e.stopPropagation();const reveal=()=>{const u=ultimateList();if(!u){box.innerHTML="";return}XM.stopSong();XM.sfx("drumroll");box.innerHTML=`<div class="title-m" style="animation:pulse .4s infinite alternate">🥁 And the Ultimate Victor is...</div>`;
     announcer.say("And the ultimate victor is...",null,{pitch:.1,rate:.75});
     setTimeout(()=>{if(!box.isConnected)return;const one=u.names.length===1;
       box.innerHTML=`<div class="ultimate pop">${u.names.map(n=>`<img src="${XM.photo(n)||"/xmas/emblem.png"}" alt="">`).join("")}
@@ -1692,6 +1738,15 @@ function revealUltimate(el){
         ${one?"":`<button class="btn" id="ult-tb" style="font-size:24px">⚔️ Settle it with a tiebreaker</button>`}</div>`;
       if(one)XM.celebrate(u.names[0],{intro:"Your ultimate victor"});else{XM.celebrate("",{line:`It's a tie! ${u.names.map(XM.spoken).join(" and ")}!`});
         box.querySelector("#ult-tb").onclick=ev=>{ev.stopPropagation();XM.tiebreaker({tied:u.names,onClose:()=>XM.playSong("board",true)})}}},3200)};
+    if(!window.Briefing)return reveal();
+    // 👑 how the Ultimate Victor is decided, read out before the reveal
+    Briefing.show({eyebrow:"👑 THE ULTIMATE VICTOR",title:"How the Ultimate Victor Is Decided",intro:"Before we crown anyone, here's how the ultimate victor is decided.",
+      steps:[["🏆","Whoever <b>won the most games</b> tonight is the Ultimate Victor.","Whoever won the most games tonight is the ultimate victor."],
+        ["🧤","Mitten Mayhem doesn't count: everyone won that one.","Mitten Mayhem doesn't count. Everyone won that one."],
+        ["2️⃣","You need at least <b>2 game wins</b> to qualify.","You need at least two game wins to qualify."],
+        ["⚔️","Tied for the most wins? It's settled with a <b>tiebreaker</b>.","Tied for the most wins? It's settled with a tiebreaker."],
+        ["👑","There's no major award for this one. Just the crown and <b>eternal bragging rights</b>.","There's no major award for this one. Just the crown, and eternal bragging rights."]],
+      outro:"Drumroll, please.",start:"▶ Reveal the Ultimate Victor",muted:()=>!XM.sound,onStart:reveal})};
 }
 /* ---------- Intermission: bathroom and drink break ---------- */
 function intermission(){

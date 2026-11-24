@@ -83,6 +83,12 @@ select,textarea{width:100%;font:600 1rem inherit;padding:10px;border-radius:12px
 .hpane{display:none}.hpane.on{display:block}
 #score summary{cursor:pointer;list-style:none;font-family:var(--display);color:var(--gold);font-size:1.2rem;text-align:center}
 #score summary::-webkit-details-marker{display:none}
+.todo{margin-top:8px;padding:8px 12px;border-radius:12px;background:rgba(232,176,75,.16);box-shadow:inset 0 0 0 1px var(--gold);font-weight:800;font-size:1.02rem}
+.todo:empty{display:none}
+.helpbtn{width:100%;background:#6e1712!important;color:#fff!important}
+.coach{box-shadow:0 0 0 2px #2f73a8;background:rgba(18,40,60,.95)}
+.coach b.n{color:#9fd0ff}
+.helpcard{box-shadow:0 0 0 3px #ff4d4d;background:rgba(80,10,10,.95);animation:qin .3s both}
 .mcard{box-shadow:0 0 0 2px #6a3c9c;background:rgba(40,20,60,.95)}
 .qov.spy{background:radial-gradient(ellipse at center,#3a1f5c,#0a0612)}
 .pin{display:flex;gap:8px;justify-content:center}
@@ -124,13 +130,14 @@ function render(){
   const t=TRIBUTES.find(x=>x.name===me);
   app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(XM.dn(me))}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
-    <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><p id="tvb"></p></div>
+    <div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>
     <div id="extras" style="display:grid;gap:16px"></div>
     <div class="card"><div class="eyebrow" style="text-align:center;margin-bottom:8px">Tap to send to the TV</div><div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>
     ${me==="Carsyn"?"":`<div class="card"><div class="eyebrow" style="margin-bottom:8px">🚨 Snitch on someone (it pops up on the TV)</div>
       <div class="vfaces" id="snf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-sn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}</div>
       <select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button><div class="tiny" id="snmsg"></div></div>
+    <div class="card"><button class="btn helpbtn" id="helpme">🆘 I'm lost. Help!</button><div class="tiny" id="helpmsg">Tap it and the Gamemaker comes to help you.</div></div>
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">🤝 Send someone your points (bribes welcome)</div>
       <div class="vfaces" id="gvf">${TRIBUTES.filter(t=>t.name!==me).map(t=>`<button data-gv="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name==="QUEEN MOTHER"?"QUEEN":XM.dn(t.name))}</button>`).join("")}</div>
       <div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
@@ -146,6 +153,7 @@ function render(){
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
     buzz(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
   app.querySelector("#golive").onclick=goLive;
+  if(app.querySelector("#helpme"))app.querySelector("#helpme").onclick=async()=>{const r=await api({a:"help",name:me});app.querySelector("#helpmsg").textContent=r.ok||r.status===429?"🆘 The Gamemaker got your message. Help is on the way!":"Couldn't send. Wave at the Gamemaker!";buzz(60)};
   if(app.querySelector("#snsend")){let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
     const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${sn}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
@@ -160,6 +168,12 @@ function render(){
     const r=await api({a:"shout",name:me,text:t.value.trim()});m.textContent=r.ok?"💌 Sent! It shows on the TV once the Gamemaker approves it.":(r.error||"Couldn't send.");if(r.ok)t.value=""};
   }
   districtLook();lastExtras="";showExtras();
+  if(me!=="Carsyn"&&!XM.store.get("xmas-tour-seen",false)){XM.store.set("xmas-tour-seen",true);const ov=document.createElement("div");ov.className="qov ok";ov.style.background="radial-gradient(ellipse at center,#1d3b32,#06100c)";
+    ov.innerHTML=`<div class="in" style="max-width:420px"><div class="ic">📱</div><h2>Your phone tonight</h2><div style="text-align:left;display:grid;gap:8px;font-size:1.02rem">
+      <div>📺 <b>Now on the TV</b> shows what's happening and <b>👉 what to do right now</b>.</div><div>😂 Tap emojis to send them to the TV.</div><div>🎥 <b>Go live</b> to put your face on the TV.</div>
+      <div>🚨 Snitch, 🤝 send points, 💌 shout-outs and 🎵 walk-up songs are further down.</div><div>🆘 Lost? Tap <b>I'm lost</b> and the Gamemaker comes to help.</div><div>⚔️ Pop-ups for side quests, votes and races show up when they start.</div></div>
+      <button class="btn" id="tourok" style="margin-top:12px">Got it</button></div>`;
+    document.body.appendChild(ov);ov.querySelector("#tourok").onclick=()=>ov.remove()}
   showSlide();
   if(me==="Carsyn"){hostCard();scoreCard()}
 }
@@ -168,7 +182,12 @@ let listT=0;
 async function hostLists(){
   clearTimeout(listT);const pin=XM.store.get("xmas-sh-pin",null);const A=document.getElementById("asks"),S=document.getElementById("shouts");if(!pin||!A||me!=="Carsyn")return;
   try{const [a,sh]=await Promise.all([fetch("/api/show?a=asks&pin="+encodeURIComponent(pin),{cache:"no-store"}).then(r=>r.json()),fetch("/api/show?a=shouts&pin="+encodeURIComponent(pin),{cache:"no-store"}).then(r=>r.json())]);
-    const ak=JSON.stringify(a),sk=JSON.stringify(sh);
+    const ak=JSON.stringify(a),sk=JSON.stringify(sh.shouts||[]);
+    let H=document.getElementById("helps");if(!H){const h=document.getElementById("host");if(h){H=document.createElement("div");H.id="helps";h.before(H)}}
+    const hk=JSON.stringify(sh.helps||[]);if(H&&H.dataset.k!==hk){const had=(JSON.parse(H.dataset.k||"[]")).length;H.dataset.k=hk;
+      H.innerHTML=(sh.helps||[]).map(x=>`<div class="card helpcard" style="margin-bottom:10px;display:flex;gap:10px;align-items:center"><div style="flex:1;font-weight:800;font-size:1.1rem">🆘 ${esc(XM.dn(x.from))} needs help</div><button class="btn" data-hd="${x.id}">On my way ✓</button></div>`).join("");
+      if((sh.helps||[]).length>had)buzz([200,100,200]);
+      H.querySelectorAll("[data-hd]").forEach(b=>b.onclick=async()=>{await api({a:"helpdone",pin,id:+b.dataset.hd});H.dataset.k="";hostLists()})}
     if(A.dataset.k!==ak){A.dataset.k=ak;A.innerHTML=a.hot?`<div class="eyebrow" style="margin:6px 0">🎭 Questions for ${esc(a.hot.to)} (tap to show on the TV)</div>${(a.asks||[]).map(x=>`<button class="btn ghost" data-ask="${esc(x.q)}" style="width:100%;text-align:left;margin-bottom:6px;font-size:.95rem">${esc(x.q)}</button>`).join("")||'<div class="tiny">No questions yet.</div>'}`:"";
       A.querySelectorAll("[data-ask]").forEach(b=>b.onclick=async()=>{await api({a:"askshow",pin,q:b.dataset.ask});b.style.opacity=.4})}
     if(S.dataset.k!==sk){S.dataset.k=sk;S.innerHTML=(sh.shouts||[]).length?`<div class="eyebrow" style="margin:6px 0">💌 Shout-outs waiting</div>${sh.shouts.map(x=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><div style="flex:1;font-size:.95rem"><b>${esc(x.from)}:</b> ${esc(x.text)}</div><button class="btn" data-so="${x.id}" style="padding:.4em .8em">✅</button><button class="btn ghost" data-sx="${x.id}" style="padding:.4em .8em">✖</button></div>`).join("")}`:"";
@@ -366,7 +385,7 @@ function hostCard(){
     <div class="eyebrow" style="margin:4px 0 6px">📲 Tap race (everyone's phone)</div>
     <div class="hgrid">${[30,50,100].map(n=>`<button data-race="${n}"><span class="i">📲</span>Race to ${n}</button>`).join("")}<button id="raceend"><span class="i">⏹️</span>End race</button></div>
     <div class="eyebrow" style="margin:4px 0 6px">🎉 Big moments</div>
-    <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
+    <div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>
     <div class="eyebrow" style="margin-bottom:6px">The show</div><div class="hgrid">${SHOW_BTNS.map(b).join("")}</div>
     <div class="eyebrow" style="margin-bottom:6px">Twists (only you can do these)</div><div class="hgrid twists">${TWIST_BTNS.map(b).join("")}</div><div class="tiny" id="hmsg"></div>`;
   tabify(box);
@@ -417,7 +436,30 @@ function showSlide(){
   const n=document.getElementById("tvn"),t=document.getElementById("tvt"),b=document.getElementById("tvb");if(!t)return;
   if(!slide){t.textContent="Waiting for the Gamemaker...";b.textContent="";n.textContent="";return}
   n.textContent=slide.total?`${slide.n} / ${slide.total}`:"";t.textContent=slide.title||"";b.textContent=slide.body||"";
+  const d=document.getElementById("tvdo");if(d)d.textContent=slide.todo?"👉 Right now: "+slide.todo:"";
+  coach();
 }
+/* ---- 🎬 the Gamemaker's coach: what to do on the slide that's on the TV ---- */
+function coachNote(id){
+  const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,""),k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];
+  const N={lobby:"Leave this up while people arrive. Check the joined count. Press → when it's time.",title:"The announcer welcomes everyone. Wait for it.",welcome:"Read your speech: \"Citizens of the living room!\"",
+    rules:"The announcer reads the 5 rules. Let it finish.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes. Press →.",begin:"Your song plays. It stops when you press →.",
+    halftime:"Games 1 to 4 victors and who's leading. Good time for a break or a twist.",victors:"Every victor. 2+ wins? Tap Reveal the Ultimate Victor (it reads how it's decided first).",
+    end:"The end. Good time for Night recap and Crown the Ultimate Victor (Fun tab).","bingo-board":"Open the bingo board. Pick the round type (a briefing reads the pattern), tap each number, check BINGO card numbers."};
+  if(N[id])return N[id];
+  if(/^d\d+$/.test(id))return "Tribute profile. Let the announcer finish the weapon, strategy and odds, then →.";
+  const by={game:{cookie:"Title slide. Good time to open bets (Phones tab) and start the arena clock (Show tab).",scoop:"Title slide. Open bets (Phones tab)?",tribute:"Click Play (new tab). Close it when the game ends.",feud:"Click Play (new tab). Close it when the game ends.",secrets:"Click Play (new tab). Close it when the game ends.",mitten:"Title slide.",lrc:"Title slide. Chips and dice ready?",bingo:"Title slide. Hand out cards and pens."},
+    how:{cookie:"The announcer reads the steps.",scoop:"The announcer reads the steps.",bingo:"The announcer reads the steps."},
+    wheel:{cookie:"Click SPIN THE WHEEL. Spin twice per face-off, tap who won. Winners go back on. Save the champion, close the tab.",scoop:"Same as Game 1, with a 30-second timer."},
+    tie:{cookie:"Tie? Tap who tied (a briefing reads the tiebreaker). No tie: skip.",scoop:"Tie? Tap who tied. No tie: skip.",lrc:"Tie? Tap who tied. No tie: skip.",bingo:"Tie? Closest Call tiebreaker, or skip."},
+    idk:{mitten:"The joke slide. Then explain the real rules out loud.",lrc:"The joke slide. Then explain the real rules out loud."},
+    order:{mitten:"Tap to sit people out, then Shuffle. Everyone wins this one.",lrc:"Shuffle for the rolling order."}};
+  return (by[k]&&by[k][g])||"";
+}
+function coach(){if(me!=="Carsyn")return;let c=document.getElementById("coach");const h=document.getElementById("host");if(!h)return;
+  if(!c){c=document.createElement("div");c.className="card coach";c.id="coach";h.before(c)}
+  if(!slide){c.innerHTML=`<div class="eyebrow">🎬 Your coach</div><div class="tiny" style="text-align:left">Start the show on the laptop and your next step shows here.</div>`;return}
+  c.innerHTML=`<div class="eyebrow">🎬 Now on the TV · <b class="n">${slide.n||""} / ${slide.total||""}</b></div><div style="font-weight:800;margin:4px 0 2px">${esc(slide.title||"")}</div><div style="font-size:.95rem">👉 ${esc(coachNote(slide.id||"")||"Press → when ready.")}</div>`}
 let pollN=0;
 async function poll(){
   pollN++;try{const r=await fetch("/api/show?a=phone"+(me?"&me="+encodeURIComponent(me):"")+(pollN%3===1?"&full=1":""),{cache:"no-store"});if(!r.ok)throw 0;const j=await r.json();const s=j.slide;

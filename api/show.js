@@ -20,7 +20,7 @@ const P = "sh:";
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "draft", "awards", "photo", "pollreveal", "betlock",
-  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
+  "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "phonetour", "pointsinfo", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
 const SONGS = ["hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
@@ -111,7 +111,9 @@ async function main(req, res) {
     if (a === "asks") { const lv = (await jget(P + "live")) || {}; if (!lv.hot) return reply(res, 200, { asks: [] });
       const l = (await redis.lrange(P + "asks:" + lv.hot.id, 0, 49)) || []; return reply(res, 200, { hot: lv.hot, asks: l.map((x, i) => { try { const o = typeof x === "string" ? JSON.parse(x) : x; return { i: o.i, q: o.q }; } catch { return null; } }).filter(Boolean) }); }
     const l = (await redis.lrange(P + "shouts", 0, 29)) || [];
-    return reply(res, 200, { shouts: l.map(x => { try { return typeof x === "string" ? JSON.parse(x) : x; } catch { return null; } }).filter(Boolean) });
+    const hl = (await redis.lrange(P + "helps", 0, 19)) || [];
+    const helps = hl.map(x => { try { return typeof x === "string" ? JSON.parse(x) : x; } catch { return null; } }).filter(Boolean);
+    return reply(res, 200, { helps, shouts: l.map(x => { try { return typeof x === "string" ? JSON.parse(x) : x; } catch { return null; } }).filter(Boolean) });
   }
 
   // 🩺 health check page: can we write to and read from the database?
@@ -165,7 +167,7 @@ async function main(req, res) {
     const s = req.body?.slide;
     if (!s || typeof s !== "object") return reply(res, 400, { error: "Missing slide" });
     const clean = { id: text(s.id, 40) || "", n: Number(s.n) || 0, total: Number(s.total) || 0,
-      title: (text(s.title, 160) || ""), body: (typeof s.body === "string" ? s.body.slice(0, 900) : ""), t: Date.now() };
+      title: (text(s.title, 160) || ""), body: (typeof s.body === "string" ? s.body.slice(0, 900) : ""), todo: text(s.todo, 220) || "", t: Date.now() };
     await redis.set(P + "state", JSON.stringify(clean), { ex: 60 * 60 * 12 });
     return reply(res, 200, { ok: true });
   }
@@ -230,6 +232,12 @@ async function main(req, res) {
       const n = x.on === winner ? x.amt : -x.amt; await redis.hincrby(P + "points", who, n); results.push({ who, on: x.on, amt: x.amt, n }); }
     lv.bet.state = "paid"; await redis.set(P + "live", JSON.stringify(lv), { ex: 43200 });
     await pushCmd("betpaid", { winner, game: lv.bet.game, results }); return reply(res, 200, { ok: true, results });
+  }
+  if (a === "helpdone") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const id = Number(req.body?.id), l = (await redis.lrange(P + "helps", 0, 19)) || [];
+    for (const x of l) { let o; try { o = typeof x === "string" ? JSON.parse(x) : x; } catch { continue; } if (o.id === id) { await redis.lrem(P + "helps", 1, typeof x === "string" ? x : JSON.stringify(x)); break; } }
+    return reply(res, 200, { ok: true });
   }
   if (["hotseat", "hotend", "askshow", "mercyopen", "mercyclose", "predictopen", "predictlock", "predictpay", "say", "shoutok", "shoutno"].includes(a)) {
     if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
@@ -417,6 +425,11 @@ async function main(req, res) {
     const lv = (await jget(P + "live")) || {}; if (!lv.predict || !lv.predict.open) return reply(res, 409, { error: "Predictions are closed" });
     const ch = text(req.body?.choice, 40); if (!NAMES.includes(ch)) return reply(res, 400, { error: "Unknown tribute" });
     await redis.hset(P + "predict", { [name]: ch }); return reply(res, 200, { ok: true });
+  }
+  if (a === "help") {
+    if (!(await redis.set(`${P}hp:${name}`, "1", { nx: true, ex: 20 }))) return reply(res, 429, { error: "Help is on the way" });
+    const id = await redis.incr(P + "helpid"); await redis.lpush(P + "helps", JSON.stringify({ id, from: name, t: Date.now() })); await redis.ltrim(P + "helps", 0, 19);
+    return reply(res, 200, { ok: true });
   }
   if (a === "shout") {
     const t = text(req.body?.text, 90); if (!t) return reply(res, 400, { error: "Type a message" });

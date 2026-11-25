@@ -1167,7 +1167,7 @@ async function photoBooth(){
       cd.innerHTML=`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover">`;setTimeout(()=>{if(cd.isConnected)cd.innerHTML=""},2500)},1000)};
 }
 /* ---------- 🎵 walk-up song when a victor is recorded ---------- */
-async function walkUp(n){try{const j=await (await fetch("/api/show?a=stats",{cache:"no-store"})).json();const song=j.walkups&&j.walkups[n];if(song)XM.playSong(song)}catch(e){}}
+async function walkUp(n){try{const j=await (await fetch("/api/show?a=stats",{cache:"no-store"})).json();const song=(j.walkups&&j.walkups[n])||{Jonny:"wu_jonny"}[n];if(song)XM.playSong(song)}catch(e){}}
 /* ---------- 📺 Capitol news ticker ---------- */
 const newsLog=XM.store.get("xmas-news",[]);
 function news(t){newsLog.push({t,at:Date.now()});while(newsLog.length>40)newsLog.shift();XM.store.set("xmas-news",newsLog)}

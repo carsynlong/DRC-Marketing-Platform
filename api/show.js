@@ -50,7 +50,7 @@ const MISSIONS = [
 const others = (not = []) => NAMES.filter(n => n !== "Carsyn" && !not.includes(n));
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const TWISTS = ["wheel", "swap", "silence", "decree", "bounty", "alliance", "mission"];
-const LV = ["poll", "bet", "hot", "mercy", "predict", "bday", "race"];
+const LV = ["poll", "bet", "hot", "mercy", "predict", "bday", "race", "allrise"];
 const LVK = LV.map(k => P + "lv:" + k);
 const pj = x => { try { return x ? (typeof x === "string" ? JSON.parse(x) : x) : null; } catch { return null; } };
 // TV pages that publish their on-screen buttons for the remote (remote-tv.js)
@@ -120,6 +120,7 @@ async function main(req, res) {
     if (live.mercy && live.mercy.open) { const mine = me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null; mercy = { ...live.mercy, mine, mt: mine ? Number(await redis.hget(P + "mt:" + live.mercy.id, me)) || 0 : 0 }; }
     if (live.predict && live.predict.open) predict = { open: true, mine: me ? await redis.hget(P + "predict", me) : null };
     const bday = live.bday && Date.now() - live.bday.t < 120000 ? live.bday : null;
+    const allrise = live.allrise && Date.now() - live.allrise.t < 20000 ? live.allrise : null;   // 👑 "BOW NOW" on QUEEN MOTHER's profile
     let race = null;
     if (live.race && live.race.state === "live" && Date.now() - live.race.start < 120000) race = { ...live.race, winner: live.race.winner || (await redis.get(P + "racewin:" + live.race.id)) || null, mine: me ? Number(await redis.hget(P + "race:" + live.race.id, me)) || 0 : 0 };
     // join screen: which faces are already on someone's phone (so they show "on a phone")
@@ -127,7 +128,7 @@ async function main(req, res) {
     if (!me && full) { const all = await hash(P + "players"), ns = Object.keys(all).filter(n => all[n] !== String(req.query.pid || ""));
       const sv = ns.length ? await redis.mget(...ns.map(n => `${P}seen:${n}`)) : []; taken = ns.filter((n, i) => sv[i]); }
     const qbUses = me === "QUEEN MOTHER" && full ? Math.max(0, 2 - (Number(await redis.get(P + "qbdayn")) || 0)) : undefined;
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, taken, qbUses, tvbtns, now: Date.now() });
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, allrise, taken, qbUses, tvbtns, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -353,6 +354,11 @@ async function main(req, res) {
   }
 
   // 🎂 QUEEN MOTHER's (belated) birthday takeover: the TV and every phone
+  // 👑 All rise: the TV asks every phone to show "BOW NOW" for a few seconds (QUEEN MOTHER's profile slide)
+  if (a === "allrise") {
+    if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
+    const now = Date.now(); await saveLive("allrise", { id: now, t: now }); return reply(res, 200, { ok: true });
+  }
   if (a === "bday") {
     if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
     const lv = await readLive(); lv.bday = { id: Date.now(), t: Date.now() };

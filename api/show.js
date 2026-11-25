@@ -611,6 +611,7 @@ async function main(req, res) {
   }
   if (a === "walkup") {
     const song = req.body?.song; if (!SONGS.includes(song)) return reply(res, 400, { error: "Unknown song" });
+    const OWN = { wu_boom: "Grandad", wu_jonny: "Jonny" }; if (OWN[song] && OWN[song] !== name) return reply(res, 403, { error: "That song belongs to someone else" });
     await redis.hset(P + "walkups", { [name]: song }); return reply(res, 200, { ok: true });
   }
 

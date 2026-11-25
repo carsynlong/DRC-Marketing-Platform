@@ -174,6 +174,8 @@ const DECREES=["Bring the QUEEN more iced tea","Bring the QUEEN a snack","Give t
  "Give the QUEEN a foot rub... just kidding, a hug","Tell the QUEEN why she's the best","Do your best royal wave","Fetch the QUEEN a napkin","Dance for 10 seconds","Speak in a British accent until the next game"];
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 // your own district's emojis (matches your profile on the TV)
+// songs that belong to one tribute only (hidden from everyone else)
+const RESERVED_SONG={wu_boom:"Grandad",wu_jonny:"Jonny"};
 const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
 const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
@@ -241,7 +243,7 @@ function guestTiles(t){
   P.push(["give","🤝","Send points",`${faces("data-gv")}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
       <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button>`]);
   P.push(["shout","💌","Shout-out",`<textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas, QUEEN MOTHER!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button>`]);
-  P.push(["walk","🎵","Walk-up song",`<select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
+  P.push(["walk","🎵","Walk-up song",`<select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.filter(([k])=>!RESERVED_SONG[k]||RESERVED_SONG[k]===me).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
       <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny">Plays on the TV when you win.</div>`]);
   P.push(["help","🆘","I'm lost",null]);
   const msgId={decree:"dqmsg",bday:"qbmsg",snitch:"snmsg",give:"gvmsg",shout:"somsg",walk:"wmsg",help:"helpmsg"};

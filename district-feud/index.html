@@ -420,6 +420,14 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
   .bq{font-size:clamp(1.4rem,min(3.6vw,5.4vh),2.6rem)}
 }
 .settings.stick{position:sticky;bottom:62px;z-index:6;background:rgba(6,10,30,.9);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}   /* final board buttons stay on screen */
+.strikes{position:fixed;inset:0;z-index:60;display:grid;place-items:center;align-content:center;gap:2vh;background:rgba(10,4,4,.55);pointer-events:none;transition:opacity .3s}
+.strikes.out{opacity:0}
+.strikes .xs{display:flex;flex-wrap:wrap;justify-content:center;gap:1.2vw;max-width:90vw}
+.strikes .xs b{font:900 min(15vw,24vh)/1 system-ui,sans-serif;color:#e3261b;text-shadow:0 0 .08em #fff,0 .06em 0 #6e0f0a,0 0 .5em rgba(227,38,27,.7);animation:xslam .28s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes xslam{from{transform:scale(2.6) rotate(-20deg);opacity:0}}
+.strikes .cap{font:900 min(7vw,11vh)/1 system-ui,sans-serif;color:#fff;letter-spacing:.04em;text-shadow:0 .06em 0 #6e0f0a,0 0 .4em rgba(0,0,0,.6);opacity:0;transform:scale(.6);transition:.25s cubic-bezier(.2,1.6,.4,1);text-align:center}
+.strikes .cap.on{opacity:1;transform:none}.strikes .cap.good{color:#7dffa0}
+.strikes .cap small{display:block;font-size:.35em;margin-top:.2em;opacity:.85}
 </style>
 
 <div class="beam l" aria-hidden="true"></div><div class="beam r" aria-hidden="true"></div>
@@ -761,12 +769,29 @@ async function surveySays(){
 }
 function runSurvey(){
   S.phase="suspense";render();drumroll(1.9);
-  later(()=>{const q=cur(),m=S.mult||1;S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v*m));
+  later(()=>strikes(()=>{const q=cur(),m=S.mult||1;S.phase="reveal";q.top.forEach(([n,v])=>addVotes(n,v*m));
     scoreGuesses(q.top.map(t=>t[0]));
     sfx("flip");flash(250);later(()=>sfx("ding"),380);
     if(isTie(q)){later(()=>sfx("buzz"),1450);shake(1450);later(()=>playSong("faceoff"),2300);later(leaderCheck,3600)}
     else{later(()=>{sfx("applause");confetti(140);applause()},500);S.results[S.k]={name:q.top[0][0],votes:q.top[0][1]};later(()=>playSong("strut"),1200);later(leaderCheck,3000)}
-    render();},2000);
+    render();}),2000);
+}
+/* ❌ strike counter: one big red X per wrong phone guess, then the reveal (Space skips) */
+function strikes(done){
+  const q=cur(),top=q.top.map(t=>t[0]),got=phoneAnswers();
+  const wrong=Object.keys(got).filter(n=>!(n===HOST&&stumpOn())&&got[n]!=null&&!top.includes(got[n])).length;
+  const any=Object.keys(got).filter(n=>!(n===HOST&&stumpOn())&&got[n]!=null).length;
+  if(!any)return done();   // nobody guessed on a phone: straight to the reveal
+  const ov=document.createElement("div");ov.className="strikes";ov.innerHTML=`<div class="xs"></div><div class="cap"></div>`;document.body.appendChild(ov);
+  const xs=ov.querySelector(".xs"),cap=ov.querySelector(".cap"),shown=Math.min(wrong,8);let fin=false,ts=[];
+  const finish=()=>{if(fin)return;fin=true;ts.forEach(clearTimeout);removeEventListener("keydown",key,true);ov.classList.add("out");setTimeout(()=>ov.remove(),350);done()};
+  const key=e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();e.stopImmediatePropagation();finish()}};
+  addEventListener("keydown",key,true);
+  if(!wrong){cap.textContent="NO STRIKES! 🎯";cap.classList.add("on","good");sfx("ding");ts.push(setTimeout(finish,1600));return}
+  for(let i=0;i<shown;i++)ts.push(setTimeout(()=>{const x=document.createElement("b");x.textContent="✕";xs.appendChild(x);sfx("buzz");shake(250)},i*300));
+  const t=shown*300+150;
+  ts.push(setTimeout(()=>{cap.innerHTML=`${wrong} STRIKE${wrong===1?"":"S"}!${wrong>shown?`<small>+${wrong-shown} more</small>`:""}`;cap.classList.add("on")},t));
+  ts.push(setTimeout(finish,t+1300));
 }
 /* 🎯 phone guesses: +1 for calling it, +1 ⚡ speed bonus, +1 🔥 when on fire, all doubled in the finale */
 function scoreGuesses(top){

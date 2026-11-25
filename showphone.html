@@ -243,7 +243,7 @@ function guestTiles(t){
   P.push(["give","🤝","Send points",`${faces("data-gv")}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
       <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button>`]);
   P.push(["shout","💌","Shout-out",`<textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas, QUEEN MOTHER!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button>`]);
-  P.push(["walk","🎵","Walk-up song",`<select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.filter(([k])=>!RESERVED_SONG[k]||RESERVED_SONG[k]===me).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
+  if(!Object.values(RESERVED_SONG).includes(me))P.push(["walk","🎵","Walk-up song",`<select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.filter(([k])=>!RESERVED_SONG[k]||RESERVED_SONG[k]===me).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
       <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny">Plays on the TV when you win. Once you save a song, it's yours: nobody else can pick it.</div>`]);
   P.push(["help","🆘","I'm lost",null]);
   const msgId={decree:"dqmsg",bday:"qbmsg",snitch:"snmsg",give:"gvmsg",shout:"somsg",walk:"wmsg",help:"helpmsg"};
@@ -316,7 +316,7 @@ function render(){if(me!=="Carsyn")dropBar();
   if(app.querySelector("#snsend")){let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
     const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${XM.dn(sn)}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
-  const ws=app.querySelector("#wsel");if(walkup)ws.value=walkup;
+  const ws=app.querySelector("#wsel");if(ws){if(walkup)ws.value=walkup;
   app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value,true);clearTimeout(window.__wpT);window.__wpT=setTimeout(()=>XM.stopSong(),12000)};
   // songs other tributes already saved show as taken
   const markSongs=async()=>{try{const j=await (await fetch("/api/show?a=walkups",{cache:"no-store"})).json();const w=j.walkups||{};
@@ -326,7 +326,7 @@ function render(){if(me!=="Carsyn")dropBar();
   app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});const m=app.querySelector("#wmsg");
     if(r.ok){walkup=ws.value;if(m)m.textContent="🎵 Saved! It's yours. It plays on the TV when you win."}
     else if(r.status===409){if(m)m.textContent=`😬 Too slow! ${XM.dn(r.by||"Someone")} already took that song. Pick another.`;ws.value=walkup||"";markSongs()}
-    else if(m)m.textContent=r.status===403?"That song belongs to someone else.":"Couldn't save. Check your internet."};
+    else if(m)m.textContent=r.status===403?"That song belongs to someone else.":"Couldn't save. Check your internet."};}
   let gv=null,gn=null;app.querySelectorAll("[data-gv]").forEach(b=>b.onclick=()=>{gv=b.dataset.gv;app.querySelectorAll("[data-gv]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelectorAll("[data-gn]").forEach(b=>b.onclick=()=>{gn=+b.dataset.gn;app.querySelectorAll("[data-gn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#gvsend").onclick=async()=>{const m=app.querySelector("#gvmsg");if(!gv||!gn){m.textContent="Pick who and how many.";return}

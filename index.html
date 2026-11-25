@@ -76,6 +76,22 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 body.has-ticker .stage{max-height:42vh}
 .stage{position:relative;border-radius:18px;overflow:hidden;background:#07120d;aspect-ratio:16/9;max-height:50vh;width:100%;margin-inline:auto;
   box-shadow:0 0 0 4px var(--gold),0 0 0 9px var(--red),0 14px 40px rgba(0,0,0,.5)}
+.stage .mash{position:absolute;inset:0;display:grid;place-items:center}
+.stage .mash img{position:absolute;height:100%;max-width:100%;object-fit:contain}
+.stage .mash img+img{opacity:.5;mix-blend-mode:normal}
+.stage .tag.mt{font-size:clamp(.9rem,1.8vw,1.5rem);max-width:94%;white-space:normal;text-align:center}
+.stage .mashrev{position:absolute;inset:0;display:flex;gap:2%;justify-content:center;align-items:center;padding:0 4%}
+.stage .mashrev img{position:static;inset:auto;width:auto;height:100%;max-width:48%;object-fit:contain;border-radius:12px;animation:revpop .8s cubic-bezier(.2,1.3,.4,1)}
+.gchart{position:absolute;inset:4% 6%;z-index:5;display:flex;flex-direction:column;justify-content:center;gap:1.2vh;padding:2vh 3vw;border-radius:18px;background:rgba(7,18,13,.92);box-shadow:0 0 0 3px var(--gold)}
+.gchart .gtitle{font-family:var(--display,serif);color:var(--gold);font-size:clamp(20px,2.4vw,40px);text-align:center;margin-bottom:.6vh}
+.gchart .grow{display:grid;grid-template-columns:clamp(34px,3.4vw,60px) minmax(120px,22%) 1fr clamp(30px,3vw,54px);gap:1vw;align-items:center;font-weight:800;font-size:clamp(16px,1.8vw,30px);transition:opacity .4s}
+.gchart .gface{display:grid;place-items:center;font-size:1.4em}.stage .gchart .gface img{position:static;inset:auto;width:100%;height:auto;aspect-ratio:1;border-radius:50%;object-fit:cover}
+.gchart .gname{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gchart .gbar{height:clamp(16px,2.2vh,30px);border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
+.gchart .gbar i{display:block;height:100%;border-radius:999px;background:rgba(255,255,255,.55);animation:gbar .9s ease-out both}
+@keyframes gbar{from{width:0}}
+.gchart .gcount{text-align:right}
+.gchart.lit .grow{opacity:.35}.gchart.lit .grow.win{opacity:1}.gchart.lit .grow.win .gbar i{background:var(--gold);box-shadow:0 0 18px var(--gold)}.gchart.lit .grow.win .gname,.gchart.lit .grow.win .gcount{color:var(--gold)}
 .stage .blur{position:absolute;inset:-40px;background-size:cover;background-position:center;filter:blur(30px) brightness(.4)}
 .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;will-change:transform}
 .stage img.rev{animation:revpop .8s cubic-bezier(.2,1.3,.4,1)}
@@ -218,6 +234,7 @@ const ROUNDS=[{at:0,num:"Round 1",name:"The Reaping",sub:"12 faces. Some of thes
               {at:12,num:"Round 2",name:"The Quarter Quell",sub:"12 faces. Fewer chances, same glory."},
               {at:24,num:"Round 3",name:"The Feast",sub:"3 faces. Triple points. Everything you need is at the cornucopia."}];
 const FEAST=24; // every face from here on is worth triple
+const MUTT_AT=[7,19]; // 🐺 Mutt Mashup faces (one in round 1, one in round 2)
 const pointsX=qi=>qi>=FEAST?3:DOUBLE.has(qi)?2:1;
 const roundOf=qi=>[...ROUNDS].reverse().find(r=>qi>=r.at);
 const SHAPES=[
@@ -241,7 +258,7 @@ function freshState(){
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 // a TV reload mid-face picks up the clock where it was (at least 8 seconds left), so nobody loses points to a refresh
-function start(data){ S=(data&&data.phase)?data:freshState(); if(S.secs!==10)S.secs=SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.charting){S.charting=false;S.chartD=null;S.charted=false} if(S.secs!==10)S.secs=SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
 
 /* ================= MUSIC: original game-show loops over public-domain carols ================= */
 let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
@@ -424,6 +441,9 @@ function newGame(){
   // the 3 wrong choices are always from the same group (girls with girls, boys with boys), so nobody can rule names out
   S.rounds=Q.map((x,qi)=>{const g=groupOf(x.a),others=shuffle(NAMES.filter(n=>n!==x.a&&groupOf(n)===g)).slice(0,3);return {qi,choices:shuffle([x.a,...others])}});
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0});
+  // 🐺 Mutt Mashups: one face per round becomes two photos blended together (name both for double points)
+  if(S.mutts!==false)MUTT_AT.forEach(qi=>{const r=S.rounds[qi];if(!r)return;const a=Q[r.qi].a,pool=Q.slice(0,qi).filter(z=>z.a!==a);
+    if(pool.length){const z=pool[Math.floor(Math.random()*pool.length)];r.mash={b:z.a,img:z.r}}});
   Extras.reset();Extras.deal();
   S.qi=0; roundCardOrQuestion();
 }
@@ -435,11 +455,11 @@ function roundCardOrQuestion(){
 let readyT=0;
 function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
-function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=LOOK;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
+function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const isTb=()=>!!S.rounds[S.qi]?.tb;
 const faceLbl=()=>isTb()?"⚔️ Showdown face":`Face ${S.qi+1} of ${Q.length}`;
-const giftTag=()=>isTb()?`<span class="gift">⚔️ Fastest right answer wins</span>`:S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
+const giftTag=()=>mash()?`<span class="gift">🐺 MUTT MASHUP: name both for double points</span>`:isTb()?`<span class="gift">⚔️ Fastest right answer wins</span>`:S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
 const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt","humblepie1","humblepie","humblepieone"],
   "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
@@ -452,6 +472,19 @@ function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1
 function matches(typed,answer){const t=norm(typed);if(!t)return false;
   return (ALIASES[answer]||[norm(answer)]).concat(norm(answer)).some(a=>a===t||(a.length>=4&&lev(a,t)<=1))}
 const cur=()=>Q[S.rounds[S.qi].qi];
+const mash=()=>S.phase!=="lobby"&&S.rounds[S.qi]&&!S.rounds[S.qi].tb?S.rounds[S.qi].mash||null:null;
+// does a typed answer mention this tribute anywhere ("kyle and natalie", "Kachow + Buzz Buzz")?
+function mentions(typed,name){const w=String(typed||"").toLowerCase().replace(/&/g," ").split(/[^a-z0-9]+/).filter(x=>x&&x!=="and"&&x!=="n"&&x!=="plus");
+  for(let i=0;i<w.length;i++)for(let k=1;k<=6&&i+k<=w.length;k++)if(matches(w.slice(i,i+k).join(""),name))return true;return false}
+/* 📊 guess chart: after the cannon, everyone's guesses as bars, then the right one lights up gold */
+function guessChart(){const counts={};let total=0;
+  answering().forEach(p=>{const t=String(S.typed[p.name]||"").trim();if(!t||t==="skip"||t.startsWith("🔮"))return;total++;
+    const n=NAMES.find(n=>matches(t,n))||"Other";counts[n]=(counts[n]||0)+1});
+  if(total<2)return null;return {rows:Object.entries(counts).sort((a,b)=>b[1]-a[1]||(a[0]==="Other")-(b[0]==="Other")),total}}
+function chartHTML(d,lit){const max=Math.max(...d.rows.map(r=>r[1]));const right=cur().a;
+  return `<div class="gchart${lit?" lit":""}"><div class="gtitle">📊 What the Capitol guessed</div>${d.rows.map(([n,c])=>`<div class="grow${lit&&n===right?" win":""}">
+    <span class="gface">${n==="Other"?"❓":`<img src="${AV(n)}" alt="">`}</span><span class="gname">${esc(n)}</span>
+    <span class="gbar"><i style="width:${Math.max(8,c/max*100)}%"></i></span><b class="gcount">${c}</b></div>`).join("")}</div>`}
 
 function setZoom(p){
   const im=$(".stage img.q");if(!im)return;const z=cur().zoom||{fx:.5,fy:.5,z:1.14,cap:1};
@@ -487,10 +520,25 @@ function drawTimer(){
   c.setAttribute("stroke-dasharray",`${(frac*176).toFixed(1)} 176`);c.setAttribute("stroke",left<=5?"var(--a1)":"var(--gold)");
 }
 function lock(){S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();FireTimer.stop();sfx("cannon");render();}
+let chartT=[];
 function reveal(){
+  if(S.charting){chartT.forEach(clearTimeout);chartT=[];S.charting=false;S.chartD=null;return doReveal()}
+  FireTimer.stop();
+  if(S.mode==="type"&&!isTb()&&!mash()&&!S.charted&&!S.locked){S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();render()}
+  Sync.fillAnswers();
+  const d=S.mode==="type"&&!isTb()&&!mash()&&!S.charted?guessChart():null;S.charted=true;
+  if(!d)return doReveal();
+  S.charting=true;S.chartD=d;S.chartLit=false;render();
+  let k=0;const roll=()=>{if(!S.charting)return;sfx("drum");if(++k<5)chartT.push(setTimeout(roll,700))};roll();
+  chartT.push(setTimeout(()=>{if(!S.charting)return;S.chartLit=true;render();sfx("go")},4000));
+  chartT.push(setTimeout(()=>{if(!S.charting)return;S.charting=false;S.chartD=null;doReveal()},5400));
+}
+function doReveal(){
   FireTimer.stop();
   Sync.fillAnswers();
-  if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
+  const m=mash();S.half=[];
+  if(S.mode==="type"&&m){const a=cur().a;answering().forEach(p=>{const t=S.typed[p.name];const hit=(mentions(t,a)?1:0)+(mentions(t,m.b)?1:0);if(hit===2)S.correct.push(p.name);else if(hit===1)S.half.push(p.name)});S.correct=[...new Set(S.correct)]}
+  else if(S.mode==="type")S.correct=answering().filter(p=>matches(S.typed[p.name],cur().a)).map(p=>p.name);
   S.phase="reveal";cancelAnimationFrame(raf);stopSong();sfx("reveal");render();confetti(110);}
 function rankMap(){const m={};let rank=0,prev=null;ranked().forEach((p,i)=>{if(rs(p)!==prev){rank=i+1;prev=rs(p)}m[p.name]=rank});return m}
 let scoreWait=false;
@@ -504,7 +552,8 @@ function scoreNow(){
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();S.slow=[];Extras.before();
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
-    if(S.correct.includes(p.name)){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult;p.score+=p.delta}
+    const mm=mash()?(S.correct.includes(p.name)?2:(S.half||[]).includes(p.name)?1:0):(S.correct.includes(p.name)?1:0);
+    if(mm){p.streak++;p.delta=(1000+Math.min(p.streak-1,5)*100)*mult*mm;p.score+=p.delta}
     else if(p.name!==HOST&&Sync.hasPhone(p.name)&&answering().includes(p)&&!String(S.typed[p.name]||"").trim()){
       // signed in but no guess before the cannon: lose points (never below 0)
       p.streak=0;p.delta=-Math.min(NO_ANSWER,p.score);p.score+=p.delta;p.missed=true;if(p.delta<0)S.slow.push(p.name)}   // nothing to lose yet: no "−250" pop-up
@@ -581,7 +630,7 @@ function lobbyView(){
     ${Sync.roster()}
     <div class="eyebrow">Tap a face to sit them out</div>
     <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
-    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options</summary><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button></div></details>
+    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options</summary><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button></div></details>
     <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
@@ -603,25 +652,28 @@ function questionView(){
   const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Phones filled in. Tap anyone who said ${esc(x.a)} out loud</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
     <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=false;
       return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own face\"":""}>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}${own?' <span class="d">their face</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
-  const img=rev?src(x.r):src(x.q);
+  const img=rev?src(x.r):src(x.q),m=mash();
   return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">${faceLbl()}</div></div>${giftTag()}
     ${rev?sndBtn():`<div class="timer" aria-label="Seconds left"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="6"/><circle class="arc" cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="176 176"/></svg><div class="n">${S.secs}</div></div>`}</div>
   <div class="stage"><div class="blur" style="background-image:url('${img}')"></div>
-    <img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(x.a):"Mystery tribute, zoomed in"}">
+    ${m?(rev?`<div class="mashrev"><img src="${src(x.r)}" alt="${esc(x.a)}"><img src="${src(m.img)}" alt="${esc(m.b)}"></div>`
+      :`<div class="mash"><img src="${src(x.r)}" alt="Mystery tribute"><img src="${src(m.img)}" alt="Second mystery tribute"></div>`)
+      :`<img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(x.a):"Mystery tribute, zoomed in"}">`}
+    ${!rev&&S.charting&&S.chartD?chartHTML(S.chartD,S.chartLit):""}
     ${!rev&&!S.locked&&S.look>0?`<div class="lookbig">👀 Look closely… <b id="lookn">${Math.ceil(S.look)}</b></div>`:""}
-    ${rev?`<div class="tag"><small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
+    ${rev?`<div class="tag${m?" mt":""}">${m?`<small>Mutt Mashup</small>It's ${esc(x.a)} and ${esc(m.b)}!`:`<small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!`}</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
   ${S.mode==="type"?typedView(x,rev):`<div class="answers">${ans}</div>${rev?scoring:`<div class="phoneprompt">${S.locked?"💥 Answers locked":"📱 Answer on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`}`}
   <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":S.look>0?"Space: start typing now":"Space: lock answers"}</span>
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
 }
 function typedView(x,rev){
-  const boxes=answering().map(p=>{const own=false,v=S.typed[p.name]||"",ok=S.correct.includes(p.name);
+  const boxes=answering().map(p=>{const own=false,v=S.typed[p.name]||"",half=(S.half||[]).includes(p.name),ok=S.correct.includes(p.name)||half;
     const cls=rev?(own?"own":ok?"ok":"no"):"";
     return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
-      ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
+      ${rev?`<span class="mark">${own?"their face":S.correct.includes(p.name)&&mash()?"✅✅":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
       <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
   // while a face is up the TV never shows guesses: only who has sealed one (their name turns gold)
-  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":S.look>0?`👀 Look closely. Typing opens in <b id="lookp">${Math.ceil(S.look)}</b>`:"📱 Type your guess on your phone! You have a minute."}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
+  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":S.look>0?`👀 Look closely. Typing opens in <b id="lookp">${Math.ceil(S.look)}</b>`:(mash()?"🐺 Name BOTH tributes on your phone! You have a minute.":"📱 Type your guess on your phone! You have a minute.")}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
   return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
   <div class="typed">${boxes}</div>`;
 }
@@ -688,6 +740,7 @@ function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   on("go",showIntro);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
+  on("mutts",()=>{S.mutts=S.mutts===false;render()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
   on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];if(S.phase==="final"){song=null;playWinner()}else if(m)playSong(m)}   // the winner screen goes back to the winner song

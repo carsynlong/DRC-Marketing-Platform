@@ -33,7 +33,8 @@ const Sync = (() => {
       hurry: S.phase === "question" && !S.locked && S.hurryEnds ? S.hurryEnds : undefined,        // ⏰ last 10 seconds: phones hurry (howto.js)
       slow: ["reveal", "board", "final"].includes(S.phase) && S.slow && S.slow.length ? S.slow : undefined, slowPen: SLOW_PEN };   // How to play is on the TV: phones show it too (howto.js)
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
-    if (inGame && ["reveal", "board", "final"].includes(S.phase)) { g.answer = Q[r.qi].a; g.correct = S.correct; }
+    if (inGame && ["reveal", "board", "final"].includes(S.phase)) { g.answer = r.mash ? Q[r.qi].a + " and " + r.mash.b : Q[r.qi].a; g.correct = r.mash ? S.correct.concat(S.half || []) : S.correct; }
+    if (inGame && r.mash && !r.tb && (S.phase === "ready" || S.phase === "question")) g.mash = true;   // 🐺 Mutt Mashup: name both
     if (inGame) {
       let rank = 0, prev = null;
       g.scores = ranked().map((p, i) => { const v = typeof rs === "function" ? rs(p) : p.score; if (v !== prev) { rank = i + 1; prev = v }
@@ -139,7 +140,8 @@ const Sync = (() => {
       if (!p || !answering().includes(p) || v == null) return;
       if (S.mode === "type") {
         S.typed[n] = v;
-        if (counted && matches(v, a) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
+        const mm = typeof mash === "function" ? mash() : null;   // 🐺 Mutt Mashup: a late answer needs both names
+        if (counted && (mm ? mentions(v, a) && mentions(v, mm.b) : matches(v, a)) && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
       } else if (v === a && !S.correct.includes(n)) { S.correct.push(n); changed = true; }
     });
     return changed;

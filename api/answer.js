@@ -5,7 +5,7 @@ import { redis, readGame, reply, text, prefix } from "../lib/redis.js";
 export default async function handler(req, res) {
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const { pid, name, qi } = req.body || {};
-  const answer = text(req.body?.answer, 40);
+  const answer = text(req.body?.answer, 80);   // room for two names in a Mutt Mashup
   if (!answer) return reply(res, 400, { error: "Empty answer" });
 
   const p = prefix(req);

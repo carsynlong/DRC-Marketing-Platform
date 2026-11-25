@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Victor Certificates</title>
+<link rel="icon" href="/xmas/emblem.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:wght@400;700&family=Great+Vibes&family=Mountains+of+Christmas:wght@700&family=Outfit:wght@600;800&display=swap">
+<style>
+@page{size:letter landscape;margin:0}
+*{box-sizing:border-box}
+body{margin:0;background:#16261d;font-family:Outfit,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{position:sticky;top:0;z-index:5;display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:14px;background:#0f1b14;color:#f3e7bf;font-weight:800}
+.bar button{font:800 1.15rem Outfit,sans-serif;border:0;border-radius:999px;padding:.7em 1.6em;background:#b8322a;color:#fff;cursor:pointer;box-shadow:0 4px 0 #6e1712}
+.bar small{opacity:.75;font-weight:600}
+.empty{max-width:640px;margin:60px auto;text-align:center;color:#f3e7bf;font-size:1.3rem;line-height:1.5;padding:0 16px}
+.wrap{display:grid;gap:30px;justify-content:center;padding:30px 10px 60px}
+.cert{position:relative;width:11in;height:8.5in;overflow:hidden;background:repeating-linear-gradient(45deg,#b8322a 0 .16in,#fff 0 .32in);break-after:page;page-break-after:always}
+.paper{position:absolute;inset:.22in;border-radius:10px;overflow:hidden;
+ background:repeating-radial-gradient(ellipse at 50% 50%,rgba(40,80,55,.05) 0 1px,transparent 1px 5px),radial-gradient(ellipse at 50% 45%,#fbf7e8,#ebe1bd);
+ box-shadow:inset 0 0 0 .05in #1f5a3a,inset 0 0 0 .09in #fbf7e8,inset 0 0 0 .12in #c9962a,inset 0 0 0 .16in #fbf7e8,inset 0 0 0 .18in #1f5a3a}
+.fl{position:absolute;inset:0}.fl i{position:absolute;color:rgba(31,90,58,.13);font-style:normal}
+.corner{position:absolute;font-size:.5in}.c1{left:.4in;top:.4in}.c2{right:.4in;top:.4in}.c3{left:.4in;bottom:.35in}.c4{right:.4in;bottom:.35in}
+.in{position:absolute;inset:.55in 1.1in .5in;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;text-align:center}
+.ey{font-weight:800;letter-spacing:.32em;font-size:.14in;color:#b8322a}
+.h{font-family:"Old Standard TT",serif;font-weight:700;font-size:.5in;letter-spacing:.08em;color:#1f5a3a;line-height:1.05;margin-top:.05in}
+.h.ult{color:#b8322a}
+.sub{font-family:"Old Standard TT",serif;font-size:.17in;letter-spacing:.14em;color:#6b5a2a;margin-top:.04in}
+.mid{display:flex;align-items:center;gap:.5in;align-self:center}
+.ov{width:2.3in;height:2.8in;border-radius:50%;overflow:hidden;flex:none;box-shadow:0 0 0 .05in #fbf7e8,0 0 0 .09in #1f5a3a,0 0 0 .13in #c9962a}
+.ov img{width:100%;height:100%;object-fit:cover}
+.txt{text-align:left;max-width:5.6in}
+.cer{font-family:"Old Standard TT",serif;font-style:italic;font-size:.22in;color:#3d3a2a}
+.nm{font-family:"Mountains of Christmas","Old Standard TT",serif;font-weight:700;font-size:.85in;color:#b8322a;line-height:1;text-shadow:.02in .02in 0 #1f5a3a;margin:.06in 0}
+.dist{font-weight:800;letter-spacing:.2em;font-size:.13in;color:#1f5a3a}
+.won{font-family:"Old Standard TT",serif;font-size:.29in;color:#1f5a3a;margin-top:.12in;line-height:1.3}
+.won b{color:#b8322a}
+.blank{display:inline-block;border-bottom:2px solid #3d3a2a;min-width:3.6in;height:.4in;vertical-align:bottom}
+.blank.s{min-width:3.2in}
+.foot{display:flex;align-items:end;justify-content:space-between;width:100%}
+.sig{width:2.6in;text-align:center;font-size:.1in;letter-spacing:.1em;font-weight:800;color:#3d3a2a}
+.sig i{display:block;font-family:"Great Vibes",cursive;font-style:normal;font-size:.34in;font-weight:400;letter-spacing:0;color:#1c2a44;border-bottom:1.5px solid #3d3a2a;line-height:1.2}
+.seal{width:1.45in;height:1.45in;border-radius:50%;display:grid;place-items:center;position:relative;
+ background:radial-gradient(circle,#f3d27a 0 52%,#c9962a 53% 58%,#f3d27a 59% 66%,#b8862a 67% 70%,transparent 71%)}
+.seal img{width:.82in}
+.seal::after{content:"";position:absolute;inset:-.06in;border-radius:50%;background:repeating-conic-gradient(#c9962a 0 6deg,transparent 6deg 12deg);-webkit-mask:radial-gradient(circle,transparent 69%,#000 70%);mask:radial-gradient(circle,transparent 69%,#000 70%)}
+.date{font-size:.11in;letter-spacing:.2em;font-weight:800;color:#6b5a2a;margin-top:.05in}
+@media print{body{background:#fff}.bar,.empty{display:none}.wrap{display:block;padding:0}.cert{margin:0}}
+@media screen and (max-width:1150px){.wrap{zoom:.6}}
+</style>
+</head>
+<body>
+<div class="bar"><button id="print">🖨️ Print certificates</button><small>Landscape, 100% scale, "Background graphics" on.</small></div>
+<div id="out"></div>
+<script src="/xmas/xmas.js"></script>
+<script>
+// 🏆 One certificate per winner saved on this laptop (The Capitol Has Spoken): 1st place, 2nd place, and the Ultimate Victor.
+const esc=XM.esc,real=n=>(XM.realName?XM.realName(n):n);
+const trib=n=>XM.TRIBUTES.find(t=>t.name.toLowerCase()===String(real(n)).toLowerCase());
+const IND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
+const flakes=Array.from({length:26},(_,k)=>`<i style="left:${(k*37)%100}%;top:${(k*53)%100}%;font-size:${.18+((k*13)%5)*.07}in">❄</i>`).join("");
+const DATE="Thanksmas · November 27, 2026";
+function cert({name,line,title,ult}){
+  const t=trib(name),who=t?XM.dn(t.name):name;
+  return `<div class="cert"><div class="paper"><div class="fl">${flakes}</div>
+  <div class="corner c1">🎄</div><div class="corner c2">🎁</div><div class="corner c3">🍬</div><div class="corner c4">❄️</div>
+  <div class="in">
+   <div><div class="ey">THE CAPITOL OF PANEM</div><div class="h${ult?" ult":""}">${title}</div><div class="sub">THE 2026 CHRISTMAS GAMES · THANKSMAS EDITION</div></div>
+   <div class="mid">${t?`<div class="ov"><img src="${t.full||t.img}" alt="" onerror="this.src='${t.img}'"></div>`:""}
+    <div class="txt"><div class="cer">This certifies that</div><div class="nm">${esc(who)}</div>${t?`<div class="dist">DISTRICT ${t.d} · ${IND[t.d].toUpperCase()}</div>`:""}<div class="won">${line}</div></div></div>
+   <div class="foot"><div class="sig"><i>Mrs. Claus</i>TREASURER OF THE NORTH POLE</div><div style="text-align:center"><div class="seal"><img src="/xmas/emblem.png" alt=""></div><div class="date">${DATE}</div></div><div class="sig"><i>The President</i>PRESIDENT OF THE CAPITOL</div></div>
+  </div></div></div>`}
+function build(){
+  const V=XM.victors(),S2=XM.seconds(),out=[];
+  for(const [k,g] of Object.entries(XM.GAMES)){
+    if(k==="mitten")continue;                      // Mitten Mayhem: everyone wins their own major award
+    const v=V[k];if(v&&trib(v))out.push(cert({name:v,title:"CERTIFICATE OF VICTORY",line:`has won <b>${esc(g.name)}</b><br>and claimed a major award.`}));
+    const s=S2[k];if(s&&trib(s))out.push(cert({name:s,title:"CERTIFICATE OF HONOR",line:`took <b>2nd place</b> in <b>${esc(g.name)}</b><br>and claimed a major award.`}));
+  }
+  // Ultimate Victor: most games won (2 or more), using the tiebreaker result if there was one
+  const c={};Object.entries(V).forEach(([g,n])=>{if(g==="mitten"||!n||!trib(n))return;const m=trib(n).name;c[m]=(c[m]||0)+1});
+  const max=Math.max(0,...Object.values(c));
+  if(max>=2){let names=Object.keys(c).filter(n=>c[n]===max);const tb=XM.store.get("xmas-ultimate",null);
+    if(names.length>1&&tb&&names.includes(tb.winner))names=[tb.winner];
+    names.forEach(n=>out.unshift(cert({name:n,ult:true,title:"👑 ULTIMATE VICTOR",line:`won <b>${max} games</b> tonight and is crowned<br>the Ultimate Victor, with eternal bragging rights.`})))}
+  document.getElementById("out").innerHTML=out.length?`<div class="wrap">${out.join("")}</div>`:
+    `<div class="empty">🏆 No winners saved on this laptop yet.<br>Record the winners in the show (The Capitol Has Spoken), then come back here to print their certificates.</div>`;
+  document.getElementById("print").style.display=out.length?"":"none";
+}
+// ?blank=1: fill-in-by-hand certificates
+function blank(){const b=(title,line)=>`<div class="cert"><div class="paper"><div class="fl">${flakes}</div>
+  <div class="corner c1">🎄</div><div class="corner c2">🎁</div><div class="corner c3">🍬</div><div class="corner c4">❄️</div>
+  <div class="in"><div><div class="ey">THE CAPITOL OF PANEM</div><div class="h">${title}</div><div class="sub">THE 2026 CHRISTMAS GAMES · THANKSMAS EDITION</div></div>
+   <div class="mid"><div class="txt" style="text-align:center;max-width:8in"><div class="cer">This certifies that</div><div style="margin:.25in 0 .1in"><span class="blank"></span></div><div class="won">${line}</div></div></div>
+   <div class="foot"><div class="sig"><i>Mrs. Claus</i>TREASURER OF THE NORTH POLE</div><div style="text-align:center"><div class="seal"><img src="/xmas/emblem.png" alt=""></div><div class="date">${DATE}</div></div><div class="sig"><i>The President</i>PRESIDENT OF THE CAPITOL</div></div></div></div></div>`;
+  document.getElementById("out").innerHTML=`<div class="wrap">${[
+    b("CERTIFICATE OF VICTORY",`has won <span class="blank s"></span><br>and claimed a major award.`),
+    b("CERTIFICATE OF VICTORY",`has won <span class="blank s"></span><br>and claimed a major award.`),
+    b("CERTIFICATE OF HONOR",`took <b>2nd place</b> in <span class="blank s"></span><br>and claimed a major award.`),
+    b("👑 ULTIMATE VICTOR",`is crowned the Ultimate Victor,<br>with eternal bragging rights.`)].join("")}</div>`}
+document.getElementById("print").onclick=()=>window.print();
+if(/blank/.test(location.search))blank();else{addEventListener("storage",build);build()}
+</script>
+</body>
+</html>

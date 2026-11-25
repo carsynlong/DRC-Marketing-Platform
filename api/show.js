@@ -105,7 +105,7 @@ async function main(req, res) {
     const me = text(req.query.me, 40), full = req.query.full === "1";
     const q = pj(qraw);
     const quest = q && me && q.to === me && Date.now() - q.t < 5 * 60000 ? q : null;
-    const pts = await points();
+    const pts = full ? await points() : undefined;   // points only on the every-3rd "full" check-in (saves database calls)
     let mission;   // undefined = "not checked this time"
     const mine = me && full && req.query.pid && (await redis.hget(P + "players", me)) === String(req.query.pid);
     if (mine) mission = pj(await redis.hget(P + "missions", me)); else if (me && full) mission = null;
@@ -579,7 +579,7 @@ async function main(req, res) {
     if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only the QUEEN MOTHER can do that" });
     const q = text(req.body?.q, 80); if (!q) return reply(res, 400, { error: "Pick a decree first" });
     let to = text(req.body?.to, 40);
-    if (to === "random") { const pl = Object.keys(await hash(P + "players")).filter(n => n !== name); const pool = pl.length ? pl : NAMES.filter(n => n !== name); to = pool[Math.floor(Math.random() * pool.length)]; }
+    if (to === "random") { const pl = Object.keys(await hash(P + "players")).filter(n => n !== name && n !== "Carsyn"); const pool = pl.length ? pl : NAMES.filter(n => n !== name && n !== "Carsyn"); to = pool[Math.floor(Math.random() * pool.length)]; }
     if (!NAMES.includes(to) || to === name) return reply(res, 400, { error: "Pick a tribute" });
     const cur = await readQuest(), now = Date.now();
     if (cur && cur.status === "live" && now < cur.start + cur.secs * 1000 + 60000) return reply(res, 409, { error: "The Capitol is busy, try again in a moment" });

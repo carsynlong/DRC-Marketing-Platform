@@ -202,7 +202,7 @@ function wireBooth(){const app=document.getElementById("app");const f=app.queryS
     app.querySelector("#phimg").src=shot;app.querySelector("#phprev").hidden=false;app.querySelector("#phrow").hidden=false;app.querySelector("#phtake").hidden=true;msg("Looking good. Send it?")};
   app.querySelector("#phsend").onclick=async()=>{if(!shot)return;const b=app.querySelector("#phsend");b.disabled=true;msg("Sending...");
     const r=await api({a:"photo",name:me,img:shot});b.disabled=false;
-    if(r.ok){buzz(60);reset();msg("📸 Sent! Watch the TV.")}else msg(r.status===429?"The Capitol is still developing your last photo. Try again in a few seconds.":r.status===400?"That photo was too big. Tap Retake.":"Couldn't send. Check your internet.")}}
+    if(r.ok){buzz(60);reset();msg("📸 Sent! It shows up at the end of the night.")}else msg(r.status===429?"The Capitol is still developing your last photo. Try again in a few seconds.":r.status===400?"That photo was too big. Tap Retake.":"Couldn't send. Check your internet.")}}
 function buzz(p){try{if(navigator.vibrate&&navigator.vibrate(p))return}catch(e){}
   const big=Array.isArray(p)||p>=150;if(!big)return;const f=document.createElement("div");f.style.cssText="position:fixed;inset:0;z-index:99;background:#fff;pointer-events:none;transition:opacity .5s";document.body.appendChild(f);
   requestAnimationFrame(()=>{f.style.opacity="0"});setTimeout(()=>f.remove(),600);try{XM.sfx("stinger")}catch(e){}}
@@ -231,12 +231,12 @@ function guestTiles(t){
     P.push(["bday","🎂","Sing to me!",null]);
   }
   P.push(["emoji","😀","Send emojis",`${DEMOJI[me]?`<div class="eyebrow" style="text-align:center;margin:2px 0 8px">Your district: D${t.d} · ${DIND[t.d]||""}</div><div class="reacts">${DEMOJI[me].map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div><div class="eyebrow" style="text-align:center;margin:12px 0 8px">Arena classics</div>`:""}<div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div>`]);
-  P.push(["booth","📸","Photo booth",`<div id="booth">
+  P.push(["booth","📸","Photo booth",`<div id="booth" class="booth">
       <input type="file" id="phfile" accept="image/*" capture="user" hidden>
       <div id="phprev" class="phprev" hidden><img id="phimg" alt=""></div>
       <button class="btn red" id="phtake" style="width:100%;font-size:1.1rem">📸 Take a photo</button>
       <div class="phrow" id="phrow" hidden><button class="btn" id="phsend">📨 Send to the Capitol</button><button class="btn ghost" id="phretake">🔁 Retake</button></div>
-      <div class="tiny" id="phmsg">It pops up on the TV.</div></div>`]);
+      <div class="tiny" id="phmsg">Saved for the end of the night.</div></div>`]);
   P.push(["live","🎥","Go live",`<button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div>`]);
   P.push(["snitch","🚨","Snitch",`${faces("data-sn")}<select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button>`]);
@@ -389,7 +389,7 @@ async function scoreCard(){
 // 👑 All rise: on QUEEN MOTHER's profile every phone (not Clo's) shows BOW NOW for 5 seconds, once
 let riseSeen=XM.store.get("xmas-rise-seen",null);
 function myAllRise(a){if(!me||!a||a.id===riseSeen||me==="Carsyn")return;riseSeen=a.id;XM.store.set("xmas-rise-seen",a.id);
-  const o=document.createElement("div");o.className="allrise";o.innerHTML=`<div class="in"><div class="cr">👑</div><h2>BOW NOW</h2><p>All rise for the QUEEN MOTHER</p></div>`;
+  const o=document.createElement("div");o.className="allrise";o.innerHTML=me==="QUEEN MOTHER"?`<div class="in"><div class="cr">👑</div><h2>YOUR SUBJECTS BOW</h2><p>Everyone is bowing to you right now</p></div>`:`<div class="in"><div class="cr">👑</div><h2>BOW NOW</h2><p>All rise for the QUEEN MOTHER</p></div>`;
   document.body.appendChild(o);buzz([300,120,300,120,500]);o.onclick=()=>o.remove();setTimeout(()=>o.remove(),5200)}
 let bdaySeen=XM.store.get("xmas-bday-seen",null);
 function myBday(b){if(!me||!b||b.id===bdaySeen||me==="Carsyn"||busyPop())return;bdaySeen=b.id;XM.store.set("xmas-bday-seen",b.id);
@@ -424,7 +424,7 @@ function myRace(r){
 /* ---- secret mission: only this phone ever sees it ---- */
 let lastIds=null,mission=null,vote=null,bet=null,walkup=null,lastExtras="",hot=null,mercy=null,predict=null;
 /* ---- your district's look (from the books) ---- */
-const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["🔥","#3a1a0e"]};
+const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["⛏️","#2a2a2e"]};
 function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove());const t=me&&TRIBUTES.find(x=>x.name===me);if(!t)return;const [em,col]=DLOOK[t.d]||[];if(!em)return;
   document.body.style.background=`radial-gradient(ellipse at top,${col},var(--night) 70%)`;const R=(a,b)=>a+Math.random()*(b-a);
   const l=document.createElement("div");l.className="dlayer";l.innerHTML=Array.from({length:12},()=>`<i style="left:${R(0,95)}%;font-size:${R(22,40)}px;--s:${R(9,16)}s;--d:${-R(0,16)}s;--dx:${R(-40,40)}px;--r:${R(-200,200)}deg">${em}</i>`).join("");document.body.prepend(l)}
@@ -432,11 +432,14 @@ function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove
 // 10 seconds to change your mind after your first pick, then it locks and shrinks to one line
 const reopen={};
 const winLeft=t=>t?Math.max(0,Math.ceil((t+10000-(Date.now()+skew))/1000)):10;
-function lockedCard(title,line,key,left,kind){return `<div class="card" style="padding:12px 16px"><div class="eyebrow">${title}</div><div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:4px;flex-wrap:wrap"><b>${line} ${left===0?"✓ Locked":"✓"}</b>${left>0?`<button class="btn ghost" data-reopen="${key}" style="font-size:.9rem;padding:.45em 1em">↩️ Change my ${kind} (${left})</button>${unBtn(key[0])}`:""}</div></div>`}
+function lockedCard(title,line,key,left,kind){return `<div class="card" style="padding:12px 16px"><div class="eyebrow">${title}</div><div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:4px;flex-wrap:wrap"><b>${line} ${left===0?"✓ Locked":"✓"}</b>${left>0?`<button class="btn ghost" data-reopen="${key}" data-end="${Date.now()+skew+left*1000}" style="font-size:.9rem;padding:.45em 1em">↩️ Change my ${kind} (<span class="cl">${left}</span>)</button>${unBtn(key[0])}`:""}</div></div>`}
 // ✖ take your pick back entirely (only while the 10 seconds are open)
 const UNK={v:"vote",m:"mercy",b:"bet"};
 function unBtn(k){return `<button class="btn ghost" data-unvote="${UNK[k]}" style="font-size:.9rem;padding:.45em 1em">${k==="b"?"✖ Take back my bet":"✖ Clear my vote"}</button>`}
-setInterval(()=>{if(document.hidden)return;const now=Date.now()+skew;if([vote,mercy,bet&&bet.state==="open"?bet:null].some(x=>x&&x.mine&&x.mt&&now<x.mt+11500)){lastExtras="";showExtras()}},1000);
+// the 10-second change window: tick the number in place (so taps aren't lost); redraw only when it locks
+setInterval(()=>{if(document.hidden)return;const now=Date.now()+skew;let done=false;
+  document.querySelectorAll("#extras [data-reopen][data-end]").forEach(b=>{const l=Math.ceil((+b.dataset.end-now)/1000);const s=b.querySelector(".cl");if(l<=0)done=true;else if(s)s.textContent=l});
+  if(done){lastExtras="";showExtras()}},1000);
 // 🗳️ Clo plays too: her own vote/bet/etc. cards fold into one line under the remote
 let ownOpen=false;
 function ownUI(){const w=document.getElementById("ownwrap");if(!w)return;const box=document.getElementById("extras");
@@ -739,7 +742,7 @@ async function poll(){
     if(me==="Carsyn"&&j.tvbtns!==undefined)tvCtl(j.tvbtns);
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch>myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};if(j.qbUses!==undefined&&j.qbUses!==qbUses){qbUses=j.qbUses;qbShow()}online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);myAllRise(j.allrise||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
+    skew=(j.now||Date.now())-Date.now();if(j.points)points=j.points;if(j.qbUses!==undefined&&j.qbUses!==qbUses){qbUses=j.qbUses;qbShow()}online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);myAllRise(j.allrise||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
   const busyNow=(quest&&quest.status==="live")||(race&&race.state==="live");
   const tvPop=me==="Carsyn"&&document.querySelector("#tvctl.tvpop");
   setTimeout(poll,fastPoll?(fastPoll=false,700):busyNow?1000:tvPop?1500:(vote||bet||mercy||hot||(predict&&predict.open))?2000:me==="Carsyn"?2000:3000);

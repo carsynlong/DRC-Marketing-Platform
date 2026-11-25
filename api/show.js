@@ -27,7 +27,7 @@ const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "clearresults", "startover", "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "board", "crown", "fallen", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
-const SONGS = ["wu_ride", "wu_snap", "wu_walk", "wu_thunder", "wu_country", "wu_crazytrain", "wu_gangsta", "wu_goingbad", "wu_boom", "wu_hypnotize", "wu_jump", "wu_throat", "wu_jonny", "hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
+const SONGS = ["wu_ride", "wu_snap", "wu_walk", "wu_thunder", "wu_country", "wu_crazytrain", "wu_gangsta", "wu_goingbad", "wu_boom", "wu_hypnotize", "wu_jump", "wu_throat", "wu_jonny", "wu_queen", "hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
 const WHY = ["fell asleep", "is cheating", "is on their phone", "is talking trash", "broke the rule", "stole a snack", "is hogging the snacks", "didn't do their side quest"];
 const stat = (k, n = 1) => redis.hincrby(P + "stats", k, n);
 const jget = async k => { const r = await redis.get(k); try { return r ? (typeof r === "string" ? JSON.parse(r) : r) : null; } catch { return null; } };
@@ -611,7 +611,7 @@ async function main(req, res) {
   }
   if (a === "walkup") {
     const song = req.body?.song; if (!SONGS.includes(song)) return reply(res, 400, { error: "Unknown song" });
-    const OWN = { wu_boom: "Grandad", wu_jonny: "Jonny" }; if (OWN[song] && OWN[song] !== name) return reply(res, 403, { error: "That song belongs to someone else" });
+    const OWN = { wu_boom: "Grandad", wu_jonny: "Jonny", wu_queen: "QUEEN MOTHER" }; if (OWN[song] && OWN[song] !== name) return reply(res, 403, { error: "That song belongs to someone else" });
     await redis.hset(P + "walkups", { [name]: song }); return reply(res, 200, { ok: true });
   }
 

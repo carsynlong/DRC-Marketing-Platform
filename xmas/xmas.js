@@ -85,7 +85,7 @@ XM.POLLS=["Who's most likely to cheat?","Best dressed tribute?","Who would survi
 // 🎤 real walk-up songs (30-second clips in /xmas/walkups/), then the built-in beats as backups
 XM.WALKFILES=[["wu_ride","Ride · twenty one pilots"],["wu_snap","Snap Yo Fingers · Lil Jon"],["wu_walk","Walk · Pantera"],["wu_thunder","Thunderstruck · AC/DC"],
  ["wu_country","Country Grammar · Nelly"],["wu_crazytrain","Crazy Train · Ozzy Osbourne"],["wu_gangsta","Gangsta's Paradise · Coolio"],["wu_goingbad","Going Bad · Meek Mill"],
- ["wu_boom","Here Comes the Boom · Nelly"],["wu_hypnotize","Hypnotize · The Notorious B.I.G."],["wu_jump","Jump · Kris Kross"],["wu_throat","Let Me Clear My Throat · DJ Kool"],["wu_jonny","HumblePie1's Walkout Song"]];
+ ["wu_boom","Here Comes the Boom · Nelly"],["wu_hypnotize","Hypnotize · The Notorious B.I.G."],["wu_jump","Jump · Kris Kross"],["wu_throat","Let Me Clear My Throat · DJ Kool"],["wu_jonny","HumblePie1's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"]];
 XM.WALKUPS=[...XM.WALKFILES,["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
  ["hh_secrets","Secret Agent"],["hh_lrc","Dice Roll"],["hh_bingo","Bingo Bounce"],["hh_lounge","Lounge Lo-fi"],["battle","Battle March"],["march","Tribute Parade"],["board","Deck the Halls"],["lobby","Jingle Bells"]];
 XM.SOUNDBOARD=[["airhorn","📯","Air horn"],["cheer","🙌","Cheer"],["applause","👏","Applause"],["gasp","😮","Ohhh!"],["laugh","😂","Laugh"],["rimshot","🥁","Rimshot"],

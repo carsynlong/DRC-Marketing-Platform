@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0a14">
 <meta name="robots" content="noindex">
 <title>District Secrets · Host</title>
@@ -65,7 +65,7 @@ function render(){
   const n=list?.filter(x=>x.status==="approved").length||0;
   app.innerHTML=`<div><div style="font-size:.75rem;letter-spacing:.18em;color:var(--muted);font-weight:800">HOST ONLY · KEEP THIS SCREEN TO YOURSELF</div><h1>Bonus secrets</h1></div>
     <p>Anonymous: you only see the secret, never who wrote it. Approved ones play as a bonus round after the main secrets. ${n?`<b style="color:var(--good)">${n} approved.</b>`:""}</p>
-    <p>✅ This phone is now the host's phone. On the game page, sign in as <b>Carsyn</b> and tap <b>🔑 Host tools</b> to get back here.</p>
+    <p>✅ This phone is now the host's phone. On the game page, sign in as <b>Clo</b> and tap <b>🔑 Host tools</b> to get back here.</p>
     <a href="play" style="justify-self:start;color:var(--gold-hi);font-weight:800">→ Go to the game page</a>
     ${err?`<div class="bad">${esc(err)}</div>`:""}
     ${list&&!list.length?`<div class="empty">Nothing yet. This updates by itself.</div>`:""}

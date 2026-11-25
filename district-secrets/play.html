@@ -240,7 +240,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-25-1";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-25-2";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -739,7 +739,7 @@ function view(){
     const b=betNow(),bl={sure:"🎯 Sure bet: +500 if right, −250 if wrong",allin:"💀 All in: double if right, −500 if wrong"}[b];
     if(mine)return [key+"sealed:"+mine+b+myFrameNow()+!!moleTarget(g),header()+(mineSecret?framer(g):moleNote(g))+`<section class="msg">${ENV}<h1>Sealed!</h1>
       <p class="said">${mine===FAKE?"You called it: <b>🃏 FAKE</b>":`${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b>`}</p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p>${Memes.html("secrets",g.gid,g.qi)}</section>${reactBar()}`,"seal"];
-    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":`<p class="said">No guess sealed: −${NO_GUESS} points.</p><p>Get the next one!</p>`,"wrong"),"wrong"];
+    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":((meScore()?.score||0)>0?`<p class="said">No guess sealed: −${Math.min(NO_GUESS,meScore().score)} points.</p><p>Get the next one!</p>`:`<p class="said">No guess sealed this time.</p><p>Get the next one!</p>`),"wrong"),"wrong"];
     return [key+"ask"+mineSecret+b+!!g.left+(g.hide||[]).length+myFrameNow()+!!moleTarget(g),header()+fileCard(g)+(!mineSecret?moleNote(g)+betPicker():"")+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>${framer(g)}`:"")+
       (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${g.slowPen||NO_GUESS}`}</div>`:"")+

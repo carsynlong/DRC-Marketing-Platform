@@ -259,6 +259,12 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .extras{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .extras button{padding:.4em .85em;border-radius:999px;box-shadow:inset 0 0 0 2px var(--line);font-weight:800;font-size:.85rem;opacity:.5}
 .extras button[aria-pressed="true"]{opacity:1;box-shadow:inset 0 0 0 2px var(--gold);background:rgba(217,178,95,.12)}
+/* final screen: compact so the podium, honors and leaderboard fit, and nothing hides under the sticky buttons */
+.fin{padding-bottom:96px}
+.fin .awards{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));max-width:1100px}
+.fin .award{padding:10px 10px 12px;gap:4px}.fin .award img{width:52px;height:52px}.fin .award .nm{font-size:1.05rem}
+@media (max-height:1100px){.fin{gap:8px!important}.fin h1{font-size:min(7vh,3.6rem)!important}.fin .pod.p1 .blk{height:110px}.fin .pod.p2 .blk{height:80px}.fin .pod.p3 .blk{height:60px}
+  .fin .pod .av{width:min(10vh,100px);height:min(10vh,100px)}.fin .pod.p1 .av{width:min(13vh,130px);height:min(13vh,130px)}.fin .award .ic{font-size:1.5rem}}
 .bonusnote{text-align:center;font-family:var(--type);color:var(--parch)}
 /* ---------- the Interrogation: lights down, a spotlight on whoever the room accused most ---------- */
 .interro{position:relative;display:grid;justify-items:center;align-content:center;gap:14px;text-align:center;min-height:76vh}
@@ -314,6 +320,9 @@ button:focus-visible{outline:3px solid var(--gold-hi);outline-offset:3px}
 .speaking i:nth-child(2){animation-delay:.15s}.speaking i:nth-child(3){animation-delay:.3s}.speaking i:nth-child(4){animation-delay:.45s}
 @keyframes eq{from{height:4px}to{height:18px}}
 @media (max-width:860px){.steps{grid-template-columns:1fr}}
+.step .exchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}.step .exchips i{font-style:normal;font-size:.82em;background:rgba(0,0,0,.08);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.howto .steps .step:has(.exchips){grid-column:1/-1}
+@media (max-height:1100px){.howto{gap:8px}.howto h1{font-size:min(6vh,3.4rem)}.step{padding:6px 12px;font-size:min(2.1vh,1.15rem);line-height:1.25}.step .ic{font-size:min(3.4vh,2rem)}.steps{gap:7px}}
 @media (max-width:860px){.story{grid-template-columns:1fr}}
 /* ---------- the last 10 seconds: a giant red number, the screen glowing red; then TIME'S UP ---------- */
 #redzone{position:fixed;inset:0;z-index:7;pointer-events:none;display:grid;place-items:center;
@@ -446,6 +455,7 @@ body:has(#ticker.on) .app{padding-bottom:84px}
 @media (max-width:860px){.lobby,.reveal{grid-template-columns:1fr}.join{flex-direction:column;text-align:center}}
 @media (max-width:620px){.pod.p1 .blk{height:130px}.pod.p2 .blk{height:95px}.pod.p3 .blk{height:70px}.file .hdr span:last-child{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.settings.stick.lob{position:sticky;bottom:12px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5);justify-content:center}
 .ctl.stick{position:sticky;bottom:62px;z-index:6;background:rgba(8,8,14,.88);padding:10px 14px;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
 details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;font-weight:800;opacity:.85;list-style:none;padding:6px}details.opts summary::-webkit-details-marker{display:none}details.opts[open]>.extras{margin-top:8px}
 </style>
@@ -465,7 +475,7 @@ details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;fo
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-25-1";
+const BUILD="ds-build-2026-11-25-2";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -791,6 +801,8 @@ async function poll(){
     const had=phones,before=phones.join("|");phones=d.players.sort();
     // someone just signed in on a phone: they want to play
     if(S.phase==="lobby"&&!firstPoll)S.players.forEach(p=>{if(phones.includes(p.name)&&!had.includes(p.name)){p.on=true;sfx("seal")}});
+    // once phones are joining, tributes without a phone sit out by default (the host can still tap them back in)
+    if(S.phase==="lobby"&&phones.length)S.players.forEach(p=>{if(!p.manual)p.on=phones.includes(p.name)});
     firstPoll=false;
     if(d.qi!=null&&d.qi===S.qi){const n0=Object.keys(current()).length;answers=d.answers;answersQi=d.qi;if(S.phase==="question"&&Object.keys(answers).length>n0){flyEnvelope();sfx("seal")}
       // when each guess first showed up, for the speed bonus
@@ -937,20 +949,14 @@ function howSteps(){
     ["⏰","Seal a guess before time's up. <b>No guess: −200.</b>","Seal a guess before time is up. If you don't guess, you lose two hundred points."],
     ["⚡","A right guess scores <b>1,000 points</b>. Answer fast for a <b>speed bonus</b>, and keep a streak going for extra.","A right guess scores one thousand points. Answer fast for a speed bonus, and keep a streak going for even more."],
     ["🎭","If it's <b>your</b> secret, keep a straight face and type a <b>decoy</b>. You earn 150 for everyone you fool.","If it's your secret, keep a straight face, and type a decoy. You earn a hundred and fifty points for everyone you fool."]];
-  if(o.decoys)st.push(["🃏","Some secrets are <b>FAKE</b>. Think nobody here said it? Tap <b>🃏 It's fake</b>. Spot a fake and it scores like a right answer.","Watch out. Some secrets are fake. If you think nobody here said it, tap It's fake. Spotting a fake scores just like a right answer."]);
-  if(o.bets)st.push(["🎲","Feeling sure? Place a <b>sponsor bet</b> before you seal: <b>Sure</b> or <b>All in</b>. Big risk, big reward.","Feeling sure? Place a sponsor bet before you seal your guess. Sure, or all in. Big risk. Big reward."]);
-  if(o.interro)st.push(["🔦","Then the <b>Interrogation Room</b>: the most accused defends themselves, and you can <b>change your vote</b>. Switch to the right person: <b>+250</b>. Switch away from it: <b>−500</b>.","Then, the Interrogation Room. Whoever is accused most defends themselves, and you can change your vote. Switch to the right person for two hundred and fifty bonus points. But switch away from the right answer, and you lose five hundred."]);
-  if(o.story)st.push(["🎤","<b>Story time:</b> the owner can accept (<b>+300</b>) and tell the story behind their secret, or decline (<b>−200</b>). Rate the story on your phone.","Then it's story time. The owner can accept, for three hundred points, and tell the story behind their secret. Or decline, and lose two hundred. Everyone rates the story on their phone."]);
-  if(o.redact)st.push(["🖤","Some files are <b>REDACTED</b>: words are blacked out and uncovered one by one. Guess early for a <b>bigger speed bonus</b>.","Some files are redacted. Words are blacked out, and uncovered one at a time. Guess early, for a bigger speed bonus."]);
-  if(o.golden)st.push(["✨","One secret is secretly a <b>GOLDEN FILE</b> worth <b>triple</b>. Nobody knows which until the reveal.","One secret is secretly a golden file, worth triple points. Nobody knows which one, until the reveal."]);
-  if(o.frame)st.push(["🎯","Your secret? <b>Frame someone</b> on your phone. If the room accuses them most, you get <b>+400</b>.","If it's your secret, you can frame someone on your phone. If the room accuses them the most, you get four hundred points."]);
-  if(o.fifth)st.push(["🤐","In the hot seat, you can <b>plead the Fifth</b> once per game. It ends the interrogation, but costs <b>100</b>.","In the hot seat, you can plead the Fifth, once per game. It ends the interrogation, but costs you a hundred points."]);
-  if(o.showdown)st.push(["⚔️","Tied at the end? <b>Quick Draw</b>: when the TV says DRAW, first to tap their phone wins. Too soon and you lose!","Tied at the end? It's a quick draw. When the TV says draw, the first to tap their phone wins. Tap too soon, and you lose."]);
-  if(o.mole)st.push(["🐀","Each secret, one of you is secretly <b>the mole</b>, told to push a wrong name. +150 for every person they fool. Trust no one!","Each secret, one of you is secretly the mole, told to push a wrong name. They score for everyone who falls for it. Trust no one."]);
-  if(o.lightning)st.push(["🌩️","Halfway through: the <b>Lightning Round</b>. Three secrets, 10 seconds each, double points.","Halfway through, the lightning round. Three secrets, ten seconds each, double points."]);
-  if(o.ttl)st.push(["🤥","Write <b>two truths and a lie</b> about yourself on your phone. Later, the room has to find your lie: +150 for each person you fool.","Write two truths and a lie about yourself on your phone. Later, the room has to find your lie. You get a hundred and fifty points for each person you fool."]);
-  if(o.mostlikely)st.push(["🗳️","Every few secrets: a quick <b>Most likely to…</b> vote. No points, just bragging rights.","Every few secrets, there's a quick vote: who's most likely to. No points, just bragging rights."]);
-  if(o.bonus)st.push(["📝","Write a <b>bonus secret</b> on your phone. If it's played, you get <b>+500 points</b>, plus 150 for everyone you fool.","Write a bonus secret on your phone. If it gets played, you earn five hundred extra points, plus a hundred and fifty for everyone you fool."]);
+  // tonight's extras: listed as short chips in ONE step (keeps How to Play on one screen); each extra is explained when it happens
+  const EX=[[o.decoys,"🃏","Fake secrets","fake secrets"],[o.bets,"🎲","Sponsor bets","sponsor bets"],[o.interro,"🔦","Interrogation Room","the interrogation room"],
+    [o.story,"🎤","Story time","story time"],[o.redact,"🖤","Redacted files","redacted files"],[o.golden,"✨","A golden file (triple)","a golden file worth triple"],
+    [o.frame,"🎯","Frame someone","framing someone"],[o.fifth,"🤐","Plead the Fifth","pleading the Fifth"],[o.showdown,"⚔️","Quick Draw tiebreaker","a quick draw tiebreaker"],
+    [o.mole,"🐀","The mole","the mole"],[o.lightning,"🌩️","Lightning Round","a lightning round"],[o.ttl,"🤥","Two truths and a lie","two truths and a lie"],
+    [o.mostlikely,"🗳️","Most likely to…","most likely to votes"],[o.bonus,"📝","Bonus secrets","bonus secrets"]].filter(x=>x[0]);
+  if(EX.length)st.push(["🎁",`<b>Tonight's twists</b> (explained when they happen):<span class="exchips">${EX.map(x=>`<i>${x[1]} ${x[2]}</i>`).join("")}</span>`,
+    `Tonight's twists include ${EX.length>1?EX.slice(0,-1).map(x=>x[3]).join(", ")+", and "+EX[EX.length-1][3]:EX[0][3]}. Each one is explained when it happens.`]);
   if(active().some(p=>p.name===HOST))st.push(["🕵️",`<b>${HOST} is the Gamemaker.</b> She knows the secrets, so she plays <b>Most Wanted</b>: she bets on who you'll wrongly accuse the most. Nail it: <b>+400</b>. In the bonus round, she guesses too!`,`${HOST} is the Gamemaker. She knows the secrets, so she plays Most Wanted. She bets on who you will wrongly accuse the most. If she nails it, four hundred points. In the bonus round, she guesses too.`]);
   st.push(["😂","Tap the <b>emojis</b> on your phone to pop them up on the TV with your name.","Tap the emojis on your phone to pop them up on the TV, with your name."]);
   st.push(["👑","Most points wins the <b>major award</b>. The final secret counts <b>double</b>.","Most points wins the major award. The final secret counts double. And may the odds be ever in your favor."]);
@@ -1039,7 +1045,7 @@ function pickMole(){
 const moleHits=()=>!S.mole?[]:guessers().filter(p=>p.name!==S.mole.name&&S.guesses?.[p.name]!=null&&matches(S.guesses[p.name],S.mole.target)).map(p=>p.name);
 function moleHTML(){if(!S.mole)return"";const h=moleHits();
   return `<div class="${h.length?"won":"lost"}" style="font-family:var(--type);font-size:clamp(1rem,1.8vw,1.25rem)">🐀 The mole was ${esc(S.mole.name)}, pushing ${esc(S.mole.target)}${h.length?`: ${h.length} fell for it!`:"… nobody bit."}</div>`}
-function startQuestion(){clearInterval(readyT);S.fifthBy=null;S.frame=null;pickMole();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};S.storyState=null;hostOpen=false;S.typed=0;playSong("count");render()}
+function startQuestion(){clearInterval(readyT);S.qShown=Date.now();S.fifthBy=null;S.frame=null;pickMole();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.guesses={};S.seenAt={};S.storyState=null;hostOpen=false;S.typed=0;playSong("count");render()}
 function tick(last){
   cancelAnimationFrame(raf);
   const loop=now=>{
@@ -1075,7 +1081,8 @@ function timesUp(){
   document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake");
   try{if(musicOn&&window.speechSynthesis){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance("Time's up! Guesses are sealed.");u.rate=1.05;u.pitch=.9;setTimeout(()=>speechSynthesis.speak(u),900)}}catch(e){}
 }
-function lock(){S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();sfx("buzzer");setTimeout(()=>sfx("cannon"),350);timesUp();render();poll()}
+// a short grace after a secret appears, so every phone has time to load it before guesses can be locked
+function lock(){if(!S.locked&&S.qShown&&Date.now()-S.qShown<3000){toast?.("⏳ Give the phones a few seconds to load the secret");return}S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();sfx("buzzer");setTimeout(()=>sfx("cannon"),350);timesUp();render();poll()}
 /* after the guesses lock: the Interrogation (if it's on and anyone was accused), then the reveal */
 let stepAt=0;const stepBusy=()=>{if(Date.now()-stepAt<2200)return true;stepAt=Date.now();return false};   // ignores a double Space
 async function afterLock(){
@@ -1474,7 +1481,7 @@ function lobbyView(){
       ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved · +500 points each if it's played`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
-      <div class="settings"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
+      <div class="settings stick lob"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
       <div class="tiny" style="text-align:center">Space moves the game on · M mutes</div>
     </div></section>`;
 }
@@ -1663,7 +1670,7 @@ function boardView(){
 function finalView(){
   const r=ranked(),top=r[0]?.score??0,tied=r.filter(p=>p.score===top&&top>0);
   const pod=[r[1],r[0],r[2]].map((p,i)=>p?`<div class="pod p${[2,1,3][i]}">${i===1?'<div class="crown">👑</div>':""}<img class="av" src="${AV(p.name)}" alt=""><div class="nm">${esc(p.name)}</div><div class="pts">${p.score.toLocaleString()} pts</div><div class="blk">${[2,1,3][i]}</div></div>`:"<div></div>").join("");
-  return `<section class="center" style="min-height:0;gap:14px">
+  return `<section class="center fin" style="min-height:0;gap:14px">
     <div class="eyebrow">The vault is empty</div>
     <h1 style="font-size:clamp(2rem,6vw,4.4rem)">${S.champ?"⚔️ "+esc(S.champ)+" wins the showdown! ⚔️":tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" knows all! 🎄"}</h1>
     <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Settle it with rock, paper, scissors!`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
@@ -1690,7 +1697,7 @@ function primary(){
   if(S.phase==="board")return next();
 }
 function wire(){
-  document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const p=S.players[+b.dataset.tog];p.on=!p.on;sfx("click");render()});
+  document.querySelectorAll("[data-tog]").forEach(b=>b.onclick=()=>{const p=S.players[+b.dataset.tog];p.on=!p.on;p.manual=true;sfx("click");render()});
   document.querySelectorAll("[data-secs]").forEach(b=>b.onclick=()=>{S.secs=+b.dataset.secs;render()});
   document.querySelectorAll("[data-opt]").forEach(b=>b.onclick=()=>{S.opts[b.dataset.opt]=!S.opts[b.dataset.opt];sfx("click");render()});
   document.querySelectorAll("[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);i<0?S.correct.push(n):S.correct.splice(i,1);sfx("click");render()});

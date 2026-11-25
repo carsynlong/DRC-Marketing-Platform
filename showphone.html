@@ -54,6 +54,9 @@ details.more summary{cursor:pointer;font-weight:800;font-size:1.05rem;list-style
 details.more summary::-webkit-details-marker{display:none}
 details.more[open] summary{margin-bottom:10px}
 details.more>.card{margin-top:12px;box-shadow:0 0 0 1px var(--line)}
+.card.own{padding:12px 16px}
+.owntog{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:800;font-size:1.05rem;min-height:44px;background:none;color:inherit}
+#owncnt{color:var(--gold);font-size:.95rem;margin-left:auto}
 .confirm{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(6,16,12,.94);padding:20px;text-align:center}
 .confirm .in{display:grid;gap:14px;justify-items:center;max-width:360px}
 .confirm img{width:150px;height:150px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)}
@@ -145,7 +148,7 @@ details.hfold.mini{display:inline-block;padding:2px 12px;margin:6px 0 0}details.
 #rbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:#08140f;box-shadow:0 -6px 20px rgba(0,0,0,.5)}
 #rbar button{display:grid;justify-items:center;gap:2px;padding:8px 2px;border-radius:12px;background:rgba(255,255,255,.08);color:inherit;border:0;font-weight:800;font-size:.82rem;font-family:inherit}
 #rbar button .i{font-size:1.5rem}#rbar button.on{background:var(--gold);color:#13271f}
-body.hasbar{padding-bottom:96px}
+body.hasbar{padding-bottom:96px}body.hasbar .app{padding-bottom:110px}
 .htabs [data-tab]{position:relative}.htabs .badge{position:absolute;top:2px;right:6px;min-width:20px;height:20px;border-radius:999px;background:#c0392b;color:#fff;font-weight:900;font-size:.75rem;line-height:20px;text-align:center;padding:0 5px}
 .hgrid button.armed{background:#7a1010!important;color:#fff;box-shadow:0 0 0 2px var(--gold)}
 </style>
@@ -291,8 +294,9 @@ function render(){if(me!=="Carsyn")dropBar();
   app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">District ${t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(XM.dn(me))}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
-    <div id="extras" style="display:grid;gap:16px"></div>
+    ${me==="Carsyn"?`<div class="card own" id="ownwrap" hidden><button class="owntog" id="owntog"><span>🗳️ Your own vote</span><span id="owncnt"></span><span id="ownarr">▾</span></button><div id="extras" style="display:none;gap:16px;margin-top:12px"></div></div>`:`<div id="extras" style="display:grid;gap:16px"></div>`}
     ${me==="Carsyn"?"":guestTiles(t)}`;
+  {const tg=app.querySelector("#owntog");if(tg)tg.onclick=()=>{ownOpen=!ownOpen;ownUI()}}
   wireTiles(app);wireDecree(app);
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
     m.textContent=r.ok?"📨 Complaint filed!":r.status===429?"The Capitol is still processing your last complaint. Try again in a bit.":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},r.ok?45000:3000)};
@@ -413,6 +417,11 @@ function lockedCard(title,line,key,left,kind){return `<div class="card" style="p
 const UNK={v:"vote",m:"mercy",b:"bet"};
 function unBtn(k){return `<button class="btn ghost" data-unvote="${UNK[k]}" style="font-size:.9rem;padding:.45em 1em">${k==="b"?"✖ Take back my bet":"✖ Clear my vote"}</button>`}
 setInterval(()=>{if(document.hidden)return;const now=Date.now()+skew;if([vote,mercy,bet&&bet.state==="open"?bet:null].some(x=>x&&x.mine&&x.mt&&now<x.mt+11500)){lastExtras="";showExtras()}},1000);
+// 🗳️ Clo plays too: her own vote/bet/etc. cards fold into one line under the remote
+let ownOpen=false;
+function ownUI(){const w=document.getElementById("ownwrap");if(!w)return;const box=document.getElementById("extras");
+  const n=box?box.querySelectorAll(":scope > .card").length:0;w.hidden=!n;if(!n)ownOpen=false;if(box)box.style.display=ownOpen?"grid":"none";
+  const c=document.getElementById("owncnt");if(c)c.textContent=n?`(${n} open)`:"";const ar=document.getElementById("ownarr");if(ar)ar.textContent=ownOpen?"▴":"▾"}
 function showExtras(){
   const box=document.getElementById("extras");if(!box)return;const key=JSON.stringify([vote,bet,hot,mercy,predict]);if(key===lastExtras)return;
   const ids=JSON.stringify([vote&&vote.id,bet&&bet.id+(bet.state||""),hot&&hot.id,mercy&&mercy.id,predict&&predict.open]),fresh=lastIds!==null&&ids!==lastIds&&(vote||bet&&bet.state==="open"||hot||mercy||predict&&predict.open);lastIds=ids;
@@ -435,7 +444,8 @@ function showExtras(){
   const keep=box.querySelector("#askq")?box.querySelector("#askq").value:"";
   const keepBo=box.querySelector("[data-bo].on"),keepBa=box.querySelector("[data-ba].on");
   box.innerHTML=h;if(keep&&box.querySelector("#askq"))box.querySelector("#askq").value=keep;
-  if(fresh&&h){buzz([120,60,120]);box.scrollIntoView({behavior:"smooth",block:"start"})}
+  if(fresh&&h&&me!=="Carsyn"){buzz([120,60,120]);box.scrollIntoView({behavior:"smooth",block:"start"})}
+  if(me==="Carsyn")ownUI();
   box.querySelectorAll("[data-reopen]").forEach(b=>b.onclick=()=>{reopen[b.dataset.reopen]=true;lastExtras="";showExtras()});
   box.querySelectorAll("[data-unvote]").forEach(b=>b.onclick=async()=>{const k=b.dataset.unvote,o=k==="vote"?vote:k==="mercy"?mercy:bet;b.disabled=true;
     const r=await api({a:"unvote",name:me,kind:k});if(r.ok&&o){o.mine=null;o.mt=0;reopen[k[0]+o.id]=false;buzz(30)}else if(r.error==="locked"&&o)o.mt=r.t;lastExtras="";showExtras()});

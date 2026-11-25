@@ -6,7 +6,7 @@
    index.html calls: Party.before(qi) in next(), Party.view()/after() in render(), Party.primary(),
    Party.scored() and Party.tie() in score(). It reads the game's globals (S, Q, render, sfx...) when called. */
 const Party = (() => {
-  const MINIS = { 12: "race", 24: "climb" };            // the face a mini-game comes before
+  const MINIS = { 8: "race", 17: "climb" };            // the face a mini-game comes before
   const SECS = 10, BONUS = [500, 300, 200];
   const INFO = {
     race: { icon: "🏃", title: "Run to the Cornucopia!", how: "When the TV says GO, tap the big button on your phone as fast as you can.", verb: "taps" },
@@ -41,7 +41,9 @@ const Party = (() => {
   .mres .r.top{box-shadow:0 0 0 2px var(--gold),0 0 20px rgba(232,176,75,.35)}
   .mres .r .av{width:40px;height:40px}
   .mres .r .b{color:var(--good)}
-  .awards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;width:min(100%,1000px)}
+  .awards{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:10px;width:min(100%,1400px)}
+  @media (max-width:900px){.awards{grid-auto-flow:row;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+  @media (max-height:1150px){.award{padding:8px 10px;gap:2px}.award .n{font-size:1rem;line-height:1.15}.award .e{font-size:1.4rem}.award .t{font-size:.62rem}}
   .award{background:var(--night-2);border-radius:14px;padding:12px;display:grid;gap:4px;justify-items:center;text-align:center;box-shadow:0 0 0 2px var(--gold);animation:pop .6s both}
   .award .e{font-size:2rem}.award .t{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:800}
   .award .n{font-family:var(--display);font-size:1.3rem}.award .d{font-size:.8rem;color:var(--muted)}

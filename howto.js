@@ -20,6 +20,7 @@ window.HowTo = (() => {
           ["⌨️", "Type who it is", "Right here on your phone. Only you see it."],
           ["👀", "10 seconds to look", "Then you have a minute to type. 💥 The cannon fires and answers lock."], ["⚠️", "Don't run out of time", "No answer in time = −250 points."]]],
         ["Points", [["✅", "Right answer", "1,000 points"],
+          ["⚡", "Speed bonus", "Faster right answers earn more"],
           ["🔥", "Streak", "More points for answers in a row"],
           ["🍗", "The Feast", "The last round is worth ×3"]]],
         ["Bonuses", [["🏃", "Mini-games", "Between rounds. Top 3 get bonus points."],

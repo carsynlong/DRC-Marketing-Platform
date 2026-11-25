@@ -80,8 +80,8 @@ body.has-ticker .stage{max-height:42vh}
 .stage .mash img{position:absolute;height:100%;max-width:100%;object-fit:contain}
 .stage .mash img+img{opacity:.5;mix-blend-mode:normal}
 .stage .tag.mt{font-size:clamp(.9rem,1.8vw,1.5rem);max-width:94%;white-space:normal;text-align:center}
-.stage .mashrev{position:absolute;inset:0;display:flex;gap:2%;justify-content:center;align-items:center;padding:0 4%}
-.stage .mashrev img{position:static;inset:auto;width:auto;height:100%;max-width:48%;object-fit:contain;border-radius:12px;animation:revpop .8s cubic-bezier(.2,1.3,.4,1)}
+.stage .mashrev{position:absolute;left:0;right:0;top:0;bottom:clamp(60px,9vh,96px);display:flex;gap:2%;justify-content:center;align-items:center;padding:2% 4% 0;box-sizing:border-box}
+.stage .mashrev img{position:static;inset:auto;width:auto;height:auto;max-height:100%;max-width:48%;object-fit:contain;border-radius:12px;animation:revpop .8s cubic-bezier(.2,1.3,.4,1)}
 .gchart{position:absolute;inset:4% 6%;z-index:5;display:flex;flex-direction:column;justify-content:center;gap:1.2vh;padding:2vh 3vw;border-radius:18px;background:rgba(7,18,13,.92);box-shadow:0 0 0 3px var(--gold)}
 .gchart .gtitle{font-family:var(--display,serif);color:var(--gold);font-size:clamp(20px,2.4vw,40px);text-align:center;margin-bottom:.6vh}
 .gchart .grow{display:grid;grid-template-columns:clamp(34px,3.4vw,60px) minmax(120px,22%) 1fr clamp(30px,3vw,54px);gap:1vw;align-items:center;font-weight:800;font-size:clamp(16px,1.8vw,30px);transition:opacity .4s}
@@ -96,7 +96,7 @@ body.has-ticker .stage{max-height:42vh}
 .stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;will-change:transform}
 .stage img.rev{animation:revpop .8s cubic-bezier(.2,1.3,.4,1)}
 @keyframes revpop{from{transform:scale(.4) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
-.stage .tag{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(13,31,24,.9);padding:.5em 1.2em;border-radius:999px;font-family:var(--display);font-size:clamp(1.1rem,3vw,2rem);white-space:nowrap;box-shadow:0 0 0 3px var(--gold);animation:pop .6s .25s both cubic-bezier(.2,1.4,.4,1)}
+.stage .tag{position:absolute;left:0;right:0;margin:0 auto;width:fit-content;max-width:94%;bottom:16px;background:rgba(13,31,24,.9);padding:.5em 1.2em;border-radius:999px;font-family:var(--display);font-size:clamp(1.1rem,3vw,2rem);white-space:nowrap;box-shadow:0 0 0 3px var(--gold);animation:pop .6s .25s both cubic-bezier(.2,1.4,.4,1)}
 .stage .tag small{font-family:var(--body);font-size:.6em;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-right:.6em;font-weight:800}
 .stage .lookbig{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(10,20,16,.82);color:#fff;font-weight:800;font-size:clamp(1.3rem,2.6vw,2.4rem);padding:.35em 1.1em;border-radius:999px;box-shadow:0 0 0 3px var(--gold);white-space:nowrap}
 .stage .lookbig b{color:var(--gold);font-family:var(--display)}
@@ -137,6 +137,8 @@ body.has-ticker .stage{max-height:42vh}
 .pod{display:grid;gap:8px;justify-items:center;text-align:center}
 .pod .blk{width:100%;border-radius:12px 12px 0 0;display:grid;place-items:start center;padding-top:10px;font-family:var(--display);font-size:2rem;color:#2a1c05}
 .pod.p1 .blk{height:180px;background:var(--gold)}.pod.p2 .blk{height:130px;background:#d5dbd2}.pod.p3 .blk{height:95px;background:#c98a5a}
+@media (max-height:950px){.lobby .ctl.stick.fctl{position:static;order:-1;box-shadow:none;background:transparent;padding:0}}
+@media (min-width:621px) and (max-height:1150px){.pod.p1 .blk{height:110px}.pod.p2 .blk{height:80px}.pod.p3 .blk{height:60px}.pod .av{width:96px;height:96px}}
 .pod .nm{font-weight:800;font-size:clamp(1rem,2.6vw,1.5rem);overflow-wrap:anywhere}
 .pod .pts{color:var(--muted);font-variant-numeric:tabular-nums}
 #fx{position:fixed;inset:0;pointer-events:none;z-index:5}
@@ -423,7 +425,7 @@ function showIntro(){
     ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
     ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
     ["⏱️",`Look for 10 seconds, then you have a minute to type your answer. No answer in time? You lose ${NO_ANSWER} points!`],
-    ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
+    ["🎯","A right answer scores 1,000 points. Faster right answers earn a speed bonus, and several in a row earn a streak bonus."],
     ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
     ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
     ["🍗","The last round, The Feast, is worth triple points."],
@@ -443,12 +445,14 @@ function newGame(){
 }
 function roundCardOrQuestion(){
   const rc=ROUNDS.find(r=>r.at===S.qi);
-  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();if(rc.at===FEAST&&window.Briefing){setTimeout(()=>{if(S.phase==="roundcard"&&S.qi===FEAST)briefFeast()},3000);return}setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
+  if(rc&&S.phase!=="roundcard"){S.phase="roundcard";stopSong();sfx("gong");render();if(rc.at===FEAST&&window.Briefing){setTimeout(()=>{if(S.phase==="roundcard"&&S.qi===FEAST&&!S.feastBriefed&&!(window.Briefing&&Briefing.open())){S.feastBriefed=true;briefFeast()}},3000);return}setTimeout(()=>S.phase==="roundcard"&&playSong("arena"),1600);return}
   beginQuestion();
 }
 let readyT=0;
 function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
+// "N correct", or on a Mutt Mashup "N both · M half"
+const cntTxt=()=>{const h=(S.half||[]).length;return mash()&&h?`${S.correct.length} both · ${h} half`:`${S.correct.length} correct`};
 function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const isTb=()=>!!S.rounds[S.qi]?.tb;
@@ -622,9 +626,9 @@ function lobbyView(){
     <p>A face appears up close. Look for 10 seconds, then you have a minute to type who it is on your phone. 1,000 points per right answer. Everyone starts at zero.</p>
     ${Sync.joinCard()}
     ${Sync.roster()}
+    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options${S.players.some(p=>!p.on)?` · ${S.players.filter(p=>!p.on).length} sitting out`:""}</summary>
     <div class="eyebrow">Tap a face to sit them out</div>
-    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
-    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options</summary><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button></div></details>
+    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button></div></details>
     <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
@@ -643,7 +647,7 @@ function questionView(){
   const rn=roundOf(S.qi);
   const ans=r.choices.map((n,k)=>{const right=n===x.a;
     return `<div class="ans k${k} ${rev?(right?"right":"dim"):""}">${SHAPES[k]}<span>${esc(n)}</span>${rev&&right?'<span class="ck" aria-label="Correct">✓</span>':""}</div>`}).join("");
-  const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Phones filled in. Tap anyone who said ${esc(x.a)} out loud</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
+  const scoring=rev?`<div class="panel"><div class="bar"><div class="eyebrow">Phones filled in. Tap anyone who said ${esc(x.a)} out loud</div><div class="tiny" id="cnt">${cntTxt()}</div></div>
     <div class="chips" style="justify-content:flex-start">${active().map(p=>{const own=false;
       return `<button class="chip" data-ok="${esc(p.name)}" aria-pressed="${S.correct.includes(p.name)}" ${own?"disabled title=\"It's their own face\"":""}>${esc(p.name)}${Sync.hasPhone(p.name)?" 📱":""}${own?' <span class="d">their face</span>':""}${p.streak>1&&!own?` <span class="d">🔥${p.streak}</span>`:""}</button>`}).join("")}</div></div>`:"";
   const img=rev?src(x.r):src(x.q),m=mash();
@@ -668,7 +672,7 @@ function typedView(x,rev){
       <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
   // while a face is up the TV never shows guesses: only who has sealed one (their name turns gold)
   if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":S.look>0?`👀 Look closely. Typing opens in <b id="lookp">${Math.ceil(S.look)}</b>`:(mash()?"🐺 Name BOTH tributes on your phone! You have a minute.":"📱 Type your guess on your phone! You have a minute.")}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
-  return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
+  return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${cntTxt()}</div></div>
   <div class="typed">${boxes}</div>`;
 }
 // the Gamemaker knows every face: if she ties a tribute, the tribute ranks ahead
@@ -699,13 +703,13 @@ function boardView(){
 function finalView(){
   const r=ranked(),top=r[0]?rs(r[0]):0,tied=r.filter(p=>rs(p)===top&&top>0);
   const pod=[r[1],r[0],r[2]].map((p,i)=>p?`<div class="pod p${[2,1,3][i]}">${i===1?'<div class="crown">👑</div>':""}<img class="av" src="${AV(p.name)}" alt=""><div class="nm">${esc(p.name)}</div><div class="pts">${p.score.toLocaleString()} pts</div><div class="blk">${[2,1,3][i]}</div></div>`:`<div></div>`).join("");
-  return `<section class="lobby" style="gap:16px">
+  return `<section class="lobby" style="gap:16px;padding-bottom:90px">
     <div class="eyebrow">The Capitol has spoken</div>
     <h1 style="font-size:clamp(2rem,6vw,4rem)">${tied.length>1?"It's a tie!":"🎄 "+esc(r[0]?.name??"")+" wins! 🎄"}</h1>
     <p>${tied.length>1?`${tied.map(p=>esc(p.name)).join(" and ")} are tied. Run a sudden death round to pick who gets the major award.`:"Our victor claims a major award. Remember, no second major award until everyone has one."}</p>
     <div class="podium">${pod}</div>
     <div class="board">${boardRows()}</div>
-    <div class="ctl stick" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="interview">🎤 Victor's interview</button><button class="btn" id="again">Play again</button></div>
+    <div class="ctl stick fctl" style="justify-content:center">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="interview">🎤 Victor's interview</button><button class="btn" id="again">Play again</button></div>
   </section>`;
 }
 
@@ -715,7 +719,7 @@ function primary(){
   if(S.phase==="interview")return Extras.nextQ();
   if(S.phase==="mini"||S.phase==="tbcard")return Party.primary();
   if(S.phase==="lobby")return active().length&&showIntro();
-  if(S.phase==="roundcard")return beginQuestion();
+  if(S.phase==="roundcard"){if(S.qi===FEAST&&window.Briefing&&!S.feastBriefed){S.feastBriefed=true;return briefFeast()}return beginQuestion()}
   if(S.phase==="ready")return (sfx("go"),startQuestion());
   if(S.phase==="question")return S.locked?reveal():S.look>0?endLook():lock();
   if(S.phase==="reveal")return score();
@@ -730,7 +734,7 @@ function wire(){
   document.querySelectorAll("label[data-ok]").forEach(l=>l.onclick=()=>{const n=l.dataset.ok,i=S.correct.indexOf(n);
     i<0?S.correct.push(n):S.correct.splice(i,1);sfx(i<0?"tap":"untap");render()});
   document.querySelectorAll("button[data-ok]").forEach(b=>b.onclick=()=>{const n=b.dataset.ok,i=S.correct.indexOf(n);
-    i<0?S.correct.push(n):S.correct.splice(i,1);b.setAttribute("aria-pressed",i<0);sfx(i<0?"tap":"untap");$("#cnt").textContent=S.correct.length+" correct"});
+    i<0?S.correct.push(n):S.correct.splice(i,1);b.setAttribute("aria-pressed",i<0);sfx(i<0?"tap":"untap");$("#cnt").textContent=cntTxt()});
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn()}};
   on("go",showIntro);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});

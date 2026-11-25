@@ -1459,7 +1459,7 @@ function lobbyView(){
       <h1 class="title">District Secrets</h1>
       <p class="tagline">${S.opts?.decoys?`${REAL.length} real secrets + ${DECOY_COUNT} decoys = ${REAL.length+DECOY_COUNT} files. Can you spot the fakes?`:`Twelve tributes. ${REAL.length} secrets. Every single one is true.`}</p>
       ${joinCard()}
-      <p class="rules">A real secret appears. Guess whose it is on your phone. <b>1,000</b> per right guess.</p>
+      <p class="rules">A real secret appears. Guess whose it is on your phone. <b>1,000</b> per right guess. Everyone starts at zero.</p>
     </div>
     <div class="roster">
       <div class="count" aria-label="${n} of ${on.length} signed in"><span class="n${bump?" bump":""}">${n}</span><span class="of">/ ${on.length}</span><span class="lbl">tributes signed in</span></div>

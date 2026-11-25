@@ -1042,7 +1042,7 @@ function resumeCard(){
 function lobby(){
   return `<section class="lobby">${logo()}${resumeCard()}
     ${joinCard()}
-    <p class="intro">Every question's <b>#1 answer</b> is someone in this room. Guess it.</p>
+    <p class="intro">Every question's <b>#1 answer</b> is someone in this room. Guess it. Everyone starts at zero.</p>
     <div class="prize">🎁 <b>Every vote counts.</b> Votes you get + <b>${GUESS_PTS} point</b> for every #1 answer you call on your phone. Highest total wins the major award!<br><small>⏱ ${TIMER_SECS} seconds per question · ⚡ speed bonus · 🔥 hot streaks · 💰 double points finale</small></div>
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     ${checkinLine()}

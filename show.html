@@ -1378,7 +1378,8 @@ function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
     outro:"That's it. Have fun, tributes.",start:"▶ Got it",muted:()=>!XM.sound})}
 function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-points-briefed","1")}catch(e){}
   Briefing.show({eyebrow:"⭐ CAPITOL POINTS",title:"What Are Capitol Points?",intro:"Capitol points. Here's how they work.",
-    steps:[["⭐","A side game all night. It <b>never counts</b> in the in-person games.","A side game all night. It never counts in the in-person games."],
+    steps:[["⭐","A side game all night. It <b>never counts</b> toward winning any game.","A side game all night. It never counts toward winning any game."],
+      ["🔄","Each screen game starts everyone at <b>zero</b>. Scores never carry over.","Each screen game starts everyone at zero. Scores never carry over."],
       ["⚔️","Earn them: side quests, tap races, bets.","Earn them with side quests, tap races, and bets."],
       ["💀","Lose them: failed quests, bad bets, the Wheel of Punishment.","Lose them with failed quests, bad bets, and the wheel of punishment."],
       ["🎁","Most points picks their <b>major award first</b>.","Most points picks their major award first."]],
@@ -1659,7 +1660,7 @@ const SLIDES=[
     ["lock","#3e8a52","What's inside? No idea","Real unclaimed mail. Nobody knows what's inside."],
     ["cannon","#2f6fb3","Tie? Sudden death","Tied? Face off until one is left."],
     ["mitten-w","#d79a1f","Mitten Mayhem pays","Its own major award. Whatever you unwrap, you keep."],
-    ["⭐","#c9862a","Points don't cross over","Capitol Points and screen-game scores never count in the in-person games."],
+    ["⭐","#c9862a","Points don't carry over","Every screen game starts at zero. Capitol Points are a separate side game."],
     ["✋","#7a3fb0","Touch it, it's yours","The first major award you touch is the one you open. No shaking, no swapping, no take-backs."]];
    return `<div style="display:grid;gap:30px;width:100%"><h1 class="title-l slam">Rules of the Arena</h1>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px 30px">${R.map(([ic,c,h,t],i)=>`<div class="card" data-say="${h}. ${t}" data-anim="${i===R.length-1?"pop":i%2?"fr":"fl"}" style="opacity:0;display:flex;gap:30px;align-items:center;padding:22px 30px;text-align:left;${i===R.length-1?"box-shadow:0 0 0 4px var(--gold),0 20px 50px rgba(0,0,0,.45)":""}">

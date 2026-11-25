@@ -177,6 +177,8 @@ async function main(req, res) {
     return img ? reply(res, 200, { img }) : reply(res, 404, { error: "Gone" });
   }
 
+  // 🎵 which walk-up songs are taken (each song belongs to one tribute, first come first served)
+  if (req.method === "GET" && a === "walkups") return reply(res, 200, { walkups: await hash(P + "walkups") });
   if (req.method === "GET" && a === "stats") {
     const [st, w] = await Promise.all([hash(P + "stats"), hash(P + "walkups")]);
     const o = {}; for (const [k, v] of Object.entries(st)) o[k] = Number(v) || 0;
@@ -612,6 +614,8 @@ async function main(req, res) {
   if (a === "walkup") {
     const song = req.body?.song; if (!SONGS.includes(song)) return reply(res, 400, { error: "Unknown song" });
     const OWN = { wu_boom: "Grandad", wu_jonny: "Jonny", wu_queen: "QUEEN MOTHER", wu_elisha: "Elisha", wu_jessie: "Jessie", wu_kyle: "Kyle" }; if (OWN[song] && OWN[song] !== name) return reply(res, 403, { error: "That song belongs to someone else" });
+    const taken = await hash(P + "walkups"); const holder = Object.keys(taken).find(n => n !== name && taken[n] === song);
+    if (holder) return reply(res, 409, { error: "taken", by: holder });
     await redis.hset(P + "walkups", { [name]: song }); return reply(res, 200, { ok: true });
   }
 

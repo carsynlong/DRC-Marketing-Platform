@@ -244,7 +244,7 @@ function guestTiles(t){
       <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button>`]);
   P.push(["shout","💌","Shout-out",`<textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas, QUEEN MOTHER!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button>`]);
   P.push(["walk","🎵","Walk-up song",`<select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.filter(([k])=>!RESERVED_SONG[k]||RESERVED_SONG[k]===me).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
-      <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny">Plays on the TV when you win.</div>`]);
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny">Plays on the TV when you win. Once you save a song, it's yours: nobody else can pick it.</div>`]);
   P.push(["help","🆘","I'm lost",null]);
   const msgId={decree:"dqmsg",bday:"qbmsg",snitch:"snmsg",give:"gvmsg",shout:"somsg",walk:"wmsg",help:"helpmsg"};
   return `${me==="Natalie"?`<button class="btn red nf" id="notfair">😤 IT'S NOT FAIR!</button><div class="tiny" id="nfmsg"></div>`:""}
@@ -318,7 +318,15 @@ function render(){if(me!=="Carsyn")dropBar();
     const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${XM.dn(sn)}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
   const ws=app.querySelector("#wsel");if(walkup)ws.value=walkup;
   app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value,true);clearTimeout(window.__wpT);window.__wpT=setTimeout(()=>XM.stopSong(),12000)};
-  app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});app.querySelector("#wmsg").textContent=r.ok?"🎵 Saved! It plays on the TV when you win.":"Couldn't save.";if(r.ok)walkup=ws.value};
+  // songs other tributes already saved show as taken
+  const markSongs=async()=>{try{const j=await (await fetch("/api/show?a=walkups",{cache:"no-store"})).json();const w=j.walkups||{};
+    [...ws.options].forEach(o=>{if(!o.value)return;const by=Object.keys(w).find(n=>n!==me&&w[n]===o.value);if(!o.dataset.l)o.dataset.l=o.textContent;
+      o.disabled=!!by;o.textContent=by?`${o.dataset.l} (taken by ${XM.dn(by)})`:o.dataset.l})}catch(e){}};
+  markSongs();ws.addEventListener("focus",markSongs);
+  app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});const m=app.querySelector("#wmsg");
+    if(r.ok){walkup=ws.value;if(m)m.textContent="🎵 Saved! It's yours. It plays on the TV when you win."}
+    else if(r.status===409){if(m)m.textContent=`😬 Too slow! ${XM.dn(r.by||"Someone")} already took that song. Pick another.`;ws.value=walkup||"";markSongs()}
+    else if(m)m.textContent=r.status===403?"That song belongs to someone else.":"Couldn't save. Check your internet."};
   let gv=null,gn=null;app.querySelectorAll("[data-gv]").forEach(b=>b.onclick=()=>{gv=b.dataset.gv;app.querySelectorAll("[data-gv]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelectorAll("[data-gn]").forEach(b=>b.onclick=()=>{gn=+b.dataset.gn;app.querySelectorAll("[data-gn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#gvsend").onclick=async()=>{const m=app.querySelector("#gvmsg");if(!gv||!gn){m.textContent="Pick who and how many.";return}

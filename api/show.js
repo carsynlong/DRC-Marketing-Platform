@@ -126,7 +126,8 @@ async function main(req, res) {
     let taken;
     if (!me && full) { const all = await hash(P + "players"), ns = Object.keys(all).filter(n => all[n] !== String(req.query.pid || ""));
       const sv = ns.length ? await redis.mget(...ns.map(n => `${P}seen:${n}`)) : []; taken = ns.filter((n, i) => sv[i]); }
-    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, taken, tvbtns, now: Date.now() });
+    const qbUses = me === "QUEEN MOTHER" && full ? Math.max(0, 2 - (Number(await redis.get(P + "qbdayn")) || 0)) : undefined;
+    return reply(res, 200, { slide, quest, points: pts, mission, epoch, vote, bet, walkup, hot, mercy, predict, race, bday, taken, qbUses, tvbtns, now: Date.now() });
   }
 
   // sabotage for the online games (sabotage.js)
@@ -455,7 +456,7 @@ async function main(req, res) {
       return reply(res, 200, { ok: true, points: await points() });
     }
     await redis.del(P + "photolist");
-    await redis.del(P + "points"); await redis.del(P + "quest"); await redis.del(P + "missions"); await redis.del(P + "stats"); for (const k of LVK) await redis.del(k); await redis.del(P + "helps"); await redis.del(P + "predict"); await redis.del(P + "shouts");
+    await redis.del(P + "points"); await redis.del(P + "quest"); await redis.del(P + "missions"); await redis.del(P + "stats"); for (const k of LVK) await redis.del(k); await redis.del(P + "helps"); await redis.del(P + "qbdayn"); await redis.del(P + "predict"); await redis.del(P + "shouts");
     return reply(res, 200, { ok: true, points: {} });
   }
 
@@ -582,10 +583,12 @@ async function main(req, res) {
   // 🎂 QUEEN MOTHER: "Everybody stop and sing Happy Birthday to me!" (once every 10 minutes)
   if (a === "qbday") {
     if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only the QUEEN MOTHER can do that" });
+    // exactly 2 uses for the whole night (reset by Start completely over / pointsreset)
     const now = Date.now();
-    if (!(await redis.set(P + "qbday", String(now), { nx: true, ex: 600 }))) { const t0 = Number(await redis.get(P + "qbday")) || now; return reply(res, 429, { error: "wait", left: Math.max(1, Math.ceil((t0 + 600000 - now) / 1000)) }); }
+    if ((Number(await redis.get(P + "qbdayn")) || 0) >= 2) return reply(res, 429, { error: "All used up", uses: 0 });
+    const used = Number(await redis.incr(P + "qbdayn")) || 1; await redis.expire(P + "qbdayn", 60 * 60 * 36);
     const lv = await readLive(); lv.bday = { id: now, t: now, queen: true };
-    await saveLive("bday", lv.bday); await pushCmd("bday", lv.bday); return reply(res, 200, { ok: true, left: 600 });
+    await saveLive("bday", lv.bday); await pushCmd("bday", lv.bday); return reply(res, 200, { ok: true, uses: 2 - used });
   }
   // 😤 Buzz Buzz's catchphrase button (Natalie's phone only)
   if (a === "notfair") {

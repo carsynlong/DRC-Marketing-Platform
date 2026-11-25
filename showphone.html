@@ -244,6 +244,7 @@ function guestTiles(t){
 }
 // open one panel at a time; tap again to close
 function wireTiles(app){
+  setTimeout(qbShow,0);
   app.querySelectorAll("[data-tile]").forEach(b=>b.onclick=()=>{const k=b.dataset.tile;
     if(k==="help")return sendHelp();if(k==="bday")return singToMe();
     const p=app.querySelector(`[data-panel="${k}"]`),open=p.hidden;
@@ -255,12 +256,13 @@ function flash(id,text,ms){const m=document.getElementById(id);if(!m)return;m.hi
 async function sendHelp(){if(!confirm("Call the Gamemaker over to help you?"))return;const r=await api({a:"help",name:me});buzz(60);
   flash("helpmsg",r.ok||r.status===429?"🆘 The Gamemaker got your message. Help is on the way!":"Couldn't send. Wave at the Gamemaker!",8000)}
 let qbT=0;
-function qbLeft(sec){const b=document.querySelector('[data-tile="bday"]');clearInterval(qbT);let left=sec;
-  const tk=()=>{if(!b||!b.isConnected){clearInterval(qbT);return}if(left<=0){clearInterval(qbT);b.disabled=false;b.querySelector("span:last-child").textContent="Sing to me!";return}
-    b.disabled=true;b.querySelector("span:last-child").textContent=`Again in ${Math.floor(left/60)}:${String(left%60).padStart(2,"0")}`;left--};tk();qbT=setInterval(tk,1000)}
-async function singToMe(){if(!confirm("Stop everything and have everyone sing to you?"))return;const r=await api({a:"qbday",name:me});
-  if(r.ok){buzz([200,100,200]);flash("qbmsg","🎂 The Capitol is singing for you!",8000);qbLeft(r.left||600)}
-  else if(r.status===429){flash("qbmsg","🎂 They just sang! You can do it again soon.",6000);qbLeft(r.left||60)}else flash("qbmsg","No internet. Try again.",6000)}
+// 🎂 QUEEN MOTHER gets exactly 2 birthday songs all night
+let qbUses=null;
+function qbShow(){const b=document.querySelector('[data-tile="bday"]');if(!b||qbUses===null)return;const l=b.querySelector("span:last-child");
+  if(qbUses<=0){b.disabled=true;l.textContent="All used up";b.querySelector("span").textContent="🎂"}else{b.disabled=false;l.textContent=`Sing to me! (${qbUses} left)`}}
+async function singToMe(){if(qbUses===0)return;if(!confirm(`Stop everything and have everyone sing to you? You get ${qbUses===null?2:qbUses===1?"1 more":"2"} tonight.`))return;const r=await api({a:"qbday",name:me});
+  if(r.ok){buzz([200,100,200]);qbUses=r.uses;flash("qbmsg",`🎂 The Capitol is singing for you! ${r.uses?"1 more left tonight.":"That was your last one."}`,8000);qbShow()}
+  else if(r.status===429){qbUses=0;flash("qbmsg","🎂 You've used both birthday songs tonight.",6000);qbShow()}else flash("qbmsg","No internet. Try again.",6000)}
 let dqPick=null;
 function dqStep(n,what){const a=document.getElementById("dq1"),b=document.getElementById("dq2");if(!a)return;a.hidden=n!==1;b.hidden=n!==2;
   if(n===2){dqPick=what;document.getElementById("dqwhat").textContent="👑 "+what}else{dqPick=null;const w=document.getElementById("dqownw");if(w)w.hidden=true}}
@@ -495,7 +497,7 @@ const TABS=[["show","🎮","Show"],["quests","⚔️","Quests"],["twists","🌀"
 const SAB=[["freeze","❄️","Phone freeze (8s)"],["bite","🐕","Mutt bite (25s slow)"],["fog","🌫️","Fog (10s)"],["flip","🙃","Flip upside down"],["jackers","🐝","Tracker jackers"]];
 const TW=[["wheel","🎰","Wheel of Punishment"],["swap","🔁","Body swap (picked + random)"],["silence","🤐","Silence the picked"],["decree","👑","QUEEN MOTHER decree"],["bounty","🎯","Bounty on the leader"],["alliance","🐦","Alliance (picked + random)"],["mission","🕵️","Secret mission to picked"]];
 const SHOW_BTNS=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["briefgo","▶️","Start / Got it"],["intermission","☕","Intermission"],["live","🎥","Live cam"],["mute","🔇","Mute"]];
-const TWIST_BTNS=[["twist:fire","🔥","Fireballs"],["twist:storm","⚡","Lightning: swap seats"],["twist:mutts","🐺","Mutts: stand and spin"],["twist:freeze","❄️","Freeze!"],["twist:bonus","🎁","Bonus major award"],["twist:rule","📜","New rule"],["twist:feast","🍗","The Feast (snacks)"],["sponsor","🪂","Sponsor gift now"],["sponsor:on","⏱️","Random sponsor gifts ON"],["sponsor:off","⏹️","Random sponsor gifts OFF"],["clearrule","🧽","Clear banners"]];
+const TWIST_BTNS=[["twist:fire","🔥","Fireballs"],["twist:storm","⚡","Lightning: swap seats"],["twist:mutts","🐺","Mutts: stand and spin"],["twist:freeze","❄️","Freeze!"],["twist:bonus","🎁","Bonus major award"],["twist:rule","📜","New rule"],["twist:feast","🍗","The Feast (snacks)"],["clearrule","🧽","Clear banners"]];
 function hostCard(){
   const box=document.getElementById("host");if(!box)return;const pin=XM.store.get("xmas-sh-pin",null);
   if(!pin){dropBar();box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="tiny" style="margin-bottom:8px">Enter your PIN to control the TV.</div>
@@ -518,7 +520,7 @@ function hostCard(){
     sec("⭐ Points",`<div class="hgrid"><button id="pplus"><span class="i">⭐</span>+1 to picked</button><button id="pminus"><span class="i">💀</span>-1 to picked</button><button data-c="points"><span class="i">📊</span>Points on TV</button></div>`),
    twists:sec("🎯 Twists on the picked tribute (or Random)",`<div class="hgrid twists">${TW.map(([k,i,l])=>`<button data-tw="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
     sec("🌍 Twists for the whole room",`<div class="hgrid twists">${TWIST_BTNS.filter(x=>!/^sponsor:/.test(x[0])).map(b).join("")}</div>`)+
-    `<details class="hfold"><summary>🐺 Sabotage phones (online games)</summary><div class="hgrid twists">${SAB.map(([k,i,l])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}</button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Freeze everyone BUT picked</button></div></details>`,
+    ``,
    phones:`<div id="asks"></div><div id="shouts"></div>`+
     sec("🗳️ Phone vote",`<div data-when="novote"><select id="psel">${XM.POLLS.map(q=>`<option>${esc(q)}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
      <textarea id="pown" rows="2" placeholder="Your question" style="display:none" maxlength="110"></textarea></div>
@@ -601,15 +603,15 @@ function hostCard(){
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
     if(r.ok){qmsg("✅ Sent to the TV");const [k,v]=x.dataset.c.split(":");if(TOGGLES.includes(k)&&(v==="on"||v==="off")){const st=XM.store.get("xmas-sh-toggles",{})||{};st[k]=v;XM.store.set("xmas-sh-toggles",st);showToggles()}}else if(r.status===403&&r.error==="Gamemaker only"){XM.store.set("xmas-sh-pin",null);hostCard()}else if(r.status===403){qmsg("Another phone took your name. Tap Not you? and rejoin.")}else qmsg("Couldn't send. Try again.")};
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=ARM.includes(x.dataset.c)?arm(x,()=>sendC(x)):()=>sendC(x));
-  // ⚙ on/off settings: one button each, showing the state you last set (the TV starts with chaos off, ticker on, random gifts off)
-  const TGL={chaos:["🎲","Chaos mode"],ticker:["📺","News ticker"],sponsor:["🪂","Random sponsor gifts"]},TDEF={chaos:"off",ticker:"on",sponsor:"off"};
+  // ⚙ on/off settings: the news ticker (on by default)
+  const TGL={ticker:["📺","News ticker"]},TDEF={ticker:"on"};
   function showToggles(){const st=XM.store.get("xmas-sh-toggles",{})||{};box.querySelectorAll("[data-tg]").forEach(x=>{const k=x.dataset.tg,v=st[k]||TDEF[k];x.classList.toggle("on",v==="on");x.innerHTML=`<span class="i">${TGL[k][0]}</span>${TGL[k][1]}: <b>${v==="on"?"ON":"OFF"}</b>`})}
   box.querySelectorAll("[data-tg]").forEach(x=>x.onclick=async()=>{const k=x.dataset.tg,st=XM.store.get("xmas-sh-toggles",{})||{},v=(st[k]||TDEF[k])==="on"?"off":"on";buzz(20);
     const r=await api({a:"cmd",name:me,pin,cmd:k+":"+v});if(r.ok){st[k]=v;XM.store.set("xmas-sh-toggles",st);showToggles();qmsg(`${TGL[k][1]}: ${v.toUpperCase()}`)}else qmsg("Couldn't send. Try again.")});
   showToggles();hostState();
   remoteBar(pin);
 }
-const TOGGLES=["chaos","ticker","sponsor"];
+const TOGGLES=["ticker"];  // chaos mode and random sponsor gifts are retired
 let hostRace=null;
 function hostState(){const box=document.getElementById("host");if(!box)return;const S={vote:!!vote,bet:!!bet,betopen:!!(bet&&bet.state==="open"),race:!!(hostRace&&hostRace.state==="live"),hot:!!hot,mercy:!!mercy,predict:!!(predict&&predict.open)};
   box.querySelectorAll("[data-when]").forEach(x=>{const w=x.dataset.when,neg=w.startsWith("no")&&!(w in S),k=neg?w.slice(2):w;x.hidden=neg?S[k]:!S[k]})}
@@ -707,7 +709,7 @@ async function poll(){
     if(me==="Carsyn"&&j.tvbtns!==undefined)tvCtl(j.tvbtns);
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch>myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();points=j.points||{};online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
+    skew=(j.now||Date.now())-Date.now();points=j.points||{};if(j.qbUses!==undefined&&j.qbUses!==qbUses){qbUses=j.qbUses;qbShow()}online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
   const busyNow=(quest&&quest.status==="live")||(race&&race.state==="live");
   const tvPop=me==="Carsyn"&&document.querySelector("#tvctl.tvpop");
   setTimeout(poll,fastPoll?(fastPoll=false,700):busyNow?1000:tvPop?1500:(vote||bet||mercy||hot||(predict&&predict.open))?2000:me==="Carsyn"?2000:3000);

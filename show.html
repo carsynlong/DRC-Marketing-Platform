@@ -863,7 +863,7 @@ function sponsorDrop(names){
 }
 // random timer: one sponsor gift every 8 to 15 minutes while it's on
 let sponsorTimer=0;
-const sponsorAuto=()=>{try{return localStorage.getItem("xmas-sponsor-auto")==="1"}catch(e){return false}};
+const sponsorAuto=()=>false;  // random sponsor gifts are switched off for good (they annoyed people)
 function scheduleSponsor(ms){clearTimeout(sponsorTimer);if(!sponsorAuto())return;
   sponsorTimer=setTimeout(()=>{if(!sponsorAuto())return;const id=SLIDES[cur]&&SLIDES[cur].id;
     if(!started||busy()||["lobby","title","welcome","rules","end","begin"].includes(id)||/^(video|idk)-/.test(id)||!sponsorDrop())return scheduleSponsor(20000);
@@ -954,7 +954,6 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("📲 Start a tap race",()=>hostCall({a:"raceopen",goal:50}));
   item("🔮 Reveal the predictions",()=>predictReveal());
   item("📺 News ticker on/off",()=>{const on=!tickerOn();try{localStorage.setItem("xmas-ticker",on?"1":"0")}catch(e){}toast(on?"📺 News ticker on":"📺 News ticker off")});
-  item("🎲 Chaos mode on/off",()=>setChaos(!chaosOn()));
   item("🎁 Major award draft order",()=>draftOrder());
   item("🏁 End-of-night awards",()=>nightAwards());
   item("🔄 Start completely over",()=>{if(confirm("Start completely over? This wipes EVERYTHING: winners, Capitol Points, news, photos, quests, votes, award stats, and signs every phone out. Use it after practicing."))startOver()});
@@ -1153,7 +1152,7 @@ function arenaClock(min){clearInterval(clockIv);clearTimeout(clockGone);let el=d
   tick();clockIv=setInterval(tick,500)}
 /* ---------- 🎲 chaos mode: random twists on their own ---------- */
 let chaosT=0;
-const chaosOn=()=>{try{return localStorage.getItem("xmas-chaos")==="1"}catch(e){return false}};
+const chaosOn=()=>false;  // chaos mode is switched off for good: nothing pops up on its own
 function scheduleChaos(ms){clearTimeout(chaosT);if(!chaosOn())return;
   chaosT=setTimeout(()=>{if(!chaosOn())return;const id=SLIDES[cur]&&SLIDES[cur].id;
     if(!started||busy()||["lobby","title","welcome","rules","end","begin"].includes(id)||/^(video|idk)-/.test(id))return scheduleChaos(20000);
@@ -1313,7 +1312,7 @@ function phoneTour(){if(!window.Briefing||busy())return busy()&&busyToast();
 function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-points-briefed","1")}catch(e){}
   Briefing.show({eyebrow:"⭐ CAPITOL POINTS",title:"What Are Capitol Points?",intro:"Capitol points. Here's how they work.",
     steps:[["⭐","A side game all night. It <b>never counts</b> in the in-person games.","A side game all night. It never counts in the in-person games."],
-      ["⚔️","Earn them: side quests, tap races, sponsor gifts, bets.","Earn them with side quests, tap races, sponsor gifts, and bets."],
+      ["⚔️","Earn them: side quests, tap races, bets.","Earn them with side quests, tap races, and bets."],
       ["💀","Lose them: failed quests, bad bets, the Wheel of Punishment.","Lose them with failed quests, bad bets, and the wheel of punishment."],
       ["🎁","Most points picks their <b>major award first</b>.","Most points picks their major award first."]],
     outro:"Go earn some points.",start:"▶ Got it",muted:()=>!XM.sound})}
@@ -1332,7 +1331,7 @@ function runCmd(c,data){
   if(c==="racewin"&&data)return raceWin(data);
   if(c==="raceend"){if(raceUI&&raceUI.m.isConnected)raceUI.close();raceUI=null;return}
   if(c.startsWith("clock:"))return arenaClock(c==="clock:off"?0:+c.slice(6));
-  if(c==="chaos:on"||c==="chaos:off")return setChaos(c==="chaos:on");
+  if(c==="chaos:on"||c==="chaos:off")return;  // retired
   if(c==="ticker:on"||c==="ticker:off"){try{localStorage.setItem("xmas-ticker",c==="ticker:on"?"1":"0")}catch(e){}toast(c==="ticker:on"?"📺 News ticker on":"📺 News ticker off");return}
   if(c==="recap")return nightRecap();
   if(c==="predictreveal")return predictReveal();
@@ -1365,10 +1364,8 @@ function runCmd(c,data){
   if(c==="photo_in"&&data)return void photoIn(data);
   if(c==="fallen")return void fallenTributes();
   if(c==="tw"&&data)return twistTo(data);
-  if(c==="sab"&&data){news(data.allBut?`❄️ Everyone but ${data.to} got frozen`:`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"🐺"} ${data.to} got sabotaged by the Gamemaker`);XM.sfx("stinger");toast(data.allBut?`❄️ The Gamemaker froze EVERYONE except ${data.to}!`:`${{freeze:"❄️",bite:"🐕",fog:"🌫️",flip:"🙃",jackers:"🐝"}[data.kind]||"⚠️"} The Gamemaker sabotaged ${data.to}!`);return}
-  if(c==="sponsor")return void sponsorDrop();
-  if(c==="sponsor:on")return setSponsorAuto(true);
-  if(c==="sponsor:off")return setSponsorAuto(false);
+  if(c==="sab")return;  // phone sabotage retired
+  if(c==="sponsor"||c==="sponsor:on"||c==="sponsor:off")return;  // sponsor gifts retired
   if(c==="quest"&&data)return sideQuest(data);
   if(c==="questdone"&&data)return questDone(data);
   if(c==="pointsadd"&&data){XM.sfx(data.n>0?"sparkle":"trombone");toast(`${data.n>0?"⭐":"💀"} ${data.to}: ${data.n>0?"+":""}${data.n} point${Math.abs(data.n)===1?"":"s"}`);return}

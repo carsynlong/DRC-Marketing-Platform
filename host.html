@@ -57,7 +57,6 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
   <div class="sec"><h2>🌀 Twists (only you can do these)</h2>
     <p>Click one and it takes over the TV. The show tab must be open in this same browser. Esc on the show closes it.</p>
     <div class="tiles twists" id="twists"></div>
-    <div class="qrow" style="margin-top:14px"><b>🪂 Random sponsor gifts</b> (one drops every 8 to 15 minutes): <button class="chip" id="spon">On</button><button class="chip" id="spoff">Off</button></div>
     <div class="msg" id="tmsg"></div>
   </div>
 
@@ -95,7 +94,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
     <div class="msg" id="rhmsg"></div>
   </div>
 
-  <div class="sec"><h2>🔊 Your voice · ⏰ Clock · 🎲 Chaos · 📺 Ticker</h2>
+  <div class="sec"><h2>🔊 Your voice · ⏰ Clock · 📺 Ticker</h2>
     <div class="qrow"><input type="text" id="saytext" maxlength="200" placeholder="Type something for the announcer to say on the TV"><button class="chip on" id="saysend">🔊 Announce</button></div>
         <div class="tiles" id="misc"></div><div class="msg" id="mmsg"></div>
   </div>
@@ -129,7 +128,7 @@ const send=(cmd,msg)=>{if(!ch){alert("This browser can't talk to the show tab. U
   const m=document.getElementById(msg);m.textContent="✅ Sent (the show must be open in another tab of this browser)";setTimeout(()=>m.textContent="",1600)};
 const TW=[["twist:fire","🔥","Fireballs","Booms and flying fire"],["twist:storm","⚡","Lightning storm","Everyone swaps seats"],["twist:mutts","🐺","Mutts released","Stand and spin, last one loses a turn"],
   ["twist:freeze","❄️","Freeze!","5-second countdown, nobody move"],["twist:bonus","🎁","Bonus major award","Next to make you laugh wins"],["twist:rule","📜","New rule","Random silly rule stays on screen"],
-  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["sponsor","🪂","Sponsor gift now","Non-winners fight for +2 points"],["clearrule","🧽","Clear banners","Removes the reminders at the top of the TV"]];
+  ["twist:feast","🍗","The Feast","Snack break at the Cornucopia"],["clearrule","🧽","Clear banners","Removes the reminders at the top of the TV"]];
 document.getElementById("twists").innerHTML=TW.map(([c,i,l,s])=>`<button data-c="${c}">${tile(i,l,s)}</button>`).join("");
 const CT=[["prev","⬅️","Back"],["next","➡️","Next"],["close","✖️","Close pop-up"],["intermission","☕","Intermission"],["live","🎥","Live broadcast"],["mute","🔇","Mute / unmute"]];
 document.getElementById("ctrl").innerHTML=CT.map(([c,i,l])=>`<button data-c="${c}">${tile(i,l)}</button>`).join("")+'<div class="msg" id="cmsg" style="grid-column:1/-1"></div>';
@@ -156,8 +155,6 @@ function questUI(){
     <h2 style="margin-top:16px">🌀 More twists on the TV</h2><p>Use the tribute picked above (or 🎲 Random / nothing picked = random). Banners stay at the top of the TV until you tap them or Clear banners.</p>
     <div class="tiles twists">${TW2.map(([k,i,l,d])=>`<button data-tw="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}</div>
     <div class="qrow" style="margin-top:10px"><input type="text" id="dtext" placeholder="Optional: type QUEEN MOTHER's decree (blank = random)" maxlength="130"></div>
-    <h2 style="margin-top:16px">🐺 Sabotage the online games</h2><p>Hits the tribute picked above (or 🎲 Random) on their phone while they play Who's That Tribute, District Feud or District Secrets.</p>
-    <div class="tiles twists">${SAB.map(([k,i,l,d])=>`<button data-sab="${k}"><span class="i">${i}</span>${l}<small>${d}</small></button>`).join("")}<button data-sab="freeze" data-allbut="1"><span class="i">🧊</span>Freeze everyone BUT picked<small>Only they can play for 8 seconds</small></button></div>
     <h2 style="margin-top:16px">🎙️ Soundboard</h2><div class="tiles">${XM.SOUNDBOARD.map(([k,i,l])=>`<button data-snd="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>
     <h2 style="margin-top:16px">🗳️ Phone vote</h2>
     <div class="qrow"><select id="psel">${XM.POLLS.map(x=>`<option>${esc(x)}</option>`).join("")}<option value="own">✏️ Write my own...</option></select><input type="text" id="pown" placeholder="Your question" maxlength="110" style="display:none"></div>
@@ -200,13 +197,10 @@ function questUI(){
   q.querySelector("#preset").onclick=async()=>{if(Date.now()-armedP>4000){armedP=Date.now();return msg("Click again to reset everyone's points to 0.")}armedP=0;const r=await call({a:"pointsreset"});msg(r.ok?"🧹 Points reset.":"Couldn't reset.")};
 }
 questUI();
-const spState=()=>{let on=false;try{on=localStorage.getItem("xmas-sponsor-auto")==="1"}catch(e){}document.getElementById("spon").classList.toggle("on",on);document.getElementById("spoff").classList.toggle("on",!on)};
-document.getElementById("spon").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","1")}catch(e){}send("sponsor:on","tmsg");spState()};
-document.getElementById("spoff").onclick=()=>{try{localStorage.setItem("xmas-sponsor-auto","0")}catch(e){}send("sponsor:off","tmsg");spState()};spState();
 // reset
-// 🔊 voice, clock, chaos, ticker, recap (voice goes through the server, the rest straight to the show tab)
+// 🔊 voice, clock, ticker, recap (voice goes through the server, the rest straight to the show tab)
 document.getElementById("misc").innerHTML=[["clock:5","⏰","5 min clock"],["clock:10","⏰","10 min clock"],["clock:15","⏰","15 min clock"],["clock:20","⏰","20 min clock"],["clock:off","⏹️","Stop the clock"],
-  ["chaos:on","🎲","Chaos mode ON","A random twist every 4 to 8 min"],["chaos:off","😌","Chaos mode OFF"],["ticker:on","📺","News ticker ON"],["ticker:off","🚫","News ticker OFF"],["recap","📼","Night recap","Highlights slideshow"],["predictreveal","🔮","Reveal predictions","+3 to whoever called the Ultimate Victor"]]
+  ["ticker:on","📺","News ticker ON"],["ticker:off","🚫","News ticker OFF"],["recap","📼","Night recap","Highlights slideshow"],["predictreveal","🔮","Reveal predictions","+3 to whoever called the Ultimate Victor"]]
   .map(([c,i,l,d])=>`<button data-m="${c}"><span class="i">${i}</span>${l}${d?`<small>${d}</small>`:""}</button>`).join("");
 document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{if(b.dataset.m.startsWith("chaos:"))try{localStorage.setItem("xmas-chaos",b.dataset.m==="chaos:on"?"1":"0")}catch(e){}send(b.dataset.m,"mmsg")});
 const pinNow=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};

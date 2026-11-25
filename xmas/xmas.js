@@ -315,7 +315,7 @@ XM.playSong=function(name,force){
   XM.stopSong();if(!ensureAudio())return;
   if(name==="lobbymix"){songName=name;lobbyMix();return}
   if(/^wu_[a-z0-9]+$/.test(name)){   // a real recorded walk-up song: plays once, about 30 seconds
-    songName=name;playFile("/xmas/walkups/"+name.slice(3)+".m4a",.9,()=>{if(songName===name)songName=null});return}
+    songName=name;playFile("/xmas/walkups/"+name.slice(3)+".m4a"+(name==="wu_kyle"?"?v=2":""),.9,()=>{if(songName===name)songName=null});return}
   if(!SONGS[name]){songName=null;return}songName=name;playSynth(name);
 };
 XM.stopSong=function(){clearInterval(timerId);timerId=0;clearTimeout(mixT);song=null;songName=null;if(fileSong){const a=fileSong;fileSong=null;try{a.pause()}catch(e){}}};

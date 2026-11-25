@@ -146,7 +146,7 @@ function bigWin(who,sub="",place=1,card=null){
   document.body.appendChild(o);o.querySelector("#bwkeep").onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};
   const mode=S.mode,rn=MODES[mode].name;
   o.querySelectorAll("[data-own]").forEach(b=>b.onclick=()=>{const n=b.dataset.own;(OWNERS[mode]=OWNERS[mode]||{})[card]=n;XM.store.set("xmas-bingo-owners",OWNERS);
-    sfx("cheer");sfx("applause");XM.say(`Card ${card} belongs to... ${XM.dn(n)}!`,null,{pitch:.1,rate:.85,interrupt:true});
+    sfx("cheer");sfx("applause");XM.say(`This card belongs to... ${XM.spoken(n)}!`,null,{pitch:.1,rate:.85,interrupt:true});
     const w=o.querySelector(".whose");if(w)w.innerHTML=`<img src="${XM.photo(n)}" alt="" style="width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)"><b style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--gold)">Card ${card} belongs to ${esc(XM.dn(n))}!</b>`;
     const p=o.querySelector("p");if(p&&place===1)p.textContent=`${XM.dn(n)} wins the ${rn} round and a major award!`;render()});
   {const sk=o.querySelector("[data-skip]");if(sk)sk.onclick=()=>{const w=o.querySelector(".whose");if(w)w.remove()}}

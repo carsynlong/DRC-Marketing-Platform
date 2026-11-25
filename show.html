@@ -1035,7 +1035,7 @@ function openVote(p){
     <div class="say" id="vtot" style="font-size:1.4rem">0 votes</div>
     <div class="row"><button class="btn red" id="vreveal">🏁 Reveal the winner</button><button class="btn ghost" id="vx">Close (Esc)</button></div></div>`;
   m.querySelector("#vreveal").onclick=e=>{e.stopPropagation();hostCall({a:"pollclose"})};m.querySelector("#vx").onclick=e=>{e.stopPropagation();close()};
-  XM.sfx("reveal");XM.playSong("hh_lounge");announcer.say("Time to vote! "+p.q+" Vote on your phones now.",null,{pitch:.15,rate:.9});
+  XM.sfx("reveal");XM.playSong("hh_lounge");announcer.say("Time to vote! Vote on your phones now.",null,{pitch:.15,rate:.9});
   voteUI={id:p.id,m,close};
 }
 function updateVote(p){if(!voteUI||!voteUI.m.isConnected||!p||p.id!==voteUI.id)return;const c={};Object.values(p.votes||{}).forEach(v=>c[v]=(c[v]||0)+1);
@@ -1048,7 +1048,7 @@ function voteResult(r){if(r.win&&r.win.length)news(`🗳️ "${r.q}" The people 
     ${w.length?`<div class="duo">${w.map(n=>`<div>${face(n)}<b>${esc(n)}</b></div>`).join("")}</div><div class="say">${w.length>1?"It's a tie!":""} ${r.counts[w[0]]} vote${r.counts[w[0]]===1?"":"s"}</div>`:`<div class="say">Nobody voted!</div>`}
     <button class="btn ghost" id="rx">Close (Esc)</button></div>`;
   m.querySelector("#rx").onclick=e=>{e.stopPropagation();close()};XM.stopSong();
-  if(w.length){XM.sfx("drumroll");T(()=>{XM.sfx("fanfare");XM.confetti(160,true);announcer.say(`${r.q} The winner${w.length>1?"s are":" is"}: ${w.map(XM.spoken).join(" and ")}!`,null,{pitch:.1,rate:.88})},1200)}
+  if(w.length){XM.sfx("drumroll");T(()=>{XM.sfx("fanfare");XM.confetti(160,true);announcer.say(`The votes are in! The winner${w.length>1?"s are":" is"}... ${w.map(XM.spoken).join(" and ")}!`,null,{pitch:.1,rate:.88})},1200)}
 }
 /* ---------- 💰 betting on the next game ---------- */
 let betState=null,betUI=null;
@@ -1295,7 +1295,7 @@ function raceWin(x){
   if(raceUI&&raceUI.m.isConnected){raceUI.done=true;const go=raceUI.m.querySelector("#rgo");go.textContent=`🏆 ${x.name}!`;
     const ln=raceUI.m.querySelector(`[data-r="${CSS.escape(x.name)}"]`);if(ln){ln.classList.add("win");ln.querySelector(".rn").style.left="85%"}}
   const ui=raceUI;setTimeout(()=>{if(ui&&ui.m.isConnected)ui.close()},10000);
-  XM.stopSong();XM.celebrate(x.name,{line:`${XM.spoken(x.name)} wins the tap race in ${x.secs} seconds! Plus one point!`});news(`📲 ${x.name} won the tap race in ${x.secs} seconds`);
+  XM.stopSong();XM.celebrate(x.name,{line:`${XM.spoken(x.name)} wins the tap race! Plus one point!`});news(`📲 ${x.name} won the tap race in ${x.secs} seconds`);
 }
 /* ---------- 📜 bounty board: everything still in play ---------- */
 function bountyBoard(){

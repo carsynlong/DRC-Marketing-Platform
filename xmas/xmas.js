@@ -656,17 +656,31 @@ XM.lights=(n=28)=>`<div class="lights" aria-hidden="true">${"<i></i>".repeat(n)}
    Lines without a recording use the browser voice exactly as before. */
 XM.voiceHash=t=>{let h=0x811c9dc5;const s=String(t).replace(/\s+/g," ").trim();for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,"0")};
 (function(){const sy=window.speechSynthesis;if(!sy||sy.__vo)return;sy.__vo=true;
-  let man={};fetch("/xmas/voice/manifest.json",{cache:"no-cache"}).then(r=>r.ok?r.json():{}).then(j=>{man=j||{}}).catch(()=>{});
-  const rec=u=>u&&typeof u.text==="string"&&man[XM.voiceHash(u.text)];
+  let man={},fr={},frMax=1;
+  fetch("/xmas/voice/manifest.json",{cache:"no-cache"}).then(r=>r.ok?r.json():{}).then(j=>{man=j||{}}).catch(()=>{});
+  // 🧩 fragments: names and stock phrases recorded on their own, stitched together for lines built from live data
+  //    ("Chad Thundercock" + "versus" + "Lucky PomPoms"). A line plays this way only if every word is covered.
+  fetch("/xmas/voice/frags.json",{cache:"no-cache"}).then(r=>r.ok?r.json():{}).then(j=>{fr=j||{};frMax=Math.max(1,...Object.keys(fr).map(k=>k.split(" ").length))}).catch(()=>{});
+  const toks=t=>String(t).toLowerCase().replace(/[‘’]/g,"'").replace(/[^a-z0-9' ]+/g," ").split(/\s+/).map(w=>w.replace(/^'+|'+$/g,"")).filter(Boolean);
+  const cover=t=>{const w=toks(t);if(!w.length)return null;const out=[];let i=0;
+    while(i<w.length){let hit=null;for(let j=Math.min(w.length,i+frMax);j>i;j--){const f=fr[w.slice(i,j).join(" ")];if(f){hit=[f,j];break}}
+      if(!hit)return null;out.push("/xmas/voice/"+hit[0]);i=hit[1]}return out};
+  XM.voiceCover=cover;
+  // the list of mp3s for a line: one full recording, or a run of fragments, or null (browser voice)
+  const rec=u=>{if(!u||typeof u.text!=="string")return null;const f=man[XM.voiceHash(u.text)];if(f)return ["/xmas/voice/"+f];return cover(u.text)};
   const speak0=sy.speak.bind(sy),cancel0=sy.cancel.bind(sy),sp0=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(sy),"speaking");
-  const q=[];let cur=null;   // cur = {u, a?} the item playing right now
+  const q=[];let cur=null;   // cur = {u, a?, list?, k} the item playing right now
   const fire=(u,k)=>{try{const f=u["on"+k];if(f)f.call(u,{type:k,utterance:u})}catch(e){}};
   const done=it=>{if(cur!==it)return;cur=null;fire(it.u,"end");pump()};
-  function pump(){if(cur||!q.length)return;const u=q.shift(),f=rec(u);
-    if(f){const a=new Audio("/xmas/voice/"+f);a.volume=XM.sound?1:0;const it={u,a};cur=it;
-      a.onplaying=()=>{if(cur===it&&!it.started){it.started=true;fire(u,"start")}};a.onended=()=>done(it);
-      a.onerror=()=>{if(cur!==it)return;cur=null;pass(u)};
-      a.play().catch(()=>{if(cur!==it)return;cur=null;pass(u)})}
+  function pump(){if(cur||!q.length)return;const u=q.shift(),list=rec(u);
+    if(list){const it={u,list,k:0};cur=it;
+      list.slice(1).forEach(src=>{try{const p=new Audio();p.preload="auto";p.src=src}catch(e){}});   // warm up the next clips
+      const next=()=>{if(cur!==it)return;if(it.k>=list.length)return done(it);const first=it.k===0;
+        const a=new Audio(list[it.k++]);it.a=a;a.volume=XM.sound?1:0;
+        a.onplaying=()=>{if(cur===it&&!it.started){it.started=true;fire(u,"start")}};a.onended=next;
+        const bad=()=>{if(cur!==it)return;if(first){cur=null;pass(u)}else next()};   // first clip missing: browser voice instead
+        a.onerror=bad;a.play().catch(bad)};
+      next()}
     else pass(u)}
   // a line with no recording: hand it to the browser voice, and continue the queue when it ends
   function pass(u){if(q[0]===u)q.shift();const it={u};cur=it;

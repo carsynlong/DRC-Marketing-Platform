@@ -21,6 +21,8 @@ h1{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 5p
 @keyframes pop{from{transform:scale(.4);opacity:0}}
 .win img{width:clamp(180px,22vw,300px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 8px var(--gold),0 20px 50px rgba(0,0,0,.6)}
 .btn{font-size:clamp(1.1rem,2vw,1.6rem)}
+@media (max-height:900px){.wrap{padding:14px 16px}.in{gap:10px}.bowl{font-size:min(16vh,8rem)}.win img{width:min(24vh,220px)}.win h1{font-size:min(9vh,4rem)}h1{font-size:min(8vh,4rem)}.slip{font-size:min(7vh,3rem)}}
+body.drawn .bowl{display:none}
 </style>
 </head>
 <body>
@@ -43,13 +45,13 @@ h1{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 5p
 document.getElementById("lights").outerHTML=XM.lights(14);XM.snow(document.getElementById("snow"));
 const Q=["Who will host the 2027 Christmas Games?","Who picks the theme for the 2027 Games?"];let qi=0,busy=false;
 const say=t=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.rate=.9;speechSynthesis.speak(u)}catch(e){}};
-document.getElementById("mode").onclick=()=>{qi=1-qi;document.getElementById("q").textContent=Q[qi];document.getElementById("res").innerHTML="";document.getElementById("slip").textContent=""};
-document.getElementById("draw").onclick=()=>{if(busy)return;busy=true;XM.ensureAudio();
+document.getElementById("mode").onclick=()=>{document.body.classList.remove("drawn");qi=1-qi;document.getElementById("q").textContent=Q[qi];document.getElementById("res").innerHTML="";document.getElementById("slip").textContent=""};
+document.getElementById("draw").onclick=()=>{if(busy)return;busy=true;document.body.classList.remove("drawn");XM.ensureAudio();
   const names=XM.TRIBUTES.map(t=>t.name),pick=names[Math.floor(Math.random()*names.length)],bowl=document.getElementById("bowl"),slip=document.getElementById("slip"),res=document.getElementById("res");
   res.innerHTML="";bowl.classList.add("shake");XM.sfx("drumroll");say(qi?"Who will choose the theme for next year? The bowl decides.":"The time has come to choose the host of the 2027 Christmas Games.");
   let n=0;const iv=setInterval(()=>{slip.textContent=XM.dn(names[n++%names.length]);XM.sfx("tick")},140);
   setTimeout(()=>{clearInterval(iv);bowl.classList.remove("shake");slip.textContent="";const t=XM.TRIBUTES.find(x=>x.name===pick);
-    res.innerHTML=`<div class="win"><img src="${t.full||t.img}" alt="" onerror="this.src='${t.img}'"><h1>${XM.esc(XM.dn(pick))}</h1><div class="q">${qi?"picks the 2027 theme!":"hosts the 2027 Christmas Games!"}</div></div>`;
+    document.body.classList.add("drawn");res.innerHTML=`<div class="win"><img src="${t.full||t.img}" alt="" onerror="this.src='${t.img}'"><h1>${XM.esc(XM.dn(pick))}</h1><div class="q">${qi?"picks the 2027 theme!":"hosts the 2027 Christmas Games!"}</div></div>`;
     XM.sfx("cannon");XM.sfx("fanfare");XM.confetti(260,true);say((qi?"The theme for 2027 will be chosen by ":"The host of the 2027 Christmas Games is ")+XM.dn(pick)+"!");busy=false},5200)};
 </script>
 </body>

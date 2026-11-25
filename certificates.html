@@ -81,7 +81,7 @@ function build(){
   const c={};Object.entries(V).forEach(([g,n])=>{if(g==="mitten"||!n||!trib(n))return;const m=trib(n).name;c[m]=(c[m]||0)+1});
   const max=Math.max(0,...Object.values(c));
   if(max>=2){let names=Object.keys(c).filter(n=>c[n]===max);const tb=XM.store.get("xmas-ultimate",null);
-    if(names.length>1&&tb&&names.includes(tb.winner))names=[tb.winner];
+    if(names.length>1&&tb&&names.includes(tb.winner)&&(!tb.key||tb.key===names.slice().sort().join("|")))names=[tb.winner];
     names.forEach(n=>out.unshift(cert({name:n,ult:true,title:"👑 ULTIMATE VICTOR",line:`won <b>${max} games</b> tonight and is crowned<br>the Ultimate Victor, with eternal bragging rights.`})))}
   document.getElementById("out").innerHTML=out.length?`<div class="wrap">${out.join("")}</div>`:
     `<div class="empty">🏆 No winners saved on this laptop yet.<br>Record the winners in the show (The Capitol Has Spoken), then come back here to print their certificates.</div>`;

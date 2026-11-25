@@ -648,4 +648,34 @@ document.addEventListener("keydown",e=>{if(T&&e.key==="Escape"){e.preventDefault
 
 /* Twinkle lights helper */
 XM.lights=(n=28)=>`<div class="lights" aria-hidden="true">${"<i></i>".repeat(n)}</div>`;
+
+/* ================= 🎙️ CAPITOL HOST VOICE =================
+   Lines recorded ahead of time in the ElevenLabs "Capitol Host" voice live in /xmas/voice/ (manifest.json maps a hash of the
+   exact spoken text to its mp3). Whenever anything on the page speaks (the announcer, briefings, games), a line that has a
+   recording plays the mp3 instead, and fires the same onstart/onend so slides and briefings keep their timing.
+   Lines without a recording use the browser voice exactly as before. */
+XM.voiceHash=t=>{let h=0x811c9dc5;const s=String(t).replace(/\s+/g," ").trim();for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,"0")};
+(function(){const sy=window.speechSynthesis;if(!sy||sy.__vo)return;sy.__vo=true;
+  let man={};fetch("/xmas/voice/manifest.json",{cache:"no-cache"}).then(r=>r.ok?r.json():{}).then(j=>{man=j||{}}).catch(()=>{});
+  const rec=u=>u&&typeof u.text==="string"&&man[XM.voiceHash(u.text)];
+  const speak0=sy.speak.bind(sy),cancel0=sy.cancel.bind(sy),sp0=Object.getOwnPropertyDescriptor(Object.getPrototypeOf(sy),"speaking");
+  const q=[];let cur=null;   // cur = {u, a?} the item playing right now
+  const fire=(u,k)=>{try{const f=u["on"+k];if(f)f.call(u,{type:k,utterance:u})}catch(e){}};
+  const done=it=>{if(cur!==it)return;cur=null;fire(it.u,"end");pump()};
+  function pump(){if(cur||!q.length)return;const u=q.shift(),f=rec(u);
+    if(f){const a=new Audio("/xmas/voice/"+f);a.volume=XM.sound?1:0;const it={u,a};cur=it;
+      a.onplaying=()=>{if(cur===it&&!it.started){it.started=true;fire(u,"start")}};a.onended=()=>done(it);
+      a.onerror=()=>{if(cur!==it)return;cur=null;pass(u)};
+      a.play().catch(()=>{if(cur!==it)return;cur=null;pass(u)})}
+    else pass(u)}
+  // a line with no recording: hand it to the browser voice, and continue the queue when it ends
+  function pass(u){if(q[0]===u)q.shift();const it={u};cur=it;
+    const end=()=>{if(cur!==it)return;cur=null;pump()};u.addEventListener("end",end);u.addEventListener("error",end);speak0(u);
+    setTimeout(end,String(u.text||"").length*130+4000)}   // safety net if the browser voice never says it finished
+  sy.speak=u=>{if(!cur&&!q.length&&!rec(u))return speak0(u);q.push(u);pump()};
+  sy.cancel=()=>{q.length=0;const it=cur;cur=null;if(it&&it.a){try{it.a.pause()}catch(e){}}cancel0()};
+  try{Object.defineProperty(sy,"speaking",{configurable:true,get:()=>!!cur||!!(sp0&&sp0.get&&sp0.get.call(sy))})}catch(e){}
+  // mute stops a recording that's playing
+  const set0=XM.setSound;XM.setSound=on=>{set0(on);if(cur&&cur.a)cur.a.volume=on?1:0};
+})();
 })();

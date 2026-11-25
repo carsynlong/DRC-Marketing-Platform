@@ -205,7 +205,7 @@ body.has-ticker .stage{max-height:42vh}
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
-const DOUBLE=new Set([11,23]); // last face of rounds 1 and 2: sponsor gift (double points)
+const DOUBLE=new Set([8,17]); // last face of rounds 1 and 2: sponsor gift (double points)
 const NO_ANSWER=250; // points lost for not locking in a guess before the cannon fires
 const SLOW_PEN=NO_ANSWER; // phones show "⏰ Too slow −250" (howto.js)
 const HOST="Carsyn"; // runs the game: knows every face, so instead of guessing she predicts (🔮) and plays the mini-games
@@ -214,27 +214,21 @@ const groupOf=n=>GIRLS.has(n)?"girls":"boys";
 const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
 const Q=[
  {q:"s01",r:"s02",a:"Dash"},{q:"s03",r:"s04",a:"Kyle"},{q:"s05",r:"s06",a:"Grandad"},{q:"s07",r:"s08",a:"Jessie"},
- {q:"s09",r:"s10",a:"Kamdon"},{q:"s11",r:"s12",a:"Brandon"},{q:"s13",r:"s14",a:"Carsyn"},{q:"s15",r:"s16",a:"Jonny"},
+ {q:"s11",r:"s12",a:"Brandon"},{q:"s13",r:"s14",a:"Carsyn"},{q:"s15",r:"s16",a:"Jonny"},
  {q:"s17",r:"s18",a:"Kamdon"},{q:"s19",r:"s20",a:"Tinsley"},{q:"s21",r:"s22",a:"Elisha"},{q:"s23",r:"s24",a:"QUEEN MOTHER"},
  {q:"s25",r:"s26",a:"Natalie"},{q:"s27",r:"s28",a:"Kyle"},{q:"s29",r:"s30",a:"Tinsley"},{q:"s31",r:"s32",a:"Natalie"},
- // Grandad's beard crop was a brown blur, so this one zooms out of the reveal photo slowly instead
- {q:"s34",r:"s34",a:"Grandad",zoom:{fx:.5,fy:.66,z:7,cap:.62}},
  {q:"s35",r:"s36",a:"Brandon"},
  {q:"s37",r:"s38",a:"Tinsley"},
  {q:"s39",r:"s40",a:"Carsyn"},
  {q:"s41",r:"s42",a:"Kamdon"},
  {q:"s43",r:"s44",a:"QUEEN MOTHER"},
- {q:"s45",r:"s46",a:"Jonny"},
- {q:"s47",r:"s48",a:"Natalie"},
- {q:"s49",r:"s50",a:"Tinsley"},
- {q:"s51",r:"s52",a:"Jessie"},
  {q:"s53",r:"s54",a:"Dash"},
 ];
-const ROUNDS=[{at:0,num:"Round 1",name:"The Reaping",sub:"12 faces. Some of these go way back."},
-              {at:12,num:"Round 2",name:"The Quarter Quell",sub:"12 faces. Fewer chances, same glory."},
-              {at:24,num:"Round 3",name:"The Feast",sub:"3 faces. Triple points. Everything you need is at the cornucopia."}];
-const FEAST=24; // every face from here on is worth triple
-const MUTT_AT=[7,19]; // 🐺 Mutt Mashup faces (one in round 1, one in round 2)
+const ROUNDS=[{at:0,num:"Round 1",name:"The Reaping",sub:"9 faces. Some of these go way back."},
+              {at:9,num:"Round 2",name:"The Quarter Quell",sub:"9 faces. Fewer chances, same glory."},
+              {at:18,num:"Round 3",name:"The Feast",sub:"3 faces. Triple points. Everything you need is at the cornucopia."}];
+const FEAST=18; // every face from here on is worth triple
+const MUTT_AT=[6,14]; // 🐺 Mutt Mashup faces (one in round 1, one in round 2)
 const pointsX=qi=>qi>=FEAST?3:DOUBLE.has(qi)?2:1;
 const roundOf=qi=>[...ROUNDS].reverse().find(r=>qi>=r.at);
 const SHAPES=[

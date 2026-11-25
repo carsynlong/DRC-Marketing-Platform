@@ -114,7 +114,7 @@
     em.outerHTML = `<div class="fx-horn">${Ambient.CORNUCOPIA}</div>`;
     if (!calm) ["coin", "bread", "chute", "coin", "berries", "bread", "coin", "sugar", "chute", "coin"].forEach((k, i) => setTimeout(() => Ambient.spawn(k), 400 + i * 220));
   }
-  /* Nobody guessed this face: a cannon sounds and the fallen tribute appears in the night sky */
+  /* (removed: the "fallen tribute" banner when nobody guessed a face; it covered the scoreboard) */
   function sky() {
     const r = S.rounds[S.qi]; if (!r) return;
     S.fallen = (S.fallen || []).filter(q => q !== r.qi).concat(r.qi);
@@ -137,7 +137,7 @@
       const list = Object.entries(d.coins || {}).map(([n, c]) => [n, +c]).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]);
       if (list.length) champ = `<div class="fx-champ">🪙 Capitol Coin Champion: <b>${esc(list[0][0])}</b> with ${list[0][1]} coin${list[0][1] > 1 ? "s" : ""}${list[1] ? ` · runner-up ${esc(list[1][0])} (${list[1][1]})` : ""}</div>`;
     } catch (e) {}
-    box.innerHTML = champ + (typeof Party !== "undefined" ? Party.awardsHTML() : "") + (fallen ? `<div class="eyebrow">🕯️ Fallen tributes: the faces nobody guessed</div><div class="fx-fallen">${fallen}</div>` : "");
+    box.innerHTML = champ + (typeof Party !== "undefined" ? Party.awardsHTML() : "") ;
     const pod = document.querySelector(".podium"); if (S.phase === "final" && pod && box.innerHTML) pod.after(box);
   }
 
@@ -154,7 +154,6 @@
       if (now.phase === "final" && prev.phase !== "interview") { S.sound = true; setTimeout(() => { if (S.phase === "final") { try { ensureAudio(); playWinner(); } catch (e) {} } }, 300); }
       if (now.phase === "final") { fireworks(12); setTimeout(finale, 300); }
       if (now.phase === "roundcard" && S.qi >= FEAST) setTimeout(feastCard, 50);
-      if ((now.phase === "board" || now.phase === "final") && prev.phase === "reveal" && !S.correct.length) sky();
       if (now.phase === "lobby" || (now.phase === "roundcard" && S.qi === 0)) S.fallen = [];
     }
     if (now.phase === "question" && now.locked && !prev.locked && prev.phase === "question" && prev.qi === now.qi) cannon();

@@ -528,6 +528,7 @@ function view(){
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:0" class="tile k${k} ${n===mine?"sel":"dim"}" disabled aria-pressed="${n===mine}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>
       <p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages for sponsor gifts!</p>${reactBar()}`,"lock"];
     if(mine)return [key+"done:"+mine,header()+`<section class="msg"><div class="shot">${ART.arrow}${ART.target}</div><h1>Locked in!</h1><p class="said">You said <b>${esc(mine)}</b></p>${Memes.html("tribute",g.gid,g.qi)}</section>${reactBar()}`,"lock"];
+    if(g.look)return [key+"look"+g.look,header()+msg("👀","Look at the TV!",`${faceNo}${gift}<p>Typing opens in <b style="font-size:1.6em;color:var(--gold)">${g.look}</b></p><p>Then you have a minute to type your answer.</p>`,"ready"),g.look===10?"whistle":""];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!","<p>The cannon fired before you answered. That costs 250 points. Be quicker next time!</p>","late"),"cannon"];
     if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:${k}" class="tile k${k}" data-ans="${esc(n)}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>`,"whistle"];

@@ -18,7 +18,7 @@ window.HowTo = (() => {
       sections: [
         ["How to play", [["📸", "Watch the TV", "A face starts super zoomed in, then slowly zooms out."],
           ["⌨️", "Type who it is", "Right here on your phone. Only you see it."],
-          ["⏱️", `${(g && g.secs) || 30} seconds`, "Then 💥 the cannon fires and answers lock."], ["⚠️", "Don't run out of time", "No answer in time = −250 points."]]],
+          ["👀", "10 seconds to look", "Then you have a minute to type. 💥 The cannon fires and answers lock."], ["⚠️", "Don't run out of time", "No answer in time = −250 points."]]],
         ["Points", [["✅", "Right answer", "1,000 points"],
           ["🔥", "Streak", "More points for answers in a row"],
           ["🍗", "The Feast", "The last round is worth ×3"]]],

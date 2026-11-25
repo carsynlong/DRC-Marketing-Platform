@@ -82,6 +82,8 @@ body.has-ticker .stage{max-height:42vh}
 @keyframes revpop{from{transform:scale(.4) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
 .stage .tag{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(13,31,24,.9);padding:.5em 1.2em;border-radius:999px;font-family:var(--display);font-size:clamp(1.1rem,3vw,2rem);white-space:nowrap;box-shadow:0 0 0 3px var(--gold);animation:pop .6s .25s both cubic-bezier(.2,1.4,.4,1)}
 .stage .tag small{font-family:var(--body);font-size:.6em;color:var(--gold);letter-spacing:.12em;text-transform:uppercase;margin-right:.6em;font-weight:800}
+.stage .lookbig{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);background:rgba(10,20,16,.82);color:#fff;font-weight:800;font-size:clamp(1.3rem,2.6vw,2.4rem);padding:.35em 1.1em;border-radius:999px;box-shadow:0 0 0 3px var(--gold);white-space:nowrap}
+.stage .lookbig b{color:var(--gold);font-family:var(--display)}
 .stage .locked{position:absolute;top:14px;right:14px;background:var(--red);font-weight:800;padding:.35em .9em;border-radius:999px;letter-spacing:.06em;text-transform:uppercase;font-size:.85rem}
 .stage .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 .stage .flash.go{animation:flash .5s}
@@ -234,12 +236,12 @@ Q.forEach(x=>{[x.q,x.r].forEach(id=>{const i=new Image();i.src=src(id)})});
 
 let S, raf=0;
 function freshState(){
-  return {phase:"lobby",secs:30,sound:true,mode:"type",typed:{},
+  return {phase:"lobby",secs:60,sound:true,mode:"type",typed:{},
     players:NAMES.map(n=>({name:n,on:true,score:0,streak:0,delta:0})),
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 // a TV reload mid-face picks up the clock where it was (at least 8 seconds left), so nobody loses points to a refresh
-function start(data){ S=(data&&data.phase)?data:freshState(); if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.secs!==10)S.secs=SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
 
 /* ================= MUSIC: original game-show loops over public-domain carols ================= */
 let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
@@ -409,7 +411,7 @@ function showIntro(){
   Rules.run({theme:"tribute",photo:AV,title:"How to play",sub:"Who's That Tribute",sound:()=>S.sound,onReady:walk,steps:[
     ["📸","A mystery face appears on the TV, zoomed way in. It slowly zooms out."],
     ["📱","On your phone, type who you think it is. Nobody else sees your answer."],
-    ["⏱️",`You have ${S.secs} seconds before the cannon fires. No answer in time? You lose ${NO_ANSWER} points!`],
+    ["⏱️",`Look for 10 seconds, then you have a minute to type your answer. No answer in time? You lose ${NO_ANSWER} points!`],
     ["🎯","A right answer scores 1,000 points. Get several in a row for a streak bonus."],
     ["🔮",`${HOST} is the Gamemaker. She knows every face, so she predicts how many of you get each one right.`],
     ["🏃","Between rounds there are mini-games on your phone. The top 3 win bonus points."],
@@ -433,7 +435,7 @@ function roundCardOrQuestion(){
 let readyT=0;
 function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready";S.count=3;stopSong();render();sfx("drum");clearInterval(readyT);
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
-function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
+function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=LOOK;S.locked=false;S.correct=[];S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const isTb=()=>!!S.rounds[S.qi]?.tb;
 const faceLbl=()=>isTb()?"⚔️ Showdown face":`Face ${S.qi+1} of ${Q.length}`;
@@ -456,11 +458,18 @@ function setZoom(p){
   const s=Math.pow(z.z,1-Math.min(1,Extras.zoomP(p))*z.cap);
   im.style.transformOrigin=`${z.fx*100}% ${z.fy*100}%`;im.style.transform=`scale(${s})`;Extras.zoomStyle(im);
 }
+// 👀 each face: 10 seconds to look (no typing), then a minute to type
+const LOOK=10,SECS=60;
+function endLook(){if(!(S.look>0))return;S.look=0;S.qStart=Date.now();S.ansAt={};S.elapsed=0;sfx("go");render()}
 function tick(last){
   cancelAnimationFrame(raf);
   const loop=now=>{
     if(S.phase!=="question"||S.locked)return;
     const dt=(now-last)/1000;last=now;
+    if(S.look>0){const b=Math.ceil(S.look);S.look=Math.max(0,S.look-dt);const a=Math.ceil(S.look);
+      if(a!==b){const n=document.getElementById("lookn");if(n)n.textContent=a;const pp=document.getElementById("lookp");if(pp)pp.textContent=a;if(a<=3&&a>0)sfx("tock")}
+      if(S.look<=0){S.look=1e-9;endLook();return}
+      setZoom(0);raf=requestAnimationFrame(loop);return}
     const before=Math.ceil(S.secs-S.elapsed);
     S.elapsed=Math.min(S.secs,S.elapsed+dt);
     const left=Math.ceil(S.secs-S.elapsed);
@@ -567,14 +576,12 @@ function lobbyView(){
     ${EMBLEM}
     <div class="eyebrow">The 2026 Christmas Games · Game 2</div>
     <h1>Who's That Tribute?</h1>
-    <p>A face appears up close. Type who it is on your phone before the cannon. 1,000 points per right answer.</p>
+    <p>A face appears up close. Look for 10 seconds, then you have a minute to type who it is on your phone. 1,000 points per right answer.</p>
     ${Sync.joinCard()}
     ${Sync.roster()}
     <div class="eyebrow">Tap a face to sit them out</div>
     <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div>
-    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options</summary><div class="settings"><span class="tiny">Seconds per face</span>
-      <div class="seg" role="group" aria-label="Seconds per face">${[15,20,30,45].map(n=>`<button data-secs="${n}" aria-pressed="${S.secs===n}">${n}</button>`).join(" ")}</div>
-      <button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button></div></details>
+    <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options</summary><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button></div></details>
     <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
@@ -601,9 +608,10 @@ function questionView(){
     ${rev?sndBtn():`<div class="timer" aria-label="Seconds left"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="6"/><circle class="arc" cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="176 176"/></svg><div class="n">${S.secs}</div></div>`}</div>
   <div class="stage"><div class="blur" style="background-image:url('${img}')"></div>
     <img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(x.a):"Mystery tribute, zoomed in"}">
+    ${!rev&&!S.locked&&S.look>0?`<div class="lookbig">👀 Look closely… <b id="lookn">${Math.ceil(S.look)}</b></div>`:""}
     ${rev?`<div class="tag"><small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
   ${S.mode==="type"?typedView(x,rev):`<div class="answers">${ans}</div>${rev?scoring:`<div class="phoneprompt">${S.locked?"💥 Answers locked":"📱 Answer on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`}`}
-  <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":"Space: lock answers"}</span>
+  <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":S.look>0?"Space: start typing now":"Space: lock answers"}</span>
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
 }
 function typedView(x,rev){
@@ -613,7 +621,7 @@ function typedView(x,rev){
       ${rev?`<span class="mark">${own?"their face":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
       <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
   // while a face is up the TV never shows guesses: only who has sealed one (their name turns gold)
-  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":"📱 Type your guess on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
+  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":S.look>0?`👀 Look closely. Typing opens in <b id="lookp">${Math.ceil(S.look)}</b>`:"📱 Type your guess on your phone! You have a minute."}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
   return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${S.correct.length} correct</div></div>
   <div class="typed">${boxes}</div>`;
 }
@@ -663,7 +671,7 @@ function primary(){
   if(S.phase==="lobby")return active().length&&showIntro();
   if(S.phase==="roundcard")return beginQuestion();
   if(S.phase==="ready")return (sfx("go"),startQuestion());
-  if(S.phase==="question")return S.locked?reveal():lock();
+  if(S.phase==="question")return S.locked?reveal():S.look>0?endLook():lock();
   if(S.phase==="reveal")return score();
   if(S.phase==="board")return next();
 }

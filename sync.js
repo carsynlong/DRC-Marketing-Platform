@@ -23,10 +23,11 @@ const Sync = (() => {
       twist: (S.phase === "ready" || S.phase === "question") && typeof Extras !== "undefined" ? Extras.twist() || undefined : undefined,
       hint: S.phase === "question" && !S.locked && typeof Extras !== "undefined" ? Extras.hint() || undefined : undefined,
       spy: typeof Extras !== "undefined" ? Extras.spy() : undefined, hostPick: S.phase === "reveal" || S.phase === "board" ? S.hostPick || null : undefined,
-      playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked), double: DOUBLE.has(S.qi),
+      playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked && !(S.look > 0)), double: DOUBLE.has(S.qi),
       tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
         results: S.mini.results, all: S.mini.all } : undefined,
-      left: S.phase === "question" && !S.locked ? Math.max(0, Math.ceil(S.secs - S.elapsed)) : undefined,   // phones show the countdown
+      left: S.phase === "question" && !S.locked && !(S.look > 0) ? Math.max(0, Math.ceil(S.secs - S.elapsed)) : undefined,   // phones show the countdown
+      look: S.phase === "question" && !S.locked && S.look > 0 ? Math.ceil(S.look) : undefined,   // 👀 the 10-second look: no typing yet
       feast: S.qi >= FEAST && !S.tb, secs: S.secs, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
       howto: window.Rules && Rules.active() ? "tribute" : undefined,
       hurry: S.phase === "question" && !S.locked && S.hurryEnds ? S.hurryEnds : undefined,        // ⏰ last 10 seconds: phones hurry (howto.js)

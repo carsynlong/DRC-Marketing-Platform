@@ -2169,9 +2169,7 @@ async function loadVideo(k,box){
 const photoCache=new Map();
 async function photoImg(id){if(photoCache.has(id))return photoCache.get(id);
   try{const r=await fetch("/api/show?a=photo&id="+encodeURIComponent(id),{cache:"no-store"});if(!r.ok)return null;const j=await r.json();if(j.img)photoCache.set(id,j.img);return j.img||null}catch(e){return null}}
-async function photoIn(x){const img=await photoImg(x.id);news(`📸 ${XM.dn(x.name)} sent a photo to the Capitol`);if(!img)return;
-  document.querySelectorAll(".phtoast").forEach(n=>n.remove());const d=document.createElement("div");d.className="phtoast";
-  d.innerHTML=`<img src="${img}" alt=""><b>📸 ${esc(XM.dn(x.name))} sent a photo</b>`;document.body.appendChild(d);XM.sfx("shutter");setTimeout(()=>d.remove(),7000)}
+async function photoIn(x){photoImg(x.id)}  // phone photos stay hidden until the end of the night (end slide + Fallen Tributes); just cache the image
 
 /* ---------- 🕯️ Fallen Tributes: a sad slideshow of tonight's photos ---------- */
 const FALLEN_LINES=["Taken too soon. Mostly by the cookie.","Survived the Games. Did not survive the leftovers.","Never once read the rules. Respect.","Fought bravely. Lost to a mitten.",

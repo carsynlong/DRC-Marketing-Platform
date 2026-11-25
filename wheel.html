@@ -58,10 +58,16 @@ h1.title{font-size:clamp(2rem,5vw,3.6rem);color:var(--gold);text-shadow:0 3px 0 
 .vsov .rays{position:absolute;inset:-50%;background:repeating-conic-gradient(rgba(232,176,75,.10) 0 8deg,transparent 8deg 16deg);animation:rays 30s linear infinite}
 @keyframes rays{to{transform:rotate(360deg)}}
 .vsov .row3{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(10px,3vw,50px);width:min(1500px,96vw)}
-.vsov .fighter{display:grid;justify-items:center;gap:14px}
-.vsov .fighter img{width:min(34vw,460px,52vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 20px var(--red),0 30px 70px rgba(0,0,0,.6)}
+.vsov .fighter{display:grid;justify-items:center;gap:8px}
+.vsov .fighter img{width:min(34vw,440px,42vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 20px var(--red),0 30px 70px rgba(0,0,0,.6)}
 .vsov .fighter b{font-family:var(--display);font-weight:400;font-size:clamp(2rem,5vw,4.6rem);color:var(--gold);text-shadow:0 5px 0 var(--red-d)}
 .vsov .fighter .dd{font-weight:800;letter-spacing:.2em;color:var(--muted)}
+.vsov .odds{font-weight:800;font-size:clamp(.9rem,1.5vw,1.3rem);color:var(--ink);background:rgba(0,0,0,.35);border-radius:999px;padding:.25em .9em}
+.vsov .fav{position:relative;margin-top:.4vh;font-family:var(--display);font-size:clamp(1.1rem,2vw,1.8rem);color:var(--gold);text-align:center;animation:popIn .5s 1.4s both}
+@media (max-height:900px){.vsov .fighter img{width:min(30vw,330px,34vh)}.vsov .fighter b{font-size:clamp(1.6rem,4vw,3.2rem)}.vsov .VS{font-size:clamp(3rem,8vw,7rem)}.vsov .ctl{margin-top:1.4vh}.vsov .top{margin-bottom:1vh}}
+.upset{position:fixed;inset:0;z-index:40;display:grid;place-items:center;pointer-events:none}
+.upset b{font-family:var(--display);font-weight:400;font-size:clamp(4rem,14vw,12rem);color:#fff;text-shadow:0 8px 0 var(--red),0 0 60px rgba(255,60,40,.9);animation:upset 2.8s cubic-bezier(.2,1.4,.4,1) both;transform:rotate(-8deg)}
+@keyframes upset{0%{opacity:0;transform:rotate(-8deg) scale(.3)}15%{opacity:1;transform:rotate(-8deg) scale(1.1)}80%{opacity:1;transform:rotate(-8deg) scale(1)}100%{opacity:0;transform:rotate(-8deg) scale(1.2)}}
 .vsov .L{animation:inL .7s cubic-bezier(.2,1.3,.4,1) both}
 .vsov .R{animation:inR .7s .15s cubic-bezier(.2,1.3,.4,1) both}
 .vsov .VS{font-family:var(--display);font-size:clamp(4rem,11vw,10rem);color:#fff;text-shadow:0 6px 0 var(--red),0 0 40px rgba(255,90,78,.8);animation:slam .7s .7s cubic-bezier(.2,1.4,.4,1) both}
@@ -164,12 +170,22 @@ function land2(name){
 }
 
 /* ---------- the big "X vs Y" reveal ---------- */
+// 📊 Capitol Odds: each fighter's record tonight (games won + face-offs won on the wheels)
+function record(n){const rn=x=>XM.realName?XM.realName(x):x;
+  const games=Object.values(XM.victors()||{}).filter(v=>v&&rn(v)===n).length;let fo=0;
+  for(const g of Object.keys(GAMES)){const st=g===S.game?S:XM.store.get(SKEY(g),null);if(!st)continue;
+    (st.history||[]).forEach(r=>(r.matches||[]).forEach(m=>{if(m.win===n)fo++}));(st.matches||[]).forEach(m=>{if(m.win===n)fo++})}
+  return {games,fo,score:games*3+fo}}
+function favOf(m){const a=record(m.a),b=record(m.b);return a.score===b.score?null:a.score>b.score?m.a:m.b}
+function upsetCheck(m){if(m.fav&&m.win&&m.win!==m.fav){const u=document.createElement("div");u.className="upset";u.innerHTML="<b>UPSET!</b>";document.body.appendChild(u);
+  sfx("siren");setTimeout(()=>u.remove(),2900);setTimeout(()=>XM.say("Upset! The underdog wins!",null,{pitch:.1,rate:.9}),2600)}}
 function versus(i){
   const m=S.matches[i];document.getElementById("vsov")?.remove();
   const ov=document.createElement("div");ov.className="vsov";ov.id="vsov";
-  const f=(n,cls)=>`<div class="fighter ${cls}"><img src="${AV(n)}" alt=""><b>${esc(n)}</b><span class="dd">DISTRICT ${DIST(n)}</span></div>`;
+  const rec=n=>{const r=record(n);return `🏆 ${r.games} game${r.games===1?"":"s"} won · ⚔️ ${r.fo} face-off${r.fo===1?"":"s"} won`};m.fav=favOf(m);
+  const f=(n,cls)=>`<div class="fighter ${cls}"><img src="${AV(n)}" alt=""><b>${esc(n)}</b><span class="dd">DISTRICT ${DIST(n)}</span><span class="odds">${rec(n)}</span></div>`;
   ov.innerHTML=`<div class="rays"></div><div style="position:relative;display:grid;justify-items:center">
-    <div class="top"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} · Round ${S.round} · Face-off ${i+1}</div></div>
+    <div class="top"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} · Round ${S.round} · Face-off ${i+1}</div><div class="fav">${m.fav?`📊 Capitol favorite: ${esc(m.fav)}`:"📊 Capitol Odds: dead even"}</div></div>
     <div class="row3">${f(m.a,"L")}<div class="VS">VS</div>${f(m.b,"R")}</div>
     <div class="ctl"><button class="btn red" id="vs-timer" style="font-size:1.2rem">⏱ Start the ${G().timer}s timer</button>
       <button class="btn ghost" id="vs-close" style="font-size:1.2rem">${S.phase==="spin"?"🎡 Back to the wheel":"✅ Back to the matchups"}</button></div>
@@ -183,7 +199,7 @@ function versus(i){
   const close=()=>{XM.hush();ov.remove();if(S.phase==="play")playSong("board")};
   ov.querySelector("#vs-close").onclick=close;
   ov.querySelector("#vs-timer").onclick=()=>{XM.hush();ov.remove();openTimer(i)};
-  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{XM.hush();m.win=m[b.dataset.vswin];ov.remove();render();stopSong();XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
+  ov.querySelectorAll("[data-vswin]").forEach(b=>b.onclick=()=>{XM.hush();m.win=m[b.dataset.vswin];ov.remove();render();stopSong();XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a);upsetCheck(m);if(S.phase==="play")setTimeout(()=>playSong("board"),4200)});
   ov.querySelector("#vs-tie").onclick=()=>{XM.hush();ov.remove();tiebreak([m.a,m.b],m)};
 }
 
@@ -321,7 +337,7 @@ function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
   document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");loadS(S.game);render()});
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{S.present[b.dataset.here]=!S.present[b.dataset.here];XM.store.set("xmas-present",S.present);sfx(S.present[b.dataset.here]?"tap":"untap");render()});
-  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];m.win=m.win===m[s]?null:m[s];render();if(m.win){XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a)}else sfx("untap")});
+  document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];if(m.fav===undefined&&!m.win)m.fav=favOf(m);m.win=m.win===m[s]?null:m[s];render();if(m.win){XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a);upsetCheck(m)}else sfx("untap")});
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
   document.querySelectorAll("[data-vs]").forEach(b=>b.onclick=()=>{ensureAudio();versus(+b.dataset.vs)});
   document.querySelectorAll("[data-tie]").forEach(b=>b.onclick=()=>{const m=S.matches[+b.dataset.tie];tiebreak([m.a,m.b],m)});

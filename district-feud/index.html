@@ -655,7 +655,7 @@ let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true]
 /* Major award: every vote a tribute receives (survey + face-offs) adds to their total,
    plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
 const GUESS_PTS=1;
-const TIMER_SECS=60;
+const TIMER_SECS=45;
 const FACEOFF_GRACE=2500; // ms of extra voting time while phones catch up
 const FACEOFF_SECS=10; // seconds to vote in a face-off; the votes are counted when it runs out // seconds to guess each question; Survey says starts by itself when it runs out
 const addVotes=(n,v)=>{if(!v)return;const was=S.tally[n]||0,now=Math.max(0,was+v);if(now===was&&v<0)return;S.tally[n]=now;S.bump[n]=(S.bump[n]||0)+(now-was)};
@@ -686,7 +686,7 @@ function startGame(){
   stopSong();   // no music while the rules are read out loud
   Rules.run({theme:"feud",photo:AV,title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
     ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
-    ["📱",`You have a minute to lock in your guess on your phone. No guess in time? You lose ${SLOW_PEN} point.`],
+    ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone. No guess in time? You lose ${SLOW_PEN} point.`],
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
     ["🏆","If you're the number one answer, your votes go into the major award race too."],
     ["⚡","Ties go to a secret face-off vote."],

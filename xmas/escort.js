@@ -15,7 +15,7 @@
     for(let i=0;i<parts.length;i++){const seg=parts[i]+(i<parts.length-1?"…":"");if(seg==="…"||!seg)continue;const g=man[hash(seg)];if(!g)return null;out.push(g)}
     return out.length>1?out:null};
   const queue=[];let cur=null; // {u,a}
-  const fire=(u,type)=>{try{const ev=new Event(type);if(typeof u["on"+type]==="function")u["on"+type](ev);u.dispatchEvent&&u.dispatchEvent(ev)}catch(e){}};
+  const fire=(u,type)=>{try{const ev=new Event(type);if(u.dispatchEvent)u.dispatchEvent(ev);else if(typeof u["on"+type]==="function")u["on"+type](ev)}catch(e){}}; // dispatchEvent also runs u.onstart / u.onend
   function next(){if(cur||!queue.length)return;const u=queue.shift(),list=files(u.text);
     if(!list){realSpeak(u);return next()}
     const vol=Math.max(0,Math.min(1,u.volume==null?1:u.volume));let k=0,started=false;

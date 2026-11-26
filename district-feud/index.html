@@ -998,7 +998,8 @@ function secondFaceoff(){
   if(!voters().length)return fate();
   nextTiebreaker();
 }
-function secondFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(()=>{winFx();applause(3500);fireworks(5);playSong("joy")},1600)}
+function secondFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(3500);fireworks(5);stopSong();   // the same champions track as the major award winner
+    if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 function scspinView(){
   const sc=S.pkg.second||{},pr=sc.pair,ws=secondPool();
   const slot=(id,n)=>`<div class="board spinbox" id="${id}"><img src="${AV(n)}" alt=""><div class="nm">${esc(n)}</div></div>`;

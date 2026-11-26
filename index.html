@@ -785,15 +785,7 @@ function scFinalView(){
   </section>`;
 }
 // the victor's music: the Second Victor gets their own walk-up song if they have one, otherwise the winner song
-const OWN_SONG={Jonny:"jonny",Grandad:"boom","QUEEN MOTHER":"queen",Elisha:"elisha",Jessie:"jessie",Kyle:"kyle",Brandon:"brandon",Tinsley:"tinsley",Carsyn:"carsyn",Kamdon:"kamdon"};
-function celebrate(){
-  if(!S.sc)return playWinner();
-  const v=ranked()[0];if(!v)return playWinner();
-  if(song&&song.win)return;stopSong();S.sound=true;song={win:1};try{ensureAudio()}catch(e){}
-  const play=k=>{if(!window.Track)return;if(k)Track.play(`/xmas/walkups/${k}.m4a${k==="kyle"?"?v=2":""}`);else Track.play(WIN_TRACK)};
-  fetch("/api/show?a=walkups",{cache:"no-store"}).then(r=>r.json()).then(j=>{const w=j&&j.walkups&&j.walkups[v.name];play(/^wu_[a-z0-9]+$/.test(w||"")?w.slice(3):OWN_SONG[v.name])})
-    .catch(()=>play(OWN_SONG[v.name]));
-}
+function celebrate(){playWinner()}   // the Second Victor gets the same champions song as the Victor
 
 /* ---------- controls ---------- */
 function primary(){

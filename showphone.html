@@ -542,7 +542,10 @@ function hostCard(){
   const SB=XM.SOUNDBOARD,quick=["airhorn","drumroll","applause"];
   const sec=(t,h)=>`<div class="eyebrow" style="margin:10px 0 6px">${t}</div>${h}`;
   const P={
-   show:sec("📍 Jump to a slide",`<div class="hgrid" id="jquick"></div><div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>`)+
+   show:sec("🏆 Record a winner (the TV celebrates)",`<select id="wg">${Object.entries(XM.GAMES).map(([k,g])=>`<option value="${k}">${g.n}. ${esc(g.name)}</option>`).join("")}</select>
+     <div class="chips" id="wplace" style="margin:6px 0"><button data-wp="1" class="on">🥇 Victor</button><button data-wp="2">🥈 Second Victor</button></div>
+     <div class="hgrid" id="wfaces">${XM.TRIBUTES.map(t=>`<button data-wn="${esc(t.name)}"><span class="i"><img src="${t.img}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover"></span>${esc(XM.dn(t.name))}</button>`).join("")}</div>`)+
+    sec("📍 Jump to a slide",`<div class="hgrid" id="jquick"></div><div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>`)+
     sec("🔊 Your voice on the TV",`<textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%">🔊 Announce it</button>`)+
     sec("🎙️ Quick sounds",`<div class="hgrid">${SB.filter(x=>quick.includes(x[0])).map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
     sec("☕ Breaks",`<div class="hgrid">${b(["intermission","☕","Intermission"])}${b(["live","🎥","Live cam"])}<button data-c="clock:10"><span class="i">⏰</span>10 min clock</button><button data-c="clock:20"><span class="i">⏰</span>20 min clock</button><button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button></div>`),
@@ -627,6 +630,13 @@ function hostCard(){
   hostLists();
   // 📍 jump straight to any slide
   fillJump();
+  {let wp=1;const wg=box.querySelector("#wg"),wpl=box.querySelector("#wplace");
+   const syncW=()=>{const mit=wg.value==="mitten";if(mit)wp=1;wpl.querySelectorAll("[data-wp]").forEach(x=>{x.classList.toggle("on",+x.dataset.wp===wp);x.hidden=mit&&x.dataset.wp==="2"})};
+   wg.onchange=syncW;wpl.querySelectorAll("[data-wp]").forEach(x=>x.onclick=()=>{wp=+x.dataset.wp;syncW()});syncW();
+   box.querySelectorAll("[data-wn]").forEach(x=>x.onclick=async()=>{const n=x.dataset.wn,g=wg.value,G=XM.GAMES[g];
+     if(!confirm(`${wp===1?"🥇 Victor":"🥈 Second Victor"} of ${G.name}: ${XM.dn(n)}?`))return;
+     buzz(30);x.classList.add("on");const r=await gmCmd("victor",{g,n,place:wp});setTimeout(()=>x.classList.remove("on"),1200);
+     qmsg(r.ok?`🏆 ${XM.dn(n)} is on the TV now!`:"Couldn't send. Is the TV on?")})}
   box.querySelector("#jgo").onclick=()=>{const v=box.querySelector("#jsel").value;if(v)gotoSlide(v)};
   // 🧹 sign out every phone (this phone signs straight back in as the Gamemaker)
   box.querySelector("#clrphones").onclick=arm(box.querySelector("#clrphones"),async()=>{const r=await call({a:"clearphones"});

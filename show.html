@@ -501,7 +501,7 @@ const SNOW=XM.snow(document.getElementById("snow"));
   `<i style="left:${R(0,98)}vw;font-size:${R(22,46)}px;--t:${R(11,20)}s;--d:${-R(0,20)}s;--sw:${R(30,90)}px">${["🍁","🍂","🍁","🍂","🍃"][k%5]}</i>`).join("");
   document.querySelectorAll(".lights i").forEach((b,i)=>{if(i%5===2)b.classList.add("fall")})})();
 const stage=document.getElementById("stage");
-const ICON=k=>`/xmas/icons/${k}.png`;
+const ICON=k=>`/xmas/icons/${k}.png${k==="wheel"?"?v=2":""}`;   // wheel v2: nicknames on the slices
 
 /* ---------- helpers ---------- */
 const d=s=>`data-d="${s}"`;
@@ -1358,6 +1358,7 @@ function runCmd(c,data){
   if(c==="pointsinfo")return pointsInfo();
   if(["questdone","pointsadd","betpaid","racewin","predictpaid"].includes(c))firstPoints();
   if(c==="crown")return coronation();
+  if(c==="victor"&&data){closeMoments(".moment,.vpick");document.querySelectorAll(".vpick").forEach(v=>v._close?v._close():v.remove());return recordWin(data.g,data.n,data.place===2?2:1)}
   if(c==="bday"){if(data&&data.queen){closeMoments(".moment,.vpick");if(window.Briefing&&Briefing.open())Briefing.close();news("👑 The QUEEN MOTHER has commanded: everybody sing!")}return birthday(data&&data.queen)}
   if(c==="race"&&data)return raceOpen(data);
   if(c==="racewin"&&data)return raceWin(data);
@@ -1927,21 +1928,26 @@ function pickVictor(g,place=1){
   ov.innerHTML=`<div style="display:grid;gap:20px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(GAMES[g].name)}</div>
     <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">${place===1?"🥇 Who won?":"🥈 Who is the Second Victor?"}</h1>
     ${place===2?`<div class="eyebrow" style="font-size:.95rem;color:var(--ink)">The winner of the Second Chance round. They get a major award too.</div>`:""}
-    <div class="faces">${TRIBUTES.filter(t=>place===1||!first||XM.realName(first)!==t.name).map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
+    <div class="faces">${TRIBUTES.filter(t=>place===1||!first||XM.realName(first)!==t.name).map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b></button>`).join("")}</div>
     <div style="display:flex;gap:12px">${cur?`<button class="btn ghost" id="vp-clear">Clear ${place===1?"Victor":"Second Victor"}</button>`:""}<button class="btn ghost" id="vp-x">Cancel (Esc)</button></div></div>`;
   document.body.appendChild(ov);XM.sfx("whoosh");
   const close=ov._close=()=>{ov.remove();document.removeEventListener("keydown",key,true)};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}};document.addEventListener("keydown",key,true);
   ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;
-    if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
-    close();refreshCorners();XM.stopSong();
-    if(place===1){setTimeout(()=>walkUp(n),4200);
-      if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length&&(betState.game===GAMES[g].name||betState.game==="the next game"))setTimeout(()=>hostCall({a:"betpay",winner:n}),2500);
-      XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g==="lrc"&&!XM.seconds().lrc)setTimeout(()=>lrcRound2(n),9500)}
-    else{XM.celebrate(n,{intro:"Your Second Victor"});setTimeout(()=>walkUp(n),4200)}});
+    close();recordWin(g,n,place)});
   const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};
   ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};
   ov.onclick=e=>e.stopPropagation();
+}
+// 🏆 save a Victor / Second Victor and celebrate on the TV (from the picker above, or from the Gamemaker's phone)
+function recordWin(g,n,place){
+  if(!GAMES[g]||!n)return;
+  if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
+  refreshCorners();XM.stopSong();
+  if(place===1){setTimeout(()=>walkUp(n),4200);
+    if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length&&(betState.game===GAMES[g].name||betState.game==="the next game"))setTimeout(()=>hostCall({a:"betpay",winner:n}),2500);
+    XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g==="lrc"&&!XM.seconds().lrc)setTimeout(()=>lrcRound2(n),9500)}
+  else{XM.celebrate(n,{intro:"Your Second Victor"});setTimeout(()=>walkUp(n),4200)}
 }
 /* ---------- 🎲 Left, Right, Capitol Round 2: the Round 1 winner sits out, the Round 2 winner is the Second Victor ---------- */
 function lrcRound2(first){

@@ -24,7 +24,7 @@ const P = "sh:";
 const HOST_PIN = "1185";
 const CMDS = ["next", "prev", "close", "intermission", "live", "mute",
   "twist:fire", "twist:storm", "twist:mutts", "twist:freeze", "twist:bonus", "twist:rule", "twist:feast", "clearrule", "points", "sponsor", "sponsor:on", "sponsor:off", "awards", "photo", "pollreveal", "betlock",
-  "clearresults", "startover", "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "crown", "fallen", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30"];
+  "clearresults", "startover", "chaos:on", "chaos:off", "ticker:on", "ticker:off", "recap", "predictreveal", "crown", "fallen", "phonetour", "pointsinfo", "briefgo", "click", "goto", "video", "clock:off", "clock:5", "clock:10", "clock:15", "clock:20", "clock:30", "victor"];
 // 🎙️ soundboard: the TV plays these
 const SFX = ["airhorn", "cheer", "applause", "gasp", "laugh", "rimshot", "trombone", "cannon", "drumroll", "siren", "boom", "fanfare"];
 const SONGS = ["wu_ride", "wu_snap", "wu_walk", "wu_thunder", "wu_country", "wu_crazytrain", "wu_gangsta", "wu_goingbad", "wu_boom", "wu_hypnotize", "wu_jump", "wu_throat", "wu_jonny", "wu_queen", "wu_elisha", "wu_jessie", "wu_kyle", "wu_brandon", "wu_tinsley", "wu_carsyn", "wu_kamdon", "wu_dash", "hh_cookie", "hh_tribute", "hh_mitten", "hh_feud", "hh_scoop", "hh_secrets", "hh_lrc", "hh_bingo", "hh_lounge", "battle", "march", "board", "lobby"];
@@ -480,6 +480,11 @@ async function main(req, res) {
     if (c === "click") {
       if (!PAGES.includes(d.page) || !/^\d{1,8}$/.test(String(d.rid))) return reply(res, 400, { error: "Bad button" });
       await pushCmd(c, { page: d.page, rid: String(d.rid) }); return reply(res, 200, { ok: true });
+    }
+    if (c === "victor") {   // 🏆 record a game's Victor / Second Victor from the Gamemaker's phone; the TV celebrates it
+      const G = ["cookie", "tribute", "mitten", "feud", "scoop", "secrets", "lrc", "bingo"], place = d.place === 2 ? 2 : 1;
+      if (!G.includes(d.g) || !NAMES.includes(d.n) || (place === 2 && d.g === "mitten")) return reply(res, 400, { error: "Bad winner" });
+      await pushCmd(c, { g: d.g, n: d.n, place }); return reply(res, 200, { ok: true });
     }
     if (c === "goto") {
       if (!/^[a-z0-9-]{1,40}$/.test(String(d.id))) return reply(res, 400, { error: "Bad slide" });

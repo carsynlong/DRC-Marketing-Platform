@@ -661,6 +661,17 @@ window.Track = (() => {
   ["pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, () => { if (want && ac && ac.state === "suspended") ac.resume(); if (want && !src) play(want); }, true));
   return { preload, play, stop, playing: () => !!src };
 })();
+/* 🎵 a tribute's walk-up song as their victory song (District Feud and District Secrets winners):
+   the song they picked on their phone, or their own walkout song. Resolves false if they have none. */
+window.walkUpSong = async name => {
+  const OWN = { Jonny: "jonny", Grandad: "boom", "QUEEN MOTHER": "queen", Elisha: "elisha", Jessie: "jessie", Kyle: "kyle", Brandon: "brandon", Tinsley: "tinsley", Carsyn: "carsyn", Kamdon: "kamdon", Dash: "dash" };
+  const VER = { kyle: "?v=2", elisha: "?v=2" };
+  let k = null;
+  try { const j = await (await fetch("/api/show?a=walkups", { cache: "no-store" })).json(); const w = j && j.walkups && j.walkups[name]; if (/^wu_[a-z0-9]+$/.test(w || "")) k = w.slice(3); } catch (e) {}
+  k = k || OWN[name]; if (!k || !window.Track) return false;
+  window.Track.stop(); return window.Track.play(`/xmas/walkups/${k}.m4a${VER[k] || ""}`);
+};
+
 
 /* ⏭️ A tiny, faint "skip to end" button in the bottom-left corner of the TV, so Carsyn can test the end music.
    SkipEnd.add(fn): fn jumps the game to its ending. Asks first, since it ends the game in progress. */

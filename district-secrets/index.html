@@ -693,7 +693,7 @@ function playSong(name){
     }
   },25);
 }
-function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop()}
+function stopSong(){clearInterval(timerId);timerId=0;song=null;window.LobbyMusic&&LobbyMusic.stop();window.Track&&Track.stop()}
 function sfx(kind){
   if(!musicOn||!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")noise(t,.03,.3,sfxBus,"bandpass",3800,6);
@@ -1234,7 +1234,7 @@ function score(){
     S.extra=dsx.approved.map(x=>({f:x.text,a:x.name,bonus:true}));Q.push(...S.extra);S.bonusDone=true}
   S.phase=S.qi===Q.length-1?"final":"board";
   if(S.phase==="final"&&showdownDue())return startShowdown();
-  if(S.phase==="final"){stopSong();confetti(260,true);playSong("winner")}else playSong("board");
+  if(S.phase==="final"){stopSong();confetti(260,true);winSong(S.champ||ranked()[0]?.name)}else playSong("board");
   render();
 }
 /* 🎯 Frame job: the owner names someone; it works if that person is (one of) the most accused */
@@ -1272,11 +1272,13 @@ function checkDuel(taps){
   const ok=t.filter(x=>!x.early).sort((x,y)=>x.t-y.t);
   if(ok.length){d.ms=ok[0].t;duelEnd(ok[0].n)}
 }
+// 🎵 a winner gets their own walk-up song (the usual winner tune if they don't have one)
+async function winSong(name){stopSong();if(musicOn&&window.walkUpSong&&name&&await walkUpSong(name))return;playSong("winner")}
 function duelEnd(n){const d=S.duel;clearTimeout(duelT);clearInterval(duelPoll);d.state="done";if(d.second)S.second.winner=n;else S.champ=n;stopSong();sfx("fanfare");confetti(220,true);render()}
 function finishShowdown(){   // breaking the tie: the champion finishes on top
-  if(S.duel?.second){S.phase="final";stopSong();confetti(260,true);playSong("winner");render();return}
+  if(S.duel?.second){S.phase="final";stopSong();confetti(260,true);winSong(S.second?.winner);render();return}
   const c=S.players.find(p=>p.name===S.champ);if(c){c.delta=500;c.score+=500;c.note="⚔️ Won the Quick Draw +500"}
-  S.phase="final";stopSong();confetti(260,true);playSong("winner");render();
+  S.phase="final";stopSong();confetti(260,true);winSong(S.champ||ranked()[0]?.name);render();
 }
 function duelView(){
   const d=S.duel,W=d.second?S.second?.winner:S.champ,f=(n,c)=>`<div class="f ${c}${d.state==="vs"?" in":""}${W?(W===n?" win":" lose"):""}"><img src="${AV(n)}" alt="">${esc(n)}</div>`;
@@ -1840,11 +1842,11 @@ setInterval(async()=>{
 })();
 // ⏭ jump straight to the winners screen (fanfare, confetti, the winners' song). Scores stay as they are.
 function skipToEnd(asked){
-  if(S.phase==="final"){stopSong();playSong("winner");return}
+  if(S.phase==="final"){winSong(S.champ||ranked()[0]?.name);return}
   if(!asked&&!confirm("Skip to the winners screen? The game ends here with the scores as they are. (Good for testing the music.)"))return;
   ensureAudio();clearInterval(readyT);clearInterval(clockT);clearRedzone?.();stopReading?.();
   if(S.qi==null||S.qi<0)S.qi=0;S.locked=true;S.duel=null;
-  S.phase="final";stopSong();confetti(260,true);playSong("winner");render();
+  S.phase="final";stopSong();confetti(260,true);winSong(S.champ||ranked()[0]?.name);render();
 }
 // A QR code for the host's own phone: it lists the bonus secrets people wrote (anonymous) to approve or skip.
 // Scanning it once also marks that phone as the host's, so signing in as Carsyn there shows 🔑 Host tools.

@@ -999,6 +999,7 @@ function secondFaceoff(){
   nextTiebreaker();
 }
 function secondFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(3500);fireworks(5);stopSong();   // the same champions track as the major award winner
+    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.winner))return;   // 🎵 the winner's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 function scspinView(){
   const sc=S.pkg.second||{},pr=sc.pair,ws=secondPool();
@@ -1011,6 +1012,7 @@ function scspinView(){
 
 /* the gift box shakes, the lid flies off, the winner pops out */
 function giftFx(){forgetGame();drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
+    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.second&&S.pkg.second.winner))return;   // 🎵 the Second Victor's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
 /* ---------- views ---------- */

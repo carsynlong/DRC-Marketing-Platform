@@ -567,7 +567,7 @@ function hostCard(){
      <button id="mgo" data-when="nomercy"><span class="i">🏳️</span>Mercy vote (picked)</button><button id="mclose" data-when="mercy"><span class="i">⚖️</span>Mercy verdict</button>
      <button id="pro" data-when="nopredict"><span class="i">🔮</span>Open predictions</button><button id="prl" data-when="predict"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal" data-when="nopredict"><span class="i">🎉</span>Reveal predictions</button></div>`),
    fun:sec("🎙️ Soundboard (plays on the TV)",`<div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${SB.map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
-    sec("🎉 Big moments",`<div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="board"><span class="i">📜</span>Bounty board</button><button data-c="recap"><span class="i">📼</span>Night recap</button><button data-c="fallen"><span class="i">🕯️</span>Fallen Tributes</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="draft"><span class="i">🎁</span>Award draft order</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>`)+
+    sec("🎉 Big moments",`<div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="recap"><span class="i">📼</span>Night recap</button><button data-c="fallen"><span class="i">🕯️</span>Fallen Tributes</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>`)+
     `<details class="hfold"><summary>⚙ Settings</summary><div class="hgrid" style="grid-template-columns:1fr">${TOGGLES.map(k=>`<button data-tg="${k}"></button>`).join("")}</div></details>
     <details class="hfold"><summary>🛠️ Setup and reset</summary><div class="hgrid"><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button id="clrphones"><span class="i">🧹</span>Sign out all phones</button><button id="statsclear"><span class="i">🧹</span>Clear winners and award stats</button><button id="startover"><span class="i">🔄</span>Start completely over</button></div></details>`};
   box.innerHTML=`<h3>🎮 Gamemaker Remote</h3><div class="tiny" id="qmsg"></div>
@@ -584,7 +584,7 @@ function hostCard(){
   const arm=(x,fn)=>async(...a)=>{if(!x._armed){x._armed=true;x.classList.add("armed");const keep=x.innerHTML;x._keep=keep;x.innerHTML=`<span class="i">⚠️</span>Tap again to confirm`;
       clearTimeout(x._at);x._at=setTimeout(()=>{x._armed=false;x.classList.remove("armed");x.innerHTML=keep},3000);return}
     clearTimeout(x._at);x._armed=false;x.classList.remove("armed");x.innerHTML=x._keep;return fn(...a)};
-  const ARM=["crown","awards","draft"];
+  const ARM=["crown","awards"];
   let qn=null,qs=null;const qmsg=t=>{const m=box.querySelector("#qmsg")||document.getElementById("qmsg");if(!m)return;m.textContent=t;clearTimeout(m._t);m._t=setTimeout(()=>m.textContent="",3000)};
   const call=async body=>{const r=await api({pin,...body});if(r.status===403&&r.error==="Gamemaker only"){XM.store.set("xmas-sh-pin",null);hostCard()}return r};
   box.querySelectorAll("[data-qn]").forEach(x=>x.onclick=()=>{qn=x.dataset.qn;box.querySelectorAll("[data-qn]").forEach(y=>y.classList.toggle("on",y===x));
@@ -718,8 +718,11 @@ function coachNote(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,""),k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];
   const N={lobby:"Leave this up while people arrive. Check the joined count. Press → when it's time.",title:"The announcer welcomes everyone. Wait for it.",welcome:"Read your speech: \"Citizens of the living room!\"",
     rules:"The announcer reads the rules. Let it finish.",phoneguide:"Phone guide: let it play, or tap Next to skip ahead.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes. Press →.",begin:"Your song plays. It stops when you press →.",
-    halftime:"Games 1 to 4 victors and who's leading. Good time for a break or a twist.",victors:"Every victor. 2+ wins? Tap Reveal the Ultimate Victor (it reads how it's decided first).",
-    end:"The end. Try Night recap or Fallen Tributes (Fun tab).","bingo-board":"Open the bingo board. Pick the round type (a briefing reads the pattern), tap each number, check BINGO card numbers."};
+    halftime:"Games 1 to 4 victors and who's leading. Good time for a break or a twist.",victors:"Every victor. 2+ wins? Tap Reveal the Ultimate Victor (it reads how it's decided first). Then tap Next for the end-of-night slides.",
+    "fin-predict":"Tap Next to reveal the predictions. Tap Next again to move on.","fin-awards":"Tap Next to start the awards. Each Next shows the next award, then moves on.",
+    "fin-recap":"Tap Next to play the recap. It runs on its own; Next skips ahead.","fin-fallen":"Tap Next for the Fallen Tributes slideshow. It runs on its own; Next skips ahead.",
+    "fin-crown":"Tap Next to crown the Ultimate Victor. Next again goes to the last slide.",
+    end:"The end. Merry Christmas! The 🕯️ Fallen Tributes button is still here.","bingo-board":"Open the bingo board. Pick the round type (a briefing reads the pattern), tap each number, check BINGO card numbers."};
   if(N[id])return N[id];
   if(/^d\d+$/.test(id))return "Tribute profile. Let the announcer finish the weapon, strategy and odds, then →.";
   const by={game:{cookie:"Title slide. Good time to open bets (Phones tab) and start the arena clock (Show tab).",scoop:"Title slide. Open bets (Phones tab)?",tribute:"Click Play (new tab). Close it when the game ends.",feud:"Click Play (new tab). Close it when the game ends.",secrets:"Click Play (new tab). Close it when the game ends.",mitten:"Title slide.",lrc:"Title slide. Chips and dice ready?",bingo:"Title slide. Hand out cards and pens."},

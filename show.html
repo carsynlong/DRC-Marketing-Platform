@@ -240,7 +240,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:58;background:rgba(13,31,24,.95);color:var(--ink);font-weight:800;font-size:clamp(18px,2vw,30px);padding:12px 26px;border-radius:999px;box-shadow:0 0 0 3px var(--gold);animation:popIn .4s both;pointer-events:none}
 .chute{position:fixed;left:50%;top:-30vh;z-index:54;font-size:clamp(90px,12vw,190px);line-height:.9;text-align:center;pointer-events:none;animation:chute 4.2s cubic-bezier(.3,.6,.4,1) forwards}
 @keyframes chute{0%{transform:translate(-50%,0) rotate(-8deg)}25%{transform:translate(-40%,30vh) rotate(8deg)}50%{transform:translate(-58%,55vh) rotate(-6deg)}75%{transform:translate(-46%,75vh) rotate(5deg)}100%{transform:translate(-50%,130vh) rotate(0)}}
-/* votes, bets, snitches, draft, awards, photo booth */
+/* votes, bets, snitches, awards, photo booth */
 .vgrid2{display:grid;grid-template-columns:repeat(6,1fr);gap:16px 22px;width:min(1500px,92vw)}
 .vgrid2 .vc{display:grid;justify-items:center;gap:4px;position:relative}
 .vgrid2 img{width:min(120px,12vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line);transition:box-shadow .3s,transform .3s}
@@ -251,9 +251,6 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .snitch{position:fixed;left:18px;bottom:80px;z-index:58;display:flex;gap:12px;align-items:center;background:#2a0a0a;border-radius:20px;padding:12px 18px;box-shadow:0 0 0 3px #ff4d4d,0 14px 30px rgba(0,0,0,.6);animation:popIn .4s both;max-width:min(640px,60vw)}
 .snitch img{width:70px;height:70px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
 .snitch div{font-weight:800;font-size:clamp(16px,1.6vw,26px);line-height:1.2}
-.draftrow{display:grid;grid-template-columns:110px 66px 1fr 70px;gap:12px;align-items:center;font-size:clamp(1.1rem,1.8vw,1.7rem);font-weight:800;text-align:left;width:min(700px,44vw);animation:popIn .5s both}
-.draftrow img{width:60px;height:60px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
-.draftrow .pk{font-family:var(--display);color:var(--gold)}
 .award{display:grid;justify-items:center;gap:10px;animation:popIn .6s both}
 .award img{width:min(240px,26vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 8px var(--gold),0 0 60px rgba(232,176,75,.6)}
 .booth{position:relative;width:min(1100px,86vw);aspect-ratio:16/9;border-radius:26px;overflow:hidden;box-shadow:0 0 0 10px var(--gold),0 0 0 20px var(--red)}
@@ -305,10 +302,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .lane b{font-weight:800;font-size:clamp(14px,1.4vw,22px);background:rgba(13,31,24,.85);padding:2px 10px;border-radius:999px}
 .lane.win{box-shadow:inset 0 0 0 3px var(--gold),0 0 30px rgba(232,176,75,.6)}
 .racego{font-family:var(--display);font-size:clamp(4rem,12vh,8rem);color:#fff;line-height:1;min-height:1em}
-/* bounty board, coronation, birthday */
-.bboard{display:grid;gap:10px;width:min(1200px,88vw);text-align:left}
-.bboard .it{display:flex;gap:14px;align-items:center;background:rgba(255,255,255,.07);border-radius:16px;padding:12px 18px;font-weight:800;font-size:clamp(1.1rem,2vw,1.8rem)}
-.bboard .it button{margin-left:auto;font-size:1rem}
+/* coronation, birthday */
 .crowned{position:relative;display:inline-block}
 .coro.many .crowned img{width:min(260px,28vh)}.coro.many .crowned .cr{font-size:110px;top:-86px}.coro.many h1{font-size:clamp(1.8rem,3.6vw,3.4rem);max-width:30vw}
 .crowned img{width:min(380px,40vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 10px var(--gold),0 0 0 22px #6a3c9c,0 0 90px rgba(232,176,75,.8)}
@@ -743,7 +737,7 @@ function slideTodo(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,"");
   const T={lobby:"Tap your face to join if you haven't. Then grab a drink and a seat.",title:"Find a seat. The Games are starting!",welcome:"Listen to the Gamemaker's welcome.",
     rules:"Listen to the rules. Remember: touch a major award and it's yours.",phoneguide:"Listen to how your phone works.",lineup:"Here are tonight's 8 games.",tributes:"Meet the tributes. Send emojis for your favorites!",
-    begin:"Let the Games begin! Cheer!",halftime:"Halftime standings. Bathroom or snack break if you need one.",victors:"The winners of every game. Cheer for them!",end:"Merry Christmas, tributes!","bingo-board":"Mark every number called. Got the pattern on the TV? Yell BINGO!"};
+    begin:"Let the Games begin! Cheer!",halftime:"Halftime standings. Bathroom or snack break if you need one.",victors:"The winners of every game. Cheer for them!","fin-predict":"Did you predict the Ultimate Victor? Right picks get 3 points!","fin-awards":"End-of-night awards. Did you win one?","fin-recap":"Tonight in the arena. Relive it!","fin-fallen":"Please rise. Remember the fallen.","fin-crown":"All hail the Ultimate Victor!",end:"Merry Christmas, tributes!","bingo-board":"Mark every number called. Got the pattern on the TV? Yell BINGO!"};
   if(T[id])return T[id];
   if(/^d\d+$/.test(id))return "Meet this tribute. Send emojis to cheer or boo!";
   const G={cookie:{game:"Next up: Smart Cookie Showdown. Get ready to be picked!",how:"Listen: cookie on your forehead, no hands.",wheel:"Watch the wheel. If it picks you, tilt your head back: cookie on your forehead, no hands!",tie:"Tied? Get ready for a tiebreaker."},
@@ -993,17 +987,13 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🕯️ Fallen Tributes slideshow",()=>fallenTributes());
   item("📼 Night recap",()=>nightRecap());
   item("🎂 QUEEN MOTHER's birthday",()=>hostCall({a:"bday"}).then(r=>{if(!r||!r.ok)birthday()}));
-  item("📜 Bounty board",()=>bountyBoard());
   item("👑 Crown the Ultimate Victor",()=>coronation());
   item("📱 Phone tour (what your phone does)",()=>phoneTour());
   item("⭐ Explain Capitol Points",()=>pointsInfo());
   item("📲 Start a tap race",()=>hostCall({a:"raceopen",goal:50}));
   item("🔮 Reveal the predictions",()=>predictReveal());
   item("📺 News ticker on/off",()=>{const on=!tickerOn();try{localStorage.setItem("xmas-ticker",on?"1":"0")}catch(e){}toast(on?"📺 News ticker on":"📺 News ticker off")});
-  item("🎁 Major award draft order",()=>draftOrder());
   item("🏁 End-of-night awards",()=>nightAwards());
-  item("🏆 Print victor certificates",()=>window.open("/certificates","_blank"));
-  item("🎟️ 2027 Reaping",()=>window.open("/reaping","_blank"));
   item("🔄 Start completely over",()=>{if(confirm("Start completely over? This wipes EVERYTHING: winners, Capitol Points, news, photos, quests, votes, award stats, and signs every phone out. Use it after practicing."))startOver()});
   item("🧹 Clear winners and award stats",()=>{if(confirm("Clear ALL game winners, Second Victors, tiebreakers and the end-of-night award stats? Use this after practicing."))clearResults()});
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
@@ -1104,19 +1094,6 @@ setInterval(()=>{if(notFairOwed&&started&&!busy()){notFairOwed=false;notFair()}}
 function snitchCard(x){const d=document.createElement("div");d.className="snitch";
   d.innerHTML=`${face(x.to)}<div>🚨 <span style="color:#ff8a7a">${esc(x.from)}</span> reports:<br>${esc(x.to)} ${esc(x.why)}!</div>`;document.body.appendChild(d);
   XM.sfx("siren");setTimeout(()=>d.remove(),7000)}
-/* ---------- 🎁 major award draft order, by Capitol Points ---------- */
-function draftOrder(){
-  if(!started)return;closeMoments(".moment.twist");if(busy())return busyToast();
-  const {m,T,close}=openMoment("twist feast");const pts=lastPoints||{};
-  const order=TRIBUTES.map(t=>t.name).map(n=>[n,pts[n]||0,Math.random()]).sort((a,b)=>b[1]-a[1]||a[2]-b[2]);
-  m.innerHTML=`<div class="inner"><div class="eb">🎁 MAJOR AWARD DRAFT</div><h1>Who Picks First?</h1><div class="say" style="font-size:1.3rem">Most Capitol Points picks first. Ties are settled by the Capitol (randomly).</div>
-    <div id="drows" style="display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:row;gap:8px 40px"></div><button class="btn ghost" id="dx">Close (Esc)</button></div>`;
-  m.querySelector("#dx").onclick=e=>{e.stopPropagation();close()};XM.playSong("march");
-  const rows=m.querySelector("#drows");
-  order.slice().reverse().forEach(([n,p],i)=>T(()=>{const k=order.length-i;const r=document.createElement("div");r.className="draftrow";
-    r.innerHTML=`<span class="pk">Pick ${k}</span>${face(n)||"<span></span>"}<span>${esc(n)}</span><span style="color:var(--gold);text-align:right">${p>0?"+":""}${p}</span>`;
-    rows.prepend(r);XM.sfx(k===1?"fanfare":"drum");if(k===1){XM.confetti(160,true);announcer.say(`${XM.spoken(n)} picks first!`,null,{pitch:.1,rate:.9})}},800+i*1100));
-}
 /* ---------- 🏁 end-of-night awards ---------- */
 async function nightAwards(){
   if(!started)return;closeMoments(".moment.twist");if(busy())return busyToast();
@@ -1247,7 +1224,7 @@ function mercyResult(r){if(mercyUI&&mercyUI.m.isConnected)mercyUI.close();mercyU
 function predictReveal(){
   let win=null;try{const u=ultimateList();if(u)win=u.names}catch(e){}
   if(!win){const c={};Object.values(XM.victors()).forEach(n=>{if(n)c[n]=(c[n]||0)+1});const mx=Math.max(0,...Object.values(c));if(mx)win=Object.keys(c).filter(n=>c[n]===mx)}
-  if(!win||!win.length)return toast("🔮 No victors yet to check the predictions against.");hostCall({a:"predictpay",winners:win})}
+  if(!win||!win.length){toast("🔮 No victors yet to check the predictions against.");return null}return hostCall({a:"predictpay",winners:win})}
 function predictPaid(r){if(busy())closeMoments(".moment.twist");if(busy())return toast(`🔮 Predictions: ${r.right.join(", ")||"nobody"} got it right`);
   const {m,close}=openMoment("twist feast");
   m.innerHTML=`<div class="inner"><div class="eb">🔮 THE PREDICTIONS</div><h1>Who saw it coming?</h1><div class="say">The Ultimate Victor: ${esc(r.win.join(" & "))}</div>
@@ -1300,21 +1277,6 @@ function raceWin(x){
   const ui=raceUI;setTimeout(()=>{if(ui&&ui.m.isConnected)ui.close()},10000);
   XM.stopSong();XM.celebrate(x.name,{line:`${XM.spoken(x.name)} wins the tap race! Plus one point!`});news(`📲 ${x.name} won the tap race in ${x.secs} seconds`);
 }
-/* ---------- 📜 bounty board: everything still in play ---------- */
-function bountyBoard(){
-  if(!started)return;closeMoments(".moment.twist");if(busy())return busyToast();
-  const {m,close}=openMoment("twist");const items=[...document.querySelectorAll("#banners div")];
-  const pts=Object.entries(lastPoints||{}).sort((a,b)=>b[1]-a[1]);const lead=pts[0]&&pts[0][1]>0?pts[0]:null;
-  const snitched=newsLog.filter(x=>x.t.startsWith("🚨")).slice(-3).map(x=>x.t);
-  m.innerHTML=`<div class="inner"><div class="eb">📜 THE CAPITOL'S OPEN BUSINESS</div><h1>The Bounty Board</h1><div class="bboard">
-    ${items.map((b,i)=>`<div class="it">${esc(b.textContent)}<button class="btn ghost" data-clr="${i}">Done ✓</button></div>`).join("")}
-    ${lead?`<div class="it">⭐ Points leader: ${esc(lead[0])} with ${lead[1]}. Everyone's coming for them.</div>`:""}
-    ${betState&&betState.state!=="paid"?`<div class="it">💰 Bets are ${betState.state==="open"?"open":"locked"} for ${esc(betState.game)}</div>`:""}
-    ${snitched.map(t=>`<div class="it">${esc(t)}</div>`).join("")}
-    ${!items.length&&!lead&&!snitched.length?`<div class="say">Nothing open. The arena is calm. Too calm.</div>`:""}</div>
-    <button class="btn ghost" id="bbx">Close (Esc)</button></div>`;
-  m.querySelectorAll("[data-clr]").forEach(b=>b.onclick=e=>{e.stopPropagation();const it=items[+b.dataset.clr];if(it)it.remove();b.closest(".it").remove();XM.sfx("untap")});
-  m.querySelector("#bbx").onclick=e=>{e.stopPropagation();close()};XM.sfx("reveal");announcer.say("The bounty board. Here's everything still in play.",null,{pitch:.1,rate:.9})}
 /* ---------- 👑 coronation of the Ultimate Victor ---------- */
 // 🎖️ Victory Tour: each game the Ultimate Victor won, then a crown drops, then the oath
 function victoryTour(name){
@@ -1395,7 +1357,6 @@ function runCmd(c,data){
   if(c==="phonetour")return phoneTour();
   if(c==="pointsinfo")return pointsInfo();
   if(["questdone","pointsadd","betpaid","racewin","predictpaid"].includes(c))firstPoints();
-  if(c==="board")return bountyBoard();
   if(c==="crown")return coronation();
   if(c==="bday"){if(data&&data.queen){closeMoments(".moment,.vpick");if(window.Briefing&&Briefing.open())Briefing.close();news("👑 The QUEEN MOTHER has commanded: everybody sing!")}return birthday(data&&data.queen)}
   if(c==="race"&&data)return raceOpen(data);
@@ -1429,7 +1390,6 @@ function runCmd(c,data){
   if(c==="snitch"&&data){news(`🚨 ${data.from} reports ${data.to} ${data.why}`);return snitchCard(data)}
   if(c==="clearresults")return clearResults();
   if(c==="startover")return void startOver();
-  if(c==="draft")return draftOrder();
   if(c==="awards")return void nightAwards();
   if(c==="photo")return void photoBooth();
   if(c==="photo_in"&&data)return void photoIn(data);
@@ -1453,6 +1413,7 @@ function runCmd(c,data){
   if(c==="close"){document.dispatchEvent(new KeyboardEvent("keydown",{key:"Escape",bubbles:true}));return}
   if(c==="mute"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel();return}
   if(c==="clearrule"){clearBanners();return}
+  if((c==="next"||c==="prev")&&momentSlideStep(c==="next"?1:-1))return;
   if(busy())return;
   if(c==="next")next();else if(c==="prev")prev();else if(c==="intermission")intermission();else if(c==="live")liveBroadcast();
 }
@@ -1609,6 +1570,36 @@ function factDeck(){const mix=a=>a.slice().sort(()=>Math.random()-.5);
   const L=[mix(HG_FACTS).map(t=>["🏹 HUNGER GAMES FUN FACT",t,"var(--gold)"]),mix(XMAS_FACTS).map(t=>["🎄 CHRISTMAS FUN FACT",t,"#6fe38e"]),mix(THANKS_FACTS).map(t=>["🦃 THANKSGIVING FUN FACT",t,"#ffa64d"])];
   const out=[];for(let k=0;k<Math.max(...L.map(l=>l.length));k++)L.forEach(l=>{if(l[k])out.push(l[k])});return out}
 const FACT_MS=6500;
+// 🏁 an end-of-night slide: a title card; the first Space opens its moment, Space steps through it, then on to the next slide
+function momentSlide(id,eb,title,sub,launch,music="board"){return {id,music,big:true,moment:true,
+  html:()=>`<div style="display:grid;justify-items:center;gap:26px;max-width:1600px">
+    <img src="/xmas/emblem.png" alt="" class="spin" style="width:200px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
+    <div class="eb fd" ${d(.3)} style="font-size:34px;letter-spacing:.5em;color:var(--ink)">${eb}</div>
+    <h1 class="title-xl slam" ${d(.5)} style="font-size:130px;line-height:1.05">${title}</h1>
+    <div class="fade" ${d(1.2)} style="font-size:42px;font-weight:600">${sub}</div>
+    <div class="fade" ${d(1.6)} style="font-size:28px;opacity:.75">Press space to begin</div></div>`,
+  enter(el){el._born=Date.now()},
+  onNext(el){if(el._launched)return !!(el._wait&&Date.now()<el._wait);   // still loading: don't skip past it
+    if(Date.now()-(el._born||0)<400)return true;el._launched=true;el._wait=Date.now()+6000;
+    let r=null;try{r=launch()}catch(e){console.error(e)}
+    if(r&&r.then)r.then(()=>{if(curEl===el&&el._wait)el._wait=Math.min(el._wait,Date.now()+(id==="fin-predict"?3500:0))},()=>{el._wait=0});else el._wait=0;
+    return true},
+  leave(){closeMoments(".moment")}}}
+// Space / → / Enter (or the remote's Next) while an end-of-night moment is up: step through it, or close it and go to the next slide
+function momentSlideStep(dir){
+  const s=SLIDES[cur];if(!started||!s||!s.moment||!curEl)return false;
+  if(XM.tiebreakerOpen()||document.querySelector(".memorial,.vpick,.brf"))return false;
+  const ms=[...document.querySelectorAll(".moment")],m=ms[ms.length-1];
+  if(!m)return dir>0&&!!curEl._wait&&Date.now()<curEl._wait;   // its moment is still on the way
+  if(m._slide!==s.id)return false;
+  if(Date.now()-(m._t0||0)<700)return true;   // a double press right as it opens
+  if(dir>0){const nb=m.querySelector("#anext,#rn"+(m.dataset.done?"":",#flnext"));if(nb){nb.click();return true}
+    if(m.classList.contains("fallen")&&!m.dataset.done)return true}   // still gathering the photos
+  closeMoments(".moment");go(cur+dir);return true}
+addEventListener("keydown",e=>{const k=e.key;const dir=["ArrowRight","PageDown"," ","Enter"].includes(k)?1:["ArrowLeft","PageUp"].includes(k)?-1:0;
+  if(!dir||(e.target&&e.target.closest&&e.target.closest("input,textarea")))return;
+  if(e.repeat){if(SLIDES[cur]&&SLIDES[cur].moment&&document.querySelector(".moment")){e.preventDefault();e.stopImmediatePropagation()}return}
+  if(momentSlideStep(dir)){e.preventDefault();e.stopImmediatePropagation()}},true);
 const SLIDES=[
  {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:${XM.dn(t.name).length>18?32:XM.dn(t.name).length>9?46:64}px;white-space:nowrap;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
@@ -1767,6 +1758,12 @@ const SLIDES=[
     <div class="fade" ${d(.5)} style="font-size:22px;color:var(--muted);margin-top:8px">Tap a game to fix its winner.</div></div>
     <div id="vgrid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 30px"></div><div id="ult" style="min-height:10px;display:grid;justify-items:center"></div></div>`,
    enter(el){drawVictors(el.querySelector("#vgrid"),true);st(()=>XM.sfx("fanfare"),400);st(()=>XM.confetti(160,true),900);revealUltimate(el)}},
+ momentSlide("fin-predict","🔮 THE PREDICTIONS","Who Saw It Coming?","Who predicted the Ultimate Victor? Right picks get 3 Capitol Points.",()=>{const p=predictReveal();
+   if(p&&p.then)p.then(r=>{if(r&&!r.ok)toast("🔮 No predictions to reveal (they weren't opened, or were already revealed). Press space to go on.",7000)});return p}),
+ momentSlide("fin-awards","🏁 END-OF-NIGHT AWARDS","The Capitol Remembers","Saboteurs, snitches, loudest fans and more.",()=>nightAwards()),
+ momentSlide("fin-recap","📼 NIGHT RECAP","Tonight in the Arena","Every victor, every point, every moment.",()=>nightRecap()),
+ momentSlide("fin-fallen","🕯️ FALLEN TRIBUTES","Remember the Fallen","Tributes, please rise.",()=>fallenTributes(),"stop"),
+ momentSlide("fin-crown","👑 THE CORONATION","Crown the Ultimate Victor","Eternal bragging rights. Long may they reign.",()=>coronation()),
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:260px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
@@ -2092,6 +2089,7 @@ function openMoment(cls,{stopMusic=true}={}){
   const pausedV=[...(curEl?curEl.querySelectorAll("video"):[])].filter(v=>!v.paused);pausedV.forEach(v=>v.pause());
   const begP=typeof BEGIN!=="undefined"&&!BEGIN.paused;if(begP)BEGIN.pause();
   const m=document.createElement("div");m.className="moment "+cls;document.body.appendChild(m);const timers=[];let alive=true;
+  {const s=SLIDES[cur];if(s&&s.moment&&curEl&&curEl._launched){m._slide=s.id;m._t0=Date.now();curEl._wait=0}}  // 🏁 belongs to this end-of-night slide
   const T=(f,ms)=>{timers.push(setTimeout(()=>alive&&f(),ms))};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)||/^[a-zA-Z]$/.test(e.key)){e.preventDefault();e.stopPropagation()}};
   const close=()=>{if(!alive)return;alive=false;timers.forEach(clearTimeout);m.remove();announcer.stop();document.removeEventListener("keydown",key,true);if(m.onClose)m.onClose();
@@ -2300,7 +2298,7 @@ async function fallenTributes(){
   const group=()=>`<div class="grp"><div class="eb2">🕯️ IN LOVING MEMORY OF TONIGHT</div><div class="faces">${TRIBUTES.map(t=>`<img src="${t.img}" alt="">`).join("")}</div>
       <h1>May the odds be ever in your favor.</h1><div class="line" style="text-align:center">See you at the 2027 Games.</div></div>`;
   const bar=`<div class="bar"><button class="btn ghost" id="flprev">◀ Back</button><button class="btn ghost" id="flnext">Next ▶</button><button class="btn ghost" id="flx">Close (Esc)</button></div>`;
-  const show=k=>{if(!m.isConnected)return;clearTimeout(adv);i=Math.max(0,Math.min(items.length,k));
+  const show=k=>{if(!m.isConnected)return;clearTimeout(adv);i=Math.max(0,Math.min(items.length,k));m.dataset.done=i===items.length?"1":"";
     if(i===items.length){m.innerHTML=group()+bar;mockingjay();announcer.say("May the odds be ever in your favor. See you at the 2027 Games.",null,{rate:.85,pitch:.6})}
     else{m.innerHTML=card(i)+bar;XM.sfx("cannon");if(i===0)T(mockingjay,1200);adv=setTimeout(()=>show(i+1),7000)}
     m.querySelector("#flprev").onclick=e=>{e.stopPropagation();show(i-1)};m.querySelector("#flnext").onclick=e=>{e.stopPropagation();show(i+1)};m.querySelector("#flx").onclick=e=>{e.stopPropagation();close()}};

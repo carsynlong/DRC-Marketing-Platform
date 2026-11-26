@@ -2100,10 +2100,8 @@ function openMoment(cls,{stopMusic=true}={}){
 }
 
 /* ---------- Victor's interview (Caesar Flickerman style) ---------- */
-const QUESTIONS=["Who did you fear most in the arena?","Thank your sponsors. Go.","What was your secret strategy?","Describe your victory in three words.",
- "Who do you want to thank? You have ten seconds.","Who was robbed tonight?","What will you do with your major award?","Give us your best victory pose.",
- "Who are you coming for next game?","On a scale of 1 to 10, how rigged was that?","What would you say to the tributes you defeated?",
- "Was it skill or luck? Be honest.","What's your walk-up song?","Say something nice about your toughest opponent.","Any words for the Gamemaker?"];
+// only the questions recorded in the Capitol Host voice (more can come back once there are voice credits to record them)
+const QUESTIONS=["What was your secret strategy?","Who was robbed tonight?","Thank your sponsors. Go.","Give us your best victory pose."];
 function interview(g){
   if(busy())return;const who=XM.victors()[g]||"Victor";const {m,T,close}=openMoment("interview");
   const qs=QUESTIONS.slice().sort(()=>Math.random()-.5);let i=0;

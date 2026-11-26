@@ -237,7 +237,7 @@ function guestTiles(t){
       <button class="btn red" id="phtake" style="width:100%;font-size:1.1rem">📸 Take a photo</button>
       <div class="phrow" id="phrow" hidden><button class="btn" id="phsend">📨 Send to the Capitol</button><button class="btn ghost" id="phretake">🔁 Retake</button></div>
       <div class="tiny" id="phmsg">Saved for the end of the night.</div></div>`]);
-  P.push(["live","🎥","Go live",`<button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div>`]);
+  P.push(["live","🎥","Go live",`<div id="live" class="live"><button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div></div>`]);
   P.push(["snitch","🚨","Snitch",`${faces("data-sn")}<select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button>`]);
   P.push(["give","🤝","Send points",`${faces("data-gv")}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
@@ -302,7 +302,8 @@ function render(){if(me!=="Carsyn")dropBar();
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
     ${me==="Carsyn"?`<div class="card own" id="ownwrap" hidden><button class="owntog" id="owntog"><span>🗳️ Your own vote</span><span id="owncnt"></span><span id="ownarr">▾</span></button><div id="extras" style="display:none;gap:16px;margin-top:12px"></div></div>`:`<div id="extras" style="display:grid;gap:16px"></div>`}
-    ${me==="Carsyn"?"":guestTiles(t)}`;
+    ${me==="Carsyn"?"":guestTiles(t)}
+    ${me==="Carsyn"?`<div class="card"><div class="eyebrow">🎥 Go live</div><div id="live" class="live"><button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div></div></div>`:""}`;
   {const tg=app.querySelector("#owntog");if(tg)tg.onclick=()=>{ownOpen=!ownOpen;ownUI()}}
   wireTiles(app);wireDecree(app);
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
@@ -771,7 +772,7 @@ async function goLive(){
 }
 function stopLive(){
   clearTimeout(liveTimer);if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;if(me)api({a:"camoff",name:me})}
-  const box=document.getElementById("live");if(box){box.innerHTML=`<button class="btn red" id="golive" style="font-size:1.1rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows up in a corner of the TV for 20 seconds.</div>`;box.querySelector("#golive").onclick=goLive}
+  const box=document.getElementById("live");if(box){box.innerHTML=`<button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div>`;box.querySelector("#golive").onclick=goLive}
 }
 addEventListener("pagehide",stopLive);
 ["touchend","click"].forEach(t=>addEventListener(t,()=>{try{XM.ensureAudio()}catch(e){}},{passive:true}));

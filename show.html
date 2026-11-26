@@ -278,6 +278,7 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .fallen .grp .faces{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:1100px}
 .fallen .grp .faces img{width:110px;height:110px;border-radius:50%;object-fit:cover;filter:grayscale(.6);box-shadow:0 0 0 4px rgba(232,176,75,.6)}
 @media (max-height:900px){.fallen .pol img{max-height:52vh;width:min(420px,32vw)}.fallen .grp .faces img{width:84px;height:84px}}
+body:has(.moment) .momentcard{visibility:hidden}   /* the end-of-night title card hides while its moment is open */
 .polaroid{position:fixed;right:40px;bottom:90px;z-index:8;background:#fbf6ea;padding:14px 14px 50px;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.6);transform:rotate(4deg);width:min(460px,28vw)}
 .polaroid img{width:100%;display:block;border-radius:3px}
 .polaroid.drift{right:auto;bottom:auto;z-index:-1;width:min(250px,14vw);padding:9px 9px 34px;transition:left 14s ease-in-out,top 14s ease-in-out,transform 14s ease-in-out,opacity .9s;opacity:0;pointer-events:none}
@@ -1530,7 +1531,7 @@ function factDeck(){const mix=a=>a.slice().sort(()=>Math.random()-.5);
 const FACT_MS=6500;
 // 🏁 an end-of-night slide: a title card; the first Space opens its moment, Space steps through it, then on to the next slide
 function momentSlide(id,eb,title,sub,launch,music="board"){return {id,music,big:true,moment:true,
-  html:()=>`<div style="display:grid;justify-items:center;gap:26px;max-width:1600px">
+  html:()=>`<div class="momentcard" style="display:grid;justify-items:center;gap:26px;max-width:1600px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:200px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <div class="eb fd" ${d(.3)} style="font-size:34px;letter-spacing:.5em;color:var(--ink)">${eb}</div>
     <h1 class="title-xl slam" ${d(.5)} style="font-size:130px;line-height:1.05">${title}</h1>

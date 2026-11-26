@@ -511,10 +511,12 @@ const ICON=k=>`/xmas/icons/${k}.png`;
 
 /* ---------- helpers ---------- */
 const d=s=>`data-d="${s}"`;
-const victorLabel=g=>{const v=XM.victors()[g],s2=XM.seconds()[g];return v?`🏆 ${esc(v)}${s2?` · 🥈 ${esc(s2)}`:""}`:"🏆 Record victor"};
+const victorLabel=g=>{const v=XM.victors()[g];return v?`🏆 ${esc(v)}`:"🏆 Record Victor"};
+const secondLabel=g=>{const s2=XM.seconds()[g];return s2?`🥈 ${esc(s2)}`:"🥈 Record Second Victor"};
+const hasSecond=g=>g!=="mitten"&&g!=="bingo";
 const AWARD={treasure:"💎",mystery:"❓",junk:"🗑️"};
 const awards=()=>XM.store.get("xmas-awards",{});
-const tbBtn=g=>`<div class="corner" data-corner="${g}">${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-interview="${g}" title="Victor's interview">🎤</button>`:""}${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-unbox="${g}">🎁 ${[awards()[g],awards()[g+"_2"]].filter(Boolean).map(r=>AWARD[r]).join("")||"Unbox"}</button>`:""}${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
+const tbBtn=g=>`<div class="corner" data-corner="${g}">${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-interview="${g}" title="Victor's interview">🎤</button>`:""}${g!=="mitten"&&XM.victors()[g]?`<button class="btn ghost" data-unbox="${g}">🎁 ${[awards()[g],awards()[g+"_2"]].filter(Boolean).map(r=>AWARD[r]).join("")||"Unbox"}</button>`:""}${g!=="mitten"?`<button class="btn ${XM.victors()[g]?"":"ghost"}" data-victor="${g}">${victorLabel(g)}</button>`:""}${hasSecond(g)&&XM.victors()[g]?`<button class="btn ${XM.seconds()[g]?"":"ghost"}" data-second2="${g}">${secondLabel(g)}</button>`:""}${GAMES[g].tb?`<button class="btn red" data-tb="${g}">⚔️ Tiebreaker</button>`:""}</div>`;
 const openBtn=(url,label,cls="")=>`<a class="btn bigbtn ${cls}" href="${url}" target="_blank" rel="noopener">${label}</a>`;
 
 // st(): like setTimeout, but skipped if the presenter has already moved to another slide
@@ -749,7 +751,7 @@ function slideTodo(id){
     tribute:{game:"Scan the QR code on the TV to play Who's That Tribute on your phone."},feud:{game:"Scan the QR code on the TV to play District Feud on your phone."},
     secrets:{game:"Scan the QR code on the TV to play District Secrets on your phone."},
     mitten:{game:"Next up: Mitten Mayhem.",idk:"QUEEN MOTHER explains the rules. Listen up!",order:"Find your turn in the order on the TV. Wait for your turn."},
-    lrc:{game:"Next up: Left, Right, Capitol. Grab your chips.",idk:"Bye Felicia explains the rules. Listen up!",order:"Find your turn in the order on the TV. Roll when it's your turn.",tie:"Tied? Get ready for a tiebreaker."},
+    lrc:{game:"Next up: Left, Right, Capitol. Grab your chips. Two rounds, two winners!",idk:"Bye Felicia explains the rules. Listen up!",order:"Find your turn in the order on the TV. Two rounds: the Round 1 winner sits out Round 2.",tie:"Tied? Get ready for a tiebreaker."},
     bingo:{game:"Next up: District Bingo. Grab a card and a pen.",how:"Grab a bingo card and a pen. Write your name on it.",tie:"Tied? Get ready for a tiebreaker."}};
   const k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];return (G[g]&&k&&G[g][k])||"";
 }
@@ -1003,7 +1005,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🏆 Print victor certificates",()=>window.open("/certificates","_blank"));
   item("🎟️ 2027 Reaping",()=>window.open("/reaping","_blank"));
   item("🔄 Start completely over",()=>{if(confirm("Start completely over? This wipes EVERYTHING: winners, Capitol Points, news, photos, quests, votes, award stats, and signs every phone out. Use it after practicing."))startOver()});
-  item("🧹 Clear winners and award stats",()=>{if(confirm("Clear ALL game winners, 2nd places, tiebreakers and the end-of-night award stats? Use this after practicing."))clearResults()});
+  item("🧹 Clear winners and award stats",()=>{if(confirm("Clear ALL game winners, Second Victors, tiebreakers and the end-of-night award stats? Use this after practicing."))clearResults()});
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
   item("✕ Close",()=>{});
   b.onclick=e=>{e.stopPropagation();show(m.style.display==="none")};
@@ -1656,7 +1658,7 @@ const SLIDES=[
       <h1 class="title-l slam" ${d(.6)}>Citizens of the living room!</h1>
       <p class="fr" ${d(1.2)} style="font-size:44px;line-height:1.35;margin:0">Welcome to the 2026 Christmas Games, where the pie counts as a sponsor gift.</p>
     </div></div>`,enter(){XM.sfx("whoosh");st(()=>XM.sfx("thud"),1000)}},
- {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Win a game, win big","1st and 2nd place each win a major award."],
+ {id:"rules",music:null,html:()=>{const R=[["gift","#b8322a","Two winners per game","The Victor and a Second Victor each get a major award."],
     ["lock","#3e8a52","What's inside? No idea","Real unclaimed mail. Nobody knows what's inside."],
     ["cannon","#2f6fb3","Tie? Sudden death","Tied? Face off until one is left."],
     ["mitten-w","#d79a1f","Mitten Mayhem pays","Its own major award. Whatever you unwrap, you keep."],
@@ -1707,7 +1709,7 @@ const SLIDES=[
 
  // GAME 1
  gameTitle("cookie"),
- howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Last one standing wins. 1st and 2nd win a major award."),
+ howTo("cookie",["Tilt your head back and set a cookie on your forehead","No hands! Wiggle it down to your mouth using only your face","Drop it? Back to the forehead you go","First tribute to eat their cookie wins the face-off"],"Last one standing wins. Then a Second Chance spin picks two more to fight for the Second Victor."),
  wheelSlide("cookie"),tieSlide("cookie"),
  // GAME 2
  gameTitle("tribute"),
@@ -1736,7 +1738,7 @@ const SLIDES=[
      st(()=>ok()&&announcer.say("Halftime report!",()=>{if(!ok())return;if(max>0)announcer.say(`${lead.length>1&&max>=2?"Tied for the lead":lead.length>1?"Winners so far":"Leading the games"}... ${lead.map(XM.spoken).join(" and ")}!`,()=>XM.duck(false),{pitch:.1,rate:.82});else XM.duck(false)},{pitch:.1,rate:.82}),900);
      st(()=>XM.sfx("fanfare"),400)}},
  gameTitle("scoop"),
- howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Last one standing wins. 1st and 2nd win a major award."),
+ howTo("scoop",["Spin the wheel to find your opponent","Blindfolds on, spoon in hand, bowl in front of you","30 seconds to scoop as many snowballs as you can","Most snowballs in the bowl wins the face-off"],"Last one standing wins. Then a Second Chance spin picks two more to fight for the Second Victor."),
  wheelSlide("scoop"),tieSlide("scoop"),
  // GAME 6
  gameTitle("secrets"),
@@ -1854,10 +1856,11 @@ function wireSlide(el){
   el.querySelectorAll("[data-tb]").forEach(b=>b.onclick=e=>{e.stopPropagation();const prev=XM.currentSong();XM.tiebreaker({game:b.dataset.tb,onClose:()=>{const s=SLIDES[cur];const m=prev||(s.music&&s.music!=="stop"?s.music:null);if(m)XM.playSong(m,true)}})});
   el.querySelectorAll("a[target]").forEach(a=>{if(a.dataset.w)return;a.dataset.w=1;a.addEventListener("click",()=>{XM.stopSong();XM.sfx("go")})});
   el.querySelectorAll("[data-victor]").forEach(b=>b.onclick=e=>{e.stopPropagation();pickVictor(b.dataset.victor)});
+  el.querySelectorAll("[data-second2]").forEach(b=>b.onclick=e=>{e.stopPropagation();pickVictor(b.dataset.second2,2)});
   el.querySelectorAll("[data-unbox]").forEach(b=>b.onclick=e=>{e.stopPropagation();unbox(b.dataset.unbox)});
   el.querySelectorAll("[data-interview]").forEach(b=>b.onclick=e=>{e.stopPropagation();interview(b.dataset.interview)});
   el.querySelectorAll("[data-skip]").forEach(b=>b.onclick=e=>{e.stopPropagation();XM.sfx("whoosh");next()});
-  // "No tie": record the victor, then move on once the victor (and 2nd place) pop-ups are done
+  // "No tie": record the victor, then move on once the victor pop-ups are done
   el.querySelectorAll("[data-notie]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.notie,was=XM.victors()[k];pickVictor(k);
     const me=curEl;let free=0;const iv=setInterval(()=>{if(curEl!==me){clearInterval(iv);return}
       if(busy()||(window.speechSynthesis&&speechSynthesis.speaking)){free=0;return}free+=400;
@@ -1923,31 +1926,38 @@ function pickVictor(g,place=1){
   if(document.querySelector(".vpick"))return;XM.ensureAudio();
   const first=XM.victors()[g],cur=place===1?first:XM.seconds()[g];const ov=document.createElement("div");ov.className="vpick";
   ov.innerHTML=`<div style="display:grid;gap:20px;justify-items:center"><div class="eyebrow" style="font-size:1rem">${esc(GAMES[g].name)}</div>
-    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">${place===1?"🥇 Who won?":"🥈 The Battle for Silver"}</h1>
-    ${place===2?`<div class="eyebrow" style="font-size:.95rem;color:var(--ink)">Second place wins a major award, but you have to fight for it. Tap everyone who was close, then FIGHT.</div>`:""}
-    <div class="faces">${TRIBUTES.filter(t=>place===1||t.name!==first).map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
-    <div style="display:flex;gap:12px">${place===2?`<button class="btn red" id="vp-fight" disabled>⚔️ FIGHT!</button>`:""}${cur?`<button class="btn ghost" id="vp-clear">Clear ${place===1?"victor":"second place"}</button>`:""}<button class="btn ghost" id="vp-x">${place===2?"Skip (Esc)":"Cancel (Esc)"}</button></div></div>`;
+    <h1 style="font-family:var(--display);font-size:clamp(2rem,5vw,4rem);color:var(--gold);text-shadow:0 4px 0 var(--red-d)">${place===1?"🥇 Who won?":"🥈 Who is the Second Victor?"}</h1>
+    ${place===2?`<div class="eyebrow" style="font-size:.95rem;color:var(--ink)">The winner of the Second Chance round. They get a major award too.</div>`:""}
+    <div class="faces">${TRIBUTES.filter(t=>place===1||!first||XM.realName(first)!==t.name).map(t=>`<button class="face ${cur===t.name?"on":""}" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(t.name)}</b></button>`).join("")}</div>
+    <div style="display:flex;gap:12px">${cur?`<button class="btn ghost" id="vp-clear">Clear ${place===1?"Victor":"Second Victor"}</button>`:""}<button class="btn ghost" id="vp-x">Cancel (Esc)</button></div></div>`;
   document.body.appendChild(ov);XM.sfx("whoosh");
   const close=ov._close=()=>{ov.remove();document.removeEventListener("keydown",key,true)};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}};document.addEventListener("keydown",key,true);
-  if(place===2){const fb=ov.querySelector("#vp-fight");ov.querySelectorAll(".face").forEach(b=>b.classList.remove("on"));
-    const picked=()=>[...ov.querySelectorAll(".face.on")].map(b=>b.dataset.n);
-    const upd=()=>{const n=picked().length;fb.disabled=!n;fb.textContent=n===1?"🥈 Award 2nd place":"⚔️ FIGHT!"};
-    ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();b.classList.toggle("on");XM.sfx(b.classList.contains("on")?"tap":"untap");upd()});
-    fb.onclick=e=>{e.stopPropagation();const p=picked();if(!p.length)return;close();
-      if(p.length===1){XM.setSecond(g,p[0]);refreshCorners();XM.stopSong();XM.celebrate(p[0],{intro:"And in second place"})}else silverBattle(g,p)};
-  }else
   ov.querySelectorAll("[data-n]").forEach(b=>b.onclick=e=>{e.stopPropagation();const n=b.dataset.n;
     if(place===1){XM.setVictor(g,n);if(XM.seconds()[g]===n)XM.setSecond(g,"")}else XM.setSecond(g,n);
     close();refreshCorners();XM.stopSong();
     if(place===1){setTimeout(()=>walkUp(n),4200);
       if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length&&(betState.game===GAMES[g].name||betState.game==="the next game"))setTimeout(()=>hostCall({a:"betpay",winner:n}),2500);
-      XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g!=="mitten"&&g!=="bingo")setTimeout(()=>{if(!document.querySelector(".vpick,.moment")&&!XM.tiebreakerOpen())pickVictor(g,2)},1800)}
-    else XM.celebrate(n,{intro:"And in second place"})});
+      XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`});if(g==="lrc"&&!XM.seconds().lrc)setTimeout(()=>lrcRound2(n),9500)}
+    else XM.celebrate(n,{intro:"Your Second Victor"})});
   const c=ov.querySelector("#vp-clear");if(c)c.onclick=e=>{e.stopPropagation();if(place===1)XM.setVictor(g,"");else XM.setSecond(g,"");close();refreshCorners();XM.sfx("untap")};
   ov.querySelector("#vp-x").onclick=e=>{e.stopPropagation();close()};
   ov.onclick=e=>e.stopPropagation();
 }
+/* ---------- 🎲 Left, Right, Capitol Round 2: the Round 1 winner sits out, the Round 2 winner is the Second Victor ---------- */
+function lrcRound2(first){
+  if(!started||XM.seconds().lrc)return;if(busy()){setTimeout(()=>lrcRound2(first),3000);return}
+  const {m,T,close}=openMoment("twist");const ph=XM.photo(first);
+  m.innerHTML=`<div class="inner"><div class="eb">🎲 LEFT, RIGHT, CAPITOL</div><h1>Round 2: the winner sits out!</h1>
+    ${ph?`<img src="${ph}" alt="" style="width:min(22vh,200px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold);filter:grayscale(.6)">`:""}
+    <div class="say" style="font-size:1.6rem">Sitting out: <b>${esc(XM.dn(first))}</b></div>
+    <div class="say">Everyone else plays one more round. The Round 2 winner is the Second Victor and gets a major award too.</div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center"><button class="btn" id="r2-rec">🥈 Record Second Victor</button><button class="btn ghost" id="r2-x">Close (Esc)</button></div></div>`;
+  XM.sfx("gong");announcer.say(`Round two! The winner sits out. ${XM.dn(first)}, take a seat. Everyone else, roll again for a second major award!`,null,{pitch:.1,rate:.9});
+  m.querySelector("#r2-rec").onclick=e=>{e.stopPropagation();close();pickVictor("lrc",2)};
+  m.querySelector("#r2-x").onclick=e=>{e.stopPropagation();close()};
+}
+
 /* ---------- The Battle for Silver: contenders fight for the 2nd place major award ---------- */
 const SILVER=[["✊","Rock, Paper, Scissors","Best two out of three. Losers drop out until one is left."],
  ["👀","Staring Contest","Eyes locked. First to blink or laugh is out."],
@@ -1984,7 +1994,7 @@ async function startOver(){toast("🔄 Starting over...",4000);
   START_OVER_KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});newsLog.length=0;lastPoints={};
   try{await hostCall({a:"pointsreset"});await hostCall({a:"statsreset"});await hostCall({a:"clearphones"})}catch(e){}
   location.hash="lobby";setTimeout(()=>location.reload(),600)}
-// 🧹 wipe every result on this laptop (winners, 2nd places, bingo rounds, tiebreakers, Ultimate Victor) and the server's award stats
+// 🧹 wipe every result on this laptop (winners, Second Victors, bingo rounds, tiebreakers, Ultimate Victor) and the server's award stats
 function clearResults(){["xmas-victors","xmas-second","xmas-seconds","xmas-awards","xmas-bingo-winners","xmas-bingo-owners","xmas-ties","xmas-ultimate"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
   hostCall({a:"statsreset"});closeMoments(".moment.twist");refreshCorners();if(SLIDES[cur])go(cur);toast("🧹 Winners and award stats cleared")}
 function refreshCorners(){document.querySelectorAll("[data-corner]").forEach(c=>{c.outerHTML=tbBtn(c.dataset.corner)});if(curEl)wireSlide(curEl);
@@ -2152,7 +2162,7 @@ function unbox(g,place){
   const close=m._close=()=>{alive=false;m.remove();announcer.stop();document.removeEventListener("keydown",key,true);refreshCorners();if(prev)XM.playSong(prev,true)};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)){e.preventDefault();e.stopPropagation()}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();
-  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · ${place===1?"🥇 1st place":"🥈 2nd place"} major award</div>
+  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · ${place===1?"🥇 Victor":"🥈 Second Victor"} major award</div>
     ${XM.photo(who)?`<img src="${XM.photo(who)}" alt="" style="width:130px;height:130px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)">`:""}
     <h1>${esc(who)}, open it!</h1><div class="gift">🎁</div>
     <div class="eb" style="font-size:1rem;color:var(--ink)">What's inside? The Capitol will judge.</div>
@@ -2179,7 +2189,7 @@ function drawVictors(grid,anim){
       <div class="ic"><img src="${ICON(k+"-w")}" alt=""></div><div style="flex:1;min-width:0"><div class="gn">${esc(g.name)}</div>
       ${editing===k?`<input id="vin" list="tnames" value="${esc(v)}" placeholder="Type the winner, then Enter" autocomplete="off">`
         :`<div class="vn"><span class="lab">Victor:</span>${ph?`<img src="${ph}" alt="">`:""}<span>${esc(v)}</span>${awards()[k]?`<span title="Major award rating" style="margin-left:auto">${AWARD[awards()[k]]}</span>`:""}</div>`}
-      ${k!=="mitten"&&k!=="bingo"?`<button class="sec2" data-second="${k}">🥈 ${S2[k]?`${XM.photo(S2[k])?`<img src="${XM.photo(S2[k])}" alt="">`:""}${esc(S2[k])}${awards()[k+"_2"]?" "+AWARD[awards()[k+"_2"]]:""}`:"Add 2nd place"}</button>`:""}</div></div>`}).join("")+
+      ${k!=="mitten"&&k!=="bingo"?`<button class="sec2" data-second="${k}">🥈 ${S2[k]?`${XM.photo(S2[k])?`<img src="${XM.photo(S2[k])}" alt="">`:""}${esc(S2[k])}${awards()[k+"_2"]?" "+AWARD[awards()[k+"_2"]]:""}`:"Add Second Victor"}</button>`:""}</div></div>`}).join("")+
     `<datalist id="tnames">${XM.NAMES.map(n=>`<option value="${esc(n)}">`+(XM.aka&&XM.aka(n)?`<option value="${esc(XM.aka(n))}">`:"")).join("")}</datalist>`;
   grid.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));
   grid.querySelectorAll("[data-second]").forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=e=>{e.stopPropagation();if(curSave)curSave();pickVictor(b.dataset.second,2)}});

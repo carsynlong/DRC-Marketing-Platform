@@ -54,7 +54,7 @@ body{margin:0;background:#16261d;font-family:Outfit,sans-serif;-webkit-print-col
 <div id="out"></div>
 <script src="/xmas/xmas.js"></script>
 <script>
-// 🏆 One certificate per winner saved on this laptop (The Capitol Has Spoken): 1st place, 2nd place, and the Ultimate Victor.
+// 🏆 One certificate per winner saved on this laptop (The Capitol Has Spoken): the Victor, the Second Victor, and the Ultimate Victor.
 const esc=XM.esc,real=n=>(XM.realName?XM.realName(n):n);
 const trib=n=>XM.TRIBUTES.find(t=>t.name.toLowerCase()===String(real(n)).toLowerCase());
 const IND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
@@ -75,7 +75,7 @@ function build(){
   for(const [k,g] of Object.entries(XM.GAMES)){
     if(k==="mitten")continue;                      // Mitten Mayhem: everyone wins their own major award
     const v=V[k];if(v&&trib(v))out.push(cert({name:v,title:"CERTIFICATE OF VICTORY",line:`has won <b>${esc(g.name)}</b><br>and claimed a major award.`}));
-    const s=S2[k];if(s&&trib(s))out.push(cert({name:s,title:"CERTIFICATE OF HONOR",line:`took <b>2nd place</b> in <b>${esc(g.name)}</b><br>and claimed a major award.`}));
+    const s=S2[k];if(s&&trib(s))out.push(cert({name:s,title:"CERTIFICATE OF VICTORY · SECOND VICTOR",line:`won the Second Chance round of <b>${esc(g.name)}</b><br>and claimed a major award.`}));
   }
   // Ultimate Victor: most games won (2 or more), using the tiebreaker result if there was one
   const c={};Object.entries(V).forEach(([g,n])=>{if(g==="mitten"||!n||!trib(n))return;const m=trib(n).name;c[m]=(c[m]||0)+1});
@@ -96,7 +96,7 @@ function blank(){const b=(title,line)=>`<div class="cert"><div class="paper"><di
   document.getElementById("out").innerHTML=`<div class="wrap">${[
     b("CERTIFICATE OF VICTORY",`has won <span class="blank s"></span><br>and claimed a major award.`),
     b("CERTIFICATE OF VICTORY",`has won <span class="blank s"></span><br>and claimed a major award.`),
-    b("CERTIFICATE OF HONOR",`took <b>2nd place</b> in <span class="blank s"></span><br>and claimed a major award.`),
+    b("CERTIFICATE OF VICTORY · SECOND VICTOR",`won the Second Chance round of <span class="blank s"></span><br>and claimed a major award.`),
     b("👑 ULTIMATE VICTOR",`is crowned the Ultimate Victor,<br>with eternal bragging rights.`)].join("")}</div>`}
 document.getElementById("print").onclick=()=>window.print();
 if(/blank/.test(location.search))blank();else{addEventListener("storage",build);build()}

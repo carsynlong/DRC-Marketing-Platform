@@ -109,7 +109,7 @@ XM.victors=()=>store.get("xmas-victors",{});
 XM.setVictor=(g,name)=>{const v=XM.victors();if((v[g]||"")!==(name||"")){const a=store.get("xmas-awards",{});if(g in a){delete a[g];store.set("xmas-awards",a)}}   // a new (or cleared) victor hasn't unboxed anything yet
   if(name)v[g]=name;else delete v[g];store.set("xmas-victors",v)};
 
-/* Second place: each game has two major awards, one for 1st and one for 2nd */
+/* Second Victor: each game (but Mitten and Bingo) has two major awards: the Victor and the Second Victor (Second Chance round) */
 XM.seconds=()=>store.get("xmas-second",{});
 XM.setSecond=(g,name)=>{const v=XM.seconds();if((v[g]||"")!==(name||"")){const a=store.get("xmas-awards",{});if((g+"_2") in a){delete a[g+"_2"];store.set("xmas-awards",a)}}
   if(name)v[g]=name;else delete v[g];store.set("xmas-second",v)};

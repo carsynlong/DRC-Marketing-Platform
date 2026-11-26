@@ -376,7 +376,7 @@ async function scoreCard(){
       const led=Object.entries(r.victors||{}).filter(([,n])=>n).length;
       box.innerHTML=`<details ${scoreOpen?"open":""}><summary>📋 Scoreboard <span style="font-family:var(--body,inherit);font-size:.8rem;color:var(--muted)">(${led} of ${G.length} games recorded · tap)</span></summary><div class="sb">${G.map(([k,g])=>`<div class="g"><span>${g.n}. ${esc(g.name)}</span><span style="text-align:right">${k==="bingo"?
           (Object.keys(bingo).length?Object.entries(bingo).map(([m,c])=>`${esc(bl[m]||m)}: <b>${[].concat(c).map(x=>{const o=((r.bingoOwners||{})[m]||{})[x];return o?`${esc(XM.dn(o))} (Card ${esc(x)})`:"#"+esc(x)}).join(", ")}</b>`).join("<br>"):"<i>no rounds yet</i>")
-          :`🥇 <b>${esc(r.victors[k]||"...")}</b>${r.awards&&r.awards[k]?" "+(AW[r.awards[k]]||""):""}${k==="mitten"?"":`<br>🥈 ${esc(r.seconds[k]||"...")}`}`}</span></div>`).join("")}</div>
+          :`🥇 <b>${esc(r.victors[k]||"...")}</b>${r.awards&&r.awards[k]?" "+(AW[r.awards[k]]||""):""}${k==="mitten"||k==="bingo"?"":`<br>🥈 ${esc(r.seconds[k]||"...")}`}`}</span></div>`).join("")}</div>
         ${r.ultimate?`<div style="margin-top:8px;font-weight:800">👑 Ultimate Victor: <b style="color:var(--gold)">${esc(r.ultimate.names.join(" & "))}</b> (${r.ultimate.max} wins)</div>`:""}
         <div class="eyebrow" style="margin:10px 0 4px">⚔️ Tiebreakers</div>${ties.length?ties.map(t=>`<div class="tiny" style="text-align:left">${esc((r.games[t.game]||{}).name||"Tiebreaker")}: ${esc(t.tied.join(" vs "))} → <b style="color:var(--gold)">${esc(t.winner)}</b>${t.how?" ("+esc(t.how)+")":""}</div>`).join(""):`<div class="tiny" style="text-align:left">None yet</div>`}
         <div class="eyebrow" style="margin:10px 0 4px">⭐ Capitol Points</div><div class="tiny" style="text-align:left">${P.length?P.map(([n,v])=>`${esc(n)} ${v>0?"+":""}${v}`).join(" · "):"None yet"}</div>
@@ -612,7 +612,7 @@ function hostCard(){
   box.querySelector("#bcancel").onclick=arm(box.querySelector("#bcancel"),async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")});
   box.querySelector("#startover").onclick=arm(box.querySelector("#startover"),async()=>{if(!confirm("Wipe EVERYTHING and sign every phone out?"))return;
     const r=await call({a:"cmd",name:me,cmd:"startover"});if(r.ok){qmsg("🔄 Done. Tap your face again to rejoin.")}else qmsg("Couldn't start over. Is the TV on?")});
-  box.querySelector("#statsclear").onclick=async()=>{if(!confirm("Clear ALL game winners, 2nd places, tiebreakers and award stats?"))return;const r=await call({a:"statsreset"});const r2=await call({a:"cmd",name:me,cmd:"clearresults"});qmsg(r.ok&&r2.ok?"🧹 Winners and award stats cleared":"Couldn't clear.")};
+  box.querySelector("#statsclear").onclick=async()=>{if(!confirm("Clear ALL game winners, Second Victors, tiebreakers and award stats?"))return;const r=await call({a:"statsreset"});const r2=await call({a:"cmd",name:me,cmd:"clearresults"});qmsg(r.ok&&r2.ok?"🧹 Winners and award stats cleared":"Couldn't clear.")};
   box.querySelector("#bdaygo").onclick=async()=>{const r=await call({a:"bday"});qmsg(r.ok?"🎂 Happy birthday, QUEEN MOTHER!":"Couldn't send.")};
   box.querySelectorAll("[data-race]").forEach(x=>x.onclick=async()=>{const r=await call({a:"raceopen",goal:+x.dataset.race});qmsg(r.ok?`📲 Race to ${x.dataset.race} starts in 6 seconds!`:"Couldn't start.")});
   box.querySelector("#raceend").onclick=arm(box.querySelector("#raceend"),async()=>{await call({a:"raceend"});qmsg("⏹️ Race over")});

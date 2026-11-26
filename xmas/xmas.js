@@ -320,6 +320,10 @@ XM.playSong=function(name,force){
 };
 XM.stopSong=function(){clearInterval(timerId);timerId=0;clearTimeout(mixT);song=null;songName=null;if(fileSong){const a=fileSong;fileSong=null;try{a.pause()}catch(e){}}};
 XM.currentSong=()=>songName;
+// 🎵 a tribute's walk-up song: the one they picked on their phone, or their own walkout song
+XM.OWN_SONG={Jonny:"wu_jonny",Grandad:"wu_boom","QUEEN MOTHER":"wu_queen",Elisha:"wu_elisha",Jessie:"wu_jessie",Kyle:"wu_kyle",Brandon:"wu_brandon",Tinsley:"wu_tinsley",Carsyn:"wu_carsyn",Kamdon:"wu_kamdon",Dash:"wu_dash"};
+XM.walkUp=async n=>{let song=null;try{const j=await (await fetch("/api/show?a=walkups",{cache:"no-store"})).json();song=j.walkups&&j.walkups[n]}catch(e){}
+  song=song||XM.OWN_SONG[n];if(song){XM.playSong(song,true);return true}return false};
 XM.sfx=function(kind){
   if(!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")osc("square",1320,t,.06,.08,sfxBus);

@@ -240,13 +240,13 @@ function secondChance(){
 }
 function finishSecond(w){
   if(!S.second)return;S.secPend=0;S.second=false;S.second2=w;S.phase="champ";S.pool=[];XM.setSecond(S.game,w);saveS();render();stopSong();
-  XM.celebrate(w,{intro:"Your Second Victor"});setTimeout(()=>S.phase==="champ"&&playSong("lobby"),4500);
+  XM.celebrate(w,{intro:"Your Second Victor"});setTimeout(()=>{if(S.phase==="champ")XM.walkUp(w).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})},4500);
 }
 function nextRound(){
   if(S.second){const m=S.matches[0];if(m&&m.win)finishSecond(m.win);return}
   const w=S.matches.map(m=>m.win).concat(S.bye?[S.bye]:[]);
   S.history.push({round:S.round,matches:S.matches.map(m=>({a:m.a,b:m.b,win:m.win})),bye:S.bye});
-  if(w.length===1){S.champ=w[0];{const fm=S.matches.find(m=>m.win===S.champ);S.runner=fm?(fm.win===fm.a?fm.b:fm.a):null}S.phase="champ";XM.setVictor(S.game,S.champ);S.saved=true;S.second2=null;saveS();stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>S.phase==="champ"&&playSong("lobby"),4500);return}
+  if(w.length===1){S.champ=w[0];{const fm=S.matches.find(m=>m.win===S.champ);S.runner=fm?(fm.win===fm.a?fm.b:fm.a):null}S.phase="champ";XM.setVictor(S.game,S.champ);S.saved=true;S.second2=null;saveS();stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>{if(S.phase==="champ")XM.walkUp(S.champ).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})},4500);return}
   S.round++;newRound(shuffle(w));
 }
 function openTimer(i){

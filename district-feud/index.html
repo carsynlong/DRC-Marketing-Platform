@@ -655,7 +655,7 @@ let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true]
 /* Major award: every vote a tribute receives (survey + face-offs) adds to their total,
    plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
 const GUESS_PTS=1;
-const TIMER_SECS=30;
+const TIMER_SECS=60;
 const FACEOFF_GRACE=2500; // ms of extra voting time while phones catch up
 const FACEOFF_SECS=10; // seconds to vote in a face-off; the votes are counted when it runs out // seconds to guess each question; Survey says starts by itself when it runs out
 const addVotes=(n,v)=>{if(!v)return;const was=S.tally[n]||0,now=Math.max(0,was+v);if(now===was&&v<0)return;S.tally[n]=now;S.bump[n]=(S.bump[n]||0)+(now-was)};
@@ -686,7 +686,7 @@ function startGame(){
   stopSong();   // no music while the rules are read out loud
   Rules.run({theme:"feud",photo:AV,title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
     ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
-    ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone. No guess in time? You lose ${SLOW_PEN} point.`],
+    ["📱",`You have a minute to lock in your guess on your phone. No guess in time? You lose ${SLOW_PEN} point.`],
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
     ["🏆","If you're the number one answer, your votes go into the major award race too."],
     ["⚡","Ties go to a secret face-off vote."],
@@ -741,6 +741,13 @@ function saveGame(phase){try{localStorage.setItem(SAVE,JSON.stringify({t:Date.no
   leader:S.leader,tbNext:S.tbNext,tbq:S.tbq,present:S.present,gid,halfDone:S.halfDone,fan:S.fan,brf:S.brf||{}}))}catch(e){}}
 function savedGame(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.order&&g.order.length&&Date.now()-g.t<12*3600e3?g:null}catch(e){return null}}
 function forgetGame(){try{localStorage.removeItem(SAVE)}catch(e){}}
+/* ↺ Start completely over: wipe every answer, point and score for this game (server and this TV), then a fresh lobby.
+   Phones stay signed in; the reloaded TV has a new game id, so they drop anything from the old game. */
+async function startOver(){
+  if(!confirm("Start completely over? This wipes every answer, point and score for this game."))return;
+  try{await post({action:"wipe"})}catch(e){}
+  forgetGame();location.reload();
+}
 function resumeGame(){
   const g=savedGame();if(!g)return;clearTimers();
   Object.assign(S,{order:g.order,k:g.k,tally:g.tally||{},results:g.results||[],streak:g.streak||{},leader:g.leader||null,tbNext:g.tbNext||0,tbq:g.tbq,
@@ -1038,10 +1045,11 @@ function render(){
 function goSetup(){forgetGame();clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
-  const letters=[...n].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
+  const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};   // nickname on the nameplate (split letters dodge the page-wide swap)
+  const letters=[...(AKA[n]||n)].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
   return `${calm?"":'<div class="curt l"></div><div class="curt r"></div><div class="xbeam l"></div><div class="xbeam r"></div>'}<div class="rays" style="--d:.6s"></div>
     <section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>
-    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">District ${NAMES.indexOf(n)+1}</div><div class="bulbname" aria-label="${esc(n)}">${letters}</div></div>
+    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">District ${NAMES.indexOf(n)+1}</div><div class="bulbname" aria-label="${esc(AKA[n]||n)}">${letters}</div></div>
     <div class="bubble">“${esc(I.hype[I.i%I.hype.length])}”</div></div>
     ${phones.length?`<div class="meter"><span class="mlab">📣 Crowd meter</span><div class="mbar ${(I.meter[n]||0)>=METER_MAX?"max":""}"><i id="mfill" style="width:${Math.min(100,(I.meter[n]||0)/METER_MAX*100).toFixed(0)}%"></i></div><b id="mnum">${I.meter[n]||0}</b></div>
     <div class="cheerhint">👏 Everyone else: tap emojis on your phone to cheer for ${esc(n)}!</div>`:""}
@@ -1094,6 +1102,7 @@ function lobby(){
     ${checkinLine()}
     <div class="chips">${NAMES.map(n=>{const ph=apiOk&&hasPhone(n);return `<button class="chip ${ph?"in":""}" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt=""><span class="who">${esc(n)}${apiOk&&S.present[n]?`<span class="st">${ph?"✓ Checked in":"Waiting…"}</span>`:""}</span></button>`}).join("")}</div>
     <div class="settings stick lob">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
+    <div class="settings"><button class="btn ghost" id="wipeall">↺ Start completely over</button></div>
     <div class="hint">Space moves the show along · M turns music on or off · <span style="opacity:.7">version QR-3</span></div></section>`;
 }
 /* contestants light up as they lock in (never showing their pick) */
@@ -1223,6 +1232,7 @@ function wire(){
   on("home",async()=>{if(!confirm("Stop this game and go back to setup? The major award race goes back to zero, and every phone goes back to picking their name."))return;
     try{await post({action:"clearPlayers"})}catch(e){}phones=[];goSetup()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
+  on("wipeall",startOver);
   on("clearphones",async()=>{if(!confirm("Clear every phone's name? Everyone will need to scan and tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
   on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound){stopSong();try{speechSynthesis.cancel()}catch(e){}}else if(!(window.Briefing&&Briefing.open())){const m=musicFor();m&&playSong(m)}
     const e=$("#snd");e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)});

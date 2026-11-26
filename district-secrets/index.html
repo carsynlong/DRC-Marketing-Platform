@@ -1513,7 +1513,8 @@ function lobbyView(){
           ${ph?'<span class="seal" aria-hidden="true">🔏</span>':""}<img src="${AV(p.name)}" alt="">${esc(p.name)}<small>${!p.on?"sitting out":p.name===HOST?"🔮 gamemaker":ph?"signed in":"waiting"}</small></button>`}).join("")}</div>
       <div class="tiny" style="text-align:center">Tap a face to sit them out.</div>
       <details class="opts"${window.__dsOpts?" open":""} ontoggle="window.__dsOpts=this.open"><summary>⚙ Game options</summary>
-      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"],["redact","🖤 Redacted files"],["golden","✨ Golden file"],["frame","🎯 Frame job"],["fifth","🤐 Plead the Fifth"],["showdown","⚔️ Quick Draw tiebreaker"],["mole","🐀 The mole"],["lightning","🌩️ Lightning round"],["ttl","🤥 Two truths & a lie"],["mostlikely","🗳️ Most likely to"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div></details>
+      <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"],["redact","🖤 Redacted files"],["golden","✨ Golden file"],["frame","🎯 Frame job"],["fifth","🤐 Plead the Fifth"],["showdown","⚔️ Quick Draw tiebreaker"],["mole","🐀 The mole"],["lightning","🌩️ Lightning round"],["ttl","🤥 Two truths & a lie"],["mostlikely","🗳️ Most likely to"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
+      <div class="settings"><button class="btn ghost" id="wipeall">↺ Start completely over</button></div></details>
       ${S.opts?.decoys?`<div class="bonusnote">🃏 ${DECOY_COUNT} decoys get shuffled in when the vault opens${dsx.decoys?.length?` · ${dsx.decoys.length} written by the host`:""}</div>`:""}
       ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved · +500 points each if it's played`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
@@ -1749,6 +1750,7 @@ function wire(){
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
   on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
     const e=$("#snd");if(e){e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)}});
+  on("wipeall",startOver);
   on("clearphones",async()=>{if(!confirm("Clear every phone sign-in? Everyone will need to tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
 }
 document.addEventListener("keydown",e=>{
@@ -1828,6 +1830,7 @@ setInterval(async()=>{
   item("📝 Approve bonus secrets: sign in as Carsyn on your phone",()=>toast("On your phone, sign in as Carsyn and tap 🔑 Host tools. Nothing shows on the TV."));
   item("⏭ Skip to the winners (test the music)",skipToEnd);
   item("↺ Restart from the beginning",restartGame);
+  item("↺ Start completely over",startOver);
   item("📱 Clear phone names",async()=>{if(!confirm("Clear every phone's name? Everyone will need to tap their name again."))return;
     try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
   item("✕ Close",()=>{});
@@ -1852,6 +1855,16 @@ function hostPhone(){
   m.innerHTML=`<div class="box"><div class="eyebrow" style="color:#6b5233">Host only</div><h2 style="margin:0">Scan once with your phone</h2><div class="qr">${qr}</div>
     <div class="u">${esc(url)}</div><div class="tiny" style="color:#6b5233">After this, sign in as Carsyn on that phone and tap 🔑 Host tools to approve bonus secrets (you'll never see who wrote them). Close this before anyone else scans it.</div><button class="btn wax">Close</button></div>`;
   m.onclick=e=>{if(e.target===m||e.target.tagName==="BUTTON")m.remove()};document.body.appendChild(m);
+}
+/* ↺ Start completely over: wipe every answer, point and score for this game (server and this TV), then reload into
+   a fresh lobby. Phones stay signed in; the new game id makes them drop anything from the old game.
+   Kept: game options, seconds per secret, the host key, and bonus secrets / two truths and a lie people already wrote. */
+async function startOver(){
+  if(!confirm("Start completely over? This wipes every answer, point and score for this game."))return;
+  stopReading();
+  try{await post({action:"wipe"})}catch(e){}
+  try{localStorage.setItem(SAVE,JSON.stringify({...freshState(),opts:S.opts,secs:S.secs,hostKey:S.hostKey,gid:Date.now(),total:BASE}))}catch(e){}
+  location.reload();
 }
 // Back to the lobby with a clean slate. Phones keep their names and follow along.
 function restartGame(ask=true){

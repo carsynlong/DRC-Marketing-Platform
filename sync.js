@@ -255,6 +255,7 @@ const Sync = (() => {
       x.onmouseenter = () => x.style.background = "rgba(255,255,255,.08)"; x.onmouseleave = () => x.style.background = "transparent";
       x.onclick = () => { m.hidden = true; fn(); }; m.appendChild(x); };
     item("↺ Restart from the beginning", restart);
+    item("↺ Start completely over", startOver);
     item("⏭ Skip to the winner (test)", skipToEnd);
     item("📱 Clear phone names", async () => { if (!confirm("Clear every phone's name? Everyone will need to tap their name again.")) return;
       try { await post({ action: "clearPlayers" }); } catch (e) {} phones = []; render(); });
@@ -292,6 +293,16 @@ const Sync = (() => {
     reset(); render();
   }
 
+  /* ---- ↺ Start completely over: wipe this game's answers, points, coins and scores on the server and this TV,
+     then reload into a fresh lobby. Phones stay signed in and follow along (new game id = nothing stale). ---- */
+  async function startOver() {
+    if (!confirm("Start completely over? This wipes every answer, point and score for this game.")) return;
+    try { await post({ action: "wipe" }); } catch (e) {}
+    try { localStorage.setItem(SAVE, JSON.stringify({ ...freshState(), gid: Date.now(), sound: S.sound, mutts: S.mutts })); } catch (e) {}
+    location.reload();
+  }
+  document.addEventListener("click", e => { if (e.target.closest("#wipeall")) startOver(); });
+
   /* ---- new game: wipe last game's answers ---- */
   function reset() {
     S.gid = Date.now(); answers = {}; answersQi = -1; counted = null; reactSeen = null;
@@ -320,5 +331,5 @@ const Sync = (() => {
 
   // the host's 🔮 prediction for this face (a number), if she made one
   function hostPick() { const v = current()[HOST]; const m = /^🔮(\d+)$/.exec(v || ""); return m ? +m[1] : null; }
-  return { allIn, fresh, hostPick, restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
+  return { allIn, fresh, hostPick, restart, startOver, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
 })();

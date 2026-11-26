@@ -654,7 +654,7 @@ function lobbyView(){
     ${Sync.roster()}
     <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options${S.players.some(p=>!p.on)?` · ${S.players.filter(p=>!p.on).length} sitting out`:""}</summary>
     <div class="eyebrow">Tap a face to sit them out</div>
-    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button></div></details>
+    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button><button class="btn ghost" id="wipeall">↺ Start completely over</button></div></details>
     <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;

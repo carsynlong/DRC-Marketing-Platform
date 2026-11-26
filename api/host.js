@@ -3,6 +3,7 @@
 // POST /api/host { action: "publish", game }    write what phones see
 // POST /api/host { action: "reset", total }     new game: wipe every face's answers and the coins
 // POST /api/host { action: "clearPlayers" }     everyone picks their name again
+// POST /api/host { action: "wipe" }             start completely over: all answers, points, scores (phones stay signed in)
 import { redis, hash, reply, prefix } from "../lib/redis.js";
 
 export default async function handler(req, res) {
@@ -36,6 +37,19 @@ export default async function handler(req, res) {
     await redis.del(p + "spent", p + "asks", ...Array.from({ length: total }, (_, i) => `${p}buys:${i}`));
     await redis.del(p + "coins", p + "reactlog", ...Array.from({ length: total }, (_, i) => `${p}answers:${i}`));
     await redis.del(...Array.from({ length: total }, (_, i) => `${p}anstime:${i}`));
+    return reply(res, 200, { ok: true });
+  }
+  if (action === "wipe") {
+    // ↺ Start completely over: every answer, point and score for this game, as if it never happened.
+    // Phones stay signed in (players and seen are kept) so nobody has to scan again.
+    const N = 200, idx = Array.from({ length: N }, (_, i) => i);
+    const keys = [p + "coins", p + "spent", p + "asks", p + "reactlog", p + "mini", p + "ready",
+      ...idx.flatMap(i => [`${p}answers:${i}`, `${p}anstime:${i}`, `${p}buys:${i}`])];
+    // District Secrets: bets, story votes, frames, the Fifth, Quick Draw, Most likely to. The bonus secrets, two truths
+    // and a lie, and the host's decoys people already wrote are kept (phones remember them, and they're not points).
+    if (p === "ds:") keys.push(p + "fifthused",
+      ...idx.flatMap(i => ["bets", "story", "switch", "storyans", "frame", "fifth", "duel", "duelat", "likely"].map(k => `${p}${k}:${i}`)));
+    for (let i = 0; i < keys.length; i += 400) await redis.del(...keys.slice(i, i + 400));
     return reply(res, 200, { ok: true });
   }
   if (action === "miniReset") {

@@ -1092,7 +1092,8 @@ function notFair(){
     <h1 style="font-size:clamp(3rem,8vw,7rem);color:#ff6a5a;transform:rotate(-4deg);text-shadow:0 6px 0 rgba(0,0,0,.5);margin:0">IT'S NOT FAIR!</h1>
     <div class="say" style="font-size:1.6rem">Buzz Buzz objects. The Gamemaker must rule.</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center"><button class="btn" id="nfyes">⚖️ Appeal granted (+1)</button><button class="btn red" id="nfno">🚫 Appeal denied</button><button class="btn ghost" id="nfx">Close (Esc)</button></div></div>`;
-  XM.sfx("trombone");shake();announcer.say("Objection! Buzz Buzz says: it's not fair! The Game maker will now rule on this complaint.",null,{rate:.95});
+  XM.sfx("trombone");shake();// 😭 the complaint itself in a whiny kid voice (high and fast), then the announcer asks for a ruling
+  announcer.say("Objection!",()=>announcer.say("It's not faaaair! It's not fair, it's not fair, it's NOT FAAAAIR!",()=>announcer.say("The Game maker will now rule on this complaint.",null,{rate:.95}),{female:true,pitch:2,rate:1.25,fallback:2500}),{rate:.95,fallback:900});
   let done=false;
   m.querySelector("#nfyes").onclick=async e=>{e.stopPropagation();if(done)return;done=true;XM.sfx("fanfare");XM.confetti(120,true);announcer.say("Appeal granted. Buzz Buzz gets one point. Fine. It wasn't fair.",null,{rate:.95});addPoints("Natalie",1);T(close,4500)};
   m.querySelector("#nfno").onclick=e=>{e.stopPropagation();if(done)return;done=true;XM.sfx("gong");m.querySelector("h1").textContent="DENIED";announcer.say(["Appeal denied. Life isn't fair, Buzz Buzz.","Denied. The Capitol has never once been fair.","Complaint received, and shredded. Denied."][Math.floor(Math.random()*3)],null,{rate:.95});T(close,4500)};

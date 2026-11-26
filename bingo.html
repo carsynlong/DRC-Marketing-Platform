@@ -98,7 +98,7 @@ function call(n){
   }else{S.called.push(n);sfx("reveal")}
   S.checked=null;save();render();
   // 📣 B-1 to B-12: that number is a tribute's district
-  if(i<0&&n<=12){const t=XM.TRIBUTES.find(x=>x.d===n);if(t){XM.say(`B ${n}... ${poss(t.name)} district!`,null,{pitch:.1,rate:.9,interrupt:true});
+  if(i<0&&n<=12){const t=XM.TRIBUTES.find(x=>x.d===n);if(t){
     const b=document.querySelector(".ballzone .ball");if(b){const f=document.createElement("div");f.className="dflash";f.innerHTML=`<img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b>`;b.appendChild(f);setTimeout(()=>f.remove(),2300)}}}
 }
 function rowLines(card){const has=(c,r)=>(c===2&&r===2)||S.called.includes(card[c][r]);const out=[];
@@ -120,8 +120,7 @@ function shapeMini(k){const m=MODES[k];const on=new Set((m.cells||[[0,2],[1,2],[
   let g="";for(let r=0;r<5;r++)for(let c=0;c<5;c++)g+=`<i style="background:${on.has(c+","+r)?"var(--gold)":"rgba(255,255,255,.12)"}"></i>`;
   return `<span class="shape">${g}</span>`}
 function setMode(k){S.mode=k;S.checked=null;XM.store.set("xmas-bingo-mode",k);sfx("reveal");render();
-  if(window.Briefing){briefRound(k);return}
-  XM.say(k==="line"?"Regular bingo!":`${MODES[k].name} bingo!`,null,{pitch:.1,rate:.85,interrupt:true})}
+  if(window.Briefing){briefRound(k);return}}
 // 🎱 read out what this round's pattern needs, with Reread; Start just closes it
 function briefRound(k){const m=MODES[k],won=(S.bingos&&S.bingos[k]||[]).length;
   const pat={line:["5 in a row: across, down or diagonal.","Five in a row. Across, down, or diagonal."],corners:["All <b>4 corner squares</b>. Nothing else matters.","All four corner squares. Nothing else matters."],
@@ -146,7 +145,7 @@ function bigWin(who,sub="",place=1,card=null){
   document.body.appendChild(o);o.querySelector("#bwkeep").onclick=()=>o.remove();o.onclick=e=>{if(e.target===o)o.remove()};
   const mode=S.mode,rn=MODES[mode].name;
   o.querySelectorAll("[data-own]").forEach(b=>b.onclick=()=>{const n=b.dataset.own;(OWNERS[mode]=OWNERS[mode]||{})[card]=n;XM.store.set("xmas-bingo-owners",OWNERS);
-    sfx("cheer");sfx("applause");XM.say(`This card belongs to... ${XM.spoken(n)}!`,null,{pitch:.1,rate:.85,interrupt:true});
+    sfx("cheer");sfx("applause");
     const w=o.querySelector(".whose");if(w)w.innerHTML=`<img src="${XM.photo(n)}" alt="" style="width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold)"><b style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--gold)">Card ${card} belongs to ${esc(XM.dn(n))}!</b>`;
     const p=o.querySelector("p");if(p&&place===1)p.textContent=`${XM.dn(n)} wins the ${rn} round and a major award!`;render()});
   {const sk=o.querySelector("[data-skip]");if(sk)sk.onclick=()=>{const w=o.querySelector(".whose");if(w)w.remove()}}

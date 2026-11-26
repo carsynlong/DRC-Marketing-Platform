@@ -21,12 +21,14 @@
 //   POST { op: "clearSecrets", k }                throw them all away
 //   POST { op: "decoy", text } / { op: "undecoy", text }   🃏 the host's own made-up secrets (shuffled in before the built-in ones)
 // TV:
-//   POST { op: "hostkey", k }                     the key the host phone must show. Only the TV that set it can renew it:
-//                                                 a different key is refused until the old one lapses (10 minutes without a renewal)
-//   GET  ?op=tv&qi=N&k=KEY                        bets + story votes for secret N; with the TV's key also the
-//                                                 two truths and a lie (with the lies) and approved bonus secrets (with who wrote them)
+//   POST { op: "hostkey", k }                     the key the host phone must show. The TV renews it every 45 seconds; a different
+//                                                 key is refused while the old one is being renewed, and takes over once the old one
+//                                                 has gone 90 seconds without a renewal (a closed TV tab, cleared storage)
+//   GET  ?op=tv&qi=N&k=KEY[&lite=1]               bets + story votes for secret N; with the TV's key also the
+//                                                 two truths and a lie (with the lies) and approved bonus secrets (with who wrote them).
+//                                                 lite=1: skip the bonus secrets, two truths and a lie and decoys (the TV keeps its last copy)
 //   POST { op: "reset", total }                   new game: clear bets and votes
-import { redis, hash, readGame, reply, text } from "../lib/redis.js";
+import { redis, hash, readGame, reply, text, safe } from "../lib/redis.js";
 
 const P = "ds:";
 const BETS = ["hunch", "sure", "allin"], VOTES = ["fire", "lol", "wow", "sense", "boring", "sucks"];
@@ -36,28 +38,31 @@ const isHost = async q => (q.name === HOST_NAME && (await isPlayer(HOST_NAME, q.
   (await keyOk(q.k));
 const parse = s => { try { return JSON.parse(s); } catch { return null; } };
 // same as the TV and phones: lets the server check "this secret is yours" without knowing whose it is
-const HOSTKEY_TTL = 600;   // seconds: the TV renews its key every minute
+const HOSTKEY_TTL = 150;   // seconds: the TV renews its key every 45 seconds
+const HOSTKEY_STALE = 90;  // seconds without a renewal before another screen's key may take over
 const keyOk = async k => typeof k === "string" && k.length >= 8 && (await redis.get(P + "hostkey")) === k;
 const ownTag = (gid, qi, name) => { let h = 5381; for (const c of `${gid}|${qi}|${name}`) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
 
-export default async function handler(req, res) {
+export default safe(async function handler(req, res) {
   const q = req.method === "GET" ? req.query : req.body || {};
   const op = q.op;
 
   if (req.method === "GET" && op === "tv") {
     const qi = Number.parseInt(q.qi, 10);
+    const lite = q.lite === "1";   // mid game: the TV already has the bonus secrets, two truths and a lie and decoys
     const duelRound = Number.parseInt(q.duel, 10), likelyRound = Number.parseInt(q.likely, 10);
     const [bets, votes, subs, ok, switches, storyAns, frames, fifth, duel] = await Promise.all([
       Number.isInteger(qi) ? hash(`${P}bets:${qi}`) : {},
       Number.isInteger(qi) ? hash(`${P}story:${qi}`) : {},
-      hash(P + "subs"), hash(P + "approved"),
+      lite ? {} : hash(P + "subs"), lite ? {} : hash(P + "approved"),
       Number.isInteger(qi) ? hash(`${P}switch:${qi}`) : {},
       Number.isInteger(qi) ? redis.get(`${P}storyans:${qi}`) : null,
       Number.isInteger(qi) ? hash(`${P}frame:${qi}`) : {},
       Number.isInteger(qi) ? redis.get(`${P}fifth:${qi}`) : null,
       Number.isInteger(duelRound) ? hash(`${P}duel:${duelRound}`) : {},
     ]);
-    const [ttlAll, likely, tv] = await Promise.all([hash(P + "ttl"), Number.isInteger(likelyRound) ? hash(`${P}likely:${likelyRound}`) : {}, keyOk(q.k)]);
+    const [ttlAll, likely, tv] = await Promise.all([lite ? {} : hash(P + "ttl"), Number.isInteger(likelyRound) ? hash(`${P}likely:${likelyRound}`) : {}, keyOk(q.k)]);
+    if (lite) return reply(res, 200, { tv, lite: true, bets, votes, switches, storyAns, frames, fifth, duel, likely });
     const approvedAll = Object.keys(subs).filter(n => ok[n] === "1").map(n => ({ name: n, text: parse(subs[n])?.text })).filter(x => x.text);
     // the lies and the bonus secrets' writers are spoilers: only the TV (with its key) gets them; anyone else just sees how many
     const ttl = tv ? ttlAll : Object.fromEntries(Object.keys(ttlAll).map((n, i) => [`#${i + 1}`, ""]));
@@ -186,9 +191,11 @@ export default async function handler(req, res) {
   if (op === "hostkey") {
     const k = text(q.k, 64);
     if (!k || k.length < 8) return reply(res, 400, { error: "Bad key" });
-    // first come: a key nobody holds yet; after that only the same key renews it (so a phone can't take over the TV's key)
+    // first come: a key nobody holds yet; after that only the same key renews it, unless the old one has stopped renewing
+    // (so a second screen can't grab the key from a TV that's still on, but a fresh TV tab recovers within a couple of minutes)
     if (!(await redis.set(P + "hostkey", k, { nx: true, ex: HOSTKEY_TTL }))) {
-      if ((await redis.get(P + "hostkey")) !== k) return reply(res, 409, { error: "Another screen holds the host key" });
+      const [held, left] = await Promise.all([redis.get(P + "hostkey"), redis.ttl(P + "hostkey")]);
+      if (held !== k && left > HOSTKEY_TTL - HOSTKEY_STALE) return reply(res, 409, { error: "Another screen holds the host key" });
       await redis.set(P + "hostkey", k, { ex: HOSTKEY_TTL });
     }
     return reply(res, 200, { ok: true });
@@ -199,4 +206,4 @@ export default async function handler(req, res) {
     return reply(res, 200, { ok: true });
   }
   reply(res, 400, { error: "Unknown op" });
-}
+});

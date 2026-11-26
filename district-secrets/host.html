@@ -46,7 +46,7 @@ const pad=n=>String(n).padStart(2,"0");
 let list=null,err="";
 async function load(){
   try{const r=await fetch(`/api/ds?op=review&k=${encodeURIComponent(k)}`,{cache:"no-store"});
-    if(r.status===403){err="This link doesn't match the TV. On your phone, open the game and sign in as Clo (Carsyn).";list=null}
+    if(r.status===403){err="This link doesn't match the TV. On your phone, open the game and sign in as Clo.";list=null}
     else{err="";list=(await r.json()).list}
   }catch(e){err="No connection. Trying again…"}
   render();

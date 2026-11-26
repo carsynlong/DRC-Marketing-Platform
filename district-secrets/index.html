@@ -532,6 +532,13 @@ function buildDeck(){
   fakes.forEach(x=>deck.splice(1+Math.floor(Math.random()*(deck.length-1)),0,x));   // somewhere after the first, before the last
   return deck;
 }
+// 🔑 the deck was built before this TV had the host key: swap the host's own decoys in for built-in ones not played yet
+function hostDecoysLate(){
+  if(S.deckHost!==false||!dsx.tv||!S.deck?.length)return;S.deckHost=true;
+  const used=new Set(Q.map(x=>x.f)),mine=(dsx.decoys||[]).filter(f=>!used.has(f)).sort(()=>Math.random()-.5);
+  const notYet=["roundcard","lightcard","ready","howto","last"].includes(S.phase)?S.qi:S.qi+1;
+  Q.forEach((x,i)=>{if(!mine.length||i<notYet||!x.fake||!DECOYS.includes(x.f))return;x.f=mine.shift();if(x.hide)x.hide=redactPlan(x.f)});   // Q holds the same objects as S.deck
+}
 // the last secret before any bonus round is worth double
 const isDouble=qi=>{let k=-1;Q.forEach((x,i)=>{if(!x.bonus&&!x.ttl)k=i});return qi===k};
 const BONUS_WRITER=500;               // points for the writer when their bonus secret is played
@@ -772,7 +779,7 @@ function snapshot(){
     howto:window.Rules&&Rules.active()?"secrets":undefined,
     hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*qMult(S.qi),mult:qMult(S.qi),
     wanted:["reveal","story","board"].includes(S.phase)&&S.qi<Q.length&&gmPredicts()?wantedTop():undefined};   // How to play is on the TV: phones show it too (howto.js)
-  if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);if(S.phase==="question"&&Q[S.qi].hide)g.hide=hiddenNow()}
+  if(inGame&&["question","interro","reveal","story"].includes(S.phase)){g.fact=Q[S.qi].f;g.own=ownTag(g.gid,S.qi,Q[S.qi].a);g.gm=ownTag(g.gid,S.qi,"gm:"+(gmSitsOut()?HOST:"-"));if(S.phase==="question"&&Q[S.qi].hide)g.hide=hiddenNow()}
   if(inGame&&["reveal","story","board"].includes(S.phase)&&Q[S.qi].golden)g.golden=true;
   if(S.phase==="interro")g.fifthOk=!!S.opts?.fifth;
   if(S.mole&&["question","interro"].includes(S.phase))g.mole={tag:ownTag(g.gid,S.qi,"mole:"+S.mole.name),t:btoa(unescape(encodeURIComponent(S.mole.target)))};   // only the mole's phone can tell it's them
@@ -832,9 +839,11 @@ let dsx={bets:{},votes:{},approved:[],written:0,qi:-1},pollingX=false;
 const dsPost=body=>fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
 async function pollX(){
   if(pollingX)return;pollingX=true;
-  try{const r=await fetch(`/api/ds?op=tv&k=${encodeURIComponent(S.hostKey||"")}&qi=${S.qi}${S.duel?`&duel=${S.duel.round}`:""}${S.likely?`&likely=${S.likely.round}`:""}`,{cache:"no-store"});if(!r.ok)throw 0;const d=await r.json();
-    const before=`${dsx.written}:${dsx.approved.length}:${(dsx.decoys||[]).length}`;dsx={...d,qi:S.qi};
-    if(S.phase==="lobby"&&before!==`${dsx.written}:${dsx.approved.length}:${(dsx.decoys||[]).length}`)render();
+  const lite=!needExtras();   // mid game the bonus secrets, two truths and a lie and decoys aren't needed: fewer database reads
+  try{const r=await fetch(`/api/ds?op=tv&k=${encodeURIComponent(S.hostKey||"")}&qi=${S.qi}${S.duel?`&duel=${S.duel.round}`:""}${S.likely?`&likely=${S.likely.round}`:""}${lite?"&lite=1":""}`,{cache:"no-store"});if(!r.ok)throw 0;const d=await r.json();
+    const before=`${dsx.written}:${dsx.approved.length}:${(dsx.decoys||[]).length}:${dsx.tv}`;dsx={...(d.lite?{approved:dsx.approved,written:dsx.written,ttl:dsx.ttl,decoys:dsx.decoys}:{}),...d,qi:S.qi};
+    if(!d.lite)hostDecoysLate();
+    if(S.phase==="lobby"&&before!==`${dsx.written}:${dsx.approved.length}:${(dsx.decoys||[]).length}:${dsx.tv}`)render();
     if(S.phase==="question")showBets();
     if(S.phase==="story"&&S.storyState==="ask"&&curX().storyAns)storyDecide(curX().storyAns==="yes"?"on":"no");
     if(S.phase==="story")showVotes();
@@ -847,11 +856,17 @@ async function pollX(){
   pollingX=false;
 }
 const curX=()=>dsx.qi===S.qi?dsx:{bets:{},votes:{}};
+// the bonus secrets, two truths and a lie and decoys are read before a game, near its end, and while anything is still waiting on the host key
+const PLAYING=["question","interro","reveal","story","board","likely","lightcard","ttlcard","bonuscard","showdown","scspin"];
+function needExtras(){let lastBase=-1;Q.forEach((x,i)=>{if(!x.bonus&&!x.ttl)lastBase=i});
+  return !PLAYING.includes(S.phase)||S.qi>=lastBase-1||S.deckHost===false||!!S.extrasWait||!dsx.approved||dsx.written==null}
 const bigBets=()=>Object.entries(curX().bets||{}).filter(([n,b])=>b!=="hunch"&&n!==cur().a).length;
 function showBets(){const el=$("#betcount");if(!el)return;const n=bigBets();el.textContent=n?`🎲 ${n} big bet${n>1?"s":""} on the table`:""}
 /* the guessers for this secret: everyone playing except the person it belongs to */
-const gmPredicts=()=>!cur()?.bonus&&!cur()?.ttl&&cur()?.a!==HOST&&active().some(p=>p.name===HOST);   // the Gamemaker predicts on this secret
-const guessers=()=>active().filter(p=>p.name!==cur().a&&!(p.name===HOST&&gmPredicts()));
+const gmPredicts=()=>!cur()?.bonus&&!cur()?.ttl&&!cur()?.fake&&cur()?.a!==HOST&&active().some(p=>p.name===HOST);   // the Gamemaker predicts on this secret
+const gmSitsOut=()=>!!cur()?.fake&&active().some(p=>p.name===HOST);   // 🃏 she knows the fakes, so she sits those out (no Most Wanted, no guess)
+const gmAside=()=>gmPredicts()||gmSitsOut();
+const guessers=()=>active().filter(p=>p.name!==cur().a&&!(p.name===HOST&&gmAside()));
 /* 🕵️ MOST WANTED: the Gamemaker knows whose secret it is, so she bets on who the room will WRONGLY accuse most */
 const WANTED_PTS=400;
 const gmPick=()=>{const m=/^🕵️(.+)$/u.exec((S.orig||current())[HOST]||"");return m?NAMES.find(n=>n===m[1].trim())||null:null};
@@ -901,7 +916,7 @@ function fillAnswers(){
 const fooledList=()=>guessers().filter(p=>S.guesses?.[p.name]!=null&&!S.correct.includes(p.name));
 /* who the room accused this round (decoys included), most first */
 function accusations(){
-  const t={};Object.entries(S.guesses||{}).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
+  const t={};Object.entries(S.guesses||{}).forEach(([who,v])=>{if(who===HOST&&gmAside())return;   // the Gamemaker's Most Wanted bet isn't an accusation
     if(who===cur().a)return;   // nor is the owner's decoy
     const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
   return Object.entries(t).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
@@ -1020,8 +1035,8 @@ function lastView(){
 function newGame(){
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
   S.gid=Date.now();S.qi=0;answers={};answersQi=-1;counted=null;
-  S.ttlDone=false;S.likelySeen={};S.likelyOwed=false;S.briefed={};S.mole=null;S.deck=dressDeck(S.opts?.decoys?buildDeck():REAL.map(x=>({...x})));Q.splice(0,Q.length,...S.deck);S.fifthUsed={};S.champ=null;S.duel=null;S.duelDone=false;S.second=null;   // decoys shuffled in fresh each game
-  S.extra=[];S.bonusDone=false;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
+  S.ttlDone=false;S.likelySeen={};S.likelyOwed=false;S.briefed={};S.mole=null;S.deck=dressDeck(S.opts?.decoys?buildDeck():REAL.map(x=>({...x})));S.deckHost=!S.opts?.decoys||!!dsx.tv;Q.splice(0,Q.length,...S.deck);S.fifthUsed={};S.champ=null;S.duel=null;S.duelDone=false;S.second=null;   // decoys shuffled in fresh each game
+  S.extra=[];S.bonusDone=false;S.extrasWait=false;S.extrasTries=0;S.bets={};S.votes={};   // bonus secrets are picked up fresh at the end of each game
   post({action:"reset",total:BASE+40}).catch(()=>{});dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   S.phase="roundcard";stopSong();sfx("gong");render();
 }
@@ -1097,7 +1112,7 @@ async function afterLock(){
   if(!S.opts?.interro||cur().lightning||cur().ttl)return reveal(true);
   stopSong();await poll();
   const playing=new Set(active().map(p=>p.name)),t={};
-  Object.entries(current()).forEach(([who,v])=>{if((who===HOST&&gmPredicts())||who===cur().a)return;   // the Gamemaker's Most Wanted bet and the owner's decoy aren't accusations
+  Object.entries(current()).forEach(([who,v])=>{if((who===HOST&&gmAside())||who===cur().a)return;   // the Gamemaker's Most Wanted bet and the owner's decoy aren't accusations
     const n=NAMES.find(n=>matches(v,n));if(n&&playing.has(n))t[n]=(t[n]||0)+1});
   const max=Math.max(0,...Object.values(t));
   if(!max)return reveal(true);
@@ -1206,6 +1221,7 @@ function score(){
       const pick=gmPick(),top=wantedTop(),hit=pick&&top.includes(pick);
       p.delta=hit?WANTED_PTS*mult:0;p.score+=p.delta;
       p.note=!pick?"🕵️ No Most Wanted pick":hit?`🕵️ Most Wanted: ${pick}! +${p.delta}`:`🕵️ Bet on ${pick}${top.length?`, the room accused ${top.join(" & ")}`:""}`;return}
+    if(p.name===HOST&&gmSitsOut()){p.delta=0;p.note="🃏 The Gamemaker sat out the fake";return}
     if(p.name===name){
       const st=(storyVotes*100-storyBoos*50)*mult,bw=cur().bonus?BONUS_WRITER:0;   // writing a bonus secret that got played is worth points too
       const sb=story==="on"?STORY_YES:0,sn=declined?Math.min(STORY_NO,p.score+fooled*150*mult+st+bw):0;   // took the stage, or declined it
@@ -1236,13 +1252,23 @@ function score(){
   if(cur().golden)S.players.forEach(p=>{if(p.delta)p.note=["✨ Golden file ×3",p.note].filter(Boolean).join(" · ")});
   const after=rankMap();S.players.forEach(p=>p.move=S.qi>0&&before[p.name]?before[p.name]-after[p.name]:0);
   // last of the 8: bonus secrets written on phones tonight (approved on the host phone) become a bonus round
-  if(S.qi===Q.length-1)addTTL();   // 🤥 two truths and a lie rounds come next
-  if(S.qi===Q.length-1&&S.opts?.bonus&&!S.bonusDone&&dsx.approved?.length){
+  if(S.qi===Q.length-1){addExtras();S.extrasWait=S.qi===Q.length-1&&extrasBlocked();if(S.extrasWait){S.extrasTries=0;keyBlocked()}}
+  if(S.qi===Q.length-1&&!S.extrasWait)return finish();
+  S.phase="board";playSong("board");render();
+}
+function finish(){
+  S.extrasWait=false;S.phase="final";
+  if(showdownDue())return startShowdown();
+  stopSong();confetti(260,true);winSong(S.champ||ranked()[0]?.name);render();
+}
+/* 🔑 bonus secrets, two truths and a lie and the host's decoys only reach the TV that holds the host key (another TV tab may hold it).
+   Nothing is marked done until they really load: the Ledger waits, and Next tries again. */
+const extrasBlocked=()=>!dsx.tv&&!!((S.opts?.ttl&&!S.ttlDone&&Object.keys(dsx.ttl||{}).length)||(S.opts?.bonus&&!S.bonusDone&&dsx.approved?.length));
+function keyBlocked(){toast("🔑 Bonus secrets can't load: close other TV tabs");keyAt=0;keyRetry=true}   // and ask for the key again right away
+function addExtras(){
+  addTTL();   // 🤥 two truths and a lie rounds come next
+  if(S.opts?.bonus&&!S.bonusDone&&dsx.tv&&dsx.approved?.length){
     const bonus=dsx.approved.filter(x=>x.text&&x.name).map(x=>({f:x.text,a:x.name,bonus:true}));S.extra=[...S.extra,...bonus];Q.push(...bonus);S.bonusDone=true}   // after any two truths and a lie, same order a reload rebuilds
-  S.phase=S.qi===Q.length-1?"final":"board";
-  if(S.phase==="final"&&showdownDue())return startShowdown();
-  if(S.phase==="final"){stopSong();confetti(260,true);winSong(S.champ||ranked()[0]?.name)}else playSong("board");
-  render();
 }
 /* 🎯 Frame job: the owner names someone; it works if that person is (one of) the most accused */
 const FRAME_PTS=400;
@@ -1332,7 +1358,12 @@ function scspinView(){
     <p class="quip">🚫 ${esc(sc.out||"")} already won and sits this one out.</p>
     ${pr?`<div class="ctl" style="justify-content:center"><button class="btn wax" id="scgo">⚔️ Start the Quick Draw</button></div><div class="eyebrow">Space: start</div>`:""}</section>`;
 }
-function next(){S.qi++;if(likelyDue()){S.qi--;return brief(likelyBrief(),()=>{if(S.phase!=="board")return;S.qi++;startLikely()})}proceed()}
+function next(){
+  if(S.extrasWait&&S.qi===Q.length-1){   // the bonus round couldn't load yet: try again (three tries, then the game ends without it)
+    addExtras();
+    if(S.qi===Q.length-1){if(extrasBlocked()&&++S.extrasTries<3){keyBlocked();pollX();render();return}return finish()}
+    S.extrasWait=false}
+  S.qi++;if(likelyDue()){S.qi--;return brief(likelyBrief(),()=>{if(S.phase!=="board")return;S.qi++;startLikely()})}proceed()}
 function proceed(){
   const x=Q[S.qi],prev=Q[S.qi-1];
   if(x?.bonus&&!prev?.bonus){S.phase="bonuscard";stopSong();sfx("gong");render();return}
@@ -1374,7 +1405,7 @@ function ttlCardView(){const n=Q.filter(x=>x.ttl).length;return `<section class=
   <button class="btn wax" id="begin">Let's hear them</button><div class="tiny">Space to begin</div></section>`}
 /* 🤥 two truths and a lie rounds: added after the real secrets (and decoys) */
 function addTTL(){
-  if(!S.opts?.ttl||S.ttlDone)return;S.ttlDone=true;
+  if(!S.opts?.ttl||S.ttlDone||!dsx.tv)return;S.ttlDone=true;   // no host key yet: nothing loaded, so try again later
   const on=new Set(active().map(p=>p.name)),pool=Object.entries(dsx.ttl||{}).filter(([n])=>on.has(n)).map(([n,v])=>{try{return [n,JSON.parse(v)]}catch(e){return null}}).filter(Boolean).sort(()=>Math.random()-.5).slice(0,2);
   pool.forEach(([n,v])=>{const opts=[...v.truths,v.lie].sort(()=>Math.random()-.5);const item={ttl:true,a:n,f:`${n}'s two truths and a lie`,opts,lie:opts.indexOf(v.lie)};S.extra.push(item);Q.push(item)});
 }
@@ -1525,7 +1556,7 @@ function lobbyView(){
       <div class="extras">${[["interro","🔦 Interrogation"],["bets","🎲 Sponsor bets"],["story","🎤 Story time"],["bonus","📝 Bonus secrets"],["decoys","🃏 Decoy secrets"],["redact","🖤 Redacted files"],["golden","✨ Golden file"],["frame","🎯 Frame job"],["fifth","🤐 Plead the Fifth"],["showdown","⚔️ Quick Draw tiebreaker"],["mole","🐀 The mole"],["lightning","🌩️ Lightning round"],["ttl","🤥 Two truths & a lie"],["mostlikely","🗳️ Most likely to"]].map(([k,l])=>`<button data-opt="${k}" aria-pressed="${!!S.opts?.[k]}">${l}</button>`).join("")}</div>
       <div class="settings"><button class="btn ghost" id="wipeall">↺ Start completely over</button></div></details>
       ${S.opts?.decoys?`<div class="bonusnote">🃏 ${DECOY_COUNT} decoys get shuffled in when the vault opens${dsx.decoys?.length?` · ${dsx.decoys.length} written by the host`:""}</div>`:""}
-      ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.approved.length} approved · +500 points each if it's played`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
+      ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.tv?`${dsx.approved.length} approved · +500 points each if it's played`:"🔑 they can't load on this screen yet: close any other TV tabs"}`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
       <div class="settings stick lob"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
@@ -1712,7 +1743,8 @@ function boardView(){
   return `<div class="top"><div><div class="eyebrow">After secret ${S.qi+1} of ${Q.length}</div><h2 class="qnum">The Capitol Ledger</h2></div>${sndBtn()}</div>
   <div class="quip" style="text-align:center">${quip()}</div>
   <div class="ledger">${rows()}</div>
-  <div class="ctl"><span class="hint tiny">Space: next secret</span><button class="btn wax" id="next">${Q[S.qi+1]?.bonus&&!cur().bonus?"📝 On to the bonus round":"Next secret"}</button></div>`;
+  <div class="ctl"><span class="hint tiny">Space: next secret</span><button class="btn wax" id="next">${S.extrasWait&&S.qi===Q.length-1?"🔑 Try the bonus round again":Q[S.qi+1]?.bonus&&!cur().bonus?"📝 On to the bonus round":"Next secret"}</button></div>
+  ${S.extrasWait&&S.qi===Q.length-1?`<div class="tiny" style="text-align:center">🔑 The bonus secrets can't load on this screen: close any other TV tabs, then press Next</div>`:""}`;
 }
 function finalView(){
   const r=ranked(),top=r[0]?.score??0,tied=r.filter(p=>p.score===top&&top>0);
@@ -1757,7 +1789,7 @@ function wire(){
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
-  on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn)stopSong();else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
+  on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn){stopSong();try{speechSynthesis.cancel()}catch(e){}}else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
     const e=$("#snd");if(e){e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)}});
   on("wipeall",startOver);
   on("clearphones",async()=>{if(!confirm("Clear every phone sign-in? Everyone will need to tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
@@ -1780,17 +1812,18 @@ if(S.phase==="showdown"&&S.duel&&["steady","draw"].includes(S.duel.state))S.duel
 if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,qs()-8))}
 /* the host phone (approving bonus secrets) proves itself with this key */
 S.hostKey=S.hostKey||(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):Math.random().toString(36).slice(2)+Date.now().toString(36));
-// the server only lets this TV renew its own key; it lapses after 10 minutes without a renewal
-let keyAt=0,keyWarned=false;
+// the server only lets this TV renew its own key (every 45 seconds); another screen's key takes over once this one stops renewing for 90 seconds
+let keyAt=0,keyWarned=false,keyRetry=false;
 async function sendKey(){keyAt=Date.now();try{const r=await dsPost({op:"hostkey",k:S.hostKey});
-  if(r.status===409&&!keyWarned){keyWarned=true;toast("🔑 Another screen holds the host key. Close it, or wait 10 minutes, for bonus secrets and two truths and a lie")}else if(r.ok)keyWarned=false}catch(e){}}
+  keyRetry=r.status===409;   // refused: ask again every 15 seconds until the old screen's key lapses
+  if(r.status===409&&!keyWarned){keyWarned=true;toast("🔑 Bonus secrets can't load: close other TV tabs")}else if(r.ok){keyWarned=false;pollX()}}catch(e){}}
 sendKey();
 if(S.phase==="scspin"&&!S.second?.pair)S.second=null;   // a reload mid Second Chance spin: spin again (below)
 render();
 if(S.phase==="scspin"&&!S.second)secondSpin();
 if(S.phase==="ready")beginQuestionNow();   // a reload mid countdown: count down to the same secret again
 try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{}}catch(e){}
-setInterval(()=>{push();maybePoll();if(Date.now()-keyAt>60000)sendKey();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
+setInterval(()=>{push();maybePoll();if(Date.now()-keyAt>(keyRetry?15000:45000))sendKey();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
 
 /* ---------- floating secrets: envelopes, wax seals, keys, quills, magnifiers, padlocks, scrolls ---------- */
 let lastArena="";
@@ -1888,7 +1921,7 @@ function restartGame(ask=true){
   stopReading();
   clearInterval(readyT);clearInterval(typeT);cancelAnimationFrame(raf);stopSong();
   S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.right=0;p.fooled=0;p.accused=0;p.story=0;p.fakes=0;p.note=""});
-  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now(),extra:[],bonusDone:false,bets:{},votes:{},deck:null});Q.splice(0,Q.length,...REAL);
+  Object.assign(S,{phase:"lobby",qi:0,elapsed:0,locked:false,correct:[],guesses:{},typed:0,gid:Date.now(),extra:[],bonusDone:false,extrasWait:false,bets:{},votes:{},deck:null,deckHost:true});Q.splice(0,Q.length,...REAL);
   dsPost({op:"reset",total:BASE+40}).catch(()=>{});
   answers={};answersQi=-1;counted=null;hostOpen=false;
   post({action:"reset",total:BASE+40}).catch(()=>{});

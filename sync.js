@@ -29,12 +29,13 @@ const Sync = (() => {
         results: S.mini.results, all: S.mini.all } : undefined,
       left: S.phase === "question" && !S.locked && !(S.look > 0) ? Math.max(0, Math.ceil(S.secs - S.elapsed)) : undefined,   // phones show the countdown
       look: S.phase === "question" && !S.locked && S.look > 0 ? Math.ceil(S.look) : undefined,   // 👀 the 10-second look: no typing yet
-      feast: !sc && S.qi >= FEAST && !S.tb, secs: S.secs, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
+      feast: !sc && S.qi >= FEAST && !S.tb, secs: S.secs, speed: sc && !sc.done ? 1 : undefined,   // 🎡 Second Chance speed round round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
       howto: window.Rules && Rules.active() ? "tribute" : undefined,
       hurry: S.phase === "question" && !S.locked && S.hurryEnds ? S.hurryEnds : undefined,        // ⏰ last 10 seconds: phones hurry (howto.js)
       slow: ["reveal", "board", "final"].includes(S.phase) && S.slow && S.slow.length ? S.slow : undefined, slowPen: SLOW_PEN };   // How to play is on the TV: phones show it too (howto.js)
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
     if (inGame && ["reveal", "board", "final"].includes(S.phase)) { const fx = typeof FACE === "function" ? FACE(r.qi) : Q[r.qi]; g.answer = r.mash ? fx.a + " and " + r.mash.b : fx.a; g.correct = r.mash ? S.correct.concat(S.half || []) : S.correct; }
+    if (inGame && sc && typeof scOrder === "function" && ["reveal", "board", "final"].includes(S.phase)) g.fast = scOrder();   // 🎡 right answers, fastest first
     if (inGame && r.mash && !r.tb && (S.phase === "ready" || S.phase === "question")) g.mash = true;   // 🐺 Mutt Mashup: name both
     if (inGame) {
       let rank = 0, prev = null;
@@ -105,6 +106,8 @@ const Sync = (() => {
   /* ---- answer counts on the TV ---- */
   const phonePlayers = () => answering().filter(p => hasPhone(p.name));
   const current = () => (answersQi === S.qi ? answers : {});
+  // 🎡 every playing phone has sent an answer (speed round ends early)
+  const allIn = () => { const ph = phonePlayers(); return ph.length > 0 && ph.every(p => current()[p.name] != null); };
   function countText() {
     const ph = phonePlayers();
     if (!ph.length) return "";
@@ -317,5 +320,5 @@ const Sync = (() => {
 
   // the host's 🔮 prediction for this face (a number), if she made one
   function hostPick() { const v = current()[HOST]; const m = /^🔮(\d+)$/.exec(v || ""); return m ? +m[1] : null; }
-  return { fresh, hostPick, restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
+  return { allIn, fresh, hostPick, restart, hasPhone, countText, whoIn, roster, phoneMark, fillAnswers, joinCard, reset, saved };
 })();

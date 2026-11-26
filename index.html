@@ -267,7 +267,7 @@ function freshState(){
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 // a TV reload mid-face picks up the clock where it was (at least 8 seconds left), so nobody loses points to a refresh
-function start(data){ S=(data&&data.phase)?data:freshState(); if(S.charting){S.charting=false;S.chartD=null;S.charted=false} if(S.secs!==10)S.secs=SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.charting){S.charting=false;S.chartD=null;S.charted=false} if(S.sc&&!S.sc.done)S.secs=SC_SECS;else if(S.secs!==10)S.secs=SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
 
 /* ================= MUSIC: original game-show loops over public-domain carols ================= */
 let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
@@ -466,7 +466,7 @@ function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready"
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
 // "N correct", or on a Mutt Mashup "N both · M half"
 const cntTxt=()=>{const h=(S.half||[]).length;return mash()&&h?`${S.correct.length} both · ${h} half`:`${S.correct.length} correct`};
-function startQuestion(){clearInterval(readyT);Extras.start();S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
+function startQuestion(){clearInterval(readyT);Extras.start();if(S.sc){S.secs=SC_SECS;S.qSecs=SC_SECS}S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=S.sc?SC_LOOK:LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const isTb=()=>!!S.rounds[S.qi]?.tb;
 const faceLbl=()=>isTb()?"⚔️ Showdown face":S.sc?`🎡 Second Chance · Face ${S.qi-S.sc.start+1} of ${S.sc.n}`:`Face ${S.qi+1} of ${Q.length}`;
@@ -504,6 +504,13 @@ function setZoom(p){
 }
 // 👀 each face: 10 seconds to look (no typing), then a minute to type
 const LOOK=10,SECS=60;
+// 🎡 Second Chance speed round: quick look, short window, fastest right answers score most
+const SC_LOOK=5,SC_SECS=20,SC_PTS=[1000,700,500],SC_REST=300,SC_MEDAL=["🥇","🥈","🥉"];
+const SC_RULES="Speed round! 5 seconds to look, 20 to type. Fastest right answer: 1,000. Then 700, 500, and 300.";
+// right answers, fastest first (server answer time; no time goes last)
+function scOrder(){const t=S.ansAt||{};return S.correct.slice().sort((a,b)=>(t[a]??1e12)-(t[b]??1e12))}
+const scPts=i=>SC_PTS[i]??SC_REST;
+let scEnding=0;
 function endLook(){if(!(S.look>0))return;S.look=0;S.qStart=Date.now();S.ansAt={};S.elapsed=0;sfx("go");render()}
 function tick(last){
   cancelAnimationFrame(raf);
@@ -521,6 +528,7 @@ function tick(last){
     if(left!==before&&left<=10&&left>0&&!S.hurryEnds)S.hurryEnds=Date.now()+(S.secs-S.elapsed)*1000;   // ⏰ phones hurry too (howto.js); the TV has the wall of fire
     drawTimer();setZoom(S.elapsed/S.secs);FireTimer.update(left,1-S.elapsed/S.secs);Extras.tick();
     if(S.elapsed>=S.secs){lock();return}
+    if(S.sc&&Sync.allIn()){lock();clearTimeout(scEnding);scEnding=setTimeout(()=>{if(S.phase==="question"&&S.locked)reveal()},1400);return}   // 🎡 every phone is in: end the face now
     raf=requestAnimationFrame(loop);
   };
   raf=requestAnimationFrame(loop);
@@ -537,7 +545,7 @@ function reveal(){
   FireTimer.stop();
   if(S.mode==="type"&&!isTb()&&!mash()&&!S.charted&&!S.locked){S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();render()}
   Sync.fillAnswers();
-  const d=S.mode==="type"&&!isTb()&&!mash()&&!S.charted?guessChart():null;S.charted=true;
+  const d=S.mode==="type"&&!isTb()&&!mash()&&!S.charted&&!S.sc?guessChart():null;   // 🎡 speed round: straight to the answerS.charted=true;
   if(!d)return doReveal();
   S.charting=true;S.chartD=d;S.chartLit=false;render();
   let k=0;const roll=()=>{if(!S.charting)return;sfx("drum");if(++k<5)chartT.push(setTimeout(roll,700))};roll();
@@ -561,6 +569,9 @@ function score(){
 function scoreNow(){
   if(S.rounds[S.qi]?.tb)return Party.scoreTiebreak();
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();S.slow=[];Extras.before();
+  if(S.sc){const order=scOrder();   // 🎡 speed round: 1000 / 700 / 500 / 300 by answer time; wrong or none = 0
+    S.players.forEach(p=>{p.streak=0;p.missed=false;const i=order.indexOf(p.name);if(!p.on||i<0){p.delta=0;return}p.delta=scPts(i);p.score+=p.delta});
+  }else{
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
     const mm=mash()?(S.correct.includes(p.name)?2:(S.half||[]).includes(p.name)?1:0):(S.correct.includes(p.name)?1:0);
@@ -571,6 +582,7 @@ function scoreNow(){
     else{p.delta=0;p.streak=0}
   });
   Extras.score(mult);   // speed bonus, underdog twist, shop power-ups
+  }
   Party.scored();
   // the host (🔮 Gamemaker) predicted how many would get it right: exact +500, off by one +200
   const h=S.players.find(p=>p.name===HOST),pick=Sync.hostPick();
@@ -677,14 +689,15 @@ function questionView(){
   <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":S.look>0?"Space: start typing now":"Space: lock answers"}</span>
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;
 }
+function scMark(n){const i=scOrder().indexOf(n);return i<0?"✅":`${SC_MEDAL[i]||"✅"} +${scPts(i).toLocaleString()}`}
 function typedView(x,rev){
   const boxes=answering().map(p=>{const own=false,v=S.typed[p.name]||"",half=(S.half||[]).includes(p.name),ok=S.correct.includes(p.name)||half;
     const cls=rev?(own?"own":ok?"ok":"no"):"";
     return `<label class="${cls}" ${rev&&!own?`data-ok="${esc(p.name)}" role="button" aria-pressed="${ok}" style="cursor:pointer"`:""}>${esc(p.name)}
-      ${rev?`<span class="mark">${own?"their face":S.correct.includes(p.name)&&mash()?"✅✅":ok?"✅":"❌"}</span>`:Sync.phoneMark(p.name)}
+      ${rev?`<span class="mark">${own?"their face":S.correct.includes(p.name)&&mash()?"✅✅":ok&&S.sc?scMark(p.name):ok?"✅":S.sc?"❌ 0":"❌"}</span>`:Sync.phoneMark(p.name)}
       <input data-type="${esc(p.name)}" value="${esc(v)}" placeholder="${rev?"no answer":Sync.hasPhone(p.name)?"answering on phone":"Who is it?"}" ${Sync.hasPhone(p.name)?"data-phone":""} autocomplete="off" spellcheck="false" ${rev||S.locked?"disabled":""}></label>`}).join("");
   // while a face is up the TV never shows guesses: only who has sealed one (their name turns gold)
-  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":S.look>0?`👀 Look closely. Typing opens in <b id="lookp">${Math.ceil(S.look)}</b>`:(mash()?"🐺 Name BOTH tributes on your phone! You have a minute.":"📱 Type your guess on your phone! You have a minute.")}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
+  if(!rev)return `<div class="phoneprompt">${S.locked?"💥 Guesses locked":S.look>0?`👀 Look closely. Typing opens in <b id="lookp">${Math.ceil(S.look)}</b>`:(S.sc?"⚡ Speed round! Type fast: 20 seconds. Fastest right answer gets 1,000.":mash()?"🐺 Name BOTH tributes on your phone! You have a minute.":"📱 Type your guess on your phone! You have a minute.")}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`;
   return `<div class="bar"><div class="eyebrow">Checked automatically. Tap a box to fix a call.</div><div class="tiny" id="cnt">${cntTxt()}</div></div>
   <div class="typed">${boxes}</div>`;
 }
@@ -743,7 +756,8 @@ function startSecondChance(){
     intro:"Time for the Second Chance Round. Here's how it works.",
     steps:[["👑",`<b>${esc(S.sc.winner)}</b> won the Games and sits out.`,`${S.sc.winner} won the Games and sits out.`],
       ["0️⃣","Everyone else starts at <b>zero</b>.","Everyone else starts at zero."],
-      ["🎡",`<b>${S.sc.n} new faces.</b> Look for 10 seconds, then type your guess.`,`${S.sc.n} new faces. Look for 10 seconds, then type your guess.`],
+      ["🎡",`<b>${S.sc.n} new faces.</b> Speed round! 5 seconds to look, 20 to type.`,`${S.sc.n} new faces. Speed round! 5 seconds to look, 20 to type.`],
+      ["⚡","Fastest right answer: <b>1,000</b>. Then 700, 500, and 300.","Fastest right answer: 1,000. Then 700, 500, and 300."],
       ["🏆","Highest score wins the <b>Second Victor</b> major award.","Highest score wins the Second Victor major award."]],
     onStart:()=>{if(S.phase==="sccard"){ensureAudio();scBegin()}}})},2500);
 }
@@ -752,6 +766,7 @@ function scCardView(){
   return `<section class="round-card">${EMBLEM}<div class="num">🎡 Second Chance Round</div><h1>${esc(S.sc.winner)} sits out</h1>
     <div class="vs" style="display:flex;justify-content:center"><div style="display:grid;justify-items:center;gap:6px"><img class="av" src="${AV(S.sc.winner)}" alt="" style="width:120px;height:120px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--gold)"><span class="tiny">👑 Already won the Games</span></div></div>
     <p class="tiny" style="font-size:1.1rem">Everyone else starts at zero. ${S.sc.n} new faces. Highest score wins the Second Victor major award.</p>
+    <p class="tiny" style="font-size:1.1rem">⚡ ${SC_RULES}</p>
     <div class="ctl" style="justify-content:center"><button class="btn" id="scbegin">Start the Second Chance Round</button></div>
     <div class="tiny">Space: start the round</div></section>`;
 }

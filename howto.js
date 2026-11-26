@@ -13,6 +13,16 @@ window.HowTo = (() => {
 
   /* the cards: [emoji, bold bit, short line] */
   function content(kind, g) {
+    if (kind === "tribute" && g.speed) return {   // 🎡 Second Chance speed round
+      goal: ["⚡", "Speed round!", "5 seconds to look, 20 to type."],
+      sections: [
+        ["How to play", [["👀", "5 seconds to look", "Then you have 20 seconds to type who it is."],
+          ["⌨️", "Type fast", "The face ends as soon as everyone has answered."]]],
+        ["Points", [["🥇", "Fastest right answer", "1,000 points"], ["🥈", "2nd fastest", "700 points"], ["🥉", "3rd fastest", "500 points"],
+          ["✅", "Every other right answer", "300 points"], ["❌", "Wrong or no answer", "0 points"]]],
+      ],
+      end: "Speed round! 5 seconds to look, 20 to type. Fastest right answer: 1,000. Then 700, 500, and 300.",
+    };
     if (kind === "tribute") return {
       goal: ["🎯", "Name the mystery face", "before time runs out."],
       sections: [
@@ -159,7 +169,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
 @keyframes hb-pop{from{transform:scale(1.8);opacity:0}}
 @keyframes hb-shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @media (prefers-reduced-motion:reduce){#hurrybar,#hurrybar *,body.hurry-shake{animation:none!important}}`;
-  let hb = null, hbTimer = 0, hbEnds = 0, hbLast = null, slowKey = "", hbHost = false, hbSeen = null, hbLocal = 0;
+  let hb = null, hbTimer = 0, hbEnds = 0, hbLast = null, slowKey = "", hbHost = false, hbSpeed = false, hbSeen = null, hbLocal = 0;
   const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
   function css2() { if (!document.getElementById("hurry-css2")) { const st = document.createElement("style"); st.id = "hurry-css2"; st.textContent = HCSS; document.head.appendChild(st); } }
   function stopHurry() { clearInterval(hbTimer); hbTimer = 0; hbEnds = 0; hbLast = null; if (hb) { hb.remove(); hb = null; } document.body.classList.remove("hurrying", "hurry-shake"); }
@@ -173,7 +183,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
       if (sec <= 0) { stopHurry(); return; }
       if (sec === hbLast) return; hbLast = sec;
       hb.innerHTML = hbHost ? `<b>${sec}</b><span>⏰ HURRY! Make your 🔮 prediction!<small>Pick how many will get it right</small></span>`
-        : `<b>${sec}</b><span>⏰ HURRY! Lock in your answer!<small>Too slow = you lose points</small></span>`;
+        : `<b>${sec}</b><span>⏰ HURRY! Lock in your answer!<small>${hbSpeed ? "⚡ Speed round: faster = more points" : "Too slow = you lose points"}</small></span>`;
       buzz(sec <= 3 ? [180, 60, 180] : 120);
       document.body.classList.remove("hurry-shake"); void document.body.offsetWidth; document.body.classList.add("hurry-shake");
     };
@@ -193,7 +203,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     if (ends && ends !== hbSeen) { hbSeen = ends; const skew = ends - Date.now();
       hbLocal = g.left != null ? Date.now() + Math.min(10, g.left) * 1000 : Date.now() + (skew > 0 && skew <= 10500 ? skew : 9000); }
     if (!ends) hbSeen = null;
-    hbHost = !!hostPlays;
+    hbHost = !!hostPlays; hbSpeed = !!(g && g.speed);
     if (ends && !o.answered && !exempt && Date.now() < hbLocal) startHurry(hbLocal); else stopHurry();
     if (g && me && g.slow && g.slow.includes(me)) {
       const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;

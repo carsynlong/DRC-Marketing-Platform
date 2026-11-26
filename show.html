@@ -494,6 +494,7 @@ body:has(.moment) .momentcard{visibility:hidden}   /* the end-of-night title car
   <p style="font-size:1rem">→ / Space / click: next · ←: back · F: fullscreen · M: mute</p></div>
 </div>
 <script src="/xmas/xmas.js"></script>
+<script>XM.singleTab("show")</script>
 <script src="/qrcode.js"></script>
 <script src="/remote-tv.js"></script>
 <script>XM.useNicknames()</script>
@@ -683,7 +684,7 @@ const PG_STEPS=[
  [[51.3,43.1,44.6,7.1],"🚨","Snitch","Report someone (just for fun). It pops up on the TV."],
  [[4.1,51.4,44.6,7.1],"🤝","Send points","Give your Capitol Points to someone. Bribes welcome."],
  [[51.3,51.4,44.6,7.1],"💌","Shout-out","Send a message to the TV. The Gamemaker approves it first."],
- [[51.3,59.7,44.6,7.3],"🆘","I'm lost","Tap it and the Gamemaker comes to help."],
+ [[4.1,59.7,44.6,7.1],"🆘","I'm lost","Tap it and the Gamemaker comes to help."],
  [[4.1,34.8,91.8,32.2],"🗳️","Votes and bets","Votes and bets pop up on their own. Tap a face. You get 10 seconds to change it, then it locks.","👑 QUEEN MOTHER and 😤 Buzz Buzz have their own special buttons."]];
 function phoneGuide(el){
   const hl=el.querySelector(".pg-hl"),cap=el.querySelector(".pg-cap"),wrap=el.querySelector(".pg-capwrap"),line=el.querySelector("#pgline"),dots=[...el.querySelectorAll(".pg-dots i")],box=el.querySelector(".pg");
@@ -761,8 +762,13 @@ function publishSlide(s,el){
   const h=el.querySelector("h1");const title=(h?h.textContent.replace(/\s+/g," ").trim():lines[0]||"");
   const body=lines.filter(t=>t!==title).join("\n").slice(0,880);
   const pin=hostPin();if(!pin)return;
-  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",pin,slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body,todo:slideTodo(s.id)}})}).catch(()=>{});
+  const my=++pubTok;pubPending=true;clearTimeout(pubRetry);
+  const fail=()=>{if(my!==pubTok)return;pubRetry=setTimeout(()=>{if(my===pubTok&&curEl===el)publishSlide(s,el)},4000)};   // keep trying (and again when the internet comes back)
+  fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"state",pin,slide:{id:s.id,n:cur+1,total:SLIDES.length,title,body,todo:slideTodo(s.id)}})})
+    .then(r=>{if(r.ok){if(my===pubTok)pubPending=false}else if(r.status!==403)fail();else if(my===pubTok)pubPending=false}).catch(fail);
 }
+let pubTok=0,pubPending=false,pubRetry=0;
+function republish(){if(started&&pubPending&&SLIDES[cur]&&curEl)publishSlide(SLIDES[cur],curEl)}
 function showMiniQR(on){let q=document.getElementById("miniqr");
   if(!q){const w=document.createElement("div");w.innerHTML=qrHTML(110);q=w.firstElementChild;q.id="miniqr";stage.appendChild(q)}
   q.hidden=!on}
@@ -818,8 +824,29 @@ function arenaTwist(kind){
 /* ---------- Side quests: the Gamemaker sends one tribute on a timed mission ---------- */
 let lastPoints={},questUI=null;
 const hostPin=()=>{try{return localStorage.getItem("xmas-host-pin")}catch(e){return null}};
+// no PIN on this laptop: never window.prompt() (it would show the PIN in plain text on the TV). The masked box below asks once.
+function needPin(){toast("🔑 Unlock the PIN first (⚙ menu)",5000);return null}
+function pinBox(){
+  if(hostPin()||document.getElementById("pinbox"))return;
+  const w=document.createElement("div");w.id="pinbox";w.className="noadv";
+  w.style.cssText="position:fixed;right:18px;bottom:76px;z-index:90;background:var(--night-2);color:var(--ink);border-radius:14px;padding:14px 16px;box-shadow:0 0 0 2px var(--gold),0 10px 30px rgba(0,0,0,.5);display:grid;gap:8px;max-width:340px;font:600 15px var(--body,system-ui),sans-serif";
+  w.innerHTML=`<div>🔑 Gamemaker PIN to connect Clo's phone (only once)</div>
+    <form style="display:flex;gap:8px"><input type="password" inputmode="numeric" maxlength="8" autocomplete="off" aria-label="Gamemaker PIN" style="flex:1;min-width:0;font:inherit;font-size:18px;padding:6px 10px;border-radius:8px;border:0">
+    <button class="btn" type="submit" style="padding:6px 14px">OK</button><button class="btn ghost" type="button" data-skip-pin style="padding:6px 12px">Skip</button></form>
+    <div data-msg style="font-size:13px;opacity:.85;min-height:1em"></div>`;
+  const inp=w.querySelector("input"),msg=w.querySelector("[data-msg]"),f=w.querySelector("form");
+  const close=()=>{w.remove()};
+  // typing here never moves the slides
+  w.addEventListener("keydown",e=>{e.stopPropagation();if(e.key==="Escape")close()});w.addEventListener("click",e=>e.stopPropagation());
+  w.querySelector("[data-skip-pin]").onclick=close;
+  f.onsubmit=async e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;msg.textContent="Checking...";
+    const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"pin",pin:v})}).catch(()=>null);
+    if(r&&r.ok){try{localStorage.setItem("xmas-host-pin",v)}catch(e){}close();toast("🔑 Connected. Clo's phone can follow the TV now.");lastResults="";if(started&&SLIDES[cur]&&curEl)publishSlide(SLIDES[cur],curEl)}   // saved only once the server says it's right
+    else{inp.value="";msg.textContent=!r?"Couldn't reach the internet. Try again.":r.status===429?"Too many tries. Wait a few minutes.":"Wrong PIN. Try again."}};
+  document.body.appendChild(w);setTimeout(()=>inp.focus(),50);
+}
 async function questResult(result){
-  let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN:");if(!pin)return;try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+  const pin=hostPin();if(!pin)return needPin();
   const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"questdone",pin,result})}).catch(()=>null);
   if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}
 }
@@ -879,7 +906,7 @@ async function showPoints(){
 }
 /* ---------- ⭐ add Capitol Points from the TV (needs the Gamemaker PIN) ---------- */
 async function addPoints(to,n){
-  let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN (to save points):");if(!pin)return false;try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+  const pin=hostPin();if(!pin){needPin();return false}
   const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"pointsadd",pin,to,n})}).catch(()=>null);
   if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN. Points not saved.");return false}return !!(r&&r.ok)}
 /* ---------- More Gamemaker twists (sent with a target through the server) ---------- */
@@ -946,12 +973,13 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
     x.onmouseenter=()=>x.style.background="rgba(255,255,255,.08)";x.onmouseleave=()=>x.style.background="transparent";
     x.onclick=e=>{e.stopPropagation();show(false);fn()};m.appendChild(x)};
   const jump=i=>{if(!started)begin();closeMoments(".moment,.vpick");go(i)};
+  item("🔑 Unlock the PIN (connect Clo's phone)",()=>{if(hostPin())toast("🔑 The PIN is already unlocked on this laptop.");else pinBox()});
   item("⏮ Go to the beginning (Lobby)",()=>jump(0));
   item("⏭ Skip to the end",()=>jump(SLIDES.length-1));
   item("👑 Jump to The Capitol Has Spoken",()=>{const i=SLIDES.findIndex(s=>s.id==="victors");if(i>=0)jump(i)});
   item("📱 Clear phone sign-ins",async()=>{
     if(!confirm("Clear every phone sign-in? Everyone will need to scan the QR code and tap their face again."))return;
-    let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN:");if(!pin)return;try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+    const pin=hostPin();if(!pin)return needPin();
     const r=await fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({a:"clearphones",pin})}).catch(()=>null);
     if(r&&r.ok){toast("📱 All phones cleared. Everyone scans to join again.");showLive({});showJoined([])}
     else if(r&&r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}else alert("Couldn't reach the server. Check the internet.")});
@@ -966,7 +994,7 @@ addEventListener("storage",e=>{if(e.key==="xmas-rehearsal")rehearsalBadge();if(e
   item("🔮 Reveal the predictions",()=>{const p=predictReveal();if(p&&p.then)p.then(r=>{if(r&&r.status===409)toast("🔮 No predictions to reveal (they weren't opened, or were already revealed).",6000)})});
   item("📺 News ticker on/off",()=>{const on=!tickerOn();try{localStorage.setItem("xmas-ticker",on?"1":"0")}catch(e){}toast(on?"📺 News ticker on":"📺 News ticker off")});
   item("🏁 End-of-night awards",()=>nightAwards());
-  item("🔄 Start completely over",()=>{if(confirm("Start completely over? This wipes EVERYTHING: winners, Capitol Points, news, photos, quests, votes, award stats, and signs every phone out. Use it after practicing."))startOver()});
+  item("🔄 Start completely over",()=>{if(confirm("Start completely over? This wipes EVERYTHING: winners, Capitol Points, news, photos, quests, votes, award stats, the saved Who's That Tribute, District Feud and District Secrets games, and signs every phone out. Use it after practicing."))startOver()});
   item("🧹 Clear winners and award stats",()=>{if(confirm("Clear ALL game winners, Second Victors, tiebreakers and the end-of-night award stats? Use this after practicing."))clearResults()});
   item("🎛️ Open the Gamemaker menu",()=>window.open("/host","_blank"));
   item("✕ Close",()=>{});
@@ -989,7 +1017,7 @@ function publishResults(){
 setInterval(publishResults,5000);
 /* ---------- 🗳️ phone votes ---------- */
 let voteUI=null;
-function hostCall(body){let pin=hostPin();if(!pin){pin=prompt("Gamemaker PIN:");if(!pin)return Promise.resolve(null);try{localStorage.setItem("xmas-host-pin",pin)}catch(e){}}
+function hostCall(body){const pin=hostPin();if(!pin){needPin();return Promise.resolve(null)}
   return fetch("/api/show",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...body,pin})}).then(async r=>{if(r.status===403){try{localStorage.removeItem("xmas-host-pin")}catch(e){}alert("Wrong PIN.")}return r}).catch(()=>{toast("📴 Can't reach the internet right now. Try again in a minute.");return null})}
 function openVote(p){
   if(!started)return;closeMoments(".moment.twist");if(busy())return toast("🗳️ Vote open on your phones: "+p.q,6000);
@@ -1033,23 +1061,25 @@ function updateBets(b){betState=b;if(!betUI||!betUI.m.isConnected||!b||b.id!==be
   betUI.m.querySelectorAll("[data-v]").forEach(x=>{x.querySelector(".n").textContent=c[x.dataset.v]?"💰"+c[x.dataset.v]:"";x.classList.toggle("lead",!!c[x.dataset.v])});
   const t=betUI.m.querySelector("#btot");if(t)t.textContent=n?`${n} bet${n===1?"":"s"} placed`:"No bets yet"}
 let betQueue=null;
-setInterval(()=>{if(betQueue&&!busy()&&!(window.speechSynthesis&&speechSynthesis.speaking&&Date.now()<keepSpeech)){const r=betQueue;betQueue=null;betPaid(r)}},1000);
-function betPaid(r){if(busy()&&!betQueue&&!r._q){betQueue={...r,_q:1};toast(`💰 Bets paid on ${r.winner}. Results coming up.`);return}news(`💰 Bets paid on ${r.winner}: ${(r.results||[]).filter(x=>x.n>0).map(x=>x.who).join(", ")||"nobody"} cashed in`);
+setInterval(()=>{if(betQueue&&!busy()&&!winMoment()){const r=betQueue;betQueue=null;betPaid(r)}},1000);
+function betPaid(r){if((busy()||winMoment())&&!betQueue&&!r._q){betQueue={...r,_q:1};toast(`💰 Bets paid on ${r.winner}. Results coming up.`);return}news(`💰 Bets paid on ${r.winner}: ${(r.results||[]).filter(x=>x.n>0).map(x=>x.who).join(", ")||"nobody"} cashed in`);
   if(betUI&&betUI.m.isConnected)betUI.close();betUI=null;setBanner("bets",null);if(busy())return toast(`💰 Bets paid on ${r.winner}`);
-  const {m,close}=openMoment("twist feast");const res=(r.results||[]).sort((a,b)=>b.n-a.n);
+  const {m,close}=openMoment("twist feast",{stopMusic:false});const res=(r.results||[]).sort((a,b)=>b.n-a.n);   // the winner's walk-up keeps playing under it
   m.innerHTML=`<div class="inner"><div class="eb">💰 THE BETS ARE IN · ${esc(r.game)}</div><h1>${esc(r.winner)} won!</h1>
     <div style="display:grid;gap:8px">${res.length?res.map(x=>`<div class="ptsrow">${face(x.who)||"<span></span>"}<span>${esc(x.who)}</span><span style="font-size:.8em;opacity:.8">bet ${x.amt} on ${esc(x.on)}</span><span class="v ${x.n<0?"neg":""}">${x.n>0?"+":""}${x.n}</span></div>`).join(""):`<div class="say">Nobody bet. Cowards.</div>`}</div>
     <button class="btn ghost" id="px">Close (Esc)</button></div>`;
   m.querySelector("#px").onclick=e=>{e.stopPropagation();close()};XM.sfx("fanfare");
-  const won=res.filter(x=>x.n>0).map(x=>XM.spoken(x.who));announcer.say(won.length?`The bets are in! Winners: ${won.join(", ")}!`:"The bets are in! Nobody picked the winner!",null,{pitch:.1,rate:.9});
+  const won=res.filter(x=>x.n>0).map(x=>XM.spoken(x.who));XM.duck(true);announcer.say(won.length?`The bets are in! Winners: ${won.join(", ")}!`:"The bets are in! Nobody picked the winner!",()=>XM.duck(false),{pitch:.1,rate:.9});
 }
 /* ---------- 🚨 snitches from phones ---------- */
 /* ---------- 😤 IT'S NOT FAIR! (Buzz Buzz's catchphrase, from her phone) ---------- */
 const nfSound=()=>{if(XM.sound){try{const a=new Audio("/xmas/voice/notfair.mp3");a.volume=1;a.play().catch(()=>{})}catch(e){}}};   // 😭 a whiny kid (ElevenLabs)
 function notFair(){
   if(!started)return;news("😤 Buzz Buzz has filed an official complaint: IT'S NOT FAIR!");
-  if(busy()){XM.sfx("trombone");nfSound();toast("😤 Buzz Buzz says: IT'S NOT FAIR!",4000);return}   // something else is on screen: just the sound and a note
-  const {m,close}=openMoment("twist");
+  // something else is on screen, the announcer is talking, or a tribute intro / the rules / the phone guide is up: just the sound and a note
+  const sid=(SLIDES[cur]&&SLIDES[cur].id)||"",talking=window.speechSynthesis&&speechSynthesis.speaking;
+  if(busy()||talking||/^d\d+$/.test(sid)||sid==="rules"||sid==="phoneguide"){XM.sfx("trombone");nfSound();toast("😤 Buzz Buzz says: IT'S NOT FAIR!",4000);return}
+  const {m,close}=openMoment("twist",{stopMusic:false,keepVoice:true});   // the music keeps playing under it
   m.innerHTML=`<div class="in" style="display:grid;gap:14px;justify-items:center">${face("Natalie")?`<div style="width:220px;height:220px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 6px var(--gold)">${face("Natalie").replace("<img","<img style=\"width:100%;height:100%;object-fit:cover\"")}</div>`:""}
     <div class="eb" style="letter-spacing:.3em">OFFICIAL COMPLAINT · DISTRICT 8</div>
     <h1 style="font-size:clamp(3rem,8vw,7rem);color:#ff6a5a;transform:rotate(-4deg);text-shadow:0 6px 0 rgba(0,0,0,.5);margin:0">IT'S NOT FAIR!</h1></div>`;
@@ -1111,7 +1141,10 @@ async function photoBooth(){
       cd.innerHTML=`<img src="${img}" alt="" style="width:100%;height:100%;object-fit:cover">`;setTimeout(()=>{if(cd.isConnected)cd.innerHTML=""},2500)},1000)};
 }
 /* ---------- 🎵 walk-up song when a victor is recorded ---------- */
-function walkUp(n){return XM.walkUp(n)}
+let wuAt=0;function walkUp(n){wuAt=Date.now();return XM.walkUp(n)}
+// a Victor's moment: the winner line is being said, or their walk-up song only just started (its intro shouldn't be talked over)
+const isWalkUp=()=>String(XM.currentSong()||"").startsWith("wu_");
+const winMoment=()=>(window.speechSynthesis&&speechSynthesis.speaking&&Date.now()<keepSpeech)||(isWalkUp()&&Date.now()-wuAt<9000);
 /* ---------- 📺 Capitol news ticker ---------- */
 const newsLog=XM.store.get("xmas-news",[]);
 function news(t){newsLog.push({t,at:Date.now()});while(newsLog.length>40)newsLog.shift();XM.store.set("xmas-news",newsLog)}
@@ -1245,10 +1278,10 @@ function raceWin(x){
 function victoryTour(name){
   if(!name)return;closeMoments(".moment.twist");if(busy())return busyToast();
   const games=Object.entries(XM.victors()).filter(([g,n])=>n&&g!=="mitten"&&GAMES[g]&&realName(n)===name).map(([g])=>g);
-  const {m,T,close}=openMoment("twist vtour");const ph=XM.photo(name)||"/xmas/emblem.png";
+  const wu=isWalkUp(),{m,T,close}=openMoment("twist vtour",{stopMusic:!wu});const ph=XM.photo(name)||"/xmas/emblem.png";   // their walk-up keeps playing under the tour
   m.innerHTML=`<div class="inner"><div class="eb">🎖️ THE VICTORY TOUR</div><div class="vt" id="vt" style="margin-top:20px"></div><button class="btn ghost" id="vx" style="margin-top:24px">Close (Esc)</button></div>`;
   m.querySelector("#vx").onclick=e=>{e.stopPropagation();close()};const box=m.querySelector("#vt");
-  XM.playSong("march",true);announcer.say(`The victory tour of ${XM.spoken(name)}!`,null,{pitch:.1,rate:.85});
+  if(!wu)XM.playSong("march",true);announcer.say(`The victory tour of ${XM.spoken(name)}!`,null,{pitch:.1,rate:.85});
   games.forEach((g,i)=>T(()=>{const G=GAMES[g];box.innerHTML=`<div class="cardin" style="display:grid;justify-items:center;gap:16px">
       <div class="gtile" style="background:${G.color}"><img src="${ICON(g+"-w")}" alt=""></div>
       <div style="font-weight:800;letter-spacing:.2em;color:var(--muted)">GAME ${G.n}</div><div class="title-m" style="color:var(--gold)">${esc(G.name)}</div>
@@ -1260,7 +1293,9 @@ function victoryTour(name){
     XM.sfx("gong");T(()=>{XM.confetti(240,true);XM.sfx("cheer")},700)},t0);
   T(()=>{box.innerHTML=`<div class="cardin" style="display:grid;justify-items:center;gap:20px;max-width:1200px"><div class="eb" style="color:var(--gold)">✋ REPEAT AFTER ME</div>
       <div class="title-l" style="line-height:1.1">"I solemnly swear to brag responsibly."</div></div>`;
-    announcer.say("Raise your right hand and repeat after me. I solemnly swear to brag responsibly.",null,{pitch:.1,rate:.85})},t0+4200);
+    announcer.say("Raise your right hand and repeat after me. I solemnly swear to brag responsibly.",null,{pitch:.1,rate:.85});m.dataset.done="1"},t0+4200);
+  // the tour is over: it closes by itself once the oath has been said (Next on the remote also closes it)
+  const fin=()=>{if(window.speechSynthesis&&speechSynthesis.speaking)return T(fin,500);close()};T(fin,t0+4200+6000);
 }
 function coronation(){
   if(!started)return;closeMoments(".moment.twist");if(busy())return busyToast();
@@ -1270,8 +1305,9 @@ function coronation(){
   m.innerHTML=`<div class="inner"><div class="eb">👑 THE CORONATION</div><div class="coro ${w.length>1?"many":""}" style="display:flex;gap:40px;justify-content:center;margin-top:clamp(40px,10vh,110px)">${w.map(n=>`<div style="display:grid;justify-items:center;gap:14px"><span class="crowned">${XM.photo(n)?`<img src="${XM.photo(n)}" alt="">`:""}<span class="cr">👑</span></span><h1>${esc(n)}</h1></div>`).join("")}</div>
     <div class="say">Ultimate Victor of the 2026 Christmas Games</div>${w.length===1?`<button class="btn" id="cvt" style="margin-right:12px">🎖️ Victory Tour</button>`:""}<button class="btn ghost" id="cx">Close (Esc)</button></div>`;
   m.querySelector("#cx").onclick=e=>{e.stopPropagation();close()};const cvt=m.querySelector("#cvt");if(cvt)cvt.onclick=e=>{e.stopPropagation();close();setTimeout(()=>victoryTour(w[0]),150)};
-  XM.sfx("drumroll");T(()=>{XM.sfx("gong");shake()},1300);T(()=>{XM.sfx("fanfare");XM.confetti(260,true)},2000);T(()=>XM.sfx("cheer"),2400);T(()=>XM.playSong("board"),4200);
-  announcer.say(`All hail ${w.map(XM.spoken).join(" and ")}! The ultimate victor of the 2026 Christmas Games! Long may they reign!`,null,{pitch:.05,rate:.82});news(`👑 ${w.join(" & ")} crowned Ultimate Victor`)}
+  XM.sfx("drumroll");T(()=>{XM.sfx("gong");shake()},1300);T(()=>{XM.sfx("fanfare");XM.confetti(260,true)},2000);T(()=>XM.sfx("cheer"),2400);
+  // after the "All hail" line: the Ultimate Victor's own walk-up song (co-winners: the board music)
+  announcer.say(`All hail ${w.map(XM.spoken).join(" and ")}! The ultimate victor of the 2026 Christmas Games! Long may they reign!`,()=>{if(!m.isConnected)return;if(w.length===1)walkUp(w[0]).then(ok=>{if(!ok&&m.isConnected)XM.playSong("board")});else XM.playSong("board")},{pitch:.05,rate:.82});news(`👑 ${w.join(" & ")} crowned Ultimate Victor`)}
 /* ---------- 🎂 QUEEN MOTHER's belated birthday (it was Thanksgiving) ---------- */
 let bdayAC=null,bdayOn=false;
 function happyBirthdaySong(){
@@ -1309,7 +1345,7 @@ function pointsInfo(){if(!window.Briefing)return;try{localStorage.setItem("xmas-
       ["🔄","Each screen game starts everyone at <b>zero</b>. Scores never carry over.","Each screen game starts everyone at zero. Scores never carry over."],
       ["⚔️","Earn them: side quests, tap races, bets.","Earn them with side quests, tap races, and bets."],
       ["💀","Lose them: failed quests, bad bets, the Wheel of Punishment.","Lose them with failed quests, bad bets, and the wheel of punishment."],
-      ["🎁","Most points picks their <b>major award first</b>.","Most points picks their major award first."]],
+      ["🎁","Just for bragging rights. Points never decide a <b>major award</b>.","Just for bragging rights. Points never decide a major award."]],
     outro:"Go earn some points.",start:"▶ Got it",muted:()=>!XM.sound})}
 let pointsPending=false;
 setInterval(()=>{if(pointsPending&&!busy()&&!twistQ.length&&!(window.Briefing&&Briefing.open())&&!(window.speechSynthesis&&speechSynthesis.speaking)){pointsPending=false;pointsInfo()}},1500);
@@ -1377,7 +1413,9 @@ function runCmd(c,data){
   if(c==="mute"){XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel();return}
   if(c==="clearrule"){clearBanners();return}
   if((c==="next"||c==="prev")&&momentSlideStep(c==="next"?1:-1))return;
-  if(busy())return;
+  // a finished pop-up (e.g. the Victory Tour after its last card): Next closes it and moves on
+  if(c==="next"){const done=document.querySelector(".moment[data-done='1']");if(done&&!document.querySelector(".vpick,.brf,.memorial")&&!XM.tiebreakerOpen()){closeMoments(".moment");if(!busy())next();return}}
+  if(busy()){if(c==="next"||c==="prev")toast("✖️ A pop-up is open. Tap ✖️ Close first (or press Esc).",4000);return}
   if(c==="next")next();else if(c==="prev")prev();else if(c==="intermission")intermission();else if(c==="live")liveBroadcast();
 }
 try{new BroadcastChannel("xmas-show").onmessage=e=>{if(e.data&&typeof e.data.cmd==="string")runCmd(e.data.cmd,e.data.data)}}catch(e){}
@@ -1386,7 +1424,7 @@ let reactSince=null,cmdSince=null,phonePolling=false;
 let netFails=0;
 function netState(ok){
   let b=document.getElementById("offline");
-  if(ok){if(netFails>=4&&b){b.remove();toast("📶 Phones are back online")}netFails=0;return}
+  if(ok){if(netFails>=4&&b){b.remove();toast("📶 Phones are back online")}if(netFails)republish();netFails=0;return}
   netFails++;if(netFails===4&&!b){b=document.createElement("div");b.id="offline";
     b.style.cssText="position:fixed;left:18px;bottom:76px;z-index:59;background:rgba(110,23,18,.92);color:#fff;font-weight:800;font-size:15px;padding:8px 14px;border-radius:12px;box-shadow:0 0 0 2px var(--gold);pointer-events:none;max-width:300px;line-height:1.3";
     b.textContent="📴 Phone extras are offline (no internet). The show keeps going. They come back on their own.";document.body.appendChild(b);showLive({})}}
@@ -1394,7 +1432,7 @@ let tvTick=0;
 function startPhonePoll(){
   if(phonePolling)return;phonePolling=true;
   const tick=async()=>{
-    tvTick++;try{const r=await fetch("/api/show?a=tv&since="+(reactSince||0)+"&csince="+(cmdSince||0)+(tvTick%3===1?"&full=1":""),{cache:"no-store"});if(r.ok){const j=await r.json();
+    tvTick++;try{const r=await fetch("/api/show?a=tv&since="+(reactSince||0)+"&csince="+(cmdSince||0)+(tvTick%5===1?"&full=1":""),{cache:"no-store"});if(r.ok){const j=await r.json();
       if(cmdSince===null)cmdSince=Math.max(0,...(j.cmds||[]).map(x=>x.id));  // skip remote taps sent before the show opened
       else for(const x of j.cmds||[]){if(x.id<=cmdSince)continue;cmdSince=x.id;runCmd(x.cmd,x.data)}
       if(j.points)lastPoints=j.points;
@@ -1402,7 +1440,7 @@ function startPhonePoll(){
       if(reactSince===null){reactSince=Math.max(0,...(j.reacts||[]).map(x=>x.id))}  // skip reactions sent before the show opened
       else for(const x of j.reacts||[]){reactSince=Math.max(reactSince,x.id);phoneReact(x)}
       showLive(j.live||{});if(j.joined)showJoined(j.joined);netState(true)}else netState(false)}catch(e){netState(false)}
-    setTimeout(tick,netFails>=4?4000:1000)};
+    setTimeout(tick,netFails>=4?4000:document.hidden?5000:1000)};   // hidden tab: slow down
   tick();
 }
 function phoneReact(x){
@@ -1540,7 +1578,7 @@ function momentSlide(id,eb,title,sub,launch,music="board"){return {id,music,big:
     <div class="eb fd" ${d(.3)} style="font-size:34px;letter-spacing:.5em;color:var(--ink)">${eb}</div>
     <h1 class="title-xl slam" ${d(.5)} style="font-size:130px;line-height:1.05">${title}</h1>
     <div class="fade" ${d(1.2)} style="font-size:42px;font-weight:600">${sub}</div>
-    <div class="fade" ${d(1.6)} style="font-size:28px;opacity:.75">Press space to begin</div></div>`,
+    <div class="fade hosthint" ${d(1.6)} style="font-size:28px;opacity:.75">Press space to begin</div></div>`,
   enter(el){el._born=Date.now()},
   onNext(el){if(el._launched)return !!(el._wait&&Date.now()<el._wait);   // still loading: don't skip past it
     if(Date.now()-(el._born||0)<400)return true;el._launched=true;el._wait=Date.now()+6000;
@@ -1624,7 +1662,7 @@ const SLIDES=[
       <div style="width:124px;height:124px;border-radius:28px;background:${c};display:grid;place-items:center;flex:none;box-shadow:0 8px 0 rgba(0,0,0,.35)">${ic.length<3?`<span style="font-size:70px">${ic}</span>`:`<img src="${ICON(ic)}" alt="" style="width:62%">`}</div>
       <div><div style="font-family:var(--display);font-size:50px;color:var(--gold);line-height:1.1">${h}</div><div style="font-size:32px;line-height:1.3;margin-top:10px">${t}</div></div></div>`).join("")}</div></div>`},
    enter(el){narrate(el,"Rules of the Arena.")}},
- {id:"phoneguide",music:null,html:()=>`<div class="pg"><div class="pg-phone"><div class="pg-screen"><img src="/xmas/phone-guide.jpg" alt="A tribute's phone"><div class="pg-hl"></div></div></div>
+ {id:"phoneguide",music:null,html:()=>`<div class="pg"><div class="pg-phone"><div class="pg-screen"><img src="/xmas/phone-guide.jpg?v=2" alt="A tribute's phone"><div class="pg-hl"></div></div></div>
     <div class="pg-right"><h1 class="title-l slam" style="font-size:84px">Your Phone, Explained</h1><div class="pg-capwrap"><div class="pg-cap" style="opacity:0;top:0"><div class="e"></div><div><b></b><span></span><small></small></div></div></div>
     <div class="pg-dots">${PG_STEPS.map(()=>"<i></i>").join("")}</div></div><svg><defs><marker id="pgarr" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5" style="stroke-width:1.2"/></marker></defs><path id="pgline" marker-end="url(#pgarr)"/></svg></div>`,
    enter(el){phoneGuide(el)},onNext:el=>el._pg&&el._pg.step(1),onPrev:el=>el._pg&&el._pg.step(-1)},
@@ -1761,7 +1799,7 @@ function go(i){
   if(old){if(oldS.leave)oldS.leave(old);old.classList.add("leaving");setTimeout(()=>old.remove(),360)}
   cur=i;const s=SLIDES[i];
   const el=document.createElement("section");el.className="slide";el.setAttribute("aria-label",s.id);el.innerHTML=s.html();el.querySelectorAll("[data-d]").forEach(n=>n.style.setProperty("--d",n.dataset.d+"s"));stage.appendChild(el);curEl=el;
-  try{history.replaceState(null,"","#"+s.id)}catch(e){}XM.store.set("xmas-slide",s.id);
+  try{history.replaceState(null,"","#"+s.id)}catch(e){}if(started)XM.store.set("xmas-slide",s.id);   // only once the show is running (reopened later, it picks up here)
   document.getElementById("count").textContent=`${i+1} / ${SLIDES.length}`;
   {const tk=document.getElementById("ticker");if(tk)tk.style.display=s.id==="lobby"||s.id==="phoneguide"||s.big||/^(idk|video)-/.test(s.id)?"none":""}
   if(started){
@@ -1825,7 +1863,9 @@ function wireSlide(el){
   // "No tie": record the victor, then move on once the victor pop-ups are done
   el.querySelectorAll("[data-notie]").forEach(b=>b.onclick=e=>{e.stopPropagation();const k=b.dataset.notie;let picked=false;pickVictor(k,1,()=>{picked=true});
     const me=curEl;let free=0;const iv=setInterval(()=>{if(curEl!==me){clearInterval(iv);return}
-      if(busy()||(window.speechSynthesis&&speechSynthesis.speaking)){free=0;return}free+=400;
+      if(busy()||(window.speechSynthesis&&speechSynthesis.speaking)){free=0;return}
+      if(picked&&(isWalkUp()||(k==="lrc"&&!XM.seconds().lrc&&!lrcR2Done))){free=0;return}   // let the walk-up play; LRC waits for its Round 2 card
+      free+=400;
       if(!picked&&free>=800){clearInterval(iv);return}   // cancelled (or cleared): stay here
       if(picked&&XM.victors()[k]&&free>=3000){clearInterval(iv);next()}},400)});   // picked, even the name the wheel already saved: move on
   const m=el.querySelector("#memo");if(m)m.onclick=e=>{e.stopPropagation();memorial()};
@@ -1834,7 +1874,7 @@ const next=()=>{const s=SLIDES[cur];if(s&&s.onNext&&curEl&&s.onNext(curEl))retur
   prev=()=>{const s=SLIDES[cur];if(s&&s.onPrev&&curEl&&s.onPrev(curEl))return;go(cur-1)};
 function begin(){
   if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);
-  if(!hostPin())setTimeout(()=>toast("🔑 Unlock your PIN on /host (Side quests) so phones can follow along",9000),1500);
+  if(!hostPin())setTimeout(pinBox,800);   // a small masked box, once
   startPhonePoll();scheduleChaos();setTimeout(tickerLoop,4000);rehearsalBadge();
   const st=document.getElementById("start");st.remove();
   const i=cur;cur=-1;curEl&&curEl.remove();curEl=null;go(i);
@@ -1846,7 +1886,7 @@ if(window.RemoteTV)RemoteTV.start({page:"show",exclude:".hud",ready:()=>started,
   extra:()=>({slide:SLIDES[cur]?SLIDES[cur].id:"",slides:SLIDE_TITLES,video:!!(curEl&&curEl.querySelector("video"))}),
   opened:()=>{XM.stopSong();XM.sfx("go")},
   blocked:()=>toast("🚫 Chrome blocked the new tab. On this laptop: click the blocked pop-up icon at the right of the address bar, choose Always allow, then tap it again.",12000)});
-const startI=(()=>{const id=location.hash.slice(1)||"";const i=SLIDES.findIndex(s=>s.id===id);return i<0?0:i})();
+const startI=(()=>{const id=location.hash.slice(1)||XM.store.get("xmas-slide","")||"";const i=SLIDES.findIndex(s=>s.id===id);return i<0?0:i})();   // no #hash: the slide the show was on last time
 go(startI);
 document.getElementById("start").addEventListener("click",e=>{e.stopPropagation();begin()});
 document.getElementById("next").onclick=e=>{e.stopPropagation();next()};
@@ -1916,12 +1956,13 @@ function recordWin(g,n,place){
   const wu=()=>{if(started)walkUp(n)};   // 🎵 the walk-up starts once the announcer finishes the winner line
   if(place===1){
     if(betState&&betState.state!=="paid"&&Object.keys(betState.bets||{}).length&&(betState.game===GAMES[g].name||betState.game==="the next game"))setTimeout(()=>hostCall({a:"betpay",winner:n}),2500);
-    XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`,then:wu});if(g==="lrc"&&!XM.seconds().lrc)setTimeout(()=>lrcRound2(n),9500)}
+    XM.celebrate(n,{intro:`Your ${GAMES[g].name.replace("?","")} victor`,then:wu});if(g==="lrc"&&!XM.seconds().lrc){lrcR2Done=false;setTimeout(()=>lrcRound2(n),9500)}}
   else XM.celebrate(n,{intro:"Your Second Victor",then:wu});
 }
 /* ---------- 🎲 Left, Right, Capitol Round 2: the Round 1 winner sits out, the Round 2 winner is the Second Victor ---------- */
+let lrcR2Done=true;   // false from an LRC Victor until its Round 2 card has been closed
 function lrcRound2(first){
-  if(!started||XM.seconds().lrc)return;if(busy()){setTimeout(()=>lrcRound2(first),3000);return}
+  if(!started||XM.seconds().lrc){lrcR2Done=true;return}if(busy()){setTimeout(()=>lrcRound2(first),3000);return}
   const {m,T,close}=openMoment("twist",{stopMusic:false});const ph=XM.photo(first);   // keep the Round 1 victor's walk-up song playing
   m.innerHTML=`<div class="inner"><div class="eb">🎲 LEFT, RIGHT, CAPITOL</div><h1>Round 2: the winner sits out!</h1>
     ${ph?`<img src="${ph}" alt="" style="width:min(22vh,200px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold);filter:grayscale(.6)">`:""}
@@ -1929,6 +1970,7 @@ function lrcRound2(first){
     <div class="say">Everyone else plays one more round. The Round 2 winner is the Second Victor and gets a major award too.</div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center"><button class="btn" id="r2-rec">🥈 Record Second Victor</button><button class="btn ghost" id="r2-x">Close (Esc)</button></div></div>`;
   XM.sfx("gong");announcer.say(`Round two! The winner sits out. ${XM.spoken(first)}, take a seat. Everyone else, roll again for a second major award!`,null,{pitch:.1,rate:.9});
+  m.onClose=()=>{lrcR2Done=true};
   m.querySelector("#r2-rec").onclick=e=>{e.stopPropagation();close();pickVictor("lrc",2)};
   m.querySelector("#r2-x").onclick=e=>{e.stopPropagation();close()};
 }
@@ -1965,8 +2007,15 @@ function silverBattle(g,names){
 }
 // 🔄 start completely over: everything on this laptop (except the PIN) and everything on the server, then back to the lobby
 const START_OVER_KEYS=["xmas-ultimate","xmas-chaos","xmas-sponsor-auto","xmas-ticker","xmas-news","xmas-rehearsal","xmas-ties","xmas-photos","xmas-victors","xmas-second","xmas-seconds","xmas-awards","xmas-bingo-called","xmas-bingo-winners","xmas-bingo-owners","xmas-bingo-mode","xmas-wheel-cookie","xmas-wheel-scoop","xmas-order-mitten","xmas-order-lrc","xmas-present","xmas-slide","xmas-muted","xmas-points-briefed","xmas-bingo-gm"];
+// the three screen games' saved TV state on this laptop (Who's That Tribute, District Feud, District Secrets)
+const GAME_SAVE_KEYS=["tribute-host-game","df-save","ds-host-game"];
 async function startOver(){toast("🔄 Starting over...",4000);
-  START_OVER_KEYS.forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});newsLog.length=0;lastPoints={};
+  START_OVER_KEYS.concat(GAME_SAVE_KEYS).forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+  try{Object.keys(localStorage).filter(k=>/^xmas-(wheel|order|bingo)-/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}   // any other wheel / order / bingo saves
+  newsLog.length=0;lastPoints={};
+  // each screen game's server wipe (answers, points, coins, scores), the same call its own "Start completely over" makes
+  const wipe=g=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(g?{g,action:"wipe"}:{action:"wipe"})}).catch(()=>null);
+  try{await Promise.all([wipe(""),wipe("df"),wipe("ds")])}catch(e){}
   try{await hostCall({a:"pointsreset"});await hostCall({a:"statsreset"});await hostCall({a:"clearphones"})}catch(e){}
   location.hash="lobby";setTimeout(()=>location.reload(),600)}
 // 🧹 wipe every result on this laptop (winners, Second Victors, bingo rounds, tiebreakers, Ultimate Victor) and the server's award stats
@@ -1993,7 +2042,7 @@ function revealUltimate(el){
         <div style="font-family:var(--display);font-size:${one?72:u.names.length===2?50:38}px;color:var(--gold);line-height:1.05;text-shadow:0 5px 0 var(--red-d);max-width:1100px;overflow-wrap:anywhere">${u.names.map(esc).join(" & ")}</div>
         <div style="font-size:28px;font-weight:800">${u.max} games won</div></div>
         ${one?"":`<button class="btn" id="ult-tb" style="font-size:24px">⚔️ Settle it with a tiebreaker</button>`}</div>`;
-      if(one){XM.celebrate(u.names[0],{intro:"Your ultimate victor"});const vb=document.createElement("button");vb.className="btn";vb.style.fontSize="24px";vb.textContent="🎖️ Victory Tour";
+      if(one){XM.celebrate(u.names[0],{intro:"Your ultimate victor",then:()=>{if(box.isConnected)walkUp(u.names[0])}});const vb=document.createElement("button");vb.className="btn";vb.style.fontSize="24px";vb.textContent="🎖️ Victory Tour";
         vb.onclick=ev=>{ev.stopPropagation();victoryTour(u.names[0])};box.querySelector(".ultimate").appendChild(vb);
         setTimeout(()=>{if(box.isConnected&&curEl&&curEl.contains(box)&&!busy())victoryTour(u.names[0])},9000)}else{XM.celebrate("",{line:`It's a tie! ${u.names.map(XM.spoken).join(" and ")}!`});
         box.querySelector("#ult-tb").onclick=ev=>{ev.stopPropagation();
@@ -2058,9 +2107,9 @@ let keepSpeech=0;   // until then, a new pop-up waits for the current line inste
 {const c0=XM.celebrate;XM.celebrate=(n,o)=>{keepSpeech=Date.now()+9000;return c0(n,o)}}
 function closeMoments(sel){document.querySelectorAll(sel).forEach(n=>{try{n._close?n._close():n.remove()}catch(e){n.remove()}})}
 function busyToast(){toast("⏸️ Close the pop-up on the TV first (Esc), then try again.",4000)}
-function openMoment(cls,{stopMusic=true}={}){
+function openMoment(cls,{stopMusic=true,keepVoice=false}={}){   // keepVoice: leave the announcer talking (open and close)
   XM.ensureAudio();const prev=XM.currentSong();if(stopMusic)XM.stopSong();
-  if(!(Date.now()<keepSpeech&&window.speechSynthesis&&speechSynthesis.speaking))announcer.stop();
+  if(!keepVoice&&!(Date.now()<keepSpeech&&window.speechSynthesis&&speechSynthesis.speaking))announcer.stop();
   // pause a how-to video or the BEGIN song under the pop-up, and pick them back up after
   const pausedV=[...(curEl?curEl.querySelectorAll("video"):[])].filter(v=>!v.paused);pausedV.forEach(v=>v.pause());
   const begP=typeof BEGIN!=="undefined"&&!BEGIN.paused;if(begP)BEGIN.pause();
@@ -2068,7 +2117,7 @@ function openMoment(cls,{stopMusic=true}={}){
   {const s=SLIDES[cur];if(s&&s.moment&&curEl&&curEl._launched){m._slide=s.id;m._t0=Date.now();curEl._wait=0}}  // 🏁 belongs to this end-of-night slide
   const T=(f,ms)=>{timers.push(setTimeout(()=>alive&&f(),ms))};
   const key=e=>{if(e.key==="Escape"){e.preventDefault();e.stopPropagation();close()}else if(e.key==="m"||e.key==="M"){e.preventDefault();e.stopPropagation();XM.toggleSound();if(!XM.sound&&window.speechSynthesis)speechSynthesis.cancel()}else if(["ArrowRight","ArrowLeft"," ","Enter"].includes(e.key)||/^[a-zA-Z]$/.test(e.key)){e.preventDefault();e.stopPropagation()}};
-  const close=()=>{if(!alive)return;alive=false;timers.forEach(clearTimeout);m.remove();announcer.stop();document.removeEventListener("keydown",key,true);if(m.onClose)m.onClose();
+  const close=()=>{if(!alive)return;alive=false;timers.forEach(clearTimeout);m.remove();if(!keepVoice)announcer.stop();document.removeEventListener("keydown",key,true);if(m.onClose)m.onClose();
     if(!document.querySelector(".moment")){pausedV.forEach(v=>{if(v.isConnected)v.play().catch(()=>{})});if(begP&&SLIDES[cur].id==="begin")BEGIN.play().catch(()=>{})}
     if(stopMusic&&!document.querySelector(".moment")){const s=SLIDES[cur];const mu=(s.music&&s.music!=="stop"?s.music:null)||prev;if(mu)XM.playSong(mu,true)}};
   document.addEventListener("keydown",key,true);m.onclick=e=>e.stopPropagation();m._close=close;

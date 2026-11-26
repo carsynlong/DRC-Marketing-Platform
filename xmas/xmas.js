@@ -404,6 +404,24 @@ XM.snow=function(canvas){
   return api;
 };
 
+/* ================= ONE TAB AT A TIME =================
+   XM.singleTab("show"): if this page is already open in another tab of this browser, the NEWER tab shows a banner
+   (two copies fight over the music, the saves and the remote). Nothing else changes. */
+XM.singleTab=name=>{let ch;try{ch=new BroadcastChannel("xmas-tab-"+name)}catch(e){return}
+  const me=Math.random().toString(36).slice(2),t0=Date.now(),others=new Set();
+  const banner=()=>{if(!document.body)return addEventListener("DOMContentLoaded",banner,{once:true});let b=document.getElementById("xm-twotabs");
+    if(!others.size){if(b)b.remove();return}
+    if(!b){b=document.createElement("div");b.id="xm-twotabs";b.setAttribute("role","alert");
+      b.style.cssText="position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:2147483000;background:#8e1f17;color:#fff;font:800 20px system-ui,sans-serif;padding:12px 22px;border-radius:12px;box-shadow:0 0 0 3px #e8b04b,0 10px 30px rgba(0,0,0,.5);pointer-events:none;text-align:center;max-width:calc(100vw - 32px)";
+      b.textContent="⚠️ This page is open in another tab. Close one.";document.body.appendChild(b)}};
+  ch.onmessage=e=>{const d=e.data||{};if(!d.id||d.id===me)return;
+    if(d.k==="hello"){ch.postMessage({k:"here",id:me,t:t0});if(d.t<t0){others.add(d.id);banner()}}   // a newer tab says hello: tell it we're here
+    else if(d.k==="here"&&d.t<t0){others.add(d.id);banner()}   // an older copy is open: this tab is the newer one
+    else if(d.k==="bye"){others.delete(d.id);banner()}};
+  ch.postMessage({k:"hello",id:me,t:t0});
+  addEventListener("pagehide",()=>{try{ch.postMessage({k:"bye",id:me})}catch(e){}});
+};
+
 /* ================= WINNER CELEBRATION ================= */
 // XM.celebrate("Kamdon") -> booms, fanfare, crowd cheer, fireworks, confetti, and "Winner... Camden!"
 let celebT=[];
@@ -438,7 +456,7 @@ XM.confetti=function(n=150,big){
 /* ================= TIEBREAKER ================= */
 /* XM.tiebreaker({game:"cookie"|"scoop"|"lrc"|"bingo", tied:[names], onClose, onWinner(name), noSave, lock, winLine, eyebrow})
    noSave: no "Save as victor" button. winLine: the line under the winner's name (default "Go claim your major award!",
-   or "Wins the face-off and moves on!" with noSave). eyebrow: the small label on the win screen. */
+   or "Wins the face-off and moves on!" with noSave). eyebrow: the small label on the win screen. silentWin: no spoken "Winner..." line. */
 let T=null,tbTimer=0,tbRun=0;
 const clearT=()=>{tbRun++;clearInterval(tbTimer);tbTimer=0;if(T&&T.raf)cancelAnimationFrame(T.raf)};
 // run fn later only if nothing has changed in the tiebreaker since (no close, switch, still-tied, stop)
@@ -448,13 +466,13 @@ XM.tiebreaker=function(opts={}){
   ensureAudio();
   if(T)closeTB();   // one at a time: close the open one properly (its music comes back, its briefing goes)
   const g=opts.game&&XM.TB[opts.game]?opts.game:null;
-  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,lock:!!opts.lock,winLine:opts.winLine||"",eyebrow:opts.eyebrow||"",prevSong:XM.currentSong(),state:{}};
+  T={game:g,picked:new Set(opts.tied||[]),round:1,used:[],tb:g||"stare",onClose:opts.onClose,onWinner:opts.onWinner,noSave:!!opts.noSave,lock:!!opts.lock,winLine:opts.winLine||"",eyebrow:opts.eyebrow||"",silentWin:!!opts.silentWin,prevSong:XM.currentSong(),state:{}};
   let el=document.getElementById("xm-tb");if(!el){el=document.createElement("div");el.id="xm-tb";el.className="tb";el.setAttribute("role","dialog");el.setAttribute("aria-label","Tiebreaker");document.body.appendChild(el)}
   XM.stopSong();XM.sfx("gong");
   if(T.picked.size>=2)startTB(T.tb);else view("pick");
 };
-function closeTB(){clearT();if(window.Briefing&&Briefing.open())Briefing.close();XM.hush();XM.cancelCelebrate();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb)cb()}
-XM.closeTiebreaker=closeTB;
+function closeTB(skipCb){clearT();if(window.Briefing&&Briefing.open())Briefing.close();XM.hush();XM.cancelCelebrate();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb&&skipCb!==true)cb()}
+XM.closeTiebreaker=closeTB;   // XM.closeTiebreaker(true): close without running its onClose
 const tied=()=>XM.NAMES.filter(n=>T.picked.has(n));
 const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">DISTRICT ${t.d}</span></button>`};
 const gameLabel=()=>T.game?XM.GAMES[T.game].name+" tiebreaker":"Tiebreaker";
@@ -516,7 +534,7 @@ function startTB(k){
     outro:"When you're ready, the Game maker will start.",start:"▶ Start the tiebreaker",muted:()=>!XM.sound,onStart:go});
 }
 function winner(n){
-  clearT();XM.stopSong();T.winner=n;if(T.onWinner)T.onWinner(n);view("win");XM.celebrate(n);
+  clearT();XM.stopSong();T.winner=n;if(T.onWinner)T.onWinner(n);view("win");XM.celebrate(n,{silent:T.silentWin});
   try{const L=store.get("xmas-ties",[]);L.push({game:T.game||"",tied:[...T.picked],winner:n,how:(XM.TB[T.tb]||{}).title||"",t:Date.now()});store.set("xmas-ties",L.slice(-40))}catch(e){}
   setTimeout(()=>{if(T&&T.view==="win")XM.playSong("lobby")},4200);
 }

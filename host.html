@@ -144,7 +144,7 @@ const SAB=[["freeze","❄️","Freeze","Iced over, no taps for 8 seconds"],["bit
 function questUI(){
   const q=document.getElementById("qbody");const pin=HP();
   if(!pin){q.innerHTML=`<div class="qrow pinrow"><span>Gamemaker PIN:</span><input id="hpin" type="password" inputmode="numeric" maxlength="4"><button class="chip on" id="hpok">Unlock</button></div>`;
-    q.querySelector("#hpok").onclick=async()=>{const v=q.querySelector("#hpin").value.trim();const r=await api({a:"pin",pin:v});if(r.ok){try{localStorage.setItem("xmas-host-pin",v)}catch(e){}questUI()}else alert("Wrong PIN.")};return}
+    q.querySelector("#hpok").onclick=async()=>{const v=q.querySelector("#hpin").value.trim();const r=await api({a:"pin",pin:v});if(r.ok){try{localStorage.setItem("xmas-host-pin",v)}catch(e){}questUI()}else alert(r.status===429?"Too many tries. Wait a few minutes.":r.status===403?"Wrong PIN.":"Couldn't check the PIN. Check your internet.")};return}
   q.innerHTML=`<div class="qfaces">${XM.TRIBUTES.filter(t=>t.name!=="Carsyn").map(t=>`<button data-qn="${esc(t.name)}"><img src="${t.img}" alt="">${esc(t.name)}</button>`).join("")}<button data-qn="random"><span class="r">🎲</span>Random</button></div>
     <div class="qrow"><select id="qsel">${XM.QUESTS.map((x,i)=>`<option value="${i}">${x[0]} ${esc(x[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
       <input type="text" id="qown" placeholder="Your side quest" maxlength="150" style="display:none"></div>

@@ -66,6 +66,7 @@ h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 
 <div class="app" id="app"><p style="margin-top:20vh;text-align:center">Loading the bingo cards…</p></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <script src="/xmas/xmas.js"></script>
+<script>XM.singleTab("bingo")</script>
 <script src="/remote-tv.js"></script>
 <script>addEventListener("load",()=>{if(window.RemoteTV)RemoteTV.start({page:"bingo",poll:true})})  /* 📱 Carsyn's remote can press the buttons here too */</script>
 <script>XM.useNicknames();XM.setSound(true) /* a game page always starts with sound on, even if the show was muted earlier */</script>
@@ -191,7 +192,7 @@ function wire(){const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.on
   {const rw=document.getElementById("resetwin");if(rw)rw.onclick=()=>{if(rw.dataset.sure){S.bingos={};OWNERS={};XM.store.set("xmas-bingo-winners",{});XM.store.set("xmas-bingo-owners",{});render()}else{rw.dataset.sure=1;rw.textContent="Tap again to reset";setTimeout(()=>{if(rw.isConnected){delete rw.dataset.sure;rw.textContent="Reset winners"}},3000)}}}on("undo",()=>{S.called.pop();S.checked=null;sfx("untap");save();render()});
   {const r=document.getElementById("reset");r.onclick=()=>{if(r.dataset.sure){S.called=[];S.checked=null;save();render()}else{r.dataset.sure=1;r.textContent="Tap again to clear";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="New game"}},3000)}}}
   on("music",()=>{if(XM.currentSong())stopSong();else playSong("lobby")});
-  on("tb",()=>{stopSong();XM.tiebreaker({game:"bingo"})});
+  on("tb",()=>{stopSong();XM.tiebreaker({game:"bingo",silentWin:true})});
   on("back",()=>{try{window.close()}catch(e){}setTimeout(()=>{location.href="/show#bingo-board"},300)});
   document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>XM.toggleSound());
   const i=document.getElementById("cardno");if(i)i.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();check()}};}

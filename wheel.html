@@ -91,6 +91,7 @@ h1.title{font-size:clamp(2rem,5vw,3.6rem);color:var(--gold);text-shadow:0 3px 0 
 <div class="app" id="app"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 <script src="/xmas/xmas.js"></script>
+<script>XM.singleTab("wheel")</script>
 <script src="/remote-tv.js"></script>
 <script>addEventListener("load",()=>{if(window.RemoteTV)RemoteTV.start({page:"wheel",poll:true})})  /* 📱 Carsyn's remote can press the buttons here too */</script>
 <script>XM.useNicknames();XM.setSound(true) /* a game page always starts with sound on, even if the show was muted earlier */</script>
@@ -241,7 +242,8 @@ function secondChance(){
   sfx("gong");playSong("lobby");render();XM.say("Second chance! Two more tributes fight for the second major award.",null,{pitch:.1,rate:.9});
 }
 function finishSecond(w){
-  if(!S.second)return;S.secPend=0;S.second=false;S.second2=w;S.phase="champ";S.pool=[];XM.setSecond(S.game,w);saveS();render();stopSong();
+  if(!S.second)return;if(XM.tiebreakerOpen())XM.closeTiebreaker(true);   // decided by a tiebreaker: close it first so it doesn't stop the walk-up
+  S.secPend=0;S.second=false;S.second2=w;S.phase="champ";S.pool=[];XM.setSecond(S.game,w);saveS();render();stopSong();
   XM.celebrate(w,{intro:"Your Second Victor",then:()=>{if(S.phase==="champ")XM.walkUp(w).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})}});   // walk-up once the line is said
 }
 function nextRound(){
@@ -289,7 +291,7 @@ function openTimer(i){
     },1000)};
 }
 function tiebreak(names,match){
-  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,lock:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render();setTimeout(()=>fallen(w===match.a?match.b:match.a),300)}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ")playSong("lobby")}});
+  stopSong();XM.tiebreaker({game:S.game,tied:names||[],noSave:!!match,lock:!!match,onWinner:w=>{if(match&&(w===match.a||w===match.b)){match.win=w;render();setTimeout(()=>fallen(w===match.a?match.b:match.a),300)}},onClose:()=>{if(S.phase==="play")playSong("board");else if(S.phase==="champ"&&S.second2)XM.walkUp(S.second2).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")});else if(S.phase==="champ")playSong("lobby")}});
 }
 
 /* ---------- views ---------- */

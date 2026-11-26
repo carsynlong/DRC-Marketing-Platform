@@ -627,11 +627,11 @@ const QUESTIONS=[
   {jab:"{n}'s alarm is still on snooze. ⏰",q:"Who would show up late to the Reaping?",              top:[["Jessie",4]]},
   {jab:"{n} volunteered before they even read the rules. 🙋",q:"Who would volunteer as tribute?",                     top:[["QUEEN MOTHER",4],["Natalie",4]]},
   {jab:"{n}: “Alliance? I don't know her.” 🗡️",q:"Who would betray their alliance?",                    top:[["Kyle",7]]},
-  {jab:"{n} gets sponsor gifts AND hot cocoa delivered. ☕",q:"Who would be the best with sponsors?",                top:[["Tinsley",7]]},
+  {jab:"{n} gets hot cocoa delivered AND a foot rub. ☕",q:"Who would be the best with sponsors?",                top:[["Tinsley",7]]},
   {jab:"{n} gets a standing ovation in the Capitol. 👏",q:"Who would be the Capitol's favorite?",                top:[["Carsyn",3],["Tinsley",3]]},
 ];
 /* Face-off questions: everyone votes in secret except the tied tributes. Up to 3 per tie, then a lucky spin. */
-const TIEBREAKERS=[   // quick, funny calls: there are only 10 seconds to vote (shuffled each game)
+const TIEBREAKERS=[   // quick, funny calls: there are only FACEOFF_SECS (20) seconds to vote (shuffled each game)
   "Who would give away their hiding spot by singing Mariah Carey in the arena?",
   "Who would trade their bow and arrows for one more Christmas cookie?",
   "Who would re-gift their sponsor's present to someone else?",
@@ -655,10 +655,10 @@ let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true]
 /* Major award: every vote a tribute receives (survey + face-offs) adds to their total,
    plus GUESS_PTS for each #1 answer they call on their phone. Highest total wins. */
 const GUESS_PTS=1;
-const TIMER_SECS=45;
+const TIMER_SECS=45;   // seconds to guess each question; Survey says starts by itself when it runs out
 const FACEOFF_GRACE=2500; // ms of extra voting time while phones catch up
-const FACEOFF_SECS=20; // seconds to vote in a face-off; the votes are counted when it runs out // seconds to guess each question; Survey says starts by itself when it runs out
-const addVotes=(n,v)=>{if(!v)return;const was=S.tally[n]||0,now=Math.max(0,was+v);if(now===was&&v<0)return;S.tally[n]=now;S.bump[n]=(S.bump[n]||0)+(now-was)};
+const FACEOFF_SECS=20; // seconds to vote in a face-off; the votes are counted when it runs out
+const addVotes=(n,v)=>{if(!v)return 0;const was=S.tally[n]||0,now=Math.max(0,was+v);if(now===was&&v<0)return 0;S.tally[n]=now;S.bump[n]=(S.bump[n]||0)+(now-was);return now-was};   // returns the real change (a player at 0 loses nothing)
 const cur=()=>QUESTIONS[S.order[S.k]];
 const isTie=q=>q.top.length>1;
 const plural=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
@@ -667,13 +667,13 @@ const winFx=()=>{sfx("fanfare");sfx("applause");confetti(220,true)};
 
 /* ---------- flow ---------- */
 const SPEED_SECS=10;      // lock in a correct guess this fast for a speed bonus (+1)
-const FIRE_AT=3;
-const SLOW_PEN=1;
+const FIRE_AT=3;          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
+const SLOW_PEN=1;         // signed in on a phone but didn't answer in time: −1
 /* 🎯 STUMP THE ROOM: Carsyn made the survey, so she knows every #1 answer. Instead of guessing, she bets on one
    player (signed in on a phone) to MISS it: they miss → Carsyn +1; they call it → they steal +1. Doubled in the finale. */
 const HOST="Carsyn",HOSTN="Clo",STUMP_PTS=1;   // HOST is her name in the data; HOSTN is what the TV shows
 const stumpOn=()=>!!(S.present[HOST]&&phones.includes(HOST));
-const stumpable=()=>phones.filter(n=>n!==HOST&&S.present[n]);        // signed in on a phone but didn't answer in time: −1          // this many correct guesses in a row = ON FIRE (+1 on every correct guess after that)
+const stumpable=()=>phones.filter(n=>n!==HOST&&S.present[n]);   // who she can bet on: signed in on a phone, here, and not her
 const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
 const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
   "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
@@ -684,7 +684,7 @@ function startGame(){
   if(!window.Rules)return startIntro();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
-  Rules.run({theme:"feud",photo:AV,title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,steps:[
+  Rules.run({theme:"feud",photo:AV,title:"How to play",sub:"District Feud",sound:()=>S.sound,onReady:startIntro,onBack:goSetup,steps:[
     ["📋","We surveyed the district. Every question's number one answer is someone in this room."],
     ["📱",`You have ${TIMER_SECS} seconds to lock in your guess on your phone. No guess in time? You lose ${SLOW_PEN} point.`],
     ["🎯",`Call it right for a point. Lock in within ${SPEED_SECS} seconds for a speed bonus. Get ${FIRE_AT} in a row and you're on fire!`],
@@ -755,7 +755,7 @@ function resumeGame(){
   gid=g.gid||gid;answers={};answersQi=-1;S.preAns=true;sfx("fanfare");
   if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
 }
-function showQuestion(){if(window.Briefing&&Briefing.open())return;if(briefStump())return;clearTimers();clearBanners();S.phase="question";S.tie=null;S.slow=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
+function showQuestion(){if(window.Briefing&&Briefing.open())return;if(briefStump())return;clearTimers();clearBanners();S.phase="question";S.tie=null;S.slow=[];S.slowHit=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
 setInterval(()=>{
   const fo=S.tie&&S.tie.ends&&["tb","ballot","cast"].includes(S.phase);
@@ -805,13 +805,13 @@ function strikes(done){
 }
 /* 🎯 phone guesses: +1 for calling it, +1 ⚡ speed bonus, +1 🔥 when on fire, all doubled in the finale */
 function scoreGuesses(top){
-  const got=phoneAnswers(),m=S.mult||1;S.earn={};S.newFire=[];S.slow=[];
+  const got=phoneAnswers(),m=S.mult||1;S.earn={};S.newFire=[];S.slow=[];S.slowHit=[];
   S.stump=null;
   const bet=stumpOn()?got[HOST]:null;
   if(bet&&bet!==HOST&&S.present[bet]){const called=top.includes(got[bet]),pts=STUMP_PTS*m;addVotes(called?bet:HOST,pts);S.stump={pick:bet,called,pts}}
   phones.forEach(n=>{
     if(n===HOST&&stumpOn())return;   // her answer was the Stump bet
-    if(got[n]==null&&S.present[n]){S.streak[n]=0;S.slow.push(n);addVotes(n,-SLOW_PEN);return}   // ⏰ too slow
+    if(got[n]==null&&S.present[n]){S.streak[n]=0;S.slow.push(n);if(addVotes(n,-SLOW_PEN))S.slowHit.push(n);return}   // ⏰ too slow
     if(!top.includes(got[n])){S.streak[n]=0;return}
     const speed=S.seen[n]!=null&&S.seen[n]-S.qStart<=(SPEED_SECS+1)*1000;
     S.streak[n]=(S.streak[n]||0)+1;const fire=S.streak[n]>=FIRE_AT;if(S.streak[n]===FIRE_AT)S.newFire.push(n);
@@ -909,12 +909,12 @@ async function countVotes(auto){
   later(()=>{mergePhoneVotes(true);const T=S.tie,max=Math.max(...T.names.map(n=>T.votes[n])),lead=T.names.filter(n=>T.votes[n]===max);
     T.lead=lead;
     if(T.prize){   // 🏆 sudden death for the major award (or the 🎡 Second Chance face-off)
-      S.slow=[];   // the major award face-off takes no points, so no "too slow" list
+      S.slow=[];S.slowHit=[];   // the major award face-off takes no points, so no "too slow" list
       if(lead.length===1&&T.second){S.pkg.second.winner=lead[0];S.phase="pkg";secondFx();render();return}
       if(lead.length===1){S.pkg.winner=lead[0];S.pkg.faceoff=true;S.phase="pkg";giftFx();render();return}
       S.phase="tbresult";later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300);render();return}
     T.names.forEach(n=>addVotes(n,T.votes[n]*(S.mult||1)));
-    S.slow=phones.filter(n=>voters().includes(n)&&!T.voted.includes(n));S.slow.forEach(n=>addVotes(n,-SLOW_PEN));   // ⏰ didn't vote in time
+    S.slow=phones.filter(n=>voters().includes(n)&&!T.voted.includes(n));S.slowHit=S.slow.filter(n=>addVotes(n,-SLOW_PEN));   // ⏰ didn't vote in time
     S.phase="tbresult";
     if(lead.length===1){S.results[S.k]={name:lead[0],votes:cur().top[0][1],tb:true};later(()=>{winFx();applause();flash()},700);later(()=>playSong("strut"),2000);later(leaderCheck,3200)}
     else{later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300)}
@@ -999,7 +999,7 @@ function secondFaceoff(){
   nextTiebreaker();
 }
 function secondFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(3500);fireworks(5);stopSong();   // the same champions track as the major award winner
-    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.winner))return;   // 🎵 the winner's own walk-up song
+    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.second&&S.pkg.second.winner))return;   // 🎵 the Second Victor's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 function scspinView(){
   const sc=S.pkg.second||{},pr=sc.pair,ws=secondPool();
@@ -1012,7 +1012,7 @@ function scspinView(){
 
 /* the gift box shakes, the lid flies off, the winner pops out */
 function giftFx(){forgetGame();drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
-    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.second&&S.pkg.second.winner))return;   // 🎵 the Second Victor's own walk-up song
+    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.winner))return;   // 🎵 the winner's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
 /* ---------- views ---------- */
@@ -1062,7 +1062,7 @@ function introView(){
 function fanView(){
   const m=S.intro?.meter||{};
   return `<div class="rays" style="--d:0s"></div><section class="center"><span class="qtag">📣 The crowd has spoken</span><h1 class="ptitle">🎉 Fan Favorite!</h1>
-    <div class="fanrow">${(S.fan||[]).map(n=>`<div class="win late"><div class="crown">👑</div><img class="av" src="${AV(n)}" alt=""><div class="nm">${esc(n)}</div><div class="votes">${m[n]} cheers · +1 point</div></div>`).join("")}</div>
+    <div class="fanrow">${(S.fan||[]).map(n=>`<div class="win late"><div class="crown">👑</div><img class="av" src="${AV(n)}" alt=""><div class="nm">${esc(n)}</div><div class="votes">${plural(m[n],"cheer")} · +1 point</div></div>`).join("")}</div>
     <p class="sub">The loudest crowd starts the game with a bonus point!</p><div class="ctl"><button class="btn red" id="fango">Let's play!</button></div></section>${raceBar()}`;
 }
 function doubleView(){
@@ -1254,13 +1254,13 @@ function snapshot(){
   g.host=HOST;g.hostIn=!!S.present[HOST];   // phone rules only mention Stump the Room when she is playing
   if(["question","lock","room","suspense"].includes(p))Object.assign(g,{phase:"question",kind:"guess",qi:S.k,q:cur().q,choices:NAMES,stump:stumpOn()?stumpable():undefined,locked:p!=="question",ends:p==="question"?S.ends:0,
     hurry:p==="question"&&S.ends&&S.ends-Date.now()<=10500?S.ends:0,secs:TIMER_SECS,mult:S.mult||1,speedEnds:(S.qStart||0)+SPEED_SECS*1000});
-  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,stumped:S.stump||undefined,mult:S.mult||1,slow:S.slow,slowPen:SLOW_PEN});
+  if(p==="reveal")Object.assign(g,{phase:"reveal",kind:"guess",qi:S.k,q:cur().q,answer:cur().top.map(t=>t[0]),earn:S.earn,stumped:S.stump||undefined,mult:S.mult||1,slow:S.slow,slowHit:S.slowHit||[],slowPen:SLOW_PEN});
   if(p==="intro"&&S.intro){g.spot=S.intro.who[S.intro.i]||null;g.cheer=!!phones.length}
   if(p==="fanfav")g.fan=S.fan;
-  if(window.Rules&&Rules.active())g.howto="feud";   // How to play is on the TV: phones show it too (howto.js)
+  if(window.Rules&&Rules.active()){g.howto="feud";g.secs=TIMER_SECS}   // How to play is on the TV: phones show it too (howto.js)
   if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p!=="tbsuspense"&&S.tie.ends&&S.tie.ends-Date.now()<=5500?S.tie.ends:0,hostPlays:!S.tie.names.includes(HOST)});   // the host votes in face-offs too, so she gets the hurry warning
-  if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:S.tie.prize?"The major award":cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
+  if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:S.tie.prize?"The major award":cur().q,slow:S.slow,slowHit:S.slowHit||[],slowPen:SLOW_PEN,round:S.tie.round});
   if(["end","pkg","pkgfate","scspin"].includes(p)){g.phase="final";if(S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
   if(S.pkg&&S.pkg.second){const sc=S.pkg.second;g.second={pair:sc.pair||null,winner:sc.winner||null,out:S.pkg.winner};if(p==="scspin")g.view="scspin"}
   if(window.Briefing&&Briefing.open())Object.assign(g,{phase:"watch",kind:undefined,view:"brief",brief:S.brfTitle||"How it works",locked:true});   // 📢 phones: "Listen up"
@@ -1321,7 +1321,7 @@ function guessedLine(bump){
 /* who called it on their phone, with what they earned */
 const stumpLine=(d=1.9)=>{const st=S.stump;if(!st)return "";
   return `<div class="called late" style="--d:${d}s"><b style="color:var(--gold)">🎯 ${HOSTN} bet <span style="color:#fff">${esc(st.pick)}</span> would miss it…</b><span class="chip" style="box-shadow:inset 0 0 0 3px ${st.called?"#7dff9e":"#ff8f80"}"><img src="${AV(st.called?st.pick:HOST)}" alt="">${st.called?`${esc(st.pick)} called it! Steals +${st.pts}`:`Stumped! ${HOSTN} +${st.pts}`}</span></div>`};
-const slowLine=(d=1.6)=>S.slow&&S.slow.length?`<div class="called"><b class="late" style="--d:${d}s;color:#ff8f80">⏰ Too slow, −${SLOW_PEN}:</b>${S.slow.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.08).toFixed(2)}s;box-shadow:inset 0 0 0 3px #ff8f80"><img src="${AV(n)}" alt="">${esc(n)}</span>`).join("")}</div>`:"";
+const slowLine=(d=1.6)=>S.slow&&S.slow.length?`<div class="called"><b class="late" style="--d:${d}s;color:#ff8f80">⏰ Too slow:</b>${S.slow.map((n,i)=>`<span class="chip" style="--d:${(d+.15+i*.08).toFixed(2)}s;box-shadow:inset 0 0 0 3px #ff8f80"><img src="${AV(n)}" alt="">${esc(n)}${(S.slowHit||[]).includes(n)?` −${SLOW_PEN}`:""}</span>`).join("")}</div>`:"";
 function calledIt(d=1.2){
   const got=phoneAnswers();if(!Object.keys(got).length)return slowLine(d+.4);
   const right=Object.keys(S.earn||{});

@@ -231,7 +231,7 @@ const soundBtn=()=>`<div class="sound"><button id="snd" aria-pressed="${sound}">
 const qcard=(g,label)=>`<div class="q"><div class="eyebrow">${label}</div><p>${esc(g.q||"")}</p></div>`;
 const nameBtns=(list,cls="")=>`<div class="grid ${cls}">${list.map((n,i)=>`<button class="nb" style="--i:${i}" data-choice="${esc(n)}"><img src="${avOf(n)}" alt="">${esc(n)}</button>`).join("")}</div>`;
 const ptimer=g=>g.ends&&!g.locked?`<div class="ptimer" id="ptimer" data-ends="${g.ends}" data-total="${g.secs||30}"><i></i><b>⏱</b></div>`:"";
-setInterval(()=>{const t=$("#ptimer");if(!t)return;const ms=+t.dataset.ends-Date.now(),sec=Math.max(0,Math.ceil(ms/1000));
+setInterval(()=>{const t=$("#ptimer");if(!t)return;const ms=+t.dataset.ends-Date.now(),sec=Math.min(+t.dataset.total||Infinity,Math.max(0,Math.ceil(ms/1000)));   // the face-off sends a little grace: never show more than the TV
   t.querySelector("i").style.transform=`scaleX(${Math.max(0,Math.min(1,ms/(+t.dataset.total*1000))).toFixed(3)})`;
   t.querySelector("b").textContent=sec?`⏱ ${sec}s left`:"⏱ Time's up!";t.classList.toggle("low",sec<=10)},200);
 const lockedCard=(n,line)=>`<section class="msg"><div class="eyebrow">Locked in</div><div class="locked"><img src="${avOf(n)}" alt=""><div class="nm">${esc(n)}</div></div><p>${line}</p><p class="priv">🔒 Only you can see this.</p>${D.game?Memes.html("feud",D.game.gid,D.game.qi):""}</section>`;
@@ -306,11 +306,11 @@ function view(){
   }
   if(g.phase==="final"&&sc&&sc.winner){
     if(sc.winner===D.me)return [key+"scwin",header()+msg("🏆","You're the Second Victor!","<p>You won the Second Chance face-off. Go claim your major award!</p>","win")+soundBtn(),"win"];
-    return [key+"scw",header()+msg("🎡",`${esc(sc.winner)} is the Second Victor!`,`<p>${g.winner?`${esc(g.winner)} won the major award, and `:""}${esc(sc.winner)} takes the Second Chance major award. Merry Christmas from District Feud!</p>`)+soundBtn(),"ding"];
+    return [key+"scw",header()+msg("🎡",`${esc(sc.winner)} is the Second Victor!`,`<p>${g.winner?`${esc(g.winner)} won the major award, and `:""}${esc(sc.winner)} takes the Second Chance major award. Merry Thanksmas from District Feud!</p>`)+soundBtn(),"ding"];
   }
   if(g.phase==="final"){
     if(g.winner===D.me)return [key+"pkgme",header()+msg("🏆","You won the major award!","<p>Top of the major award race. Go claim your major award!</p>","win")+soundBtn(),"win"];
-    if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the major award!`,"<p>Merry Christmas from District Feud!</p>")+soundBtn(),"ding"];
+    if(g.winner)return [key+"pkg",header()+msg("🎄",`${esc(g.winner)} wins the major award!`,"<p>Merry Thanksmas from District Feud!</p>")+soundBtn(),"ding"];
     return [key,header()+msg("🎁","The major award round!","<p>Eyes on the TV. Who has the most points?</p>")+soundBtn()];
   }
   if(g.view==="intro"){

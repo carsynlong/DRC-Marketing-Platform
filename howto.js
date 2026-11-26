@@ -66,7 +66,7 @@ window.HowTo = (() => {
       sections: [
         ["How to play", [["📋", "Read the question", "It appears on the TV."],
           ["👆", "Tap a face", "Right here on your phone."],
-          ["⏱️", "30 seconds", "Then Survey says…!"],
+          ["⏱️", `${(g.kind !== "faceoff" && +g.secs) || 45} seconds`, "Then Survey says…!"],
           ["⚠️", "Don't run out of time", "No guess in time = −1 point."]]],
         ["Points", [["✅", "Called it", "+1 point"],
           ["⚡", "Fast", "Lock in within 10 seconds: +1 more"],
@@ -207,7 +207,7 @@ body.hurry-shake #hurrybar{animation:hb-shake .4s cubic-bezier(.36,.07,.19,.97)}
     if (ends && !o.answered && !exempt && Date.now() < hbLocal) startHurry(hbLocal); else stopHurry();
     if (g && me && g.slow && g.slow.includes(me)) {
       const k = `${g.gid}:${g.qi}:${g.kind || ""}:${g.round || ""}`;
-      if (k !== slowKey) { slowKey = k; const mine = (g.scores || []).find(s => s.name === me), pen = mine ? Math.min(g.slowPen || Infinity, Math.max(0, -(mine.delta || 0))) : g.slowPen;   // the no-answer part only (not a rose)
+      if (k !== slowKey) { slowKey = k; const mine = (g.scores || []).find(s => s.name === me), pen = Array.isArray(g.slowHit) ? (g.slowHit.includes(me) ? g.slowPen : 0) : mine ? Math.min(g.slowPen || Infinity, Math.max(0, -(mine.delta || 0))) : g.slowPen;   // the no-answer part only (not a rose)
         slowToast(`⏰ Too slow! You didn't answer in time${pen ? `: −${pen}` : ""}`); }
     }
   }

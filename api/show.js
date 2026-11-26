@@ -606,7 +606,7 @@ async function main(req, res) {
   // 😤 Buzz Buzz's catchphrase button (Natalie's phone only)
   if (a === "notfair") {
     if (name !== "Natalie") return reply(res, 403, { error: "Only Buzz Buzz can say that" });
-    if (!(await redis.set(`${P}nf`, "1", { nx: true, ex: 45 }))) return reply(res, 429, { error: "wait" });
+    if (!(await redis.set(`${P}nf`, "1", { nx: true, px: 2500 }))) return reply(res, 429, { error: "wait" });
     await stat("notfair:" + name); await pushCmd("notfair", { from: name }); return reply(res, 200, { ok: true });
   }
   if (a === "snitch") {

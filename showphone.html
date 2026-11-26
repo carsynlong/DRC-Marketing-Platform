@@ -307,7 +307,7 @@ function render(){if(me!=="Carsyn")dropBar();
   {const tg=app.querySelector("#owntog");if(tg)tg.onclick=()=>{ownOpen=!ownOpen;ownUI()}}
   wireTiles(app);wireDecree(app);
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
-    m.textContent=r.ok?"📨 Complaint filed!":r.status===429?"The Capitol is still processing your last complaint. Try again in a bit.":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},r.ok?45000:3000)};
+    m.textContent=r.ok?"📨 Complaint filed!":r.status===429?"One sec...":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},2500)};
   app.querySelector("#notme").onclick=e=>{e.preventDefault();if(!confirm("Sign out of "+XM.dn(me)+" so someone else can use this phone?"))return;api({a:"leave",name:me});stopLive();me=null;walkup=null;quest=null;mission=null;predict=null;vote=null;bet=null;XM.store.set("xmas-sh-me",null);document.querySelectorAll(".qov,#race,#mcard").forEach(n=>n.remove());render()};
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);

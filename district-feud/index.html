@@ -657,7 +657,7 @@ let S={phase:"lobby",sound:true,present:Object.fromEntries(NAMES.map(n=>[n,true]
 const GUESS_PTS=1;
 const TIMER_SECS=45;
 const FACEOFF_GRACE=2500; // ms of extra voting time while phones catch up
-const FACEOFF_SECS=10; // seconds to vote in a face-off; the votes are counted when it runs out // seconds to guess each question; Survey says starts by itself when it runs out
+const FACEOFF_SECS=20; // seconds to vote in a face-off; the votes are counted when it runs out // seconds to guess each question; Survey says starts by itself when it runs out
 const addVotes=(n,v)=>{if(!v)return;const was=S.tally[n]||0,now=Math.max(0,was+v);if(now===was&&v<0)return;S.tally[n]=now;S.bump[n]=(S.bump[n]||0)+(now-was)};
 const cur=()=>QUESTIONS[S.order[S.k]];
 const isTie=q=>q.top.length>1;

@@ -19,21 +19,22 @@ const Sync = (() => {
   /* ---- what phones see. Never the photos, and never the right answer before the reveal. ---- */
   function snapshot() {
     const r = S.rounds[S.qi], inGame = S.phase !== "lobby" && !!r;
-    const g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: Q.length, mode: S.mode, names: NAMES, host: HOST, hostPlays: true,
+    const sc = S.sc || null, g = { gid: S.gid || 0, phase: S.phase, qi: S.qi, total: sc ? sc.n : Q.length, faceNum: sc ? S.qi - sc.start + 1 : S.qi + 1,
+      sc: sc ? { winner: sc.winner, done: !!sc.done } : undefined, sitOut: sc ? [sc.winner] : undefined, mode: S.mode, names: NAMES, host: HOST, hostPlays: true,
       twist: (S.phase === "ready" || S.phase === "question") && typeof Extras !== "undefined" ? Extras.twist() || undefined : undefined,
       hint: S.phase === "question" && !S.locked && typeof Extras !== "undefined" ? Extras.hint() || undefined : undefined,
       spy: typeof Extras !== "undefined" ? Extras.spy() : undefined, hostPick: S.phase === "reveal" || S.phase === "board" ? S.hostPick || null : undefined,
-      playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked && !(S.look > 0)), double: DOUBLE.has(S.qi),
+      playing: (/^(question|reveal|tbcard)$/.test(S.phase) ? answering() : active()).map(p => p.name), locked: !(S.phase === "question" && !S.locked && !(S.look > 0)), double: !sc && DOUBLE.has(S.qi),
       tb: !!S.tb, mini: S.phase === "mini" && S.mini ? { kind: S.mini.kind, stage: S.mini.stage, id: S.mini.id, count: S.mini.count,
         results: S.mini.results, all: S.mini.all } : undefined,
       left: S.phase === "question" && !S.locked && !(S.look > 0) ? Math.max(0, Math.ceil(S.secs - S.elapsed)) : undefined,   // phones show the countdown
       look: S.phase === "question" && !S.locked && S.look > 0 ? Math.ceil(S.look) : undefined,   // 👀 the 10-second look: no typing yet
-      feast: S.qi >= FEAST && !S.tb, secs: S.secs, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
+      feast: !sc && S.qi >= FEAST && !S.tb, secs: S.secs, round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
       howto: window.Rules && Rules.active() ? "tribute" : undefined,
       hurry: S.phase === "question" && !S.locked && S.hurryEnds ? S.hurryEnds : undefined,        // ⏰ last 10 seconds: phones hurry (howto.js)
       slow: ["reveal", "board", "final"].includes(S.phase) && S.slow && S.slow.length ? S.slow : undefined, slowPen: SLOW_PEN };   // How to play is on the TV: phones show it too (howto.js)
     if (inGame && (S.phase === "question" || S.phase === "reveal")) g.choices = r.choices;
-    if (inGame && ["reveal", "board", "final"].includes(S.phase)) { g.answer = r.mash ? Q[r.qi].a + " and " + r.mash.b : Q[r.qi].a; g.correct = r.mash ? S.correct.concat(S.half || []) : S.correct; }
+    if (inGame && ["reveal", "board", "final"].includes(S.phase)) { const fx = typeof FACE === "function" ? FACE(r.qi) : Q[r.qi]; g.answer = r.mash ? fx.a + " and " + r.mash.b : fx.a; g.correct = r.mash ? S.correct.concat(S.half || []) : S.correct; }
     if (inGame && r.mash && !r.tb && (S.phase === "ready" || S.phase === "question")) g.mash = true;   // 🐺 Mutt Mashup: name both
     if (inGame) {
       let rank = 0, prev = null;
@@ -284,14 +285,14 @@ const Sync = (() => {
     try { cancelAnimationFrame(raf); } catch (e) {}
     S.players.forEach(p => { p.score = 0; p.streak = 0; p.delta = 0; p.move = 0; });
     try { Extras.reset(); } catch (e) {}
-    Object.assign(S, { phase: "lobby", qi: 0, rounds: [], locked: false, correct: [], typed: {}, elapsed: 0, fallen: [] });
+    Object.assign(S, { sc: null, phase: "lobby", qi: 0, rounds: [], locked: false, correct: [], typed: {}, elapsed: 0, fallen: [] });
     reset(); render();
   }
 
   /* ---- new game: wipe last game's answers ---- */
   function reset() {
     S.gid = Date.now(); answers = {}; answersQi = -1; counted = null; reactSeen = null;
-    post({ action: "reset", total: Q.length + 20 }).catch(() => {});
+    post({ action: "reset", total: Q.length + (typeof BONUS !== "undefined" ? BONUS.length : 0) + 20 }).catch(() => {});
   }
 
   /* ---- keep a copy so a TV reload doesn't lose the game ---- */
@@ -299,7 +300,7 @@ const Sync = (() => {
     try {
       const g = JSON.parse(localStorage.getItem(SAVE)) || {};
       // A game saved before faces were added or removed would replay the old list: start fresh instead.
-      if (g.rounds?.length && g.rounds.filter(r => !r.tb).length !== Q.length) return {};
+      if (g.rounds?.length && g.rounds.filter(r => !r.tb && !r.sc).length !== Q.length) return {};
       if (g.phase) g.mode = "type"; // the game is typed-only now
       return g;
     } catch (e) { return {}; }

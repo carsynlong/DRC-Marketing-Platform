@@ -196,7 +196,8 @@ const Party = (() => {
   function startShowdown(names, again) {
     S.tb = names;
     // one more face, picked at random from faces not shown yet (any face if they've all been used)
-    const used = new Set(S.rounds.map(r => r.qi)), fresh = Q.map((_, i) => i).filter(i => !used.has(i)), pool = fresh.length ? fresh : Q.map((_, i) => i);
+    const deck = S.sc && typeof BONUS !== "undefined" && BONUS.length ? BONUS.map((_, i) => Q.length + i) : Q.map((_, i) => i);
+    const used = new Set(S.rounds.map(r => r.qi)), fresh = deck.filter(i => !used.has(i)), pool = fresh.length ? fresh : deck;
     const qi = pool[Math.random() * pool.length | 0];
     S.rounds.push({ qi, choices: [], tb: true }); S.qi = S.rounds.length - 1;
     S.tbAgain = again; S.phase = "tbcard"; stopSong(); sfx("gong"); render();
@@ -207,7 +208,7 @@ const Party = (() => {
       steps: [
         ["⚔️", `It's a tie between <b>${names.map(esc).join(" and ")}</b>.`, `It's a tie between ${names.join(" and ")}.`],
         ["📱", "One more face. Only the tied tributes answer, on their phones.", "One more face. Only the tied tributes answer, on their phones."],
-        ["⚡", "The <b>fastest right answer</b> wins <b>+1,000</b> and the Games.", "The fastest right answer wins plus 1,000 and the Games."],
+        ["⚡", `The <b>fastest right answer</b> wins <b>+1,000</b> and ${S.sc ? "the Second Victor title" : "the Games"}.`, `The fastest right answer wins plus 1,000 and ${S.sc ? "the Second Victor title" : "the Games"}.`],
         ["🔁", "Nobody gets it right? Another face, until someone does.", "Nobody gets it right? Another face, until someone does."],
         ["📣", "Everyone else: eyes on the TV and cheer for your favorite!", "Everyone else, eyes on the TV and cheer for your favorite!"],
       ],
@@ -217,7 +218,7 @@ const Party = (() => {
   function tbView() {
     return `<section class="mg"><div class="eyebrow">${S.tbAgain ? "Nobody got it. Again!" : "It's a tie at the top"}</div><h1>⚔️ Showdown!</h1>
       <div class="vs">${S.tb.map((n, i) => `${i ? '<span class="x">vs</span>' : ""}<div class="who">${avatar(n)}${esc(n)}</div>`).join("")}</div>
-      <p>One more face. Only these tributes answer, on their phones. The <b style="color:var(--gold)">fastest right answer</b> wins the Games.</p>
+      <p>One more face. Only these tributes answer, on their phones. The <b style="color:var(--gold)">fastest right answer</b> wins ${S.sc ? "the Second Victor title" : "the Games"}.</p>
       <div class="ctl" style="justify-content:center"><button class="btn" id="tbgo">Begin the showdown ▶</button></div><div class="tiny">Space: begin</div></section>`;
   }
   function scoreTiebreak() {
@@ -226,7 +227,7 @@ const Party = (() => {
     if (!right.length) return startShowdown(S.tb, true);
     const w = S.players.find(p => p.name === right[0]); w.delta = 1000; w.score += 1000;
     S.tbWinner = w.name; S.tb = null;
-    S.phase = "final"; stopSong(); sfx("fanfare"); confetti(260, true); playWinner(); render();
+    S.phase = "final"; if (S.sc) S.sc.done = true; stopSong(); sfx("fanfare"); confetti(260, true); (typeof celebrate === "function" ? celebrate : playWinner)(); render();
   }
 
   /* ---------------- hooks ---------------- */

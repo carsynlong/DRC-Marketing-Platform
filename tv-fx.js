@@ -123,8 +123,8 @@
     try { stopSong(); setTimeout(() => sfx("cannon"), 250); setTimeout(() => { if (S.phase === "board") playSong("board"); }, 3400); } catch (e) {}
     const d = document.createElement("div"); d.className = "fx-sky";
     if (calm) return;
-    const who = Q[r.qi].a, dist = typeof DISTRICT !== "undefined" && DISTRICT[who] ? ` of District ${DISTRICT[who]}` : "";
-    d.innerHTML = `<img src="img/${Q[r.qi].r}.jpg" alt=""><div><small>🔔 A cannon sounds in the arena</small>Tribute ${esc(who)}${dist} has fallen<small class="sub">Not one tribute recognized this face.</small></div>`;
+    const who = (typeof FACE === "function" ? FACE(r.qi) : Q[r.qi]).a, dist = typeof DISTRICT !== "undefined" && DISTRICT[who] ? ` of District ${DISTRICT[who]}` : "";
+    d.innerHTML = `<img src="img/${(typeof FACE === "function" ? FACE(r.qi) : Q[r.qi]).r}.jpg" alt=""><div><small>🔔 A cannon sounds in the arena</small>Tribute ${esc(who)}${dist} has fallen<small class="sub">Not one tribute recognized this face.</small></div>`;
     document.body.appendChild(d); setTimeout(() => d.remove(), 6200);
   }
   /* Winner screen: the Capitol coin champion and the faces nobody guessed */

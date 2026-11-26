@@ -16,6 +16,8 @@ export default async function handler(req, res) {
   if (typeof name !== "string" || (await redis.hget(p + "players", name)) !== pid) {
     return reply(res, 403, { error: "Not your name" });
   }
+  // 🎡 Who's That Tribute's Second Chance Round: the winner sits out
+  if (Array.isArray(game.sitOut) && game.sitOut.includes(name)) return reply(res, 403, { error: "sitting out" });
   if (game.mode === "choice" && !game.choices?.includes(answer)) {
     return reply(res, 400, { error: "Not one of the choices" });
   }

@@ -507,6 +507,14 @@ function view(){
   if(g.phase==="lobby")return [key+playing, header()+(playing
     ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div><div class="eyebrow" style="margin-top:4px">Training score</div><div class="train"><span data-from="1" data-to="${Ambient.training(D.me)}">${Ambient.training(D.me)}</span><small>/ 12</small></div></div><p>You're in! Eyes on the TV. The Games begin soon.</p><p class="tiphint">🪂 While you wait: tap the care packages, swat the wasps, catch the bird!</p></section>`
     :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+(playing?reactBar():"")+soundBar()+notYou,playing?"reap":""];
+  // 🎡 Second Chance Round: the winner sits out and watches; everyone else plays for the Second Victor
+  if(g.sc&&g.phase!=="lobby"){
+    if(g.phase==="final"&&g.sc.done){const v=(g.scores||[])[0],meV=v&&v.name===D.me;
+      if(D.me===g.sc.winner)return [key+"scw",header()+msg("👑","You won the Games!",`<p>${esc(v?v.name:"")} is the Second Victor. Merry Christmas!</p>`,"win")+reactBar(),"win"];
+      return [key+"scf"+(meV?1:0),header()+msg(meV?"🎡":"🎄",meV?"You're the Second Victor!":`${esc(v?v.name:"")} is the Second Victor!`,`<p>${meV?"Go claim your major award!":"Merry Christmas, tribute!"}</p>`,meV?"win":"")+reactBar()+soundBar(),meV?"win":"final"];}
+    if(D.me===g.sc.winner)return [key+"scsit",header()+msg("👑","You won! Sit back and watch.","<p>Everyone else is playing the 🎡 Second Chance Round for the Second Victor major award.</p>")+reactBar()];
+    if(g.phase==="sccard")return [key,header()+msg("🎡","Second Chance Round",`<p>${esc(g.sc.winner)} sits out. Everyone else starts at zero. Highest score is the Second Victor!</p>`,"ready"),"gift"];
+  }
   if(D.me===g.host&&!g.tb&&(g.phase==="question"||g.phase==="reveal"))return hostScreen(g,key);
   if(!playing&&g.tb)return [key+"tbwatch",header()+msg("⚔️","Showdown!","<p>It's a tie at the top. Watch the TV and cheer for your favorite!</p>")+reactBar()];
   if(!playing)return [key+"out",header()+msg("📺","Watch the TV","<p>You're sitting out this game. Cheer loudly.</p>")+notYou];
@@ -514,7 +522,7 @@ function view(){
   if(g.phase==="mini")return miniScreen(g,key);
 
   const gift=g.mash?`<span class="gift">🐺 Name BOTH for double points</span>`:g.feast?`<span class="gift">🍗 Triple points</span>`:g.double?`<span class="gift">🎁 Double points</span>`:"";
-  const faceNo=g.tb?`<div class="eyebrow">⚔️ Showdown face</div>`:`<div class="eyebrow">Face ${g.qi+1} of ${g.total}</div>`;
+  const faceNo=g.tb?`<div class="eyebrow">⚔️ Showdown face</div>`:`<div class="eyebrow">${g.sc?`🎡 Second Chance Round: ${esc(g.sc.winner)} sits out<br>`:""}Face ${g.faceNum||g.qi+1} of ${g.total}</div>`;
   if(g.phase==="roundcard")return [key,header()+`<section class="msg">${g.feast?`<div class="horn">${Ambient.CORNUCOPIA}</div>`:`<img class="round-sym" src="bird.svg" alt="">`}<div class="eyebrow">${esc(g.round?.num||"")}</div><h1>${esc(g.round?.name||"Next round")}</h1><p>${g.feast?"Every face is worth triple. Everything you need is at the cornucopia!":"Let the Games begin. Eyes on the TV."}</p></section>`+soundBar(),"gong"];
   if(g.phase==="ready"&&g.twist)return [key+"tw",header()+`<section class="msg ready"><div class="eyebrow">🎲 Gamemaker twist</div><div class="icon">${g.twist.icon}</div><h1>${esc(g.twist.title)}</h1><p class="said">${esc(g.twist.text)}</p></section>`,"gift"];
   if(g.phase==="ready"&&g.feast)return [key,header()+`<section class="msg ready"><div class="horn">${Ambient.CORNUCOPIA}</div><h1>The Feast!</h1>${faceNo}${gift}<p>This face is worth triple. Run for the cornucopia!</p></section>`,"gift"];

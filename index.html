@@ -259,6 +259,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const src=id=>`img/${id}.jpg`;
+const nickOf=n=>window.NICK?NICK(n):"The answer";   // alt text: the nickname, never the real name
 Q.concat(BONUS).forEach(x=>{[x.q,x.r].forEach(id=>{const i=new Image();i.src=src(id)})});
 
 let S, raf=0;
@@ -680,9 +681,9 @@ function questionView(){
   return `<div class="top"><div><div class="eyebrow">${rn.num} · ${rn.name}</div><div class="qnum">${faceLbl()}</div></div>${giftTag()}
     ${rev?sndBtn():`<div class="timer" aria-label="Seconds left"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="none" stroke="var(--line)" stroke-width="6"/><circle class="arc" cx="32" cy="32" r="28" fill="none" stroke="var(--gold)" stroke-width="6" stroke-linecap="round" stroke-dasharray="176 176"/></svg><div class="n">${S.secs}</div></div>`}</div>
   <div class="stage"><div class="blur" style="background-image:url('${img}')"></div>
-    ${m?(rev?`<div class="mashrev"><img src="${src(x.r)}" alt="${esc(x.a)}"><img src="${src(m.img)}" alt="${esc(m.b)}"></div>`
+    ${m?(rev?`<div class="mashrev"><img src="${src(x.r)}" alt="${esc(nickOf(x.a))}"><img src="${src(m.img)}" alt="${esc(nickOf(m.b))}"></div>`
       :`<div class="mash"><img src="${src(x.r)}" alt="Mystery tribute"><img src="${src(m.img)}" alt="Second mystery tribute"></div>`)
-      :`<img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(x.a):"Mystery tribute, zoomed in"}">`}
+      :`<img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(nickOf(x.a)):"Mystery tribute, zoomed in"}">`}
     ${!rev&&S.charting&&S.chartD?chartHTML(S.chartD,S.chartLit):""}
     ${!rev&&!S.locked&&S.look>0?`<div class="lookbig">👀 Look closely… <b id="lookn">${Math.ceil(S.look)}</b></div>`:""}
     ${rev?`<div class="tag${m?" mt":""}">${m?`<small>Mutt Mashup</small>It's ${esc(x.a)} and ${esc(m.b)}!`:`<small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!`}</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
@@ -817,7 +818,7 @@ function wire(){
   on("scgo",startSecondChance);on("scbegin",scBegin);
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});
-  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound)stopSong();else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];if(S.phase==="final"){song=null;celebrate()}else if(m)playSong(m)}   // the winner screen goes back to the winner song
+  on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound){stopSong();try{speechSynthesis.cancel()}catch(e){}}else{const m={lobby:"lobby",roundcard:"arena",question:S.locked?null:"count",board:"board",final:"lobby"}[S.phase];if(S.phase==="final"){song=null;celebrate()}else if(m)playSong(m)}   // the winner screen goes back to the winner song
     const e=$("#snd");if(e){e.textContent=S.sound?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",S.sound)}});
 }
 document.addEventListener("keydown",e=>{

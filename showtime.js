@@ -18,6 +18,9 @@
      style:    "reaping" | "lineup"      optional: Who's That Tribute draws names from the reaping bowl; District Secrets puts suspects in a lineup
    })
    Space, Enter or the Skip button ends it early. While it runs, it sits on top of the game's lobby. */
+// everyone's nickname (attributes like alt and title aren't caught by the page-wide nickname swap in sabotage.js)
+window.NICK = window.NICK || (() => { const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
+  return n => AKA[n] || n; })();
 window.Walkout = (() => {
   const THEMES = {
     tribute: {
@@ -233,8 +236,8 @@ window.Walkout = (() => {
     };
   })();
   let talking = false, sayN = 0;
-  // speaks the line; done() runs once when it has been said (or straight away with no voice)
-  function say(text, done) {
+  // speaks the line; done() runs once when it has been said (or straight away with no voice); started() when the voice starts
+  function say(text, done, started) {
     const my = ++sayN; let fin = false;
     const over = () => { if (fin) return; fin = true; if (my === sayN) { talking = false; if (root) Music.duck(.42); } if (done) done(); };
     try {
@@ -242,7 +245,7 @@ window.Walkout = (() => {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text); u.rate = 1; u.pitch = .85; u.volume = 1;
       talking = true;
-      u.onstart = () => Music.duck(.2); u.onend = over; u.onerror = over;   // the music dips so the announcer is heard
+      u.onstart = () => { Music.duck(.2); if (started) try { started(); } catch (e) {} }; u.onend = over; u.onerror = over;   // the music dips so the announcer is heard
       speechSynthesis.speak(u);
     } catch (e) { over(); }
   }
@@ -276,8 +279,7 @@ window.Walkout = (() => {
     Music.start();
     const pick = (arr, k) => arr[(k + seed) % arr.length];
     // nickname on the card (the letters are split up for the drop-in, so the page-wide nickname swap can't catch them)
-    const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
-    const letters = n => (n = AKA[n] || n, `<div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>`);
+    const letters = n => (n = NICK(n), `<div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>`);
     const photoHTML = (n, prop) => `<div class="wo-photo"><img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">${calm ? "" : `<span class="wo-prop${prop.eyes ? " eyes" : ""}" aria-hidden="true">${prop.e}</span>`}</div>`;
     const hypeLine = (n, i) => `<div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div>`;
     function middle(style, n, dn, prop, stat, i) {
@@ -316,15 +318,17 @@ window.Walkout = (() => {
       root.querySelector(".wo-back").onclick = () => end(true);
       // ~5 seconds each: drumroll → BAM (photo + name) → a funny sound and confetti → the prop drops on their head
       sfx("whoosh"); Music.duck(.12); sfx("drumroll");
-      // next tribute once the line has been said in full and at least 4.9s have passed (12s at most, in case the voice never finishes)
+      // next tribute once the line has been said in full and at least 4.9s have passed
+      // (in case the voice never finishes: 12s after it starts talking, or 20s after asking if it never starts)
       const me = i; let spoke = false, minDone = false;
       const go = () => { if (root && i === me && spoke && minDone) step(); };
-      say(`${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!`, () => { spoke = true; later(go, 350); });
+      const cap = () => { if (root && i === me) { spoke = minDone = true; go(); } };
+      say(`${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!`, () => { spoke = true; later(go, 350); }, () => { if (root && i === me) later(cap, 12000); });
       later(() => { Music.bam(); Music.duck(talking ? .2 : .42); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 1250);
       later(() => sfx(funny), 1900);
       later(() => sfx("drop"), 3050); later(() => sfx("boing"), 3700);
       later(() => { minDone = true; go(); }, 4900);
-      later(() => { if (root && i === me) { spoke = minDone = true; go(); } }, 12000);
+      later(cap, 20000);
     };
     step();
   }
@@ -536,7 +540,7 @@ window.Rules = (() => {
         el.innerHTML = !players.length ? "" : all ? `✅ All <b>${players.length}</b> ${word} are ready!`
           : `✅ <b>${ready.length}</b> of ${players.length} ${word} ready${waiting.length <= 4 ? `<small>Waiting on ${waiting.map(esc).join(", ")}</small>` : ""}`;
         // everyone checked in on a phone, lighting up as they tap Got it
-        if (photo && players.length) el.innerHTML += `<div class="ru-faces">${players.map(n => `<div class="ru-face ${ready.includes(n) ? "on" : ""} ${ready.includes(n) && !shown.has(n) ? "pop" : ""}" title="${esc(n)}"><img src="${esc(photo(n))}" alt="${esc(n)}"></div>`).join("")}</div>`;
+        if (photo && players.length) el.innerHTML += `<div class="ru-faces">${players.map(n => `<div class="ru-face ${ready.includes(n) ? "on" : ""} ${ready.includes(n) && !shown.has(n) ? "pop" : ""}" title="${esc(NICK(n))}"><img src="${esc(photo(n))}" alt="${esc(NICK(n))}"></div>`).join("")}</div>`;
         shown = new Set(ready);
       } catch (e) {}
     };

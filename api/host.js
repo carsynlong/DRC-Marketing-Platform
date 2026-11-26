@@ -1,15 +1,28 @@
 // Only the TV uses this.
-// GET  /api/host?qi=3                      -> { players: [names with a phone], answers: {name: answer} }
+// GET  /api/host?qi=3                      -> { players: [names with a phone], quiet: [those whose phone stopped checking in], answers: {name: answer} }
 // POST /api/host { action: "publish", game }    write what phones see
 // POST /api/host { action: "reset", total }     new game: wipe every face's answers and the coins
 // POST /api/host { action: "clearPlayers" }     everyone picks their name again
 // POST /api/host { action: "wipe" }             start completely over: all answers, points, scores (phones stay signed in)
 import { redis, hash, reply, prefix, safe } from "../lib/redis.js";
 
+// Which signed-in names' phones have gone quiet (no "I'm still here" for about 30 seconds: closed, asleep, left).
+// One MGET, at most every 4 seconds per game from a warm server instance (the TV asks every second or two).
+const quietCache = new Map();
+async function quietOf(p, players) {
+  const k = p + "|" + players.join("|"), c = quietCache.get(p), now = Date.now();
+  if (c && c.k === k && now - c.at < 4000) return c.quiet;
+  const seen = players.length ? await redis.mget(...players.map(n => `${p}seen:${n}`)) : [];
+  const quiet = players.filter((n, i) => !seen[i]);
+  quietCache.set(p, { k, at: now, quiet });
+  return quiet;
+}
+
 export default safe(async function handler(req, res) {
   const p = prefix(req);
   if (req.method === "GET") {
     const players = Object.keys(await hash(p + "players"));
+    const quiet = p ? undefined : await quietOf(p, players);   // only Who's That Tribute's TV uses it
     const qi = Number.parseInt(req.query.qi, 10);
     const answers = Number.isInteger(qi) ? await hash(`${p}answers:${qi}`) : {};
     const times = Number.isInteger(qi) && !p ? await hash(`${p}anstime:${qi}`) : {};   // server time each answer arrived (only Who's That Tribute records it)
@@ -19,7 +32,7 @@ export default safe(async function handler(req, res) {
     const ready = req.query.ready ? Object.keys(await hash(p + "ready")) : undefined;   // tapped Got it on How to play
     const buys = req.query.buys != null ? await hash(`${p}buys:${Number.parseInt(req.query.buys, 10) || 0}`) : undefined;   // sponsor shop (Tribute)
     const asks = req.query.asks ? await redis.lrange(p + "asks", 0, 99) : undefined;   // victor's interview questions (Tribute)
-    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, answers, times, now: Date.now(), coins, react, mini , ready , buys, asks });
+    return reply(res, 200, { qi: Number.isInteger(qi) ? qi : null, players, quiet, answers, times, now: Date.now(), coins, react, mini , ready , buys, asks });
   }
   if (req.method !== "POST") return reply(res, 405, { error: "GET or POST" });
 

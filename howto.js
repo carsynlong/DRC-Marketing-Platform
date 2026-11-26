@@ -91,7 +91,7 @@ window.HowTo = (() => {
 #howto .ht-top{text-align:center}
 #howto .ht-top small{display:block;text-transform:uppercase;letter-spacing:.18em;font-size:.72rem;font-weight:800;opacity:.75}
 #howto h1{margin:2px 0 0;font-family:var(--ht-font);font-weight:400;font-size:clamp(1.9rem,9vw,2.6rem);line-height:1;color:var(--ht-accent);text-shadow:0 3px 0 var(--ht-accent2)}
-#howto .ht-goal{display:flex;gap:14px;align-items:center;background:var(--ht-accent);color:var(--ht-btn);border-radius:16px;padding:14px 16px;box-shadow:0 5px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
+#howto .ht-goal{display:flex;gap:14px;align-items:center;background:var(--ht-accent);color:var(--ht-btn);border-radius:16px;padding:14px 16px;box-shadow:0 5px 0 rgba(0,0,0,.35);box-shadow:0 5px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
 #howto .ht-goal .e{font-size:2.2rem;flex:none}
 #howto .ht-goal b{display:block;font-size:1.25rem;line-height:1.15}
 #howto .ht-goal span{display:block;font-weight:600;font-size:.95rem;line-height:1.3;margin-top:2px}
@@ -106,8 +106,8 @@ window.HowTo = (() => {
 /* the button sits at the end of the list, after the last card (not floating over the cards) */
 #howto .ht-bar{max-width:520px;margin:22px auto 0;padding:0}
 #howto .ht-ok{display:block;width:100%;max-width:520px;margin:0 auto;font:inherit;font-weight:800;font-size:1.25rem;min-height:58px;border:0;border-radius:16px;cursor:pointer;
-  background:var(--ht-accent);color:var(--ht-btn);box-shadow:0 5px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
-#howto .ht-ok:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
+  background:var(--ht-accent);color:var(--ht-btn);box-shadow:0 5px 0 rgba(0,0,0,.35);box-shadow:0 5px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
+#howto .ht-ok:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35);box-shadow:0 2px 0 color-mix(in srgb,var(--ht-accent) 55%,#000)}
 #howto.done{display:grid;place-items:center;padding-bottom:max(18px,env(safe-area-inset-bottom))}
 #howto .ht-done{text-align:center;display:grid;gap:10px;justify-items:center;animation:ht-in .4s both}
 #howto .ht-done .e{font-size:4rem}

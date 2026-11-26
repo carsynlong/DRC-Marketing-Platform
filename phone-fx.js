@@ -24,7 +24,9 @@ const PFX = (() => {
       return true;
     } catch (e) { return false; }
   }
-  document.addEventListener("pointerdown", () => { ready(); if (prefs.music && wantSong && !song) music(wantSong); }, true);
+  // iOS only counts touchend / click as a gesture that may start audio (pointerdown isn't one), so listen for all three
+  const unlock = () => { ready(); if (prefs.music && wantSong && !song) music(wantSong); };
+  ["pointerdown", "touchend", "click"].forEach(t => document.addEventListener(t, unlock, true));
 
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
   function env(g, t, a, peak, dec) { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + dec); }

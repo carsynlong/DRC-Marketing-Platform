@@ -3,6 +3,8 @@
 // -> { game, me, taken, away, myAnswer }   away: taken names whose phone has gone quiet (they can rejoin)
 import { redis, hash, readGame, reply, text, prefix, safe, touch } from "../lib/redis.js";
 
+const owned = new Map();   // "<prefix><name>|<phone id>" -> when the database last confirmed this phone owns the name
+
 export default safe(async function handler(req, res) {
   const pid = text(req.query.pid, 64);
   const name = text(req.query.name, 40);
@@ -12,7 +14,14 @@ export default safe(async function handler(req, res) {
 
   let me = null, taken = null, away = null, myAnswer = null;
   // Cheap path: the phone already knows its name, just confirm it.
-  if (pid && name && (await redis.hget(p + "players", name)) === pid) me = name;
+  // Remembered for 10 seconds per warm server instance, like touch() (answering still checks the database itself).
+  if (pid && name) {
+    const k = p + name + "|" + pid, t = owned.get(k), now = Date.now();
+    if (t && now - t < 10000) me = name;
+    else if ((await redis.hget(p + "players", name)) === pid) { me = name; owned.set(k, now); }
+    else owned.delete(k);
+    if (owned.size > 400) for (const [x, v] of owned) if (now - v > 10000) owned.delete(x);
+  }
   if (!me) {
     // Name picker (or a phone that forgot its name): send the taken names, never the phone ids.
     const all = await hash(p + "players");

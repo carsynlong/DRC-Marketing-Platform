@@ -8,13 +8,14 @@
 const Sync = (() => {
   const SAVE = "tribute-host-game";
   let phones = [];        // names claimed by a phone
+  let quiet = [];         // of those, names whose phone stopped checking in (closed, asleep, left): treated as no phone
   let answers = {};       // phone answers for the current face: name -> answer
   let answersQi = -1;     // which face `answers` belongs to
   let counted = null;     // names whose phone answer was already applied at the reveal
-  let skew = null, lastPushed = "", pushing = false, polling = false, lastPoll = 0, lastSave = 0, pollKey = "", firstPoll = true;
+  let skew = null, lastPushed = "", pushing = false, polling = false, lastPoll = 0, lastSave = 0, pollKey = "", firstPoll = true, wiping = false;
 
   const post = body => fetch("/api/host", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  const hasPhone = n => phones.includes(n);
+  const hasPhone = n => phones.includes(n) && !quiet.includes(n);
 
   /* ---- what phones see. Never the photos, and never the right answer before the reveal. ---- */
   function snapshot() {
@@ -46,6 +47,7 @@ const Sync = (() => {
     return JSON.stringify(g);
   }
   async function push() {
+    if (wiping) return;
     const snap = snapshot();
     if (snap === lastPushed || pushing) return;
     pushing = true;
@@ -70,8 +72,8 @@ const Sync = (() => {
       // server clock minus this TV's clock (measured at the middle of the request)
       if (d.now) skew = d.now - (sent + Date.now()) / 2;
       if (d.react) floatReacts(d.react);
-      const before = phones.join("|"), had = phones;
-      phones = d.players.sort();
+      const before = phones.join("|") + "/" + quiet.join("|"), had = phones;
+      phones = d.players.sort(); quiet = Array.isArray(d.quiet) ? d.quiet : [];
       // Someone who just picked their name on a phone wants to play: switch them on.
       // (The host can still tap them to sit out. Skipped on the TV's first look after loading.)
       if (S.phase === "lobby" && !firstPoll) S.players.forEach(p => { if (phones.includes(p.name) && !had.includes(p.name)) p.on = true; });
@@ -83,7 +85,7 @@ const Sync = (() => {
             else if (S.ansAt[n] == null && S.qStart && S.phase === "question") S.ansAt[n] = Date.now() - S.qStart; } }
         answers = d.answers; answersQi = d.qi;
       }
-      if (S.phase === "lobby" && before !== phones.join("|")) render();
+      if (S.phase === "lobby" && before !== phones.join("|") + "/" + quiet.join("|")) render();
       if (S.phase === "question") showCount();
       if (S.phase === "reveal") lateAnswers();
     } catch (e) { /* try again next time */ }
@@ -202,7 +204,7 @@ const Sync = (() => {
     const ps = active();
     if (!ps.length) return "";
     const waiting = ps.filter(p => !hasPhone(p.name)).map(p => p.name);
-    const fresh = phones.filter(n => !shownIn.includes(n)); shownIn = phones.slice();
+    const live = phones.filter(hasPhone), fresh = live.filter(n => !shownIn.includes(n)); shownIn = live;
     const status = !waiting.length ? `<div class="status all">🎉 Everyone's in! Start the Games</div>`
       : waiting.length <= 4 ? `<div class="status">Waiting on ${waiting.map(esc).join(", ")}</div>` : "";
     const n = ps.length - waiting.length, bump = n !== shownCount; shownCount = n;
@@ -298,9 +300,12 @@ const Sync = (() => {
      then reload into a fresh lobby. Phones stay signed in and follow along (new game id = nothing stale). ---- */
   async function startOver() {
     if (!confirm("Start completely over? This wipes every answer, point and score for this game.")) return;
+    wiping = true;   // from here on the 250ms timer must not write the old game back over the fresh one
     try { await post({ action: "wipe" }); } catch (e) {}
-    try { localStorage.setItem(SAVE, JSON.stringify({ ...freshState(), gid: Date.now(), sound: S.sound, mutts: S.mutts })); } catch (e) {}
-    location.reload();
+    const f = freshState(), off = new Set(S.players.filter(p => p.on === false).map(p => p.name));   // keep who's sitting out
+    f.players.forEach(p => { if (off.has(p.name)) p.on = false; });
+    try { localStorage.setItem(SAVE, JSON.stringify({ ...f, gid: Date.now(), sound: S.sound, mutts: S.mutts })); } catch (e) {}
+    setTimeout(() => location.reload(), 200);   // a moment for the browser to store the fresh game before the page reloads
   }
   document.addEventListener("click", e => { if (e.target.closest("#wipeall")) startOver(); });
 
@@ -320,7 +325,7 @@ const Sync = (() => {
       return g;
     } catch (e) { return {}; }
   }
-  function save() { try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }
+  function save() { if (wiping) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }
 
   setInterval(() => {
     if (!S) return;

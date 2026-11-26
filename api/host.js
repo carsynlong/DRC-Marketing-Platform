@@ -45,9 +45,9 @@ export default async function handler(req, res) {
     const N = 200, idx = Array.from({ length: N }, (_, i) => i);
     const keys = [p + "coins", p + "spent", p + "asks", p + "reactlog", p + "mini", p + "ready",
       ...idx.flatMap(i => [`${p}answers:${i}`, `${p}anstime:${i}`, `${p}buys:${i}`])];
-    // District Secrets: bets, story votes, frames, the Fifth, Quick Draw, Most likely to. The bonus secrets, two truths
-    // and a lie, and the host's decoys people already wrote are kept (phones remember them, and they're not points).
-    if (p === "ds:") keys.push(p + "fifthused",
+    // District Secrets: bets, story votes, frames, the Fifth, Quick Draw, Most likely to, and everything written during
+    // practice (bonus secrets, two truths and a lie, the host's decoys). Phones forget theirs when they see the TV's new wipe stamp.
+    if (p === "ds:") keys.push(p + "fifthused", p + "subs", p + "approved", p + "ttl", p + "decoys",
       ...idx.flatMap(i => ["bets", "story", "switch", "storyans", "frame", "fifth", "duel", "duelat", "likely"].map(k => `${p}${k}:${i}`)));
     for (let i = 0; i < keys.length; i += 400) await redis.del(...keys.slice(i, i + 400));
     return reply(res, 200, { ok: true });

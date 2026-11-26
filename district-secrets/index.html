@@ -476,7 +476,7 @@ details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;fo
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-25-2";
+const BUILD="ds-build-2026-11-26-1";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -764,7 +764,7 @@ const hasPhone=n=>phones.includes(n);
 const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:"ds",...body})});
 function snapshot(){
   const inGame=S.phase!=="lobby"&&S.qi<Q.length;
-  const g={v:BUILD,gid:S.gid||0,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
+  const g={v:BUILD,gid:S.gid||0,wiped:S.wiped||undefined,phase:S.phase,qi:S.qi,total:Q.length,names:NAMES,playing:active().map(p=>p.name),
     locked:!(S.phase==="question"&&!S.locked),double:isDouble(S.qi),secs:qs(),opts:S.opts,bonus:!!Q[S.qi]?.bonus,base:Q.filter(x=>!x.bonus&&!x.ttl).length,lightning:!!Q[S.qi]?.lightning,ttl:Q[S.qi]?.ttl?{who:Q[S.qi].a,opts:Q[S.qi].opts}:undefined,
     howto:window.Rules&&Rules.active()?"secrets":undefined,
     hurry:S.phase==="question"&&!S.locked&&S.hurryEnds?S.hurryEnds:undefined,slow:["reveal","story","board","final"].includes(S.phase)&&S.slow?.length?S.slow:undefined,slowPen:NO_GUESS*qMult(S.qi),mult:qMult(S.qi),
@@ -1858,12 +1858,13 @@ function hostPhone(){
 }
 /* ↺ Start completely over: wipe every answer, point and score for this game (server and this TV), then reload into
    a fresh lobby. Phones stay signed in; the new game id makes them drop anything from the old game.
-   Kept: game options, seconds per secret, the host key, and bonus secrets / two truths and a lie people already wrote. */
+   Bonus secrets, two truths and a lie, and the host's decoys are wiped too (phones forget theirs via the wipe stamp).
+   Kept: game options, seconds per secret, the host key. */
 async function startOver(){
   if(!confirm("Start completely over? This wipes every answer, point and score for this game."))return;
   stopReading();
   try{await post({action:"wipe"})}catch(e){}
-  try{localStorage.setItem(SAVE,JSON.stringify({...freshState(),opts:S.opts,secs:S.secs,hostKey:S.hostKey,gid:Date.now(),total:BASE}))}catch(e){}
+  try{localStorage.setItem(SAVE,JSON.stringify({...freshState(),opts:S.opts,secs:S.secs,hostKey:S.hostKey,gid:Date.now(),wiped:Date.now(),total:BASE}))}catch(e){}
   location.reload();
 }
 // Back to the lobby with a clean slate. Phones keep their names and follow along.

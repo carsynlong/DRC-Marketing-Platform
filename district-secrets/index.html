@@ -478,6 +478,8 @@ details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;fo
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
 const BUILD="ds-build-2026-11-26-1";
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
+const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
+const dn=n=>window.XM?.dn?XM.dn(n):(AKA[n]||n);   // nickname, for text the page's name swap can't reach (capitals, attributes)
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
 const Q=[ /* the real fun facts the family sent in; edit wording here */
@@ -759,7 +761,8 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
    and reads who has signed in and each phone's private guess. */
 const API="/api/host?g=ds";
 let phones=[],answers={},answersQi=-1,counted=null,apiOk=false,firstPoll=true;
-let lastPushed="",pushing=false,polling=false,lastPoll=0,pollKey="",lastSave=0;
+let lastPushed="",pushing=false,polling=false,lastPoll=0,pollKey="",lastSave=0,lastGoodPoll=0;
+const apiFresh=()=>Date.now()-lastGoodPoll<5000;   // phones' guesses were read in the last few seconds
 const hasPhone=n=>phones.includes(n);
 const post=body=>fetch("/api/host",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:"ds",...body})});
 function snapshot(){
@@ -799,7 +802,7 @@ async function poll(){
   const qi=S.phase==="lobby"?null:S.qi;
   try{
     const r=await fetch(API+"&react=1"+(qi==null?"":`&qi=${qi}`),{cache:"no-store"});if(!r.ok)throw 0;
-    const d=await r.json();apiOk=true;
+    const d=await r.json();apiOk=true;lastGoodPoll=Date.now();
     const had=phones,before=phones.join("|");phones=d.players.sort();
     // someone just signed in on a phone: they want to play
     if(S.phase==="lobby"&&!firstPoll)S.players.forEach(p=>{if(phones.includes(p.name)&&!had.includes(p.name)){p.on=true;sfx("seal")}});
@@ -829,7 +832,7 @@ let dsx={bets:{},votes:{},approved:[],written:0,qi:-1},pollingX=false;
 const dsPost=body=>fetch("/api/ds",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
 async function pollX(){
   if(pollingX)return;pollingX=true;
-  try{const r=await fetch(`/api/ds?op=tv&qi=${S.qi}${S.duel?`&duel=${S.duel.round}`:""}${S.likely?`&likely=${S.likely.round}`:""}`,{cache:"no-store"});if(!r.ok)throw 0;const d=await r.json();
+  try{const r=await fetch(`/api/ds?op=tv&k=${encodeURIComponent(S.hostKey||"")}&qi=${S.qi}${S.duel?`&duel=${S.duel.round}`:""}${S.likely?`&likely=${S.likely.round}`:""}`,{cache:"no-store"});if(!r.ok)throw 0;const d=await r.json();
     const before=`${dsx.written}:${dsx.approved.length}:${(dsx.decoys||[]).length}`;dsx={...d,qi:S.qi};
     if(S.phase==="lobby"&&before!==`${dsx.written}:${dsx.approved.length}:${(dsx.decoys||[]).length}`)render();
     if(S.phase==="question")showBets();
@@ -899,6 +902,7 @@ const fooledList=()=>guessers().filter(p=>S.guesses?.[p.name]!=null&&!S.correct.
 /* who the room accused this round (decoys included), most first */
 function accusations(){
   const t={};Object.entries(S.guesses||{}).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
+    if(who===cur().a)return;   // nor is the owner's decoy
     const n=NAMES.find(n=>matches(v,n));if(n)t[n]=(t[n]||0)+1});
   return Object.entries(t).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
 }
@@ -1093,7 +1097,7 @@ async function afterLock(){
   if(!S.opts?.interro||cur().lightning||cur().ttl)return reveal(true);
   stopSong();await poll();
   const playing=new Set(active().map(p=>p.name)),t={};
-  Object.entries(current()).forEach(([who,v])=>{if(who===HOST&&gmPredicts())return;   // the Gamemaker's Most Wanted bet isn't an accusation
+  Object.entries(current()).forEach(([who,v])=>{if((who===HOST&&gmPredicts())||who===cur().a)return;   // the Gamemaker's Most Wanted bet and the owner's decoy aren't accusations
     const n=NAMES.find(n=>matches(v,n));if(n&&playing.has(n))t[n]=(t[n]||0)+1});
   const max=Math.max(0,...Object.values(t));
   if(!max)return reveal(true);
@@ -1141,7 +1145,7 @@ function curtains(fn,sign=""){
 function closeRoom(){if(!S.roomOpen)return;S.roomOpen=false;clearInterval(drumT);drumT=0;stopSong();sfx("stamp");const s=$(".room .how");if(s)s.innerHTML="🔒 <b>Votes are final.</b> Press Space to open the seal."}
 let switchSeen=0;
 function showSwitches(){
-  const n=Object.keys(curX().switches||{}).filter(x=>x!==cur().a).length,el=$(".room .switched");if(!el)return;
+  const orig=current(),n=Object.entries(curX().switches||{}).filter(([x,v])=>x!==cur().a&&orig[x]!=null&&norm(v)!==norm(orig[x])).length,el=$(".room .switched");if(!el)return;
   if(n>switchSeen){sfx("swap");el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump")}switchSeen=n;
   el.textContent=n?`🔄 ${n} tribute${n>1?"s":""} changed their vote!`:"";
 }
@@ -1193,6 +1197,8 @@ function score(){
   // speed bonus: up to 500 for sealing a right guess the moment the secret appears
   const speed=n=>Math.round((cur().hide?1000:500)*Math.max(0,1-(S.seenAt?.[n]??qs())/qs())/10)*10*mult;   // 🖤 redacted: up to 1000
   S.slow=[];
+  const fresh=apiFresh();   // lost touch with the phones: nobody gets fined for a guess the TV couldn't read
+  if(!fresh&&phones.length)toast?.("📡 Can't reach the phones right now, so nobody was fined for a missing guess");
   S.players.forEach(p=>{
     p.note="";
     if(!p.on){p.delta=0;return}
@@ -1218,7 +1224,8 @@ function score(){
       p.delta=d;p.score+=d;p.right++;p.note=notes.join(" · ")}
     else{p.streak=0;p.delta=0;
       // signed in on a phone but never sealed a guess: time ran out
-      if(S.guesses?.[p.name]==null&&hasPhone(p.name)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;if(p.delta<0)S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
+      // 🤥 the Gamemaker has seen every lie in her host tools, so she can sit two truths and a lie out
+      if(S.guesses?.[p.name]==null&&hasPhone(p.name)&&fresh&&!(p.name===HOST&&cur().ttl)){p.delta=-Math.min(NO_GUESS*mult,p.score);p.score+=p.delta;if(p.delta<0)S.slow.push(p.name);p.note=`⏰ No guess in time`+(p.delta?` −${-p.delta}`:" (no points to lose yet)");return}   // phones get the ⏰ Too slow pop-up (howto.js)
       if(S.guesses?.[p.name]!=null&&(bet==="sure"||bet==="allin")){const loss=(bet==="allin"?500:250)*mult;p.delta=-Math.min(loss,p.score);p.score+=p.delta;const lost=-p.delta;p.note=(bet==="allin"?"💀 All in… and wrong":"🎯 Sure… and wrong")+(lost?` −${lost}`:" (no points to lose yet)")}}
   });
   accusations().forEach(([n,c])=>{const q=S.players.find(p=>p.name===n);if(q)q.accused+=c});
@@ -1231,7 +1238,7 @@ function score(){
   // last of the 8: bonus secrets written on phones tonight (approved on the host phone) become a bonus round
   if(S.qi===Q.length-1)addTTL();   // 🤥 two truths and a lie rounds come next
   if(S.qi===Q.length-1&&S.opts?.bonus&&!S.bonusDone&&dsx.approved?.length){
-    S.extra=dsx.approved.map(x=>({f:x.text,a:x.name,bonus:true}));Q.push(...S.extra);S.bonusDone=true}
+    const bonus=dsx.approved.filter(x=>x.text&&x.name).map(x=>({f:x.text,a:x.name,bonus:true}));S.extra=[...S.extra,...bonus];Q.push(...bonus);S.bonusDone=true}   // after any two truths and a lie, same order a reload rebuilds
   S.phase=S.qi===Q.length-1?"final":"board";
   if(S.phase==="final"&&showdownDue())return startShowdown();
   if(S.phase==="final"){stopSong();confetti(260,true);winSong(S.champ||ranked()[0]?.name)}else playSong("board");
@@ -1363,7 +1370,7 @@ function lightView(){return `<section class="center">${EMBLEM}<div class="num">�
   <p>Three secrets, back to back. <b>10 seconds</b> each, <b>double points</b>. No interrogations, no stories. Go go go!</p>
   <button class="btn wax" id="begin">Strike!</button><div class="tiny">Space to begin</div></section>`}
 function ttlCardView(){const n=Q.filter(x=>x.ttl).length;return `<section class="center">${EMBLEM}<div class="num">🤥 TWO TRUTHS AND A LIE</div><h1>Two Truths & a Lie</h1>
-  <p>${n} of you wrote two truths and a lie about yourself. Three statements on the screen: tap the <b>lie</b> on your phone. Fool the room and you earn 150 for each person.</p>
+  <p>Up next: two truths and a lie from ${n===1?"one of you":`${n} of you`}. Three statements on the screen: tap the <b>lie</b> on your phone. Fool the room and you earn 150 for each person.</p>
   <button class="btn wax" id="begin">Let's hear them</button><div class="tiny">Space to begin</div></section>`}
 /* 🤥 two truths and a lie rounds: added after the real secrets (and decoys) */
 function addTTL(){
@@ -1375,7 +1382,7 @@ function ttlQuestionView(){
   const x=cur(),tot=guessers().length;
   return `<div class="top"><div><div class="eyebrow">🤥 Two truths and a lie</div><div class="qnum">${esc(x.a)}: which one is the lie?</div></div>
     <div class="timer" aria-label="Seconds left"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38" fill="#a3182b"/></svg><div class="n">${qs()}</div></div></div>
-  <article class="file"><div class="hdr"><span>${esc(x.a.toUpperCase())}</span><span>TWO TRUTHS · ONE LIE</span></div>
+  <article class="file"><div class="hdr"><span>${esc(dn(x.a).toUpperCase())}</span><span>TWO TRUTHS · ONE LIE</span></div>
     ${x.opts.map((o,i)=>`<p class="fact" style="min-height:0;font-size:clamp(1.3rem,3vw,2.3rem);margin:.25em 0"><b style="color:var(--wax)">${i+1}.</b> ${esc(o)}</p>`).join("")}
     <div class="fuse" aria-hidden="true"><i></i><b></b></div></article>
   <div class="sealedrow"><div class="envs" aria-hidden="true">${ENV.repeat(tot)}</div><div class="sealedtxt" id="sealedtxt">${sealedLine(sealedCount(),tot)}</div></div>
@@ -1446,11 +1453,11 @@ function lightBrief(){
 function ttlBrief(){
   const n=Q.filter(x=>x.ttl).length,s=S.secs;
   return {eyebrow:"🤥 TWO TRUTHS AND A LIE",title:"Two Truths and a Lie",intro:"Welcome to Two Truths and a Lie. Here's how it works.",start:"▶ Let's hear them",steps:[
-    ["🤥",`${n} of you wrote <b>two truths and a lie</b>. All three statements go up on the screen.`,`${n} of you wrote two truths and a lie. All three statements go up on the screen.`],
+    ["🤥",`Up next: <b>two truths and a lie</b> from ${n===1?"one of you":`${n} of you`}. All three statements go up on the screen.`,`Up next: two truths and a lie from ${n===1?"one of you":`${n} of you`}. All three statements go up on the screen.`],
     ["📱",`On your phone, tap the one you think is the <b>lie</b>. You have <b>${s} seconds</b>.`,`On your phone, tap the one you think is the lie. You have ${s} seconds.`],
     ["✅","Find the lie: <b>1,000 points</b>, plus a speed bonus and extra for a streak.","Find the lie, and you get 1000 points, plus a speed bonus, and extra for a streak."],
     ["🎭","Your own? Keep a straight face. <b>+150</b> for every person who picks a truth.","If it's your own, keep a straight face. You get plus 150 for every person who picks a truth."],
-    ["⏰","No answer in time: <b>-200</b>.","No answer in time is minus 200."],
+    ["⏰","No answer in time: <b>-200</b>. The Gamemaker has seen every lie, so she can sit these out.","No answer in time is minus 200. The Game maker has seen every lie, so she can sit these out."],
     ["🔓","No interrogation, no story. When time's up, the lie is revealed.","No interrogation, no story. When time's up, the lie is revealed."]]};
 }
 function betsBrief(){
@@ -1534,7 +1541,7 @@ const dialHTML=c=>`<div class="dial"><svg viewBox="0 0 200 200" aria-hidden="tru
   <circle cx="100" cy="100" r="94" fill="#1b1328" stroke="#d9b25f" stroke-width="4"/>
   ${Array.from({length:40},(_,i)=>`<line x1="100" y1="10" x2="100" y2="${i%5?18:26}" stroke="#d9b25f" stroke-width="${i%5?1.5:3}" transform="rotate(${i*9} 100 100)"/>`).join("")}
   <circle cx="100" cy="100" r="64" fill="#a3182b" stroke="#5e0a17" stroke-width="5"/></g></svg><div class="big">${c}</div></div>`;
-const giftTag=()=>isDouble(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
+const giftTag=()=>isDouble(S.qi)?`<span class="gift">🎁 Double points</span>`:"";
 function readyView(){
   return `<section class="center"><div class="eyebrow">Secret ${S.qi+1} of ${Q.length}</div>${giftTag()}${dialHTML(S.count)}<div class="quip">Unlocking the next file…</div></section>`;
 }
@@ -1626,7 +1633,7 @@ function revealView(){
   const line=!right.length?"Nobody cracked it. The secret was safe.":right.length===tot?"Every single tribute cracked it!":`${right.length} of ${tot} tributes cracked it`;
   return `<div class="top"><div><div class="eyebrow">Secret ${S.qi+1} of ${Q.length} · Declassified</div></div>${giftTag()}${sndBtn()}</div>
   <section class="reveal">
-    <div class="polaroid"><span class="tape"></span><img src="${RV(x.a)}" alt="${esc(x.a)}"><div class="stamp">Declassified</div><div class="cap">District ${DISTRICT(x.a)}</div></div>
+    <div class="polaroid"><span class="tape"></span><img src="${RV(x.a)}" alt="${esc(dn(x.a))}"><div class="stamp">Declassified</div><div class="cap">District ${DISTRICT(x.a)}</div></div>
     <div class="rv">
       <div class="dist">IT BELONGS TO…</div>
       <div class="who">${esc(x.a)}</div>
@@ -1773,11 +1780,17 @@ if(S.phase==="showdown"&&S.duel&&["steady","draw"].includes(S.duel.state))S.duel
 if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,qs()-8))}
 /* the host phone (approving bonus secrets) proves itself with this key */
 S.hostKey=S.hostKey||(crypto.randomUUID?crypto.randomUUID().replace(/-/g,""):Math.random().toString(36).slice(2)+Date.now().toString(36));
-dsPost({op:"hostkey",k:S.hostKey}).catch(()=>{});
-if(S.phase==="ready")S.phase="roundcard";
+// the server only lets this TV renew its own key; it lapses after 10 minutes without a renewal
+let keyAt=0,keyWarned=false;
+async function sendKey(){keyAt=Date.now();try{const r=await dsPost({op:"hostkey",k:S.hostKey});
+  if(r.status===409&&!keyWarned){keyWarned=true;toast("🔑 Another screen holds the host key. Close it, or wait 10 minutes, for bonus secrets and two truths and a lie")}else if(r.ok)keyWarned=false}catch(e){}}
+sendKey();
+if(S.phase==="scspin"&&!S.second?.pair)S.second=null;   // a reload mid Second Chance spin: spin again (below)
 render();
+if(S.phase==="scspin"&&!S.second)secondSpin();
+if(S.phase==="ready")beginQuestionNow();   // a reload mid countdown: count down to the same secret again
 try{speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{}}catch(e){}
-setInterval(()=>{push();maybePoll();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
+setInterval(()=>{push();maybePoll();if(Date.now()-keyAt>60000)sendKey();if(Date.now()-lastSave>1000){lastSave=Date.now();save()}arena()},250);
 
 /* ---------- floating secrets: envelopes, wax seals, keys, quills, magnifiers, padlocks, scrolls ---------- */
 let lastArena="";
@@ -1851,7 +1864,7 @@ function skipToEnd(asked){
 // A QR code for the host's own phone: it lists the bonus secrets people wrote (anonymous) to approve or skip.
 // Scanning it once also marks that phone as the host's, so signing in as Carsyn there shows 🔑 Host tools.
 function hostPhone(){
-  const url=`${location.origin}/district-secrets/host?k=${S.hostKey}`;dsPost({op:"hostkey",k:S.hostKey}).catch(()=>{});
+  const url=`${location.origin}/district-secrets/host?k=${S.hostKey}`;sendKey();
   let qr="";try{const q=qrcode(0,"M");q.addData(url);q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
   const m=document.createElement("div");m.className="modal";
   m.innerHTML=`<div class="box"><div class="eyebrow" style="color:#6b5233">Host only</div><h2 style="margin:0">Scan once with your phone</h2><div class="qr">${qr}</div>

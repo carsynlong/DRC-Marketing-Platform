@@ -162,9 +162,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .rate button span{font-size:2.2rem}
 .rate button[aria-pressed="true"]{box-shadow:inset 0 0 0 3px var(--gold);background:rgba(217,178,95,.16);animation:bump .5s}
 .hot{width:min(60%,220px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 5px var(--gold-hi),0 0 40px 10px rgba(255,240,190,.3)}
-/* certificate */
-.cert{display:grid;gap:10px;justify-items:center;width:100%}
-.cert img{width:100%;border-radius:6px;box-shadow:0 14px 30px rgba(0,0,0,.6)}
 /* How to play on the phone: one short card per rule, grouped, appearing as the TV reads them */
 .rules{display:grid;gap:8px}
 .rules .sec{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:800;margin:8px 0 0 4px}
@@ -299,6 +296,8 @@ const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to pop it up on the
 /* 🔑 Host tools: the host's phone scanned the TV's host code once (host.html saves the key);
    when it's signed in as Carsyn, a button opens the bonus secrets to approve. Anonymous: text only, never who wrote it. */
 const HOST_NAME="Carsyn";
+const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
+const dn=n=>window.XM?.dn?XM.dn(n):(AKA[n]||n);   // nickname, for text the page's name swap can't reach (pop-ups, capitals)
 const NO_GUESS=200;
 const FAKE="🃏 FAKE";   // sealed when you call a secret fake (matches the TV)   // points lost for not sealing a guess in time (matches the TV)
 const hostKey=()=>store.get("ds-hostkey");
@@ -347,7 +346,7 @@ function hostDraw(){
   p.querySelectorAll("[data-hok]").forEach(x=>x.onclick=()=>hostDecide(x.dataset.hok,true));
   p.querySelectorAll("[data-hno]").forEach(x=>x.onclick=()=>hostDecide(x.dataset.hno,false));
   const dt2=p.querySelector("#decoytext");if(dt2&&draft){dt2.value=draft;if(dfoc)dt2.focus()}
-  p.querySelectorAll("[data-unttl]").forEach(x=>x.onclick=async()=>{if(!confirm(`Remove ${x.dataset.unttl}'s two truths and a lie?`))return;try{await post("/api/ds",{op:"ttlremove",name:myName,who:x.dataset.unttl})}catch(e){}sfx("tap");hostLoad()});
+  p.querySelectorAll("[data-unttl]").forEach(x=>x.onclick=async()=>{if(!confirm(`Remove ${dn(x.dataset.unttl)}'s two truths and a lie?`))return;try{await post("/api/ds",{op:"ttlremove",name:myName,who:x.dataset.unttl})}catch(e){}sfx("tap");hostLoad()});
   p.querySelectorAll("[data-undecoy]").forEach(x=>x.onclick=()=>hostDecoy("undecoy",x.dataset.undecoy));
   const df2=p.querySelector("#decoyform");if(df2)df2.onsubmit=e=>{e.preventDefault();const t=p.querySelector("#decoytext").value.trim();if(t){p.querySelector("#decoytext").value="";hostDecoy("decoy",t)}};
 }
@@ -382,7 +381,7 @@ function phoneRules(o){
   if(o.interro)r.push(["Extras","🔦","Interrogation Room","Most accused defends themselves. You can change your vote: right = +250, talked out of it = −500."]);
   if(o.story)r.push(["Extras","🎤","Story time","Your secret? Accept to tell the story: +300. Decline or no answer: −200. Rate others 🔥 😂 🤯 🤔 😴 👎"]);
   if(o.redact)r.push(["Extras","🖤","Redacted files","Words are blacked out and uncovered one by one. Guess early = bigger bonus."]);
-  if(o.golden)r.push(["Extras","✨","Golden file","One secret is secretly worth TRIPLE. Revealed at the end."]);
+  if(o.golden)r.push(["Extras","✨","Golden file","One secret is secretly worth TRIPLE. You find out which one when it's revealed."]);
   if(o.frame)r.push(["Extras","🎯","Frame job","Your secret? Pick someone to frame. Room accuses them most = +400."]);
   if(o.fifth)r.push(["Extras","🤐","Plead the Fifth","In the hot seat? End it once per game. Costs 100."]);
   if(o.showdown)r.push(["Extras","⚔️","Quick Draw","Tied at the end? When the TV says DRAW, first tap wins. Too soon = you lose!"]);
@@ -685,7 +684,8 @@ function view(){
     if(g.phase==="reveal"){const right=(g.correct||[]).includes(D.me);
       return [key+"tr"+right,header()+(right?msg("🕵️","You found the lie!","<p>Nice detective work.</p>","right"):msg("🤥",pickI?"Fooled you!":"No pick this time",`<p>${pickI?`You picked #${pickI}.`:"You didn't pick one."} Check the TV for the lie.</p>`,"wrong"))+reactBar(),right?"right":"wrong"];}
     if(pickI)return [key+"tp"+pickI,header()+msg("🔏",`Sealed: #${pickI} is the lie`,`<p class="said">“${esc(T.opts[pickI-1])}”</p><p>Eyes on the TV.</p>`)+reactBar(),"seal"];
-    if(g.locked)return [key+"tl",header()+msg("💥","Time's up!",`<p class="said">No pick: −${NO_GUESS} points.</p>`,"wrong"),"wrong"];
+    if(g.locked){const pen=Math.min(g.slowPen||NO_GUESS,meScore()?.score||0);   // the Gamemaker has seen the lies, so she isn't fined for sitting it out (matches the TV)
+      return [key+"tl",header()+msg("💥","Time's up!",D.me===HOST_NAME?"<p>You've seen every lie, so no fine for sitting this one out.</p>":pen>0?`<p class="said">No pick: −${pen} points.</p>`:"<p class=\"said\">No pick this time.</p>","wrong"),"wrong"]}
     return [key+"ta"+!!g.left,header()+`<section class="msg" style="flex:none;padding:4px 0 0"><div class="eyebrow">🤥 ${esc(T.who)}'s two truths and a lie</div><h1 style="font-size:1.5rem">Which one is the lie?</h1></section>
       ${g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left</div>`:""}
       <div style="display:grid;gap:10px">${T.opts.map((o,i)=>`<button class="btn" data-ttl="${i+1}" style="text-align:left;min-height:64px;font-family:var(--type);font-size:1.05rem;background:var(--parch);color:var(--parch-ink);box-shadow:0 4px 0 #c9b385"><b style="color:var(--wax)">${i+1}.</b> ${esc(o)}</button>`).join("")}</div>`,"shh"];
@@ -755,13 +755,13 @@ function view(){
     const b=betNow(),bl={sure:"🎯 Sure bet: +500 if right, −250 if wrong",allin:"💀 All in: double if right, −500 if wrong"}[b];
     if(mine)return [key+"sealed:"+mine+b+myFrameNow()+!!moleTarget(g),header()+(mineSecret?framer(g):moleNote(g))+`<section class="msg">${ENV}<h1>Sealed!</h1>
       <p class="said">${mine===FAKE?"You called it: <b>🃏 FAKE</b>":`${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b>`}</p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p>${Memes.html("secrets",g.gid,g.qi)}</section>${reactBar()}`,"seal"];
-    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":((meScore()?.score||0)>0?`<p class="said">No guess sealed: −${Math.min(NO_GUESS,meScore().score)} points.</p><p>Get the next one!</p>`:`<p class="said">No guess sealed this time.</p><p>Get the next one!</p>`),"wrong"),"wrong"];
+    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":((meScore()?.score||0)>0?`<p class="said">No guess sealed: −${Math.min(g.slowPen||NO_GUESS,meScore().score)} points.</p><p>Get the next one!</p>`:`<p class="said">No guess sealed this time.</p><p>Get the next one!</p>`),"wrong"),"wrong"];
     return [key+"ask"+mineSecret+b+!!g.left+(g.hide||[]).length+myFrameNow()+!!moleTarget(g),header()+fileCard(g)+(!mineSecret?moleNote(g)+betPicker():"")+(mineSecret
       ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>${framer(g)}`:"")+
       (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${g.slowPen||NO_GUESS}`}</div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">
-      <button class="btn" type="submit">🔏 Seal my guess</button>${g.opts?.decoys?`<button class="btn" type="button" id="fakebtn" style="background:#2b1d12;box-shadow:0 4px 0 #000;min-height:52px;font-size:1.05rem">🃏 It's fake! Nobody said that</button>`:""}<p class="hint">Nobody else sees your guess.${mineSecret?"":` No guess before time's up: −${NO_GUESS}.`}</p></form>`,mineSecret?"shh":""];
+      <button class="btn" type="submit">🔏 Seal my guess</button>${g.opts?.decoys?`<button class="btn" type="button" id="fakebtn" style="background:#2b1d12;box-shadow:0 4px 0 #000;min-height:52px;font-size:1.05rem">🃏 It's fake! Nobody said that</button>`:""}<p class="hint">Nobody else sees your guess.${mineSecret?"":` No guess before time's up: −${g.slowPen||NO_GUESS}.`}</p></form>`,mineSecret?"shh":""];
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer;
@@ -781,7 +781,7 @@ function view(){
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You know all!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Christmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+`<div class="cert"><button class="btn" id="cert">📜 Get my certificate</button><div id="certout"></div></div>`+standings()+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Thanksmas, tribute!"}</p>${(g.awards||[]).length?`<div class="awards">${g.awards.map(a=>`<div class="award${a.name.split(" & ").includes(D.me)?" me":""}"><span class="ic">${a.ic}</span><div><b>${esc(a.t)}</b>${esc(a.name)} · ${esc(a.why)}</div></div>`).join("")}</div>`:""}`,won?"win":"")+standings()+reactBar()+soundBtn(),won||(g.awards||[]).some(a=>a.name.split(" & ").includes(D.me))?"win":""];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }
@@ -831,7 +831,6 @@ function render(){
   document.querySelectorAll("[data-ttl]").forEach(b=>b.onclick=()=>{sfx("tap");buzz(15);send("TTL"+b.dataset.ttl)});
   document.querySelectorAll("[data-likely]").forEach(b=>b.onclick=()=>likelyVote(b.dataset.likely));
   document.querySelectorAll("#nobonus").forEach(b=>b.onclick=()=>{sfx("tap");declined=true;editing=false;store.set("ds-nobonus","1");lastKey="";render()});
-  const cb=$("#cert");if(cb)cb.onclick=()=>certificate(cb);
   document.querySelectorAll("[data-frame]").forEach(b=>b.onclick=()=>frameSomeone(b.dataset.frame));
   const ff=$("#fifth");if(ff)ff.onclick=pleadFifth;
   const dt3=$("#drawtap");if(dt3){dt3.onpointerdown=e=>{e.preventDefault();drawTap()}}
@@ -862,51 +861,6 @@ function render(){
   const busy=document.querySelector("#g,[data-name],#secret,#t1,[data-ttl],[data-likely],[data-vote],#app figure,#drawtap,.write")||["interro","howto"].includes(D.game?.phase);   // nothing floating over text people need to read
   if(!D.me||busy||!D.game){Ambient.set("off");if(busy)Ambient.clear()}
   else Ambient.set("full",{theme:"ds",tap:true,sound:k=>sfx(k),key:addKey,max:3,every:[2000,3400]});
-}
-/* ---------- a keepsake certificate, drawn on the phone and saved to the camera roll ---------- */
-async function certificate(btn){
-  btn.disabled=true;btn.textContent="📜 Sealing your certificate…";
-  const g=D.game,s=meScore()||{},W=1080,H=1350,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
-  try{await document.fonts?.ready}catch(e){}
-  // parchment
-  const bg=x.createRadialGradient(W/2,H/2,200,W/2,H/2,900);bg.addColorStop(0,"#f6ecd2");bg.addColorStop(1,"#d9c59a");x.fillStyle=bg;x.fillRect(0,0,W,H);
-  x.strokeStyle="#8a6a26";x.lineWidth=10;x.strokeRect(40,40,W-80,H-80);x.lineWidth=3;x.strokeRect(62,62,W-124,H-124);
-  x.textAlign="center";x.fillStyle="#2b1d12";
-  const font=(w,sz,f)=>x.font=`${w} ${sz}px ${f}`;
-  font(700,34,'"Cinzel", Georgia, serif');x.fillStyle="#8a6a26";x.fillText("THE 2026 CHRISTMAS GAMES",W/2,140);
-  font(900,84,'"Cinzel Decorative", Georgia, serif');x.fillStyle="#a3182b";x.fillText("District Secrets",W/2,240);
-  font(400,30,'"Special Elite", "Courier New", monospace');x.fillStyle="#6b5233";x.fillText("CAPITOL ARCHIVES · CERTIFICATE OF HONOR",W/2,295);
-  // photo
-  const img=new Image();img.src=`img/r${pad(dist())}.jpg`;
-  await new Promise(r=>{img.onload=r;img.onerror=r});
-  const cx=W/2,cy=505,R=150;
-  x.save();x.beginPath();x.arc(cx,cy,R+14,0,7);x.fillStyle="#d9b25f";x.fill();x.beginPath();x.arc(cx,cy,R,0,7);x.clip();
-  if(img.naturalWidth){const k=Math.max(2*R/img.naturalWidth,2*R/img.naturalHeight);x.drawImage(img,cx-img.naturalWidth*k/2,cy-img.naturalHeight*k/2,img.naturalWidth*k,img.naturalHeight*k)}
-  x.restore();
-  font(400,30,'"Special Elite", "Courier New", monospace');x.fillStyle="#6b5233";x.fillText("THIS CERTIFIES THAT",W/2,715);
-  font(900,86,'"Cinzel Decorative", Georgia, serif');x.fillStyle="#2b1d12";x.fillText(D.me,W/2,805,W-180);
-  font(700,36,'"Cinzel", Georgia, serif');x.fillStyle="#a3182b";
-  x.fillText(`District ${dist()} · finished #${s.rank||"?"} of ${g.scores?.length||"?"} · ${fmt(s.score)} points`,W/2,870,W-160);
-  const mine=(g.awards||[]).filter(a=>a.name.split(" & ").includes(D.me));
-  // one line of stats, then up to three awards (each on its own line), all above the signature
-  const stats=`🔮 Cracked ${s.right||0} · 🎭 Fooled ${s.fooled||0}${s.story?` · 🎤 ${s.story} vote${s.story===1?"":"s"}`:""}`;
-  font(400,34,'"Special Elite", "Courier New", monospace');x.fillStyle="#6b5233";x.fillText(stats,W/2,935,W-200);
-  font(700,40,'"Cinzel", Georgia, serif');x.fillStyle="#2b1d12";
-  mine.slice(0,3).forEach((a,i)=>x.fillText(`${a.ic} ${a.t}`,W/2,1010+i*54,W-420));
-  // wax seal + signature
-  const sx=W-180,sy=H-180;x.beginPath();for(let a=0;a<Math.PI*2;a+=Math.PI/12){const r=a%(Math.PI/6)<.01?92:84;x.lineTo(sx+Math.cos(a)*r,sy+Math.sin(a)*r)}x.closePath();x.fillStyle="#a3182b";x.fill();
-  x.beginPath();x.arc(sx,sy,58,0,7);x.strokeStyle="#5e0a17";x.lineWidth=6;x.stroke();font(900,54,'"Cinzel", Georgia, serif');x.fillStyle="#f6dfa0";x.fillText("DS",sx,sy+18);
-  x.strokeStyle="#6b5233";x.lineWidth=2;x.beginPath();x.moveTo(130,H-150);x.lineTo(470,H-150);x.stroke();
-  font(400,26,'"Special Elite", "Courier New", monospace');x.fillStyle="#6b5233";x.textAlign="left";x.fillText("Head Gamemaker",130,H-112);
-  font(400,44,'"Cinzel Decorative", Georgia, serif');x.fillStyle="#2b1d12";x.fillText("The Capitol",140,H-165);
-  // hand it over
-  c.toBlob(async blob=>{
-    const file=new File([blob],`District-Secrets-${D.me.replace(/\W+/g,"-")}.png`,{type:"image/png"}),url=URL.createObjectURL(blob);
-    $("#certout").innerHTML=`<img src="${url}" alt="Your District Secrets certificate"><a class="btn" style="text-align:center;text-decoration:none" href="${url}" download="${file.name}">⬇️ Save it</a><p class="hint" style="margin:0;text-align:center;color:var(--muted);font-size:.85rem">Or press and hold the picture to save it.</p>`;
-    btn.textContent="📜 Your certificate";
-    try{if(navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:"District Secrets"})}catch(e){}
-    FX(60);sfx("win");
-  },"image/png");
 }
 setInterval(()=>{if(isHost()&&!hostOpen&&!document.hidden)hostLoad()},10000);
 poll();

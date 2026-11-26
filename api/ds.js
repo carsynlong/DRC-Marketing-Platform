@@ -21,8 +21,10 @@
 //   POST { op: "clearSecrets", k }                throw them all away
 //   POST { op: "decoy", text } / { op: "undecoy", text }   🃏 the host's own made-up secrets (shuffled in before the built-in ones)
 // TV:
-//   POST { op: "hostkey", k }                     the key the host phone must show
-//   GET  ?op=tv&qi=N                              bets + story votes for secret N, approved bonus secrets
+//   POST { op: "hostkey", k }                     the key the host phone must show. Only the TV that set it can renew it:
+//                                                 a different key is refused until the old one lapses (10 minutes without a renewal)
+//   GET  ?op=tv&qi=N&k=KEY                        bets + story votes for secret N; with the TV's key also the
+//                                                 two truths and a lie (with the lies) and approved bonus secrets (with who wrote them)
 //   POST { op: "reset", total }                   new game: clear bets and votes
 import { redis, hash, readGame, reply, text } from "../lib/redis.js";
 
@@ -31,9 +33,11 @@ const BETS = ["hunch", "sure", "allin"], VOTES = ["fire", "lol", "wow", "sense",
 const isPlayer = async (name, pid) => typeof name === "string" && !!pid && (await redis.hget(P + "players", name)) === pid;
 const HOST_NAME = "Carsyn";   // the host approves bonus secrets on her own phone, signed in as herself
 const isHost = async q => (q.name === HOST_NAME && (await isPlayer(HOST_NAME, q.pid))) ||
-  (typeof q.k === "string" && q.k.length >= 8 && (await redis.get(P + "hostkey")) === q.k);
+  (await keyOk(q.k));
 const parse = s => { try { return JSON.parse(s); } catch { return null; } };
 // same as the TV and phones: lets the server check "this secret is yours" without knowing whose it is
+const HOSTKEY_TTL = 600;   // seconds: the TV renews its key every minute
+const keyOk = async k => typeof k === "string" && k.length >= 8 && (await redis.get(P + "hostkey")) === k;
 const ownTag = (gid, qi, name) => { let h = 5381; for (const c of `${gid}|${qi}|${name}`) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return (h >>> 0).toString(36); };
 
 export default async function handler(req, res) {
@@ -53,9 +57,12 @@ export default async function handler(req, res) {
       Number.isInteger(qi) ? redis.get(`${P}fifth:${qi}`) : null,
       Number.isInteger(duelRound) ? hash(`${P}duel:${duelRound}`) : {},
     ]);
-    const [ttl, likely] = await Promise.all([hash(P + "ttl"), Number.isInteger(likelyRound) ? hash(`${P}likely:${likelyRound}`) : {}]);
-    const approved = Object.keys(subs).filter(n => ok[n] === "1").map(n => ({ name: n, text: parse(subs[n])?.text })).filter(x => x.text);
-    return reply(res, 200, { bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel, ttl, likely, decoys: await redis.lrange(P + "decoys", 0, 49) });
+    const [ttlAll, likely, tv] = await Promise.all([hash(P + "ttl"), Number.isInteger(likelyRound) ? hash(`${P}likely:${likelyRound}`) : {}, keyOk(q.k)]);
+    const approvedAll = Object.keys(subs).filter(n => ok[n] === "1").map(n => ({ name: n, text: parse(subs[n])?.text })).filter(x => x.text);
+    // the lies and the bonus secrets' writers are spoilers: only the TV (with its key) gets them; anyone else just sees how many
+    const ttl = tv ? ttlAll : Object.fromEntries(Object.keys(ttlAll).map((n, i) => [`#${i + 1}`, ""]));
+    const approved = tv ? approvedAll : approvedAll.map(() => ({ name: "", text: "" }));
+    return reply(res, 200, { tv, bets, votes, approved, written: Object.keys(subs).length, switches, storyAns, frames, fifth, duel, ttl, likely, decoys: tv ? await redis.lrange(P + "decoys", 0, 49) : [] });
   }
   if (req.method === "GET" && op === "review") {
     if (!(await isHost(q))) return reply(res, 403, { error: "Only the host's phone can do that" });
@@ -179,7 +186,11 @@ export default async function handler(req, res) {
   if (op === "hostkey") {
     const k = text(q.k, 64);
     if (!k || k.length < 8) return reply(res, 400, { error: "Bad key" });
-    await redis.set(P + "hostkey", k);
+    // first come: a key nobody holds yet; after that only the same key renews it (so a phone can't take over the TV's key)
+    if (!(await redis.set(P + "hostkey", k, { nx: true, ex: HOSTKEY_TTL }))) {
+      if ((await redis.get(P + "hostkey")) !== k) return reply(res, 409, { error: "Another screen holds the host key" });
+      await redis.set(P + "hostkey", k, { ex: HOSTKEY_TTL });
+    }
     return reply(res, 200, { ok: true });
   }
   if (op === "reset") {

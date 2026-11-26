@@ -1693,13 +1693,14 @@ const SLIDES=[
      st(()=>announcer.say("Let the reaping begin!",null,{pitch:.2,rate:.9}),500);
      all.forEach((n,k)=>st(()=>pull(n,k),1500+k*1000));
      st(()=>{bowl.querySelector(".pulled")?.remove();el.querySelectorAll(".rp").forEach(c=>c.classList.add("in"));XM.sfx("fanfare")},1500+all.length*1000+400)}},
- ...TRIBUTES.map(t=>({id:"d"+t.d,music:"march",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
+ ...TRIBUTES.map(t=>({id:"d"+t.d,music:"stop",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${districtFX(t.d)}${t.d===11?`<div class="qcrown">👑</div>`:""}${DISTRICT_FX[t.d]?`<div class="dbadge">DISTRICT ${t.d} · ${DISTRICT_FX[t.d].ind}</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">DISTRICT ${t.d}</span></div>
     <div style="display:grid;gap:26px">
       <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.name==="Carsyn"?"YOUR GAMEMAKER":t.name==="Brandon"?t.label:XM.AKA[t.name]?"REAL NAME: "+t.name.toUpperCase():(t.label||"TRIBUTE PROFILE")}</div>
       <h1 class="title-xl slam" ${d(.7)} style="font-size:${XM.dn(t.name).length>18?96:XM.dn(t.name).length>8?118:150}px">${esc(t.name)}</h1>
       ${[["canes","WEAPON OF CHOICE",t.weapon],["snowflake","SURVIVAL STRATEGY",t.strategy],["coins","CAPITOL ODDS",t.odds]].map(([ic,k,v],i)=>`<div class="card stat" data-stat="${i}" style="opacity:0"><img src="${ICON(ic)}" alt=""><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></div>`).join("")}
-    </div></div>`,enter(el){XM.sfx("whoosh");XM.sfx("cheer");if(t.d===11){st(()=>XM.sfx("fanfare"),700);st(()=>XM.sfx("fanfare"),1500);allRise()}st(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
+    </div></div>`,enter(el){XM.sfx("whoosh");XM.sfx("cheer");XM.walkUp(t.name,()=>curEl===el).then(ok=>{if(!ok&&curEl===el)XM.playSong("march")});   // 🎵 their walk-up song (quieter while the announcer talks)
+      if(t.d===11){st(()=>XM.sfx("fanfare"),700);st(()=>XM.sfx("fanfare"),1500);allRise()}st(()=>XM.sfx("drum"),1100);announce(t,el)},leave(){announcer.stop()}})),
  {id:"begin",music:"stop",big:true,html:()=>`<div class="burst" style="--gc:#a32820;opacity:.6"></div><div class="vign"></div>
     <div style="position:relative;display:grid;justify-items:center;gap:20px">
       <img src="${ICON("cannon")}" alt="" class="fl" style="width:260px" id="cannon">

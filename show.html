@@ -737,7 +737,7 @@ function slideTodo(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,"");
   const T={lobby:"Tap your face to join if you haven't. Then grab a drink and a seat.",title:"Find a seat. The Games are starting!",welcome:"Listen to the Gamemaker's welcome.",
     rules:"Listen to the rules. Remember: touch a major award and it's yours.",phoneguide:"Listen to how your phone works.",lineup:"Here are tonight's 8 games.",tributes:"Meet the tributes. Send emojis for your favorites!",
-    begin:"Let the Games begin! Cheer!",halftime:"Halftime standings. Bathroom or snack break if you need one.",victors:"The winners of every game. Cheer for them!","fin-predict":"Did you predict the Ultimate Victor? Right picks get 3 points!","fin-awards":"End-of-night awards. Did you win one?","fin-recap":"Tonight in the arena. Relive it!","fin-fallen":"Please rise. Remember the fallen.","fin-crown":"All hail the Ultimate Victor!",end:"Merry Christmas, tributes!","bingo-board":"Mark every number called. Got the pattern on the TV? Yell BINGO!"};
+    begin:"Let the Games begin! Cheer!",halftime:"Halftime standings. Bathroom or snack break if you need one.",victors:"The winners of every game. Cheer for them!","fin-predict":"Did you predict the Ultimate Victor? Right picks get 3 points!","fin-awards":"End-of-night awards. Did you win one?","fin-recap":"Tonight in the arena. Relive it!","fin-fallen":"Please rise. Remember the fallen.","fin-crown":"All hail the Ultimate Victor!",end:"Merry Thanksmas, tributes!","bingo-board":"Mark every number called. Got the pattern on the TV? Yell BINGO!"};
   if(T[id])return T[id];
   if(/^d\d+$/.test(id))return "Meet this tribute. Send emojis to cheer or boo!";
   const G={cookie:{game:"Next up: Smart Cookie Showdown. Get ready to be picked!",how:"Listen: cookie on your forehead, no hands.",wheel:"Watch the wheel. If it picks you, tilt your head back: cookie on your forehead, no hands!",tie:"Tied? Get ready for a tiebreaker."},
@@ -1245,7 +1245,7 @@ function nightRecap(){
     pts.length?`<div class="eb">⭐ CAPITOL POINTS</div><div style="display:grid;gap:10px">${pts.slice(0,5).map(([n,v],i)=>`<div class="ptsrow"><span>${["🥇","🥈","🥉"][i]||"#"+(i+1)}</span>${face(n)||"<span></span>"}<span>${esc(n)}</span><span class="v ${v<0?"neg":""}">${v>0?"+":""}${v}</span></div>`).join("")}</div>`:null,
     fun.length?`<div class="eb">😂 MOMENTS WE'LL NEVER FORGET</div><div style="display:grid;gap:14px">${fun.map(t=>`<div class="say">${esc(t)}</div>`).join("")}</div>`:null,
     ...photos.map(p=>`<div class="eb">📸 PHOTO BOOTH</div><img src="${p.img}" alt="" style="width:min(1100px,80vw);border-radius:20px;box-shadow:0 0 0 8px var(--gold)">`),
-    `<div class="big">🎄</div><h1>Merry Christmas, Tributes</h1><div class="say">May the odds be ever in your favor</div>`].filter(Boolean);
+    `<div class="big">🎄</div><h1>Merry Thanksmas, Tributes</h1><div class="say">May the odds be ever in your favor</div>`].filter(Boolean);
   let i=0;const show=()=>{if(!m.isConnected)return;m.innerHTML=`<div class="inner">${frames[i]}<div class="row">${i<frames.length-1?`<button class="btn red" id="rn">Next ▶</button>`:""}<button class="btn ghost" id="rx">Close (Esc)</button></div></div>`;
     m.querySelector("#rx").onclick=e=>{e.stopPropagation();close()};const n=m.querySelector("#rn");if(n)n.onclick=e=>{e.stopPropagation();i++;show()};XM.sfx("whoosh");
     if(i<frames.length-1)T(()=>{if(m.isConnected&&m.querySelector("#rn")){i++;show()}},7000)};
@@ -1768,7 +1768,7 @@ const SLIDES=[
  {id:"end",music:"lobby",big:true,html:()=>`<div style="display:grid;justify-items:center;gap:22px">
     <img src="/xmas/emblem.png" alt="" class="spin" style="width:260px;filter:drop-shadow(0 20px 40px rgba(0,0,0,.6))">
     <h1 class="title-xl slam" ${d(.9)} style="font-size:140px">Congrats to All Our Victors!</h1>
-    <h2 class="title-l fd" ${d(1.8)} style="color:#fff;font-size:84px"><span class="tg" style="font-size:.8em">🦃</span> Merry Christmas, Tributes <span class="tg r" style="font-size:.8em">🥧</span></h2>
+    <h2 class="title-l fd" ${d(1.8)} style="color:#fff;font-size:84px"><span class="tg" style="font-size:.8em">🦃</span> Merry Thanksmas, Tributes <span class="tg r" style="font-size:.8em">🥧</span></h2>
     <div class="fade" ${d(2.4)} style="font-size:38px">The 2027 Christmas Games are already in the works. Train accordingly.</div>
     <div class="motto fade" ${d(2.8)}>May the odds be ever in your favor</div></div><div class="corner"><button class="btn ghost" id="fallenbtn">🕯️ Fallen Tributes</button></div>`,
    enter(el){SNOW.set(3.2);const fb=el.querySelector("#fallenbtn");if(fb)fb.onclick=e=>{e.stopPropagation();fallenTributes()};

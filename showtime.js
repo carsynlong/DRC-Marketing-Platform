@@ -232,14 +232,19 @@ window.Walkout = (() => {
       },
     };
   })();
-  function say(text) {
+  let talking = false, sayN = 0;
+  // speaks the line; done() runs once when it has been said (or straight away with no voice)
+  function say(text, done) {
+    const my = ++sayN; let fin = false;
+    const over = () => { if (fin) return; fin = true; if (my === sayN) { talking = false; if (root) Music.duck(.42); } if (done) done(); };
     try {
-      if (!soundOn() || !window.speechSynthesis) return;
+      if (!soundOn() || !window.speechSynthesis) return over();
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text); u.rate = 1; u.pitch = .85; u.volume = 1;
-      u.onstart = () => Music.duck(.2); u.onend = () => Music.duck(.42);   // the music dips so the announcer is heard
+      talking = true;
+      u.onstart = () => Music.duck(.2); u.onend = over; u.onerror = over;   // the music dips so the announcer is heard
       speechSynthesis.speak(u);
-    } catch (e) {}
+    } catch (e) { over(); }
   }
   function onKey(e) {
     if (!root) return;
@@ -311,11 +316,15 @@ window.Walkout = (() => {
       root.querySelector(".wo-back").onclick = () => end(true);
       // ~5 seconds each: drumroll → BAM (photo + name) → a funny sound and confetti → the prop drops on their head
       sfx("whoosh"); Music.duck(.12); sfx("drumroll");
-      say(`${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!`);
-      later(() => { Music.bam(); Music.duck(.42); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 1250);
+      // next tribute once the line has been said in full and at least 4.9s have passed (12s at most, in case the voice never finishes)
+      const me = i; let spoke = false, minDone = false;
+      const go = () => { if (root && i === me && spoke && minDone) step(); };
+      say(`${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!`, () => { spoke = true; later(go, 350); });
+      later(() => { Music.bam(); Music.duck(talking ? .2 : .42); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 1250);
       later(() => sfx(funny), 1900);
       later(() => sfx("drop"), 3050); later(() => sfx("boing"), 3700);
-      later(step, 4900);
+      later(() => { minDone = true; go(); }, 4900);
+      later(() => { if (root && i === me) { spoke = minDone = true; go(); } }, 12000);
     };
     step();
   }
@@ -662,13 +671,11 @@ window.Track = (() => {
   return { preload, play, stop, playing: () => !!src };
 })();
 /* 🎵 a tribute's walk-up song as their victory song (District Feud and District Secrets winners):
-   the song they picked on their phone, or their own walkout song. Resolves false if they have none. */
+   their own walkout song. Resolves false if they have none. */
 window.walkUpSong = async name => {
   const OWN = { Jonny: "jonny", Grandad: "boom", "QUEEN MOTHER": "queen", Elisha: "elisha", Jessie: "jessie", Kyle: "kyle", Brandon: "brandon", Tinsley: "tinsley", Carsyn: "carsyn", Kamdon: "kamdon", Dash: "dash" };
   const VER = { kyle: "?v=2", elisha: "?v=2" };
-  let k = null;
-  try { const j = await (await fetch("/api/show?a=walkups", { cache: "no-store" })).json(); const w = j && j.walkups && j.walkups[name]; if (/^wu_[a-z0-9]+$/.test(w || "")) k = w.slice(3); } catch (e) {}
-  k = k || OWN[name]; if (!k || !window.Track) return false;
+  const k = OWN[name]; if (!k || !window.Track) return false;
   window.Track.stop(); return window.Track.play(`/xmas/walkups/${k}.m4a${VER[k] || ""}`);
 };
 

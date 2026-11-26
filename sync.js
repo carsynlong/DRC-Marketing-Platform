@@ -29,7 +29,8 @@ const Sync = (() => {
         results: S.mini.results, all: S.mini.all } : undefined,
       left: S.phase === "question" && !S.locked && !(S.look > 0) ? Math.max(0, Math.ceil(S.secs - S.elapsed)) : undefined,   // phones show the countdown
       look: S.phase === "question" && !S.locked && S.look > 0 ? Math.ceil(S.look) : undefined,   // 👀 the 10-second look: no typing yet
-      feast: !sc && S.qi >= FEAST && !S.tb, secs: S.secs, speed: sc && !sc.done ? 1 : undefined,   // 🎡 Second Chance speed round round: (({ num, name }) => ({ num, name }))(roundOf(S.qi)),
+      feast: !sc && S.qi >= FEAST && !S.tb, secs: S.secs, speed: sc && !sc.done ? 1 : undefined,   // 🎡 Second Chance speed round
+      round: (({ num, name }) => ({ num, name }))(roundOf(S.qi) || {}),
       howto: window.Rules && Rules.active() ? "tribute" : undefined,
       hurry: S.phase === "question" && !S.locked && S.hurryEnds ? S.hurryEnds : undefined,        // ⏰ last 10 seconds: phones hurry (howto.js)
       slow: ["reveal", "board", "final"].includes(S.phase) && S.slow && S.slow.length ? S.slow : undefined, slowPen: SLOW_PEN };   // How to play is on the TV: phones show it too (howto.js)

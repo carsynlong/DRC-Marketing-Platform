@@ -208,7 +208,7 @@ body.has-ticker .stage{max-height:42vh}
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
-const DOUBLE=new Set([7,16]); // last face of rounds 1 and 2: sponsor gift (double points)
+const DOUBLE=new Set([7,16]); // last face of rounds 1 and 2: double points
 const NO_ANSWER=250; // points lost for not locking in a guess before the cannon fires
 const SLOW_PEN=NO_ANSWER; // phones show "⏰ Too slow −250" (howto.js)
 const HOST="Carsyn"; // runs the game: knows every face, so instead of guessing she predicts (🔮) and plays the mini-games
@@ -467,11 +467,11 @@ function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready"
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
 // "N correct", or on a Mutt Mashup "N both · M half"
 const cntTxt=()=>{const h=(S.half||[]).length;return mash()&&h?`${S.correct.length} both · ${h} half`:`${S.correct.length} correct`};
-function startQuestion(){clearInterval(readyT);Extras.start();S.secs=S.sc?SC_SECS:SECS;S.hurryEnds=0; /* regular faces always get the full minute, even after a speed round */S.slow=[];S.phase="question";S.elapsed=0;S.look=S.sc?SC_LOOK:LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
+function startQuestion(){clearInterval(readyT);Extras.start();S.secs=S.sc?SC_SECS:SECS;S.qSecs=S.secs;S.hurryEnds=0; /* regular faces always get the full minute, even after a speed round */S.slow=[];S.phase="question";S.elapsed=0;S.look=S.sc?SC_LOOK:LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const isTb=()=>!!S.rounds[S.qi]?.tb;
 const faceLbl=()=>isTb()?"⚔️ Showdown face":S.sc?`🎡 Second Chance · Face ${S.qi-S.sc.start+1} of ${S.sc.n}`:`Face ${S.qi+1} of ${Q.length}`;
-const giftTag=()=>mash()?`<span class="gift">🐺 MUTT MASHUP: name both for double points</span>`:isTb()?`<span class="gift">⚔️ Fastest right answer wins</span>`:S.sc?`<span class="gift">🎡 Second Chance Round</span>`:S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Sponsor gift: double points</span>`:"";
+const giftTag=()=>mash()?`<span class="gift">🐺 MUTT MASHUP: name both for double points</span>`:isTb()?`<span class="gift">⚔️ Fastest right answer wins</span>`:S.sc?`<span class="gift">🎡 Second Chance Round</span>`:S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
 const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt","humblepie1","humblepie","humblepieone"],
   "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
@@ -546,7 +546,7 @@ function reveal(){
   FireTimer.stop();
   if(S.mode==="type"&&!isTb()&&!mash()&&!S.charted&&!S.locked){S.locked=true;S.hurryEnds=0;cancelAnimationFrame(raf);stopSong();render()}
   Sync.fillAnswers();
-  const d=S.mode==="type"&&!isTb()&&!mash()&&!S.charted&&!S.sc?guessChart():null;   // 🎡 speed round: straight to the answerS.charted=true;
+  const d=S.mode==="type"&&!isTb()&&!mash()&&!S.charted&&!S.sc?guessChart():null;S.charted=true;   // 🎡 speed round: straight to the answer
   if(!d)return doReveal();
   S.charting=true;S.chartD=d;S.chartLit=false;render();
   let k=0;const roll=()=>{if(!S.charting)return;sfx("drum");if(++k<5)chartT.push(setTimeout(roll,700))};roll();
@@ -571,7 +571,7 @@ function scoreNow(){
   if(S.rounds[S.qi]?.tb)return Party.scoreTiebreak();
   const name=cur().a,mult=pointsX(S.qi),before=rankMap();S.slow=[];Extras.before();
   if(S.sc){const order=scOrder();   // 🎡 speed round: 1000 / 700 / 500 / 300 by answer time; wrong or none = 0
-    S.players.forEach(p=>{p.streak=0;p.missed=false;const i=order.indexOf(p.name);if(!p.on||i<0){p.delta=0;return}p.delta=scPts(i);p.score+=p.delta});
+    S.players.forEach(p=>{p.streak=0;p.missed=false;p.speed=0;p.notes=[];const i=order.indexOf(p.name);if(!p.on||i<0){p.delta=0;return}p.delta=scPts(i);p.score+=p.delta});
   }else{
   S.players.forEach(p=>{
     if(!p.on){p.delta=0;return}
@@ -597,7 +597,7 @@ function scoreNow(){
 }
 function next(){
   const go=()=>{S.qi++;if(Party.before(S.qi))return;roundCardOrQuestion();};
-  if(DOUBLE.has(S.qi+1)&&S.qi+1<S.rounds.length&&briefDouble(go))return;   // sponsor gift face: briefing first, Start moves on
+  if(DOUBLE.has(S.qi+1)&&S.qi+1<S.rounds.length&&briefDouble(go))return;   // double-points face: briefing first, Start moves on
   go();
 }
 /* 📋 spoken "how this works" when the scoring changes (briefing.js). Without it, everything runs as before. */
@@ -605,8 +605,8 @@ function briefDouble(go){
   if(!window.Briefing)return false;
   const qi=S.qi;
   stopSong();
-  Briefing.show({eyebrow:"🎁 SPONSOR GIFT",title:"Double Points!",start:"▶ Start the face",
-    intro:"A sponsor has sent a gift. The next face is worth double points. Here's how it works.",
+  Briefing.show({eyebrow:"🎁 DOUBLE POINTS",title:"Double Points!",start:"▶ Start the face",
+    intro:"The next face is worth double points. Here's how it works.",
     steps:[["🎁","The next face is worth <b>double points</b>.","The next face is worth double points."],
       ["🎯","A right answer scores <b>2,000</b>, and your streak bonus is doubled too.","A right answer scores 2,000, and your streak bonus is doubled too."],
       ["⚡","A fast answer earns up to <b>+1,000</b> speed bonus.","A fast answer earns up to plus 1,000 speed bonus."],
@@ -748,7 +748,7 @@ function startSecondChance(){
   const w=ranked()[0];if(!w)return;
   cancelAnimationFrame(raf);stopSong();
   S.sc={winner:w.name,main:Object.fromEntries(S.players.map(p=>[p.name,p.score])),start:S.rounds.length,n:BONUS.length,done:false};
-  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.missed=false});
+  S.players.forEach(p=>{p.score=0;p.streak=0;p.delta=0;p.move=0;p.missed=false;p.speed=0;p.notes=[]});
   BONUS.forEach((x,i)=>S.rounds.push({qi:Q.length+i,choices:[],sc:true}));
   S.qi=S.sc.start;S.tb=null;S.tbWinner=null;S.phase="sccard";sfx("gong");render();
   setTimeout(()=>S.phase==="sccard"&&playSong("arena"),1600);

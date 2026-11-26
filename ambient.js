@@ -119,7 +119,7 @@ const Ambient = (() => {
       const el = sprite(ART.chute, size, opts.tap);
       el.animate([{ transform: `translate(${x}px,${-size * 1.4}px) rotate(-8deg)` }, { transform: `translate(${x + 20}px,${H() * .35}px) rotate(7deg)` },
         { transform: `translate(${x - 15}px,${H() * .7}px) rotate(-6deg)` }, { transform: `translate(${x + 10}px,${H() + 20}px) rotate(5deg)` }], { duration: t, easing: "linear" }).onfinish = () => el.remove();
-      if (opts.tap) tapped(el, "chute", (x, y) => { opts.sound?.("gift"); opts.burst?.(); popup(x, y, `<small>A sponsor sent you</small>${GIFTS[Math.random() * GIFTS.length | 0]}`); });
+      if (opts.tap) tapped(el, "chute", (x, y) => { opts.sound?.("gift"); opts.burst?.(); popup(x, y, `<small>Inside the care package:</small>${GIFTS[Math.random() * GIFTS.length | 0]}`); });
     },
     rose() {
       const size = R(38, 56), x = fallX(size), t = R(9000, 12000);

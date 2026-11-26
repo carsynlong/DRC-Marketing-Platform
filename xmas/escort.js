@@ -14,19 +14,31 @@
     const parts=t.split("…").map(x=>x.trim());const out=[];
     for(let i=0;i<parts.length;i++){const seg=parts[i]+(i<parts.length-1?"…":"");if(seg==="…"||!seg)continue;const g=man[hash(seg)];if(!g)return null;out.push(g)}
     return out.length>1?out:null};
-  const queue=[];let cur=null; // {u,a}
+  const queue=[];let cur=null; // {u,a} for a recording, {u,real:true} for a browser-voice line
   const fire=(u,type)=>{try{const ev=new Event(type);if(u.dispatchEvent)u.dispatchEvent(ev);else if(typeof u["on"+type]==="function")u["on"+type](ev)}catch(e){}}; // dispatchEvent also runs u.onstart / u.onend
+  const pre={};const load=f=>{if(pre[f])return pre[f];const a=new Audio();a.preload="auto";a.src=BASE+f;try{a.load()}catch(e){}pre[f]=a;return a};
+  const take=f=>{const a=pre[f];delete pre[f];return a||load(f)};
+  // warm up the clips this line and the next queued lines will need, so stitched pieces play back to back
+  const warm=list=>{(list||[]).forEach(load);queue.slice(0,2).forEach(q=>(files(q.text)||[]).forEach(load))};
+  // an unrecorded line: the browser voice says it, and the queue waits for it to finish (or a timeout) before going on
+  function speakReal(u){const c={u,real:true};cur=c;let t=0;
+    const done=()=>{if(cur!==c)return;clearTimeout(t);cur=null;next()};
+    u.addEventListener("end",done);u.addEventListener("error",done);
+    t=setTimeout(done,2500+String(u.text||"").length*110/Math.max(.5,u.rate||1));
+    try{realSpeak(u)}catch(e){done()}}
   function next(){if(cur||!queue.length)return;const u=queue.shift(),list=files(u.text);
-    if(!list){realSpeak(u);return next()}
+    if(!list)return speakReal(u);
+    warm(list);
     const vol=Math.max(0,Math.min(1,u.volume==null?1:u.volume));let k=0,started=false;
-    const fail=a=>{if(!cur||cur.a!==a)return;cur=null;if(!started)realSpeak(u);else fire(u,"end");next()};
-    const play=()=>{const a=new Audio(BASE+list[k]);a.volume=vol;cur={u,a};
+    const fail=a=>{if(!cur||cur.a!==a)return;cur=null;if(!started)return speakReal(u);fire(u,"end");next()};
+    const play=()=>{const a=take(list[k]);a.volume=vol;cur={u,a};if(list[k+1])load(list[k+1]);
       a.onended=()=>{if(!cur||cur.a!==a)return;if(++k<list.length)return play();cur=null;fire(u,"end");next()};
       a.onerror=()=>fail(a);
+      try{a.currentTime=0}catch(e){}
       a.play().then(()=>{if(!started){started=true;fire(u,"start")}}).catch(()=>fail(a))};
     play()}
-  ss.speak=function(u){if(!u||!files(u.text)){if(cur||queue.length){queue.push(u);return}return realSpeak(u)}queue.push(u);next()};
-  ss.cancel=function(){queue.length=0;if(cur){const a=cur.a;cur=null;try{a.pause()}catch(e){}}realCancel()};
+  ss.speak=function(u){if(!u)return;queue.push(u);next()};
+  ss.cancel=function(){queue.length=0;const c=cur;cur=null;if(c&&c.a){try{c.a.pause()}catch(e){}}realCancel()};
   try{Object.defineProperty(ss,"speaking",{configurable:true,get(){return !!cur||queue.length>0||Object.getPrototypeOf(ss).__lookupGetter__("speaking").call(ss)}})}catch(e){}
   window.EscortVoice={hash,has:t=>!!files(t)};
 })();

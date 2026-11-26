@@ -156,7 +156,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 .slip .nm{font-family:var(--display);font-size:clamp(1.8rem,9vw,2.4rem);line-height:1}
 .slip img{width:84px;height:84px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold-d);animation:pop .6s .8s both}
 @keyframes unfold{0%{transform:scaleY(0) rotate(-6deg);opacity:0}60%{transform:scaleY(1.08) rotate(2deg);opacity:1}100%{transform:none}}
-/* sponsor parachute drifting down on a double-points face */
+/* parachute drifting down on a double-points face */
 .chute{width:120px;height:auto;animation:drift 2.6s ease-in-out both,sway 1.6s 2.6s ease-in-out infinite alternate}
 @keyframes drift{from{transform:translateY(-60vh) rotate(-12deg)}to{transform:none}}
 @keyframes sway{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
@@ -378,7 +378,7 @@ function miniScreen(g,key){
       <button class="mgbtn" id="mgtap">${m.kind==="climb"?"SHAKE!<small>or tap here</small>":"TAP!"}</button></section>`];
   if(m.stage==="tally")return [key+"tally",header()+msg("💥","Time!",`<p class="said">You did ${mg.n}!</p><p>Eyes on the TV…</p>`,"late")];
   const all=m.all||[],me=all.find(([n])=>n===D.me),i=me&&me[1]>0?all.filter(([,k])=>k>me[1]).length:(me?99:-1),bonus=[500,300,200][i];   // ties share a place, like the TV
-  return [key+"done",header()+msg(i===0?"🏆":i>0&&i<3?"🥇":"🏅",i<0?"No score":`You came #${i+1}!`,`<p class="said">${i>=0?`${all[i][1]} ${m.kind==="climb"?"shakes":"taps"}`:""}${bonus?` · <b style="color:var(--good)">+${bonus} points</b>`:""}</p><p>Eyes on the TV.</p>`,bonus?"right":"")+reactBar(),bonus?"points":""];
+  return [key+"done",header()+msg(i===0?"🏆":i===1?"🥈":i===2?"🥉":"🏅",i<0?"No score":`You came #${i+1}!`,`<p class="said">${i>=0?`${all[i][1]} ${m.kind==="climb"?"shakes":"taps"}`:""}${bonus?` · <b style="color:var(--good)">+${bonus} points</b>`:""}</p><p>Eyes on the TV.</p>`,bonus?"right":"")+reactBar(),bonus?"points":""];
 }
 // send the count to the TV a few times a second while the race is on
 setInterval(()=>{const m=D.game?.mini;if(D.game?.phase!=="mini"||!m||m.id!==mg.id||(m.stage!=="live"&&m.stage!=="tally")||mg.n===mg.sent)return;
@@ -447,7 +447,7 @@ async function buy(item,target){
 function askBox(g,isWinner){
   if(isWinner)return "";
   const w=(g.scores||[])[0];if(!w||w.name===D.me)return "";
-  return `<form class="ask" id="askf"><label class="eyebrow" for="askq">🎤 Ask ${esc(w.name)} a question</label><input id="askq" maxlength="140" autocomplete="off" placeholder="How did you know it was Grandad?"><button class="btn" type="submit">Send to the TV</button></form>`;
+  return `<form class="ask" id="askf"><label class="eyebrow" for="askq">🎤 Ask ${esc(w.name)} a question</label><input id="askq" maxlength="140" autocomplete="off" placeholder="How did you know it was Grandad the Ancient and Wise?"><button class="btn" type="submit">Send to the TV</button></form>`;
 }
 
 /* arena tips that rotate while you wait */
@@ -514,8 +514,8 @@ function view(){
   // 🎡 Second Chance Round: the winner sits out and watches; everyone else plays for the Second Victor
   if(g.sc&&g.phase!=="lobby"){
     if(g.phase==="final"&&g.sc.done){const v=(g.scores||[])[0],meV=v&&v.name===D.me;
-      if(D.me===g.sc.winner)return [key+"scw",header()+msg("👑","You won the Games!",`<p>${esc(v?v.name:"")} is the Second Victor. Merry Christmas!</p>`,"win")+reactBar(),"win"];
-      return [key+"scf"+(meV?1:0),header()+msg(meV?"🎡":"🎄",meV?"You're the Second Victor!":`${esc(v?v.name:"")} is the Second Victor!`,`<p>${meV?"Go claim your major award!":"Merry Christmas, tribute!"}</p>`,meV?"win":"")+reactBar()+soundBar(),meV?"win":"final"];}
+      if(D.me===g.sc.winner)return [key+"scw",header()+msg("👑","You won the Games!",`<p>${esc(v?v.name:"")} is the Second Victor. Merry Thanksmas!</p>`,"win")+reactBar(),"win"];
+      return [key+"scf"+(meV?1:0),header()+msg(meV?"🎡":"🎄",meV?"You're the Second Victor!":`${esc(v?v.name:"")} is the Second Victor!`,`<p>${meV?"Go claim your major award!":"Merry Thanksmas, tribute!"}</p>`,meV?"win":"")+reactBar()+soundBar(),meV?"win":"final"];}
     if(D.me===g.sc.winner)return [key+"scsit",header()+msg("👑","You won! Sit back and watch.","<p>Everyone else is playing the 🎡 Second Chance Round for the Second Victor major award.</p>")+reactBar()];
     if(g.phase==="sccard")return [key,header()+msg("🎡","Second Chance Round",`<p>${esc(g.sc.winner)} sits out. Everyone else starts at zero. Highest score is the Second Victor!</p>`,"ready"),"gift"];
   }
@@ -531,17 +531,17 @@ function view(){
   if(g.phase==="ready"&&g.twist)return [key+"tw",header()+`<section class="msg ready"><div class="eyebrow">🎲 Gamemaker twist</div><div class="icon">${g.twist.icon}</div><h1>${esc(g.twist.title)}</h1><p class="said">${esc(g.twist.text)}</p></section>`,"gift"];
   if(g.phase==="ready"&&g.feast)return [key,header()+`<section class="msg ready"><div class="horn">${Ambient.CORNUCOPIA}</div><h1>The Feast!</h1>${faceNo}${gift}<p>This face is worth triple. Run for the cornucopia!</p></section>`,"gift"];
   if(g.phase==="ready")return [key,header()+(g.double
-      ?`<section class="msg ready">${ART.chute}<h1>Get ready!</h1>${faceNo}${gift}<p>A sponsor sent a gift: this face is worth double!</p></section>`
+      ?`<section class="msg ready">${ART.chute}<h1>Get ready!</h1>${faceNo}${gift}<p>This face is worth double!</p></section>`
       :msg("⏳",`Get ready!`,`${faceNo}<p>Watch the TV. Your buttons appear here.</p>`,"ready")),g.double?"gift":""];
 
   if(g.phase==="question"){
     const mine=D.myAnswer??(pending&&pending.gid===g.gid&&pending.qi===g.qi?pending.answer:null);
     if(mine&&g.mode==="choice"&&g.choices.includes(mine))return [key+"done:"+mine,header()+`<div class="shot">${ART.arrow}${ART.target}</div><div class="locked-in"><span class="lk">🔒</span> Locked in!</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:0" class="tile k${k} ${n===mine?"sel":"dim"}" disabled aria-pressed="${n===mine}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>
-      <p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages for sponsor gifts!</p>${reactBar()}`,"lock"];
+      <p class="tip" id="tip"></p><p class="tiphint">🪂 Tap the care packages while you wait!</p>${reactBar()}`,"lock"];
     if(mine)return [key+"done:"+mine,header()+`<section class="msg"><div class="shot">${ART.arrow}${ART.target}</div><h1>Locked in!</h1><p class="said">You said <b>${esc(mine)}</b></p>${Memes.html("tribute",g.gid,g.qi)}</section>${reactBar()}`,"lock"];
     if(g.look)return [key+"look"+g.look,header()+msg("👀","Look at the TV!",`${faceNo}${gift}<p>Typing opens in <b style="font-size:1.6em;color:var(--gold)">${g.look}</b></p>${g.speed?`<p>⚡ ${SPEED_RULES}</p>`:"<p>Then you have a minute to type your answer.</p>"}`,"ready"),g.look===(g.speed?5:10)?"whistle":""];
-    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",g.speed?"<p>Too slow this time. No points, but the next face is coming!</p>":"<p>The cannon fired before you answered. That costs 250 points. Be quicker next time!</p>","late"),"cannon"];
+    if(g.locked)return [key+"late",header()+msg("💥","Time's up!",g.speed?"<p>Too slow this time. No points, but the next face is coming!</p>":(s&&s.score>0?`<p>The cannon fired before you answered. That costs ${fmt(Math.min(250,s.score))} points. Be quicker next time!</p>`:"<p>The cannon fired before you answered. Nothing to lose yet, but be quicker next time!</p>"),"late"),"cannon"];
     if(g.mode==="choice")return [key+"ask",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
       <div class="tiles">${g.choices.map((n,k)=>`<button style="--i:${k}" class="tile k${k}" data-ans="${esc(n)}">${SHAPES[k]}<span>${esc(n)}</span></button>`).join("")}</div>`,"whistle"];
     return [key+"type",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
@@ -566,7 +566,7 @@ function view(){
   if(g.phase==="final"){
     const won=s&&s.rank===1&&s.score>0;
     return [key+(s?.rank),header()+msg(won?"👑":"🎄",won?"You won!":`You finished #${s?.rank}`,
-      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Christmas, tribute!"}</p>${myCoins()?`<p class="said">🪙 You collected ${myCoins()} Capitol coin${myCoins()>1?"s":""}. Check the TV for the coin champion!</p>`:""}`,won?"win":"")+askBox(g,won)+reactBar()+soundBar(),won?"win":"final"];
+      `<p>${fmt(s?.score)} points. ${won?"Go claim your major award!":"Merry Thanksmas, tribute!"}</p>${myCoins()?`<p class="said">🪙 You collected ${myCoins()} Capitol coin${myCoins()>1?"s":""}. Check the TV for the coin champion!</p>`:""}`,won?"win":"")+askBox(g,won)+reactBar()+soundBar(),won?"win":"final"];
   }
   return [key,header()+msg("📺","Watch the TV")];
 }

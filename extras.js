@@ -7,7 +7,6 @@
    index.html calls the hooks named below; everything else lives here. */
 const Extras = (() => {
   const TWISTS = {
-    rush: { icon: "🐺", title: "Mutts released!", text: "Only 10 seconds on this face!" },
     bw: { icon: "🌫️", title: "Fog in the arena", text: "The photo is black and white." },
     flip: { icon: "🙃", title: "The arena flipped!", text: "The photo is upside down." },
     underdog: { icon: "🌹", title: "Underdog's chance", text: "The bottom 3 score double on this face!" },
@@ -63,7 +62,6 @@ const Extras = (() => {
   /* start of a face: apply the twist, reset the hint, pull shop purchases */
   function start() {
     restore();
-    if (tw() === "rush") { S.secsSaved = S.secs; S.secs = 10; }
     S.qSecs = S.secs; S.hintShown = false; loadBuys(true);
   }
   function zoomStyle(im) {

@@ -153,7 +153,7 @@ const Party = (() => {
         <div class="clock">${m.stage === "tally" ? "💥 Time!" : `⏱ <span id="mclock">${SECS}</span>`}</div>${field}</section>`;
     }
     const place = n => 1 + (m.all || []).filter(([, k]) => k > n).length;
-    const rows = (m.all || []).map(([name, n]) => { const pl = n > 0 ? place(n) : 99; return `<div class="r${pl <= 3 ? " top" : ""}"><span class="rk" style="font-family:var(--display);color:var(--gold)">${n > 0 ? pl : "–"}</span>${avatar(name)}
+    const rows = (m.all || []).map(([name, n]) => { const pl = n > 0 ? place(n) : 99; return `<div class="r${pl <= 3 ? " top" : ""}"><span class="rk" style="font-family:var(--display);color:var(--gold)">${n > 0 ? pl : "·"}</span>${avatar(name)}
       <span>${esc(name)} <span class="tiny">${n} ${info.verb}</span></span><span class="b">${pl <= 3 ? "+" + BONUS[pl - 1] : ""}</span></div>`; }).join("");
     return `<section class="mg"><div class="icon">🏆</div><h1>${m.results?.[0] ? (() => { const top = m.results.filter(r => r.n === m.results[0].n).map(r => esc(r.name)); return top.length > 1 ? top.join(" & ") + " tie!" : top[0] + " wins!"; })() : "Nobody moved!"}</h1>
       <div class="mres">${rows || "<p>No taps came in. Was everyone asleep?</p>"}</div>

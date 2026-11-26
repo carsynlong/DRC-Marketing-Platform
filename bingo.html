@@ -84,7 +84,6 @@ const save=()=>{XM.store.set("xmas-bingo-called",S.called)};
 // 🙋 whose card is it: which tribute owns each winning card, per round ({line:{"42":"Kyle"},...}); xmas-bingo-winners keeps the card numbers
 let OWNERS=(v=>v&&typeof v==="object"&&!Array.isArray(v)?v:{})(XM.store.get("xmas-bingo-owners",{}));
 const ownerOf=(mode,k)=>OWNERS[mode]&&OWNERS[mode][k]||null;
-const poss=n=>{const d=XM.dn(n);return /s$/i.test(d)?d+"'":d+"'s"};
 
 let lastTap={n:0,t:0};
 function call(n){
@@ -134,7 +133,7 @@ function briefRound(k){const m=MODES[k],won=(S.bingos&&S.bingos[k]||[]).length;
 function check(){const k=+document.getElementById("cardno").value;if(!(Number.isInteger(k)&&k>=1&&k<=CARDS.length)){S.checked={err:true};render();return}
   const ln=lines(CARDS[k-1]);S.checked={k,ln};
   if(ln.length){const list=S.bingos[S.mode]=S.bingos[S.mode]||[];if(!list.includes(k)){list.push(k);XM.store.set("xmas-bingo-winners",S.bingos)}const place=list.indexOf(k)+1;
-    bigWin(`Card ${k}`,"",place,k);XM.celebrate("",{line:place===1?`Bingo! Card ${k} wins the ${MODES[S.mode].name} round!`:`Bingo! Card ${k}!`})}else sfx("cannon");render();const v=document.querySelector(".mini");if(v)v.scrollIntoView({block:"nearest",behavior:"smooth"});}
+    bigWin(`Card ${k}`,"",place,k);XM.celebrate("",{silent:true})}else sfx("cannon");render();const v=document.querySelector(".mini");if(v)v.scrollIntoView({block:"nearest",behavior:"smooth"});}
 function bigWin(who,sub="",place=1,card=null){
   document.querySelectorAll(".bigwin").forEach(x=>x.remove());
   const o=document.createElement("div");o.className="bigwin";
@@ -197,7 +196,7 @@ function wire(){const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.on
   document.querySelectorAll("[data-mute]").forEach(b=>b.onclick=()=>XM.toggleSound());
   const i=document.getElementById("cardno");if(i)i.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();check()}};}
 // Hidden tester: triple-click the "District Bingo" title, or press Shift+T, to preview a win (changes nothing)
-function testWin(){ensureAudio();const k=1+Math.floor(Math.random()*CARDS.length);bigWin(`Card ${k}`,"Test run");XM.celebrate("",{line:`Bingo! Card ${k} is a winner!`})}
+function testWin(){ensureAudio();const k=1+Math.floor(Math.random()*CARDS.length);bigWin(`Card ${k}`,"Test run");XM.celebrate("",{silent:true})}
 document.addEventListener("click",e=>{if(e.detail===3&&e.target.closest&&e.target.closest("h1.title"))testWin()});
 document.addEventListener("keydown",e=>{if(e.key==="T"&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!(e.target.closest&&e.target.closest("input")))testWin()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelectorAll(".bigwin").forEach(x=>x.remove())}});

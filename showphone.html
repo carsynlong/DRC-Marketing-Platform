@@ -13,7 +13,7 @@ body{min-height:100%;overflow-x:hidden}
 .app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:46px max(16px,env(safe-area-inset-left,0px)) max(24px,env(safe-area-inset-bottom,0px));display:grid;gap:16px}
 h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 3px 0 var(--red-d);font-size:clamp(1.8rem,8vw,2.4rem);line-height:1.05;text-align:center;margin:0}
 .sub{text-align:center;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .grid button{display:grid;justify-items:center;gap:6px;padding:10px 4px;border-radius:16px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 2px var(--line)}
 .grid button img{width:72px;height:72px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
 .grid button b{font-size:.9rem}
@@ -27,7 +27,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .tv .eyebrow{display:flex;justify-content:space-between}
 .tv h2{font-family:var(--display);font-weight:400;color:var(--gold);font-size:1.5rem;margin:6px 0}
 .tv p{margin:0;white-space:pre-line;line-height:1.4;font-size:1.02rem}
-.reacts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.reacts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .reacts button{font-size:2rem;min-height:64px;border-radius:14px;background:rgba(255,255,255,.06)}
 .reacts button:active{background:rgba(232,176,75,.3);transform:scale(.94)}
 .live{display:grid;gap:10px;justify-items:center}
@@ -37,7 +37,7 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .tiny{text-align:center;font-size:.95rem}
 .app .eyebrow{font-size:.88rem}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{display:flex;align-items:center;gap:10px;min-height:60px;padding:10px 14px;border-radius:16px;background:rgba(22,48,42,.95);box-shadow:0 0 0 1px var(--line);font-weight:800;font-size:1.05rem;text-align:left;color:inherit}
+.tile{scroll-margin-top:50px;display:flex;align-items:center;gap:10px;min-height:60px;padding:10px 14px;border-radius:16px;background:rgba(22,48,42,.95);box-shadow:0 0 0 1px var(--line);font-weight:800;font-size:1.05rem;text-align:left;color:inherit}
 .tile .ti{font-size:1.6rem;line-height:1}
 .tile.open{background:var(--gold);color:#13271f}
 .tile.royal{box-shadow:0 0 0 2px var(--gold)}
@@ -65,7 +65,7 @@ details.more>.card{margin-top:12px;box-shadow:0 0 0 1px var(--line)}
 .grid button.taken img{filter:grayscale(1)}
 .host{box-shadow:0 0 0 2px var(--gold)}
 .host h3{font-family:var(--display);font-weight:400;color:var(--gold);margin:0 0 8px;text-align:center}
-.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.hgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}
 .hgrid button{min-height:58px;border-radius:14px;background:rgba(255,255,255,.07);font-weight:800;font-size:.92rem;line-height:1.15}
 .hgrid button .i{display:block;font-size:1.5rem}
 .hgrid button:active{background:rgba(232,176,75,.35);transform:scale(.95)}
@@ -78,7 +78,7 @@ details.more>.card{margin-top:12px;box-shadow:0 0 0 1px var(--line)}
 .qov .ic{font-size:4.5rem;line-height:1}
 .qov .clk{font-family:var(--display);font-size:5.5rem;line-height:1;color:#fff}
 @keyframes qin{from{opacity:0;transform:scale(1.1)}}
-.qfaces{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:6px}
+.qfaces{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-bottom:6px}
 .qfaces button{display:grid;justify-items:center;gap:2px;padding:4px 0;border-radius:12px;font-size:.68rem;font-weight:800;background:rgba(255,255,255,.05)}
 .qfaces img,.qfaces .r{width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:1.6rem}
 .qfaces button.on img,.qfaces button.on .r{box-shadow:0 0 0 3px var(--gold)}
@@ -87,7 +87,7 @@ select,textarea{width:100%;font-size:16px;font-weight:600;font-family:inherit;pa
 .chips{display:flex;gap:6px;margin-bottom:8px}
 .chips button{flex:1;padding:9px 0;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800}
 .chips button.on{background:var(--gold);color:#13271f}
-.vfaces{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.vfaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .vfaces button{display:grid;justify-items:center;gap:3px;padding:6px 2px;border-radius:12px;background:rgba(255,255,255,.05);font-size:.82rem;font-weight:800;line-height:1.1}
 .vfaces img{width:52px;height:52px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line)}
 .vfaces button.on{background:rgba(232,176,75,.28)}.vfaces button.on img{box-shadow:0 0 0 3px var(--gold)}
@@ -112,7 +112,7 @@ html{touch-action:manipulation}
 .race .tapb:disabled{filter:grayscale(.7);opacity:.6}
 .race .bar{height:18px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}
 .race .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),#ffd36b);width:0;transition:width .15s}
-.htabs{position:sticky;top:26px;z-index:5;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin:8px -6px 10px;padding:6px;background:rgba(13,31,24,.97);border-radius:14px;box-shadow:0 0 0 1px var(--line)}
+.htabs{position:sticky;top:26px;z-index:5;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;margin:8px -6px 10px;padding:6px;background:rgba(13,31,24,.97);border-radius:14px;box-shadow:0 0 0 1px var(--line)}
 .htabs button{padding:8px 0;border-radius:10px;font-weight:800;font-size:.72rem;line-height:1.1;background:transparent;color:var(--ink)}
 .htabs button .i{display:block;font-size:1.3rem}
 .htabs button.on{background:var(--gold);color:#13271f}
@@ -141,16 +141,16 @@ details.hfold.mini{display:inline-block;padding:2px 12px;margin:6px 0 0}details.
 .tvctl.tvpop{box-shadow:0 0 0 3px #e85b4a;animation:tvpulse 1.2s ease-in-out 2}
 @keyframes tvpulse{50%{box-shadow:0 0 0 6px #e85b4a}}
 .tvctl h4{margin:2px 0 8px;font-size:1.15rem;line-height:1.2}
-.tvb{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.tvb{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .tvb button{min-height:56px;border-radius:14px;background:rgba(255,255,255,.09);font-weight:800;font-size:1rem;line-height:1.15;padding:6px;display:flex;align-items:center;justify-content:center;gap:8px;text-align:center}
-.tvb.nums{grid-template-columns:repeat(5,1fr);gap:5px;margin-top:8px}.tvb.nums button{min-height:42px;font-size:1.05rem}
+.tvb.nums{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:8px}.tvb.nums button{min-height:42px;font-size:1.05rem}
 .tvb button img{width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none}
 .tvb button.on{background:var(--gold);color:#13271f}
 .tvb button.armed{background:#c0392b;color:#fff}
 .tvb button.sent{outline:3px solid #fff}
 .tvpages{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.tvpages button{border-radius:999px;padding:6px 12px;background:rgba(255,255,255,.08);font-weight:800;font-size:.9rem}.tvpages button.on{background:var(--gold);color:#13271f}
 .jump{display:flex;gap:8px;margin-bottom:10px}.jump select{flex:1;margin:0}.jump .btn{white-space:nowrap}
-#rbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:#08140f;box-shadow:0 -6px 20px rgba(0,0,0,.5)}
+#rbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));background:#08140f;box-shadow:0 -6px 20px rgba(0,0,0,.5)}
 #rbar button{display:grid;justify-items:center;gap:2px;padding:8px 2px;border-radius:12px;background:rgba(255,255,255,.08);color:inherit;border:0;font-weight:800;font-size:.82rem;font-family:inherit}
 #rbar button .i{font-size:1.5rem}#rbar button.on{background:var(--gold);color:#13271f}
 body.hasbar{padding-bottom:96px}body.hasbar .app{padding-bottom:110px}
@@ -174,8 +174,6 @@ const DECREES=["Bring the QUEEN more iced tea","Bring the QUEEN a snack","Give t
  "Give the QUEEN a foot rub... just kidding, a hug","Tell the QUEEN why she's the best","Do your best royal wave","Fetch the QUEEN a napkin","Dance for 10 seconds","Speak in a British accent until the next game"];
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 // your own district's emojis (matches your profile on the TV)
-// songs that belong to one tribute only (hidden from everyone else)
-const RESERVED_SONG={wu_boom:"Grandad",wu_jonny:"Jonny",wu_queen:"QUEEN MOTHER",wu_elisha:"Elisha",wu_jessie:"Jessie",wu_kyle:"Kyle",wu_brandon:"Brandon",wu_tinsley:"Tinsley",wu_carsyn:"Carsyn",wu_kamdon:"Kamdon",wu_dash:"Dash"};
 const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
 const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
@@ -220,7 +218,7 @@ function markTaken(){document.querySelectorAll(".grid [data-n]").forEach(b=>{con
   let x=b.querySelector(".tk");if(t&&!x){x=document.createElement("span");x.className="tk tiny";x.textContent="on a phone";b.appendChild(x)}else if(!t&&x)x.remove()})}
 // 🧩 the guest page: a few big buttons; each opens its own panel right under it (one at a time)
 function guestTiles(t){
-  const others=TRIBUTES.filter(x=>x.name!==me);
+  const others=TRIBUTES.filter(x=>x.name!==me&&x.name!=="Carsyn");   // decree / snitch / send points: never Clo (the Gamemaker)
   const faces=attr=>`<div class="vfaces">${others.map(x=>`<button ${attr}="${esc(x.name)}"><img src="${x.img}" alt="">${esc(XM.dn(x.name))}</button>`).join("")}</div>`;
   const P=[];
   if(me==="QUEEN MOTHER"){
@@ -243,8 +241,6 @@ function guestTiles(t){
   P.push(["give","🤝","Send points",`${faces("data-gv")}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
       <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button>`]);
   P.push(["shout","💌","Shout-out",`<textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas, QUEEN MOTHER!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button>`]);
-  if(!Object.values(RESERVED_SONG).includes(me))P.push(["walk","🎵","Walk-up song",`<select id="wsel"><option value="">Pick a song...</option>${XM.WALKUPS.filter(([k])=>!RESERVED_SONG[k]||RESERVED_SONG[k]===me).map(([k,l])=>`<option value="${k}">${esc(l)}</option>`).join("")}</select>
-      <div style="display:flex;gap:8px"><button class="btn ghost" id="wprev" style="flex:1">▶ Preview</button><button class="btn" id="wsave" style="flex:1">Save</button></div><div class="tiny">Plays on the TV when you win. Once you save a song, it's yours: nobody else can pick it.</div>`]);
   P.push(["help","🆘","I'm lost",null]);
   const msgId={decree:"dqmsg",bday:"qbmsg",snitch:"snmsg",give:"gvmsg",shout:"somsg",walk:"wmsg",help:"helpmsg"};
   return `${me==="Natalie"?`<button class="btn red nf" id="notfair">😤 IT'S NOT FAIR!</button><div class="tiny" id="nfmsg"></div>`:""}
@@ -289,9 +285,10 @@ function wireDecree(app){if(!app.querySelector("#dq1"))return;
 function render(){if(me!=="Carsyn")dropBar();
   const app=document.getElementById("app");
   if(!me){
+    districtLook();   // signed out ("Not you?"): drop the old district's background and emojis
     app.innerHTML=`<img src="/xmas/emblem.png" alt="" style="width:90px;justify-self:center"><h1 class="t">The 2026 Christmas Games</h1>
       <div class="sub">Tap your face to join, tribute.</div>
-      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b>${XM.aka(t.name)?`<span style="font-size:.7rem;color:var(--gold);font-weight:700">${esc(XM.aka(t.name))}</span>`:""}</button>`).join("")}</div>`;
+      <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b></button>`).join("")}</div>`;
     app.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>confirmJoin(b.dataset.n,async()=>{b.disabled=true;const r=await api({a:"join",name:b.dataset.n});
       if(r.ok){me=r.me;myEpoch=r.epoch||0;XM.store.set("xmas-sh-me",me);XM.store.set("xmas-sh-epoch",myEpoch);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute.":"Couldn't join. Check your internet and try again.")}}));
     markTaken();
@@ -308,7 +305,7 @@ function render(){if(me!=="Carsyn")dropBar();
   wireTiles(app);wireDecree(app);
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
     m.textContent=r.ok?"📨 Complaint filed!":r.status===429?"One sec...":"Couldn't send. Check your internet.";buzz(r.ok?[80,40,80]:40);setTimeout(()=>{nfb.disabled=false},2500)};
-  app.querySelector("#notme").onclick=e=>{e.preventDefault();if(!confirm("Sign out of "+XM.dn(me)+" so someone else can use this phone?"))return;api({a:"leave",name:me});stopLive();me=null;walkup=null;quest=null;mission=null;predict=null;vote=null;bet=null;XM.store.set("xmas-sh-me",null);document.querySelectorAll(".qov,#race,#mcard").forEach(n=>n.remove());render()};
+  app.querySelector("#notme").onclick=e=>{e.preventDefault();if(!confirm("Sign out of "+XM.dn(me)+" so someone else can use this phone?"))return;api({a:"leave",name:me});stopLive();me=null;quest=null;mission=null;predict=null;vote=null;bet=null;XM.store.set("xmas-sh-me",null);document.querySelectorAll(".qov,#race,#mcard").forEach(n=>n.remove());render()};
   app.querySelectorAll("[data-e]").forEach(b=>b.onclick=ev=>{const e=b.dataset.e;const f=document.createElement("div");f.className="pop";f.textContent=e;
     f.style.left=(ev.clientX-20)+"px";f.style.top=(ev.clientY-30)+"px";document.body.appendChild(f);setTimeout(()=>f.remove(),1300);
     buzz(15);api({a:"react",name:me,e}).then(r=>{if(r.status===403){me=null;XM.store.set("xmas-sh-me",null);render()}})});
@@ -317,17 +314,6 @@ function render(){if(me!=="Carsyn")dropBar();
   if(app.querySelector("#snsend")){let sn=null;app.querySelectorAll("[data-sn]").forEach(b=>b.onclick=()=>{sn=b.dataset.sn;app.querySelectorAll("[data-sn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#snsend").onclick=async()=>{const m=app.querySelector("#snmsg");if(!sn){m.textContent="Tap who you're reporting first.";return}
     const r=await api({a:"snitch",name:me,to:sn,why:app.querySelector("#snwhy").value});m.textContent=r.ok?`🚨 Reported ${XM.dn(sn)}. The Gamemaker will decide.`:r.status===429?"Easy, snitch. Wait 30 seconds.":"Couldn't send.";if(r.ok&&navigator.vibrate)navigator.vibrate(40)};
-  const ws=app.querySelector("#wsel");if(ws){if(walkup)ws.value=walkup;
-  app.querySelector("#wprev").onclick=()=>{if(!ws.value)return;XM.ensureAudio&&XM.ensureAudio();XM.playSong(ws.value,true);clearTimeout(window.__wpT);window.__wpT=setTimeout(()=>XM.stopSong(),12000)};
-  // songs other tributes already saved show as taken
-  const markSongs=async()=>{try{const j=await (await fetch("/api/show?a=walkups",{cache:"no-store"})).json();const w=j.walkups||{};
-    [...ws.options].forEach(o=>{if(!o.value)return;const by=Object.keys(w).find(n=>n!==me&&w[n]===o.value);if(!o.dataset.l)o.dataset.l=o.textContent;
-      o.disabled=!!by;o.textContent=by?`${o.dataset.l} (taken by ${XM.dn(by)})`:o.dataset.l})}catch(e){}};
-  markSongs();ws.addEventListener("focus",markSongs);
-  app.querySelector("#wsave").onclick=async()=>{if(!ws.value)return;XM.stopSong();const r=await api({a:"walkup",name:me,song:ws.value});const m=app.querySelector("#wmsg");
-    if(r.ok){walkup=ws.value;if(m)m.textContent="🎵 Saved! It's yours. It plays on the TV when you win."}
-    else if(r.status===409){if(m)m.textContent=`😬 Too slow! ${XM.dn(r.by||"Someone")} already took that song. Pick another.`;ws.value=walkup||"";markSongs()}
-    else if(m)m.textContent=r.status===403?"That song belongs to someone else.":"Couldn't save. Check your internet."};}
   let gv=null,gn=null;app.querySelectorAll("[data-gv]").forEach(b=>b.onclick=()=>{gv=b.dataset.gv;app.querySelectorAll("[data-gv]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelectorAll("[data-gn]").forEach(b=>b.onclick=()=>{gn=+b.dataset.gn;app.querySelectorAll("[data-gn]").forEach(x=>x.classList.toggle("on",x===b))});
   app.querySelector("#gvsend").onclick=async()=>{const m=app.querySelector("#gvmsg");if(!gv||!gn){m.textContent="Pick who and how many.";return}
@@ -423,10 +409,10 @@ function myRace(r){
   }
 }
 /* ---- secret mission: only this phone ever sees it ---- */
-let lastIds=null,mission=null,vote=null,bet=null,walkup=null,lastExtras="",hot=null,mercy=null,predict=null;
+let lastIds=null,mission=null,vote=null,bet=null,lastExtras="",hot=null,mercy=null,predict=null;
 /* ---- your district's look (from the books) ---- */
 const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["⛏️","#2a2a2e"]};
-function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove());const t=me&&TRIBUTES.find(x=>x.name===me);if(!t)return;const [em,col]=DLOOK[t.d]||[];if(!em)return;
+function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove());document.body.style.background="";const t=me&&TRIBUTES.find(x=>x.name===me);if(!t)return;const [em,col]=DLOOK[t.d]||[];if(!em)return;
   document.body.style.background=`radial-gradient(ellipse at top,${col},var(--night) 70%)`;const R=(a,b)=>a+Math.random()*(b-a);
   const l=document.createElement("div");l.className="dlayer";l.innerHTML=Array.from({length:12},()=>`<i style="left:${R(0,95)}%;font-size:${R(22,40)}px;--s:${R(9,16)}s;--d:${-R(0,16)}s;--dx:${R(-40,40)}px;--r:${R(-200,200)}deg">${em}</i>`).join("");document.body.prepend(l)}
 /* ---- votes and bets the Gamemaker opens ---- */
@@ -542,18 +528,18 @@ function hostCard(){
   const SB=XM.SOUNDBOARD,quick=["airhorn","drumroll","applause"];
   const sec=(t,h)=>`<div class="eyebrow" style="margin:10px 0 6px">${t}</div>${h}`;
   const P={
-   show:sec("🏆 Record a winner (the TV celebrates)",`<select id="wg">${Object.entries(XM.GAMES).map(([k,g])=>`<option value="${k}">${g.n}. ${esc(g.name)}</option>`).join("")}</select>
-     <div class="chips" id="wplace" style="margin:6px 0"><button data-wp="1" class="on">🥇 Victor</button><button data-wp="2">🥈 Second Victor</button></div>
+   show:sec("🏆 Record a winner (the TV celebrates)",`<select id="wg">${Object.entries(XM.GAMES).filter(([k])=>k!=="mitten").map(([k,g])=>`<option value="${k}">${g.n}. ${esc(g.name)}</option>`).join("")}</select>
+     <div class="chips" id="wplace" style="margin:6px 0"><button data-wp="1" class="on">🥇 Victor</button><button data-wp="2">🥈 Second Victor</button></div><div class="tiny" id="wnote" style="min-height:0"></div>
      <div class="hgrid" id="wfaces">${XM.TRIBUTES.map(t=>`<button data-wn="${esc(t.name)}"><span class="i"><img src="${t.img}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover"></span>${esc(XM.dn(t.name))}</button>`).join("")}</div>`)+
     sec("📍 Jump to a slide",`<div class="hgrid" id="jquick"></div><div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>`)+
-    sec("🔊 Your voice on the TV",`<textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%">🔊 Announce it</button>`)+
+    sec("🔊 Your voice on the TV",`<textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad the Ancient and Wise, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%">🔊 Announce it</button>`)+
     sec("🎙️ Quick sounds",`<div class="hgrid">${SB.filter(x=>quick.includes(x[0])).map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
     sec("☕ Breaks",`<div class="hgrid">${b(["intermission","☕","Intermission"])}${b(["live","🎥","Live cam"])}<button data-c="clock:10"><span class="i">⏰</span>10 min clock</button><button data-c="clock:20"><span class="i">⏰</span>20 min clock</button><button data-c="clock:off"><span class="i">⏹️</span>Stop clock</button></div>`),
    quests:sec("⚔️ Side quest",`<select id="qsel">${XM.QUESTS.map((q,i)=>`<option value="${i}">${q[0]} ${esc(q[1])}</option>`).join("")}<option value="own">✏️ Write my own...</option></select>
     <textarea id="qown" rows="2" placeholder="Your side quest" style="display:none" maxlength="150"></textarea>
     <div class="chips" id="qsecs">${[10,15,30,60].map(n=>`<button data-s="${n}">${n}s</button>`).join("")}<button id="qdbl">🎲 Double: OFF</button></div>
     <button class="btn red" id="qsend" style="width:100%;font-size:1.1rem">⚔️ Send the side quest</button>
-    <div class="hgrid" style="grid-template-columns:repeat(2,1fr);margin-top:8px"><button id="qdone"><span class="i">✅</span>They did it (+1)</button><button id="qfail"><span class="i">❌</span>Failed (-1)</button></div>`)+
+    <div class="hgrid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:8px"><button id="qdone"><span class="i">✅</span>They did it (+1)</button><button id="qfail"><span class="i">❌</span>Failed (-1)</button></div>`)+
     sec("⭐ Points",`<div class="hgrid"><button id="pplus"><span class="i">⭐</span>+1 to picked</button><button id="pminus"><span class="i">💀</span>-1 to picked</button><button data-c="points"><span class="i">📊</span>Points on TV</button></div>`),
    twists:sec("🎯 Twists on the picked tribute (or Random)",`<div class="hgrid twists">${TW.map(([k,i,l])=>`<button data-tw="${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
     sec("🌍 Twists for the whole room",`<div class="hgrid twists">${TWIST_BTNS.filter(x=>!/^sponsor:/.test(x[0])).map(b).join("")}</div>`)+
@@ -568,8 +554,8 @@ function hostCard(){
     sec("📲 Tap race",`<div class="chips" data-when="norace">${[30,50,100].map(n=>`<button data-race="${n}">📲 Race to ${n}</button>`).join("")}</div><div class="hgrid" style="grid-template-columns:1fr"><button id="raceend" data-when="race"><span class="i">⏹️</span>End race</button></div>`)+
     sec("🎭 Hot seat · 🏳️ Mercy · 🔮 Predictions",`<div class="hgrid"><button id="hotgo" data-when="nohot"><span class="i">🎭</span>Hot seat (picked)</button><button id="hotend" data-when="hot"><span class="i">⏹️</span>End hot seat</button>
      <button id="mgo" data-when="nomercy"><span class="i">🏳️</span>Mercy vote (picked)</button><button id="mclose" data-when="mercy"><span class="i">⚖️</span>Mercy verdict</button>
-     <button id="pro" data-when="nopredict"><span class="i">🔮</span>Open predictions</button><button id="prl" data-when="predict"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal" data-when="nopredict"><span class="i">🎉</span>Reveal predictions</button></div>`),
-   fun:sec("🎙️ Soundboard (plays on the TV)",`<div class="hgrid" style="grid-template-columns:repeat(4,1fr)">${SB.map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
+     <button id="pro" data-when="nopredict"><span class="i">🔮</span>Open predictions</button><button id="prl" data-when="predict"><span class="i">🔒</span>Lock predictions</button><button data-c="predictreveal" data-when="revealable"><span class="i">🎉</span>Reveal predictions</button></div>`),
+   fun:sec("🎙️ Soundboard (plays on the TV)",`<div class="hgrid" style="grid-template-columns:repeat(4,minmax(0,1fr))">${SB.map(([k,i,l])=>`<button data-c="sfx:${k}"><span class="i">${i}</span>${l}</button>`).join("")}</div>`)+
     sec("🎉 Big moments",`<div class="hgrid"><button id="bdaygo"><span class="i">🎂</span>QUEEN MOTHER's birthday</button><button data-c="photo"><span class="i">📸</span>Photo booth</button><button data-c="recap"><span class="i">📼</span>Night recap</button><button data-c="fallen"><span class="i">🕯️</span>Fallen Tributes</button><button data-c="crown"><span class="i">👑</span>Crown the Ultimate Victor</button><button data-c="awards"><span class="i">🏁</span>End-of-night awards</button></div>`)+
     `<details class="hfold"><summary>⚙ Settings</summary><div class="hgrid" style="grid-template-columns:1fr">${TOGGLES.map(k=>`<button data-tg="${k}"></button>`).join("")}</div></details>
     <details class="hfold"><summary>🛠️ Setup and reset</summary><div class="hgrid"><button data-c="phonetour"><span class="i">📱</span>Phone tour on TV</button><button data-c="pointsinfo"><span class="i">⭐</span>Explain Capitol Points</button><button id="clrphones"><span class="i">🧹</span>Sign out all phones</button><button id="statsclear"><span class="i">🧹</span>Clear winners and award stats</button><button id="startover"><span class="i">🔄</span>Start completely over</button></div></details>`};
@@ -614,7 +600,7 @@ function hostCard(){
   box.querySelector("#block").onclick=async()=>{const r=await call({a:"betlock"});qmsg(r.ok?"🔒 Bets locked":"No open betting.")};
   box.querySelector("#bpay").onclick=async()=>{if(!qn||qn==="random"){qmsg("Pick who WON first (👤 Picked ▾).");return}const r=await call({a:"betpay",winner:qn});qmsg(r.ok?`🏆 Paid out on ${qn} (${r.results.length} bets)`:"No betting round.")};
   box.querySelector("#bcancel").onclick=arm(box.querySelector("#bcancel"),async()=>{const r=await call({a:"betcancel"});qmsg(r.ok?"↩️ Bets canceled":"No betting round.")});
-  box.querySelector("#startover").onclick=arm(box.querySelector("#startover"),async()=>{if(!confirm("Wipe EVERYTHING and sign every phone out?"))return;
+  box.querySelector("#startover").onclick=arm(box.querySelector("#startover"),async()=>{if(!confirm("Wipe EVERYTHING and sign every phone out?"))return;setPred(null);
     const r=await call({a:"cmd",name:me,cmd:"startover"});if(r.ok){qmsg("🔄 Done. Tap your face again to rejoin.")}else qmsg("Couldn't start over. Is the TV on?")});
   box.querySelector("#statsclear").onclick=async()=>{if(!confirm("Clear ALL game winners, Second Victors, tiebreakers and award stats?"))return;const r=await call({a:"statsreset"});const r2=await call({a:"cmd",name:me,cmd:"clearresults"});qmsg(r.ok&&r2.ok?"🧹 Winners and award stats cleared":"Couldn't clear.")};
   box.querySelector("#bdaygo").onclick=async()=>{const r=await call({a:"bday"});qmsg(r.ok?"🎂 Happy birthday, QUEEN MOTHER!":"Couldn't send.")};
@@ -625,17 +611,26 @@ function hostCard(){
   box.querySelector("#hotend").onclick=arm(box.querySelector("#hotend"),async()=>{await call({a:"hotend"});qmsg("⏹️ Hot seat over");hostLists()});
   box.querySelector("#mgo").onclick=async()=>{const r=await call({a:"mercyopen",to:qn||"random"});qmsg(r.ok?`🏳️ Mercy vote on ${r.mercy.to}`:"Couldn't start.")};
   box.querySelector("#mclose").onclick=arm(box.querySelector("#mclose"),async()=>{const r=await call({a:"mercyclose"});qmsg(r.ok?(r.spared?`🏳️ ${r.to} spared (${r.up} to ${r.down})`:`⚔️ No mercy for ${r.to} (${r.up} to ${r.down})`):"No mercy vote running.")});
-  box.querySelector("#pro").onclick=async()=>{const r=await call({a:"predictopen"});qmsg(r.ok?"🔮 Predictions open":"Couldn't open.")};
-  box.querySelector("#prl").onclick=async()=>{const r=await call({a:"predictlock"});qmsg(r.ok?"🔒 Predictions locked":"Couldn't lock.")};
+  box.querySelector("#pro").onclick=async()=>{const r=await call({a:"predictopen"});if(r.ok){setPred("open");hostState()}qmsg(r.ok?"🔮 Predictions open":"Couldn't open.")};
+  box.querySelector("#prl").onclick=async()=>{const r=await call({a:"predictlock"});if(r.ok){setPred("locked");hostState()}qmsg(r.ok?"🔒 Predictions locked":"Couldn't lock.")};
   hostLists();
   // 📍 jump straight to any slide
   fillJump();
-  {let wp=1;const wg=box.querySelector("#wg"),wpl=box.querySelector("#wplace");
-   const syncW=()=>{const mit=wg.value==="mitten";if(mit)wp=1;wpl.querySelectorAll("[data-wp]").forEach(x=>{x.classList.toggle("on",+x.dataset.wp===wp);x.hidden=mit&&x.dataset.wp==="2"})};
-   wg.onchange=syncW;wpl.querySelectorAll("[data-wp]").forEach(x=>x.onclick=()=>{wp=+x.dataset.wp;syncW()});syncW();
-   box.querySelectorAll("[data-wn]").forEach(x=>x.onclick=async()=>{const n=x.dataset.wn,g=wg.value,G=XM.GAMES[g];
-     if(!confirm(`${wp===1?"🥇 Victor":"🥈 Second Victor"} of ${G.name}: ${XM.dn(n)}?`))return;
-     buzz(30);x.classList.add("on");const r=await gmCmd("victor",{g,n,place:wp});setTimeout(()=>x.classList.remove("on"),1200);
+  {let wp=1,wv={};const wg=box.querySelector("#wg"),wpl=box.querySelector("#wplace"),wnote=box.querySelector("#wnote");
+   // Bingo has a Victor only (one per round); a Second Victor needs the game's Victor first, and can't be the same tribute
+   const two=g=>g!=="mitten"&&g!=="bingo";
+   const syncW=()=>{const g=wg.value;if(!two(g))wp=1;wpl.querySelectorAll("[data-wp]").forEach(x=>{x.classList.toggle("on",+x.dataset.wp===wp);x.hidden=!two(g)&&x.dataset.wp==="2"});
+     const v=wp===2?XM.realName(wv[g]||""):"";
+     box.querySelectorAll("[data-wn]").forEach(x=>{const isV=wp===2&&!!v&&x.dataset.wn===v;x.hidden=isV;x.disabled=wp===2&&!v;x.style.opacity=wp===2&&!v?.35:""});
+     wnote.textContent=wp===2?(v?`🥇 Victor: ${XM.dn(v)} (not shown)`:"Record the 🥇 Victor of this game first."):""};
+   const loadWV=async()=>{try{const j=await (await fetch("/api/show?a=results",{cache:"no-store"})).json();if(j.results&&j.results.victors)wv={...j.results.victors}}catch(e){}syncW()};
+   wg.onchange=()=>{syncW();if(wp===2)loadWV()};wpl.querySelectorAll("[data-wp]").forEach(x=>x.onclick=()=>{wp=+x.dataset.wp;syncW();if(wp===2)loadWV()});syncW();
+   box.querySelectorAll("[data-wn]").forEach(x=>x.onclick=async()=>{const n=x.dataset.wn,g=wg.value,G=XM.GAMES[g],place=wp;
+     if(place===2&&(!wv[g]||XM.realName(wv[g])===n))return;
+     if(!confirm(`${place===1?"🥇 Victor":"🥈 Second Victor"} of ${G.name}: ${XM.dn(n)}?`))return;
+     buzz(30);x.classList.add("on");const r=await gmCmd("victor",{g,n,place});setTimeout(()=>x.classList.remove("on"),1200);
+     if(r.ok&&place===1)wv[g]=n;
+     wp=1;syncW();   // back to 🥇 for the next one
      qmsg(r.ok?`🏆 ${XM.dn(n)} is on the TV now!`:"Couldn't send. Is the TV on?")})}
   box.querySelector("#jgo").onclick=()=>{const v=box.querySelector("#jsel").value;if(v)gotoSlide(v)};
   // 🧹 sign out every phone (this phone signs straight back in as the Gamemaker)
@@ -645,7 +640,7 @@ function hostCard(){
   box.querySelector("#pplus").onclick=pts(1);box.querySelector("#pminus").onclick=pts(-1);
   const sendC=async x=>{buzz(20);
     const r=await api({a:"cmd",name:me,pin,cmd:x.dataset.c});
-    if(r.ok){qmsg("✅ Sent to the TV");const [k,v]=x.dataset.c.split(":");if(TOGGLES.includes(k)&&(v==="on"||v==="off")){const st=XM.store.get("xmas-sh-toggles",{})||{};st[k]=v;XM.store.set("xmas-sh-toggles",st);showToggles()}}else if(r.status===403&&r.error==="Gamemaker only"){XM.store.set("xmas-sh-pin",null);hostCard()}else if(r.status===403){qmsg("Another phone took your name. Tap Not you? and rejoin.")}else qmsg("Couldn't send. Try again.")};
+    if(r.ok){qmsg("✅ Sent to the TV");if(x.dataset.c==="predictreveal"){setPred(null);hostState()}const [k,v]=x.dataset.c.split(":");if(TOGGLES.includes(k)&&(v==="on"||v==="off")){const st=XM.store.get("xmas-sh-toggles",{})||{};st[k]=v;XM.store.set("xmas-sh-toggles",st);showToggles()}}else if(r.status===403&&r.error==="Gamemaker only"){XM.store.set("xmas-sh-pin",null);hostCard()}else if(r.status===403){qmsg("Another phone took your name. Tap Not you? and rejoin.")}else qmsg("Couldn't send. Try again.")};
   box.querySelectorAll("[data-c]").forEach(x=>x.onclick=ARM.includes(x.dataset.c)?arm(x,()=>sendC(x)):()=>sendC(x));
   // ⚙ on/off settings: the news ticker (on by default)
   const TGL={ticker:["📺","News ticker"]},TDEF={ticker:"on"};
@@ -657,7 +652,11 @@ function hostCard(){
 }
 const TOGGLES=["ticker"];  // chaos mode and random sponsor gifts are retired
 let hostRace=null;
-function hostState(){const box=document.getElementById("host");if(!box)return;const S={vote:!!vote,bet:!!bet,betopen:!!(bet&&bet.state==="open"),race:!!(hostRace&&hostRace.state==="live"),hot:!!hot,mercy:!!mercy,predict:!!(predict&&predict.open)};
+// 🔮 predictions on this phone: "open" -> "locked" -> revealed (null). The server only tells phones while they're open, so lock/reveal are remembered here.
+const predSt=()=>XM.store.get("xmas-sh-pred",null),setPred=v=>XM.store.set("xmas-sh-pred",v);
+function hostState(){const box=document.getElementById("host");if(!box)return;
+  if(predict&&predict.open){if(predSt()!=="open")setPred("open")}else if(predSt()==="open")setPred("locked");
+  const S={revealable:predSt()==="open"||predSt()==="locked",vote:!!vote,bet:!!bet,betopen:!!(bet&&bet.state==="open"),race:!!(hostRace&&hostRace.state==="live"),hot:!!hot,mercy:!!mercy,predict:!!(predict&&predict.open)};
   box.querySelectorAll("[data-when]").forEach(x=>{const w=x.dataset.when,neg=w.startsWith("no")&&!(w in S),k=neg?w.slice(2):w;x.hidden=neg?S[k]:!S[k]})}
 /* ---- 📍 jump to a slide (the list comes from the TV) ---- */
 function gmCmd(cmd,data){return api({a:"cmd",name:me,pin:XM.store.get("xmas-sh-pin",null),cmd,data})}
@@ -756,7 +755,7 @@ async function poll(){
     if(me==="Carsyn"&&j.tvbtns!==undefined)tvCtl(j.tvbtns);
     if(me&&typeof j.epoch==="number"&&myEpoch!==null&&j.epoch>myEpoch){signedOut();return setTimeout(poll,2000)}   // the Gamemaker cleared all phones
     if(me&&myEpoch===null&&typeof j.epoch==="number"){myEpoch=j.epoch;XM.store.set("xmas-sh-epoch",myEpoch)}
-    skew=(j.now||Date.now())-Date.now();if(j.points)points=j.points;if(j.qbUses!==undefined&&j.qbUses!==qbUses){qbUses=j.qbUses;qbShow()}online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);myAllRise(j.allrise||null);if(j.walkup!==undefined&&walkup===null)walkup=j.walkup;showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
+    skew=(j.now||Date.now())-Date.now();if(j.points)points=j.points;if(j.qbUses!==undefined&&j.qbUses!==qbUses){qbUses=j.qbUses;qbShow()}online(true);showMyPoints();myQuest(j.quest);if(j.mission!==undefined)myMission(j.mission);vote=j.vote||null;bet=j.bet||null;hot=j.hot||null;mercy=j.mercy||null;predict=j.predict||null;myRace(j.race||null);myBday(j.bday||null);myAllRise(j.allrise||null);showExtras();if(me==="Carsyn"){hostRace=j.race||null;hostState()}}catch(e){online(false)}
   const busyNow=(quest&&quest.status==="live")||(race&&race.state==="live");
   const tvPop=me==="Carsyn"&&document.querySelector("#tvctl.tvpop");
   setTimeout(poll,fastPoll?(fastPoll=false,700):busyNow?1000:tvPop?1500:(vote||bet||mercy||hot||(predict&&predict.open))?2000:me==="Carsyn"?2000:3000);
@@ -791,7 +790,7 @@ addEventListener("pagehide",stopLive);
 ["touchend","click"].forEach(t=>addEventListener(t,()=>{try{XM.ensureAudio()}catch(e){}},{passive:true}));
 render();poll();
 // keep our name claimed while the page is open
-setInterval(()=>{if(me)api({a:"join",name:me,epoch:myEpoch}).then(r=>{if(r.status===410)signedOut();else if(r.status===409){me=null;XM.store.set("xmas-sh-me",null);render()}})},20000);
+setInterval(()=>{if(me&&document.visibilityState==="visible")api({a:"join",name:me,epoch:myEpoch}).then(r=>{if(r.status===410)signedOut();else if(r.status===409){me=null;XM.store.set("xmas-sh-me",null);render()}})},20000);
 </script>
 </body>
 </html>

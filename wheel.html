@@ -119,7 +119,7 @@ const G=()=>GAMES[S.game];
 // Keep each game's bracket on this laptop so a refresh doesn't lose it
 const SKEY=g=>"xmas-wheel-"+g;
 function saveS(){const c={...S,spinning:false};delete c.present;XM.store.set(SKEY(S.game),c.phase==="setup"?null:c)}
-function loadS(g){const v=XM.store.get(SKEY(g),null);if(v&&v.phase&&v.phase!=="setup"){const keep=S.present;S={...S,...v,game:g,spinning:false,secPend:0,history:v.history||[],present:keep};return true}return false}
+function loadS(g){const v=XM.store.get(SKEY(g),null);if(v&&v.phase&&v.phase!=="setup"){const keep=S.present;S={...S,second:false,second2:null,champ:null,runner:null,...v,game:g,spinning:false,secPend:0,history:v.history||[],present:keep};return true}return false}
 loadS(S.game);
 
 /* ---------- wheel ---------- */
@@ -221,9 +221,11 @@ function fallen(name){
 }
 
 /* ---------- flow ---------- */
+// a fresh bracket: no Second Chance mode, champion or Second Victor left over from before
+function clearBracket(){S.second=false;S.second2=null;S.champ=null;S.runner=null;S.secPend=0;S.saved=false;S.pool=[];S.matches=[];S.bye=null;S.pick=null;S.last=null;S.flash=null}
 function start(){
   const ps=NAMES.filter(n=>S.present[n]);if(ps.length<2)return;
-  S.round=1;S.history=[];newRound(shuffle(ps));
+  clearBracket();S.round=1;S.history=[];newRound(shuffle(ps));
 }
 function newRound(names){
   S.pool=names;S.matches=[];S.bye=null;S.pick=null;S.saved=false;
@@ -240,13 +242,17 @@ function secondChance(){
 }
 function finishSecond(w){
   if(!S.second)return;S.secPend=0;S.second=false;S.second2=w;S.phase="champ";S.pool=[];XM.setSecond(S.game,w);saveS();render();stopSong();
-  XM.celebrate(w,{intro:"Your Second Victor"});setTimeout(()=>{if(S.phase==="champ")XM.walkUp(w).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})},4500);
+  XM.celebrate(w,{intro:"Your Second Victor",then:()=>{if(S.phase==="champ")XM.walkUp(w).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})}});   // walk-up once the line is said
 }
 function nextRound(){
   if(S.second){const m=S.matches[0];if(m&&m.win)finishSecond(m.win);return}
   const w=S.matches.map(m=>m.win).concat(S.bye?[S.bye]:[]);
   S.history.push({round:S.round,matches:S.matches.map(m=>({a:m.a,b:m.b,win:m.win})),bye:S.bye});
-  if(w.length===1){S.champ=w[0];{const fm=S.matches.find(m=>m.win===S.champ);S.runner=fm?(fm.win===fm.a?fm.b:fm.a):null}S.phase="champ";XM.setVictor(S.game,S.champ);S.saved=true;S.second2=null;saveS();stopSong();render();XM.celebrate(S.champ,{intro:`Your ${G().name} champion`});setTimeout(()=>{if(S.phase==="champ")XM.walkUp(S.champ).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})},4500);return}
+  if(w.length===1){S.champ=w[0];{const fm=S.matches.find(m=>m.win===S.champ);S.runner=fm?(fm.win===fm.a?fm.b:fm.a):null}S.phase="champ";
+    {const oldV=XM.victors()[S.game],oldS=XM.seconds()[S.game];   // a new bracket's champion: an old Second Victor from before is stale (or is now the champ)
+      if(oldS&&(XM.realName(oldS)===S.champ||(oldV&&XM.realName(oldV)!==S.champ)))XM.setSecond(S.game,"")}
+    XM.setVictor(S.game,S.champ);S.saved=true;S.second2=null;saveS();stopSong();render();
+    XM.celebrate(S.champ,{intro:`Your ${G().name.replace("?","")} victor`,then:()=>{if(S.phase==="champ")XM.walkUp(S.champ).then(ok=>{if(!ok&&S.phase==="champ")playSong("lobby")})}});return}
   S.round++;newRound(shuffle(w));
 }
 function openTimer(i){
@@ -350,7 +356,7 @@ function champ(){
 function backToShow(){try{window.close()}catch(e){}setTimeout(()=>{location.href="/show#wheel-"+S.game},300)}
 function wire(){
   const on=(id,fn)=>{const e=document.getElementById(id);if(e)e.onclick=()=>{ensureAudio();fn(e)}};
-  document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");loadS(S.game);render()});
+  document.querySelectorAll("[data-game]").forEach(b=>b.onclick=()=>{S.game=b.dataset.game;history.replaceState(null,"","#"+S.game);sfx("tap");if(!loadS(S.game)){clearBracket();S.phase="setup";S.history=[];S.round=1}render()});
   document.querySelectorAll("[data-here]").forEach(b=>b.onclick=()=>{S.present[b.dataset.here]=!S.present[b.dataset.here];XM.store.set("xmas-present",S.present);sfx(S.present[b.dataset.here]?"tap":"untap");render()});
   document.querySelectorAll("[data-win]").forEach(b=>b.onclick=()=>{const[i,s]=b.dataset.win.split("|");const m=S.matches[+i];if(m.fav===undefined&&!m.win)m.fav=favOf(m);m.win=m.win===m[s]?null:m[s];render();if(m.win){XM.celebrate(m.win);fallen(m.win===m.a?m.b:m.a);upsetCheck(m)}else sfx("untap")});
   document.querySelectorAll("[data-timer]").forEach(b=>b.onclick=()=>{ensureAudio();openTimer(+b.dataset.timer)});
@@ -361,7 +367,7 @@ function wire(){
   on("second",secondChance);
   on("save",e=>{XM.setVictor(S.game,S.champ);if(S.second2)XM.setSecond(S.game,S.second2);e.textContent="✅ Saved to The Capitol Has Spoken";e.disabled=true;sfx("reveal")});
   {const r=document.getElementById("reset");if(r)r.onclick=()=>{ensureAudio();
-    if(S.phase==="champ"||r.dataset.sure){S.phase="setup";S.history=[];XM.store.set(SKEY(S.game),null);stopSong();render();return}
+    if(S.phase==="champ"||r.dataset.sure){clearBracket();S.phase="setup";S.history=[];S.round=1;XM.store.set(SKEY(S.game),null);stopSong();render();return}
     r.dataset.sure=1;r.textContent="Tap again to erase this bracket";setTimeout(()=>{if(r.isConnected){delete r.dataset.sure;r.textContent="Start over"}},3000)}}
   on("music",()=>{stopSong();playSong("lobby")});
 }

@@ -40,7 +40,7 @@ XM.GAMES={
 
 // The announcer says "Game maker", not "Gamemaker"
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
-  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/\bKachow\b/gi,"Kuh-chow").replace(/\bClo\b/g,"C.Lo"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
+  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/HumblePie1/g,"Humble Pie One").replace(/\bKachow\b/gi,"Kuh-chow").replace(/\bClo\b/g,"C.Lo"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 // the shared "how this works" briefing screen (/briefing.js) on every page that uses these helpers
 if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){const s=document.createElement("script");s.src="/briefing.js";document.head.appendChild(s)}
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
@@ -82,10 +82,8 @@ XM.POLLS=["Who's most likely to cheat?","Best dressed tribute?","Who would survi
  "Who would win a real snowball fight?","Who's most likely to cry at a Christmas movie?","Who's Santa's favorite?","Who's on the naughty list?",
  "Who would make the best Gamemaker?","Who tells the worst jokes?","Who's most likely to re-gift a present?","Who's the most competitive?"];
 /* 🎵 walk-up songs (the show's own music) */
-// 🎤 real walk-up songs (30-second clips in /xmas/walkups/), then the built-in beats as backups
-XM.WALKFILES=[["wu_ride","Ride · twenty one pilots"],["wu_snap","Snap Yo Fingers · Lil Jon"],["wu_walk","Walk · Pantera"],["wu_thunder","Thunderstruck · AC/DC"],
- ["wu_country","Country Grammar · Nelly"],["wu_crazytrain","Crazy Train · Ozzy Osbourne"],["wu_gangsta","Gangsta's Paradise · Coolio"],["wu_goingbad","Going Bad · Meek Mill"],
- ["wu_boom","Here Comes the Boom · Nelly"],["wu_hypnotize","Hypnotize · The Notorious B.I.G."],["wu_jump","Jump · Kris Kross"],["wu_throat","Let Me Clear My Throat · DJ Kool"],["wu_jonny","HumblePie1's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"],["wu_elisha","Bye Felicia's Walkout Song"],["wu_jessie","Lucky PomPoms' Walkout Song"],["wu_kyle","Kachow's Walkout Song"],["wu_brandon","Iron Balls III's Walkout Song"],["wu_tinsley","Pee Pee Balls' Walkout Song"],["wu_carsyn","Clo's Walkout Song"],["wu_kamdon","Big Daddy Kam's Walkout Song"],["wu_dash","Chad Thundercock's Walkout Song"]];
+// 🎤 real walk-up songs (recorded clips in /xmas/walkups/, played once), then the built-in beats as backups
+XM.WALKFILES=[["wu_boom","Here Comes the Boom · Nelly"],["wu_jonny","HumblePie1's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"],["wu_elisha","Bye Felicia's Walkout Song"],["wu_jessie","Lucky PomPoms' Walkout Song"],["wu_kyle","Kachow's Walkout Song"],["wu_brandon","Iron Balls III's Walkout Song"],["wu_tinsley","Pee Pee Balls' Walkout Song"],["wu_carsyn","Clo's Walkout Song"],["wu_kamdon","Big Daddy Kam's Walkout Song"],["wu_dash","Chad Thundercock's Walkout Song"]];
 XM.WALKUPS=[...XM.WALKFILES,["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
  ["hh_secrets","Secret Agent"],["hh_lrc","Dice Roll"],["hh_bingo","Bingo Bounce"],["hh_lounge","Lounge Lo-fi"],["battle","Battle March"],["march","Tribute Parade"],["board","Deck the Halls"],["lobby","Jingle Bells"]];
 XM.SOUNDBOARD=[["airhorn","📯","Air horn"],["cheer","🙌","Cheer"],["applause","👏","Applause"],["gasp","😮","Ohhh!"],["laugh","😂","Laugh"],["rimshot","🥁","Rimshot"],
@@ -314,16 +312,15 @@ XM.playSong=function(name,force){
   if(songName===name&&!force)return;
   XM.stopSong();if(!ensureAudio())return;
   if(name==="lobbymix"){songName=name;lobbyMix();return}
-  if(/^wu_[a-z0-9]+$/.test(name)){   // a real recorded walk-up song: plays once, about 30 seconds
+  if(/^wu_[a-z0-9]+$/.test(name)){   // a real recorded walk-up song: plays once
     songName=name;playFile("/xmas/walkups/"+name.slice(3)+".m4a"+({wu_kyle:"?v=2",wu_elisha:"?v=2"}[name]||""),.9,()=>{if(songName===name)songName=null});return}
   if(!SONGS[name]){songName=null;return}songName=name;playSynth(name);
 };
 XM.stopSong=function(){clearInterval(timerId);timerId=0;clearTimeout(mixT);song=null;songName=null;if(fileSong){const a=fileSong;fileSong=null;try{a.pause()}catch(e){}}};
 XM.currentSong=()=>songName;
-// 🎵 a tribute's walk-up song: the one they picked on their phone, or their own walkout song
+// 🎵 a tribute's walk-up song: their own walkout song (phones no longer pick songs). No song of their own: returns false so the page plays its fallback.
 XM.OWN_SONG={Jonny:"wu_jonny",Grandad:"wu_boom","QUEEN MOTHER":"wu_queen",Elisha:"wu_elisha",Jessie:"wu_jessie",Kyle:"wu_kyle",Brandon:"wu_brandon",Tinsley:"wu_tinsley",Carsyn:"wu_carsyn",Kamdon:"wu_kamdon",Dash:"wu_dash"};
-XM.walkUp=async(n,still=()=>true)=>{let song=null;try{const j=await (await fetch("/api/show?a=walkups",{cache:"no-store"})).json();song=j.walkups&&j.walkups[n]}catch(e){}
-  song=song||XM.OWN_SONG[n];if(!still())return true;if(song){XM.playSong(song,true);return true}return false};   // still(): skip if the screen moved on
+XM.walkUp=async(n,still=()=>true)=>{const song=XM.OWN_SONG[XM.realName(n)];if(!still())return true;if(song){XM.playSong(song,true);return true}return false};   // still(): skip if the screen moved on
 XM.sfx=function(kind){
   if(!ensureAudio())return;const t=AC.currentTime+.01;
   if(kind==="tick")osc("square",1320,t,.06,.08,sfxBus);
@@ -377,7 +374,7 @@ XM.sfx=function(kind){
 };
 
 /* ================= ANNOUNCER (laptop's built-in voice, pitched down) ================= */
-XM.SAY={"Clo":"C.Lo","Kachow":"Kuh-chow","HumblePie1":"Humble Pie One","Iron Balls III":"Iron Balls the Third","Elisha":"Alicia","QUEEN MOTHER":"Queen Mother","Kamdon":"Camden"};
+XM.SAY={"Clo":"C.Lo","Kachow":"Kuh-chow","HumblePie1":"Humble Pie One","Iron Balls III":"Iron Balls the Third","QUEEN MOTHER":"Queen Mother"};
 XM.spoken=n=>{const d=XM.dn(n);return XM.SAY[d]||(d===n?XM.SAY[n]:null)||d};
 let sayGen=0;
 const pickVoice=()=>{const sy=window.speechSynthesis;if(!sy)return null;const v=sy.getVoices().filter(v=>/^en/i.test(v.lang));
@@ -411,13 +408,13 @@ XM.snow=function(canvas){
 // XM.celebrate("Kamdon") -> booms, fanfare, crowd cheer, fireworks, confetti, and "Winner... Camden!"
 let celebT=[];
 XM.cancelCelebrate=()=>{celebT.forEach(clearTimeout);celebT=[]};
-XM.celebrate=(name,{intro="Winner",line=null}={})=>{
+XM.celebrate=(name,{intro="Winner",line=null,then=null,silent=false}={})=>{   // then(): runs once the spoken line has finished (e.g. start the walk-up song)
   ensureAudio();XM.cancelCelebrate();const setTimeout=(f,ms)=>{const id=window.setTimeout(f,ms);celebT.push(id);return id};XM.sfx("boom");setTimeout(()=>XM.sfx("boom"),380);
   setTimeout(()=>XM.sfx("fanfare"),700);setTimeout(()=>XM.sfx("cheer"),900);setTimeout(()=>XM.sfx("applause"),2200);
   [1500,2100,2700,3400].forEach(d=>setTimeout(()=>XM.sfx("firework"),d));
   XM.confetti(240,true);setTimeout(()=>XM.confetti(200,true),2200);
   const say=line||`${intro}... ${XM.spoken(name)}!`;
-  setTimeout(()=>XM.say(say,null,{pitch:.05,rate:.75,interrupt:true}),1100);
+  if(silent){if(then)setTimeout(then,1100)}else setTimeout(()=>XM.say(say,then,{pitch:.05,rate:.75,interrupt:true}),1100);   // silent: booms, fanfare and confetti only
   document.querySelectorAll(".tb,.overlay,.vsov,.app").forEach(el=>el.animate&&el.animate([{transform:"translate(-14px,6px)"},{transform:"translate(12px,-6px)"},{transform:"none"}],{duration:380}));
 };
 
@@ -690,7 +687,7 @@ XM.voiceHash=t=>{let h=0x811c9dc5;const s=String(t).replace(/\s+/g," ").trim();f
   function pass(u){if(q[0]===u)q.shift();const it={u};cur=it;
     const end=()=>{if(cur!==it)return;cur=null;pump()};u.addEventListener("end",end);u.addEventListener("error",end);speak0(u);
     setTimeout(end,String(u.text||"").length*130+4000)}   // safety net if the browser voice never says it finished
-  sy.speak=u=>{if(!cur&&!q.length&&!rec(u))return speak0(u);q.push(u);pump()};
+  sy.speak=u=>{q.push(u);pump()};   // every line goes through the queue (even a browser-voice one), so the next line waits for it to end
   sy.cancel=()=>{q.length=0;const it=cur;cur=null;if(it&&it.a){try{it.a.pause()}catch(e){}}cancel0()};
   try{Object.defineProperty(sy,"speaking",{configurable:true,get:()=>!!cur||!!(sp0&&sp0.get&&sp0.get.call(sy))})}catch(e){}
   // mute stops a recording that's playing

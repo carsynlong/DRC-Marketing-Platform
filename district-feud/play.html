@@ -148,6 +148,9 @@ let myName=store.get("df-name");
 let D={game:undefined,me:null,taken:[],myAnswer:null},pending=null,offline=0,timer=0,lastKey="",shownVotes=null;
 let sound=store.get("df-sound")!=="off";
 
+/* poll fast while timing matters (questions, face-offs, walk-outs, countdowns, reveal to next question); 3s otherwise */
+function pollGap(){const g=D.game;if(!g||!D.me)return 3000;
+  return g.phase==="question"||["intro","fanfav","double","brief","reveal"].includes(g.view)||g.phase==="reveal"?1500:3000}
 async function poll(){
   clearTimeout(timer);if(document.hidden)return;
   try{
@@ -157,7 +160,7 @@ async function poll(){
     if(D.me!==myName){myName=D.me;store.set("df-name",myName)}
     if(pending&&D.game&&(pending.gid!==D.game.gid||pending.qi!==D.game.qi||D.myAnswer))pending=null;
   }catch(e){offline++}
-  render();timer=setTimeout(poll,1500);
+  render();timer=setTimeout(poll,pollGap());
 }
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()});
 async function post(path,body){
@@ -302,7 +305,7 @@ function view(){
     const lead=g.lead||[],won=lead.length===1;
     if(won&&lead[0]===D.me)return [key+"won",header()+msg("🏆","You won the face-off!","<p>The district has spoken!</p>","win"),"win"];
     if(won)return [key+"w",header()+msg("⚡",`${esc(lead[0])} wins!`,`<p>${mine?`You voted for ${esc(mine)}.`:"Eyes on the TV."}</p>`,mine===lead[0]?"right":""),mine===lead[0]?"right":""];
-    return [key+"tie",header()+msg("❌","Still tied!","<p>Get ready for another face-off…</p>","wrong"),"wrong"];
+    return [key+"tie"+(g.spin?"spin":""),header()+msg("❌","Still tied!",g.spin?"<p>The lucky spin decides.</p>":"<p>Get ready for another face-off…</p>","wrong"),"wrong"];
   }
   if(g.phase==="final"&&sc&&sc.winner){
     if(sc.winner===D.me)return [key+"scwin",header()+msg("🏆","You're the Second Victor!","<p>You won the Second Chance face-off. Go claim your major award!</p>","win")+soundBtn(),"win"];

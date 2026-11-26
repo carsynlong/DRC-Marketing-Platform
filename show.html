@@ -318,7 +318,7 @@ body:has(.moment) .momentcard{visibility:hidden}   /* the end-of-night title car
 @media (max-height:820px){.moment.inter .clock{font-size:clamp(3rem,9vh,6rem)!important}.moment.inter .qrbox svg{width:90px!important;height:90px!important}.moment.inter h1{font-size:clamp(2rem,6vh,4rem)}}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:520px}
-/* who's joined on their phone: all 13 tributes, dim until they join (7 + 6, centered; stops short of the QR code) */
+/* who's joined on their phone: all 12 tributes and the Gamemaker, dim until they join (7 + 6, centered; stops short of the QR code) */
 .tgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 4px;width:724px;margin:8px 0 0 -70px}
 .tgrid .t{width:100px}
 .tgrid .t{display:grid;justify-items:center;gap:4px;opacity:.32;filter:grayscale(1);transition:opacity .5s,filter .5s}
@@ -616,8 +616,8 @@ const DISTRICT_FX={
  9:{ind:"GRAIN",g:["rgba(250,215,120,.7)","rgba(190,140,40,.35)"],p:[["fall","🌾",16]]},
  10:{ind:"LIVESTOCK",g:["rgba(200,230,150,.6)","rgba(110,140,60,.35)"],p:[["across","🐄",4],["across","🐑",4],["fall","🌾",5]]},
  11:{ind:"AGRICULTURE",g:["rgba(255,140,120,.6)","rgba(80,150,60,.35)"],p:[["fall","🍎",10],["fall","🍑",5],["fall","🍃",5]]},
- 12:{ind:"COAL MINING",g:["rgba(255,150,70,.32)","rgba(30,30,34,.55)"],p:[["fall","🪨",8],["twinkle","⛏️",5],["across","🐦",2]]},
- 13:{ind:"SECRETS & BUNKERS",g:["rgba(120,230,170,.45)","rgba(20,40,34,.6)"],p:[["twinkle","📻",8],["rise","🛡️",5],["twinkle","🕳️",4],["across","🐦",2]]}};  // District 13, the district that doesn't exist: radios, bunker doors, a mockingjay. coal dust, pickaxes, a mockingjay (no flames)
+ 12:{ind:"COAL MINING",g:["rgba(255,150,70,.32)","rgba(30,30,34,.55)"],p:[["fall","🪨",8],["twinkle","⛏️",5],["across","🐦",2]]},  // coal dust, pickaxes, a mockingjay (no flames)
+ 0:{ind:"GAMEMAKER",g:["rgba(255,215,140,.7)","rgba(150,60,200,.4)"],p:[["twinkle","🏛️",6],["twinkle","🔮",6],["twinkle","✨",10],["rise","🎮",4]]}};  // the Capitol (the Gamemaker): columns, crystal ball, sparkle
 function districtFX(d){const f=DISTRICT_FX[d];if(!f)return fireHTML();const R=(a,b)=>a+Math.random()*(b-a);
   let h=f.fire?fireHTML().replace('<div class="fire">','').replace(/<\/div>$/,""):`<div class="aura" style="--g1:${f.g[0]};--g2:${f.g[1]}"></div>`;
   if(f.bolt)h+=`<div class="bolt" style="--d:${-R(0,2)}s"></div>`;
@@ -635,7 +635,7 @@ function fireHTML(){const R=(a,b)=>a+Math.random()*(b-a);let h="";
 /* ---------- deep-voice announcer for the tribute profiles ---------- */
 // Uses the laptop's built-in speech voice, pitched way down. Names are spelled for the voice the way they're said.
 const SAY=XM.SAY;
-const NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen"];
+const NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"];
 const announcer=(()=>{
   let gen=0;const synth=window.speechSynthesis;
   const pickVoice=()=>{if(!synth)return null;const v=synth.getVoices().filter(v=>/^en/i.test(v.lang));
@@ -672,7 +672,7 @@ function announce(t,el){
     st(()=>{if(!ok())return;const s=stats[i];s.style.opacity="";s.classList.add("fr");XM.sfx("tap");
       announcer.say(lines[i],()=>step(i+1),{pitch:.3,rate:.85,fallback:1900})},i===0?900:500)};
   st(()=>{if(!ok())return;
-    announcer.say(`District ${NUM[t.d]}.`,()=>{if(!ok())return;st(()=>ok()&&announcer.say(`${spoken}!`,()=>step(0),{pitch:.05,rate:.7,fallback:1200}),350)},{pitch:.1,rate:.8,fallback:700});
+    announcer.say(t.capitol?"The Capitol.":`District ${NUM[t.d]}.`,()=>{if(!ok())return;st(()=>ok()&&announcer.say(`${spoken}!`,()=>step(0),{pitch:.05,rate:.7,fallback:1200}),350)},{pitch:.1,rate:.8,fallback:700});
   },900);
 }
 /* 📱 "Your Phone, Explained": a snapshot of a guest phone (xmas/phone-guide.jpg), circle one button at a time and explain it.
@@ -1469,7 +1469,7 @@ function lobbyNext(){const n=lobbyQ.shift();if(!n){lobbyBusy=false;return}lobbyB
   const cards=[...card.querySelectorAll(".lc")],k=TRIBUTES.indexOf(t);lobbyHold=Date.now()+3600;
   cards.forEach((c,j)=>{c.classList.toggle("on",j===k);c.classList.toggle("enter",j===k)});
   card.querySelector(".entertag")?.remove();const tag=document.createElement("div");tag.className="entertag";tag.textContent="🚪 Entered the arena!";card.appendChild(tag);
-  XM.sfx("cannon");shake();announcer.say(`${t.name==="Brandon"?"Iron Balls the Third":XM.spoken(n)} of District ${NUM[t.d]} has entered the arena!`,null,{pitch:.1,rate:.9});
+  XM.sfx("cannon");shake();announcer.say(`${t.name==="Brandon"?"Iron Balls the Third":XM.spoken(n)} ${t.capitol?"of the Capitol":`of District ${NUM[t.d]}`} has entered the arena!`,null,{pitch:.1,rate:.9});
   setTimeout(()=>{tag.remove();cards[k]&&cards[k].classList.remove("enter");lobbyNext()},3600)}
 function showJoined(list){
   const c=document.getElementById("jcount"),g=document.getElementById("tgrid");
@@ -1515,7 +1515,7 @@ const HG_FACTS=[
  "The Games started as punishment for the Dark Days, a failed uprising by the districts against the Capitol.",
  "Cinna's \"girl on fire\" costumes used synthetic flames that didn't burn.",
  "District 11 is agriculture, District 4 is fishing, District 3 is technology, and District 12 is coal mining.",
- "The Capitol claimed District 13 was wiped out in the Dark Days. It was underground the whole time, in giant bunkers.",
+ "District 6 is transportation: it builds the trains, hovercraft and cars that carry everything to the Capitol.",
 ];
 const XMAS_FACTS=[
  "Some historians think \"Jingle Bells\" was written for Thanksgiving, not Christmas. Very Thanksmas of it.",
@@ -1607,7 +1607,7 @@ addEventListener("keydown",e=>{const k=e.key;const dir=["ArrowRight","PageDown",
 const SLIDES=[
  {id:"lobby",music:"hh_lounge",html:()=>`<div style="display:grid;grid-template-columns:560px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative"><div class="lobbycard" id="lobbycard">${TRIBUTES.map((t,i)=>`<div class="lc ${i===0?"on":""}"><img src="${t.img}" alt=""><div style="font-family:var(--display);font-size:${XM.dn(t.name).length>18?32:XM.dn(t.name).length>9?46:64}px;white-space:nowrap;color:var(--gold);text-shadow:0 5px 0 var(--red-d)">${esc(t.name)}</div>
-      ${XM.aka(t.name)?`<div style="font-weight:800;font-size:30px;color:#fff;margin-top:-4px">a.k.a. ${esc(XM.aka(t.name))}</div>`:""}<div class="eb">DISTRICT ${t.d}</div></div>`).join("")}</div>
+      ${XM.aka(t.name)?`<div style="font-weight:800;font-size:30px;color:#fff;margin-top:-4px">a.k.a. ${esc(XM.aka(t.name))}</div>`:""}<div class="eb">${t.capitol?"🏛️ THE CAPITOL":"DISTRICT "+t.d}</div></div>`).join("")}</div>
     <div class="jhead">📱 <b id="jcount">0</b> of ${TRIBUTES.length} tributes joined</div>
     <div class="tgrid" id="tgrid">${TRIBUTES.map(t=>`<div class="t" data-n="${esc(t.name)}"><img src="${t.img}" alt=""><span>${esc(t.name)}</span></div>`).join("")}</div></div>
     <div style="display:grid;gap:18px;justify-items:start">
@@ -1644,7 +1644,7 @@ const SLIDES=[
  {id:"welcome",music:"stop",html:()=>`<div style="display:grid;grid-template-columns:520px 1fr;gap:90px;align-items:center;text-align:left">
     <div class="card spin" style="padding:44px 36px;display:grid;justify-items:center;gap:14px;box-shadow:0 0 0 4px var(--gold),0 30px 70px rgba(0,0,0,.6);background:linear-gradient(170deg,#1d3b32,#0d1f18)">
       <div class="eb" style="letter-spacing:.4em;color:var(--gold)">CAPITOL ID</div>
-      <img src="/xmas/tributes/d06.jpg" alt="" class="ring" style="width:280px;height:280px">
+      <img src="/xmas/tributes/capitol.jpg" alt="" class="ring" style="width:280px;height:280px">
       <div class="eb" style="margin-top:20px;letter-spacing:.45em">GAMEMAKER</div>
       <div style="font-family:var(--display);font-size:64px;color:var(--gold)">Carsyn</div>
       <div style="font-size:24px;color:var(--muted)">Access level: all of it</div>
@@ -1678,7 +1678,7 @@ const SLIDES=[
     <div class="bowl" id="bowl"><div class="glass"></div><div class="slips">${TRIBUTES.map((t,i)=>`<i style="left:${(i*37)%78}%;bottom:${(i*29)%46}px;transform:rotate(${(i*47)%60-30}deg)"></i>`).join("")}</div></div></div>
     <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:30px 20px;max-width:1560px;margin:0 auto">${TRIBUTES.map((t,i)=>`<div class="rp" data-rp="${esc(t.name)}" style="display:grid;justify-items:center;gap:10px;position:relative;width:200px">
       <img src="${t.img}" alt="" class="ring" style="width:180px;height:180px;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red),0 14px 30px rgba(0,0,0,.5)">
-      <span style="position:absolute;top:-6px;left:22px;background:var(--red);font-family:var(--display);font-size:24px;padding:2px 12px;border-radius:8px;transform:rotate(-10deg)">D${t.d}</span>
+      <span style="position:absolute;top:-6px;left:22px;background:var(--red);font-family:var(--display);font-size:24px;padding:2px 12px;border-radius:8px;transform:rotate(-10deg)">${t.capitol?"🏛️":"D"+t.d}</span>
       <b style="font-size:30px">${esc(t.name)}</b>${XM.aka(t.name)?`<span style="font-size:20px;font-weight:700;color:var(--gold);margin-top:-8px">a.k.a. ${esc(XM.aka(t.name))}</span>`:""}</div>`).join("")}</div></div>`,
    // 🥣 the Reaping: slips are pulled from the bowl one at a time, in random order, and each flips to that tribute's face
    enter(el){const all=TRIBUTES.map(t=>t.name).map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
@@ -1689,9 +1689,9 @@ const SLIDES=[
      all.forEach((n,k)=>st(()=>pull(n,k),1500+k*1000));
      st(()=>{bowl.querySelector(".pulled")?.remove();el.querySelectorAll(".rp").forEach(c=>c.classList.add("in"));XM.sfx("fanfare")},1500+all.length*1000+400)}},
  ...TRIBUTES.map(t=>({id:"d"+t.d,music:"stop",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
-    <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${districtFX(t.d)}${t.d===11?`<div class="qcrown">👑</div>`:""}${DISTRICT_FX[t.d]?`<div class="dbadge">DISTRICT ${t.d} · ${DISTRICT_FX[t.d].ind}</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">DISTRICT ${t.d}</span></div>
+    <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${districtFX(t.d)}${t.d===11?`<div class="qcrown">👑</div>`:""}${DISTRICT_FX[t.d]?`<div class="dbadge">${t.capitol?"🏛️ THE CAPITOL":"DISTRICT "+t.d} · ${DISTRICT_FX[t.d].ind}</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">${t.capitol?"THE CAPITOL":"DISTRICT "+t.d}</span></div>
     <div style="display:grid;gap:26px">
-      <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.name==="Carsyn"?"YOUR GAMEMAKER":esc(t.label||"TRIBUTE PROFILE")}</div>
+      <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.capitol?"YOUR GAMEMAKER · THE CAPITOL":esc(t.label||"TRIBUTE PROFILE")}</div>
       <h1 class="title-xl slam" ${d(.7)} style="font-size:${XM.dn(t.name).length>18?96:XM.dn(t.name).length>8?118:150}px">${esc(t.name)}</h1>
       ${[["canes","WEAPON OF CHOICE",t.weapon],["snowflake","SURVIVAL STRATEGY",t.strategy],["coins","CAPITOL ODDS",t.odds]].map(([ic,k,v],i)=>`<div class="card stat" data-stat="${i}" style="opacity:0"><img src="${ICON(ic)}" alt=""><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></div>`).join("")}
     </div></div>`,enter(el){XM.sfx("whoosh");XM.sfx("cheer");XM.walkUp(t.name,()=>curEl===el).then(ok=>{if(!ok&&curEl===el)XM.playSong("march")});   // 🎵 their walk-up song (quieter while the announcer talks)
@@ -2148,7 +2148,7 @@ const TICKER=["BREAKING: QUEEN MOTHER favored to win, odds 1 to 1, obviously","C
  "Weather: 100% chance of trash talk","Grandad spotted fixing something. Nobody knows what.","Kamdon has already calculated your odds. They are not good.",
  "Tinsley's memes reach the Capitol","Natalie breaks into song mid-broadcast","Brandon has not sat down in 3 hours","Gamemaker denies all rigging allegations. Probably.",
  "Kyle rushes the arena like it's pledge week","Jessie offers free trims to anyone who surrenders","Elisha seen out-planking a tribute","Jonny posts a pep talk. Morale soars.",
- "Dash spotted running. Reason unknown.","District 13 does not exist. Cable says hi anyway.","Cable was last seen entering a bunker. Nobody saw Cable leave.","May the odds be ever in your favor",
+ "Dash spotted running. Reason unknown.","Cable asks an AI for golf tips. The AI says: practice.","Cable rates tonight 5 stars. Would watch the sequel.","May the odds be ever in your favor",
  "Natalie files official complaint: it's not fair","Capitol scientists confirm: Kachow is a valid greeting","Iron Balls III demands to be addressed by his full title",
  "Leftover turkey declared a Capitol treasure","Grandad the Ancient and Wise shares a story. It is long.","Major awards remain wrapped. Tension rises.",
  "Scan the QR code to join the Games on your phone","Thanksmas declared an official Capitol holiday","Pee Pee Balls refuses to comment","Chad Thundercock seen flexing at the snack table",
@@ -2324,7 +2324,7 @@ async function fallenTributes(){
   const card=k=>{const x=items[k],t=x.name&&TRIBUTES.find(z=>z.name===x.name),fx=t&&DISTRICT_FX[t.d];
     return `<div class="fl"><div class="pol" style="--r:${k%2?3.5:-4}deg"><img src="${x.img}" alt="" onerror="this.src='/xmas/emblem.png'"><b>${x.name?esc(XM.dn(x.name)):"The Capitol Photo Booth"}</b></div>
       <div class="txt"><div class="eb2">${x.name?"FALLEN TRIBUTE":"FALLEN TRIBUTES"}</div><h1>${x.name?esc(XM.dn(x.name)):"Captured on camera"}</h1>
-      ${t?`<div class="dist">DISTRICT ${t.d}${fx?" · "+fx.ind:""}</div>`:x.cap?`<div class="dist">${esc(XM.nick(x.cap.replace(/^🏆 /,"")))}</div>`:""}<div class="line">${esc(lines[k%lines.length])}</div></div></div>`};
+      ${t?`<div class="dist">${t.capitol?"THE CAPITOL":"DISTRICT "+t.d}${fx?" · "+fx.ind:""}</div>`:x.cap?`<div class="dist">${esc(XM.nick(x.cap.replace(/^🏆 /,"")))}</div>`:""}<div class="line">${esc(lines[k%lines.length])}</div></div></div>`};
   const group=()=>`<div class="grp"><div class="eb2">🕯️ IN LOVING MEMORY OF TONIGHT</div><div class="faces">${TRIBUTES.map(t=>`<img src="${t.img}" alt="">`).join("")}</div>
       <h1>May the odds be ever in your favor.</h1><div class="line" style="text-align:center">See you at the 2027 Games.</div></div>`;
   const bar=`<div class="bar"><button class="btn ghost" id="flprev">◀ Back</button><button class="btn ghost" id="flnext">Next ▶</button><button class="btn ghost" id="flx">Close (Esc)</button></div>`;

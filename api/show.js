@@ -15,10 +15,10 @@
 //   GET  ?a=tv&since=<reactId>             new reactions, who's live (with their latest frame), who joined
 import { redis, hash, reply, text, touch } from "../lib/redis.js";
 
-const NAMES = ["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Caleb"];
+const NAMES = ["Jessie","Elisha","Grandad","Dash","Jonny","Caleb","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Carsyn"];   // Districts 1 to 12, then the Gamemaker (the Capitol)
 const EMOJI = ["🏹", "🔥", "🌹", "🍞", "🐦", "🎁", "😱", "😂", "🎂"];
 // each tribute also gets their own district's emojis (same as their profile effects)
-const DEMOJI = {Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"],Caleb:["📻","🕳️","🛡️","🤫"]};
+const DEMOJI = {Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Caleb:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"],Carsyn:["🏛️","🎮","🔮","✨"]};   // the Gamemaker gets the Capitol's
 const P = "sh:";
 // The Gamemaker's phone remote and twists need this PIN (only Carsyn knows it).
 const HOST_PIN = "1185";
@@ -42,7 +42,7 @@ const MISSIONS = [
   "Get someone to sing any Christmas song",
   "Steal one cookie without anyone noticing",
   "Get Kyle to talk about cars",
-  "Get Caleb to tell you where District 13 is",
+  "Get Caleb to explain what AI is",
   "Get someone to say \"Gamemaker\"",
   "Wink at the Gamemaker 5 times without getting caught",
   "Get 2 people to switch seats without telling them why",

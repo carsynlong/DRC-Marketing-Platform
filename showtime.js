@@ -9,7 +9,7 @@
 
    Walkout.run({
      names:    ["Jonny", ...]            who walks out, in order
-     district: name => number            their district
+     district: name => number            their district (0 = the Capitol: the Gamemaker, who has no district)
      photo:    name => image url
      theme:    "tribute" | "secrets"     colors, font and lines that match the game
      sound:    () => true/false          the game's music/sound switch
@@ -28,14 +28,14 @@ window.Walkout = (() => {
       accent: "#e8b04b", accent2: "#b8322a", bg1: "#16302a", bg2: "#0d1f18",
       hype: ["Volunteered without blinking!", "Sponsors are already watching!", "Trained for this moment!", "Fierce, festive and ready!",
         "Victor material!", "Bringing the fire!", "The Capitol's new favorite!", "Here for the glory (and the cookies)!",
-        "Never misses a target!", "Cool as District 12 snow!", "A threat in a Santa hat!", "Ready for the arena!", "Came out of nowhere!"],
+        "Never misses a target!", "Cool as District 12 snow!", "A threat in a Santa hat!", "Ready for the arena!", "Ready for the big screen!"],
     },
     secrets: {
       tag: "🔏 Presenting the suspects", font: '"Cinzel Decorative", "Cinzel", Georgia, serif', ink: "#f4ecdb",
       accent: "#d9b25f", accent2: "#a3182b", bg1: "#251a36", bg2: "#0b0a14",
       hype: ["Has a secret to hide…", "Keeps a perfect poker face!", "Trust no one. Especially them.", "Knows something you don't!",
         "The vault's most wanted!", "Never cracks under pressure!", "Smooth as candlelight!", "Leaves no fingerprints!",
-        "Hiding something under the tree…", "The master of misdirection!", "Sealed lips, sharp mind!", "Suspiciously innocent!", "Officially doesn't exist!"],
+        "Hiding something under the tree…", "The master of misdirection!", "Sealed lips, sharp mind!", "Suspiciously innocent!", "Plays it close to the vest!"],
     },
   };
 
@@ -286,18 +286,18 @@ window.Walkout = (() => {
       if (style === "reaping") {   // 🏹 drawn from the reaping bowl, then the tribute card
         const slips = Array.from({ length: 14 }, (_, k) => `<i style="left:${(k * 6.5) % 76}%;bottom:${(k * 13) % 50}%;transform:rotate(${(k * 37) % 70 - 35}deg);animation-delay:${(k % 5) * 60}ms"></i>`).join("");
         return `<div class="wo-stage"><div class="wo-bowl" aria-hidden="true"><div class="wo-glass">${slips}</div><div class="wo-hand">✋</div><div class="wo-slip">${esc(n)}</div></div>
-          <div class="wo-card">${photoHTML(n, prop)}<div><div class="wo-from">District ${dn} Tribute</div>${letters(n)}
+          <div class="wo-card">${photoHTML(n, prop)}<div><div class="wo-from">${dn ? `District ${dn} Tribute` : "🏛️ Gamemaker of the Capitol"}</div>${letters(n)}
           <div class="wo-sheet"><div style="--d:1.9s">🎯 Training score: <b>${o.training ? o.training(n) : 5 + ((i * 7 + seed) % 8)}</b></div><div style="--d:2.15s">🗡️ Weapon of choice: <b>${esc(pick(WEAPONS, i))}</b></div><div style="--d:2.4s">🎲 Odds: <b>${esc(pick(ODDS, i))}</b></div></div></div></div></div>${hypeLine(n, i)}`;
       }
       if (style === "lineup") {   // 🔏 mugshot against the height chart, fingerprint match, typed case file
         const red = "█".repeat(6 + (i % 5));
         return `<div class="wo-lineup"><div class="wo-mug"><div class="wo-hgt" aria-hidden="true"><span>6'</span><span>5'</span><span>4'</span><span>3'</span></div>${photoHTML(n, prop)}
-          <div class="wo-scanl" aria-hidden="true"></div><div class="wo-match">MATCH ✓</div><div class="wo-plac">SUSPECT #${i + 1} · DISTRICT ${dn}</div></div>
+          <div class="wo-scanl" aria-hidden="true"></div><div class="wo-match">MATCH ✓</div><div class="wo-plac">SUSPECT #${i + 1} · ${dn ? `DISTRICT ${dn}` : "THE CAPITOL"}</div></div>
           <div class="wo-file"><div class="wo-fhead">CASE FILE #${(1200 + seed * 7 + i * 13) % 9000 + 1000}</div>
           <div class="wo-tl" style="--d:1.8s">ALIAS: ${esc(pick(ALIASES, i))}</div><div class="wo-tl" style="--d:2.4s">KNOWN FOR: <span class="wo-red">${red}</span></div>
           <div class="wo-tl" style="--d:3s">LAST SEEN: ${esc(pick(SEEN, i))}</div><div class="wo-sus">SUSPECT</div></div></div>${letters(n)}${hypeLine(n, i)}`;
       }
-      return `${photoHTML(n, prop)}<div class="wo-from">From District ${dn}…</div>${letters(n)}${hypeLine(n, i)}<div class="wo-stat">${esc(stat)}</div>`;
+      return `${photoHTML(n, prop)}<div class="wo-from">${dn ? `From District ${dn}…` : "From the Capitol…"}</div>${letters(n)}${hypeLine(n, i)}<div class="wo-stat">${esc(stat)}</div>`;
     }
     if (!document.getElementById("wo-font") && o.style === "reaping") { const l = document.createElement("link"); l.id = "wo-font"; l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap"; document.head.appendChild(l); }
     let i = -1;
@@ -305,7 +305,7 @@ window.Walkout = (() => {
       if (!root) return;
       i++;
       if (i >= names.length) { later(end, 500); return; }
-      const n = names[i], dn = o.district ? o.district(n) : i + 1;
+      const n = names[i], dn = o.district ? o.district(n) : i + 1;   // 0 or empty: the Capitol
       const prop = PROPS[(i + seed) % PROPS.length], stat = stats[i % stats.length], funny = FUNNY[(i + seed) % FUNNY.length];
       const conf = calm ? "" : Array.from({ length: 18 }, (_, k) => `<span class="wo-conf" style="left:${(k * 5.6 + Math.random() * 4).toFixed(1)}%;--t:${(2.2 + Math.random() * 1.6).toFixed(2)}s;--d:${(1.5 + Math.random() * .9).toFixed(2)}s;--r:${(Math.random() * 720 - 360) | 0}deg">${CONF[(k + i) % CONF.length]}</span>`).join("");
       root.innerHTML = `${calm ? "" : '<div class="wo-rays"></div><div class="wo-search"></div>'}<div class="wo-beam"></div>${conf}<button class="wo-back" type="button">↩ Back to setup</button>
@@ -323,7 +323,8 @@ window.Walkout = (() => {
       const me = i; let spoke = false, minDone = false;
       const go = () => { if (root && i === me && spoke && minDone) step(); };
       const cap = () => { if (root && i === me) { spoke = minDone = true; go(); } };
-      say(`${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!`, () => { spoke = true; later(go, 350); }, () => { if (root && i === me) later(cap, 12000); });
+      // the Gamemaker has no district: "Ladies and gentlemen… give it up for… C.Lo!" (every piece has a recording; "From the Capitol" has none)
+      say(dn ? `${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!` : `Ladies and gentlemen… give it up for… ${n}!`, () => { spoke = true; later(go, 350); }, () => { if (root && i === me) later(cap, 12000); });
       later(() => { Music.bam(); Music.duck(talking ? .2 : .42); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 1250);
       later(() => sfx(funny), 1900);
       later(() => sfx("drop"), 3050); later(() => sfx("boing"), 3700);

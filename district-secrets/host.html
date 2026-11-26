@@ -38,7 +38,7 @@ button{font:inherit;cursor:pointer;border:0}
 <body>
 <main class="app" id="app"><p>Loading…</p></main>
 <script>
-const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Caleb"];
+const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Caleb","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Carsyn"];
 const k=new URLSearchParams(location.search).get("k")||"";
 try{if(k)localStorage.setItem("ds-hostkey",k)}catch(e){}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));

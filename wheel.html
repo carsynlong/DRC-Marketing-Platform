@@ -104,7 +104,6 @@ const {esc,NAMES}=XM;
 const {playSong,stopSong,sfx,ensureAudio}=XM;
 const confetti=(n,big)=>XM.confetti(n,big);
 const AV=n=>XM.photo(n);
-const DIST=n=>XM.TRIBUTES.find(t=>t.name===n).d;
 const GAMES={
   cookie:{name:"Smart Cookie Showdown",verb:"Cookie face-off",timer:60,rule:"Cookie on the forehead, no hands. First cookie in the mouth wins."},
   scoop:{name:"Blind Snowball Scoop",verb:"Snowball scoop-off",timer:30,rule:"Blindfolds on, spoon in hand. Most snowballs in 30 seconds wins."},
@@ -185,7 +184,7 @@ function versus(i){
   const m=S.matches[i];document.getElementById("vsov")?.remove();
   const ov=document.createElement("div");ov.className="vsov";ov.id="vsov";
   const rec=n=>{const r=record(n);return `🏆 ${r.games} game${r.games===1?"":"s"} won · ⚔️ ${r.fo} face-off${r.fo===1?"":"s"} won`};m.fav=favOf(m);
-  const f=(n,cls)=>`<div class="fighter ${cls}"><img src="${AV(n)}" alt=""><b>${esc(n)}</b><span class="dd">DISTRICT ${DIST(n)}</span><span class="odds">${rec(n)}</span></div>`;
+  const f=(n,cls)=>`<div class="fighter ${cls}"><img src="${AV(n)}" alt=""><b>${esc(n)}</b><span class="dd">${XM.where(n)}</span><span class="odds">${rec(n)}</span></div>`;
   ov.innerHTML=`<div class="rays"></div><div style="position:relative;display:grid;justify-items:center">
     <div class="top"><div class="eyebrow" style="font-size:1rem">${esc(G().name)} · ${S.second?"🎡 Second Chance":"Round "+S.round+" · Face-off "+(i+1)}</div><div class="fav">${m.fav?`📊 Capitol favorite: ${esc(m.fav)}`:"📊 Capitol Odds: dead even"}</div></div>
     <div class="row3">${f(m.a,"L")}<div class="VS">VS</div>${f(m.b,"R")}</div>

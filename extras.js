@@ -79,8 +79,8 @@ const Extras = (() => {
     const a = cur().a, d = DISTRICT[a];
     // never letters: those give the name away
     const k = S.qi % 3;
-    if (k === 0) return `It's one of the <b>${groupOf(a) === "girls" ? "girls" : "guys"}</b>`;
-    if (k === 1) return `From <b>District ${d <= 6 ? "1 to 6" : "7 to 13"}</b>`;
+    if (k === 0 || !d) return `It's one of the <b>${groupOf(a) === "girls" ? "girls" : "guys"}</b>`;   // the Gamemaker has no district
+    if (k === 1) return `From <b>District ${d <= 6 ? "1 to 6" : "7 to 12"}</b>`;
     return `From an <b>${d % 2 ? "odd" : "even"}-numbered district</b>`;
   }
   function tick() {

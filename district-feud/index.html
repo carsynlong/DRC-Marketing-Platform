@@ -615,8 +615,11 @@ function countUps(){document.querySelectorAll(".cu[data-auto]:not(.started)").fo
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 
 /* ================= DISTRICT FEUD ================= */
-const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Caleb"];
-const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
+// Districts 1 to 12 in order (Caleb is District 6), then the Gamemaker, who lives in the Capitol (no district, her own photo)
+const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Caleb","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Carsyn"];
+const DNUM=n=>n==="Carsyn"?0:NAMES.indexOf(n)+1;
+const FROM=n=>DNUM(n)?`District ${DNUM(n)}`:"The Capitol";
+const AV=n=>DNUM(n)?`img/p${String(DNUM(n)).padStart(2,"0")}.jpg`:"img/capitol.jpg";
 
 /* The family's survey. Only the #1 answer is on the board (two names = a tie). Edit wording here. */
 const QUESTIONS=[
@@ -676,7 +679,7 @@ const stumpOn=()=>!!(S.present[HOST]&&phones.includes(HOST));
 const stumpable=()=>phones.filter(n=>n!==HOST&&S.present[n]);   // who she can bet on: signed in on a phone, here, and not her
 const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
 const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
-  "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!","Came out of nowhere!"];
+  "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!","Ready for the big screen!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
   forgetGame();S.phase="lobby";S.tie=null;S.revealK=-1;S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;S.brf={};gid=Date.now()%1e7;answers={};answersQi=-1;
@@ -712,7 +715,8 @@ function introStep(){
   /* next walk-out once the name line has been said in full: at least 3.4s (4.6s with phones, time to cheer), at most 8s */
   const id=++introId,t0=Date.now(),min=phones.length?4600:3400;let said=false;
   const go=()=>{if(id!==introId||S.phase!=="intro")return;introId++;introStep()};
-  const u=announce(`From District ${NAMES.indexOf(n)+1}… ${n}!`,()=>{said=true;if(Date.now()-t0>=min)go()});
+  const u=announce(DNUM(n)?`From District ${DNUM(n)}… ${n}!`:`Ladies and gentlemen… ${n}!`   // the Gamemaker (the Capitol): both pieces have recordings
+    ,()=>{said=true;if(Date.now()-t0>=min)go()});
   later(()=>{if(said||!u)go()},min);later(go,8000);
 }
 const METER_MAX=20;   // cheers that fill the crowd meter
@@ -1057,8 +1061,8 @@ function introView(){
   const letters=[...(AKA[n]||n)].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
   return `${calm?"":'<div class="curt l"></div><div class="curt r"></div><div class="xbeam l"></div><div class="xbeam r"></div>'}<div class="rays" style="--d:.6s"></div>
     <section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>
-    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">District ${NAMES.indexOf(n)+1}</div><div class="bulbname" aria-label="${esc(AKA[n]||n)}">${letters}</div></div>
-    <div class="bubble">“${esc(I.hype[I.i%I.hype.length])}”</div></div>
+    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">${DNUM(n)?FROM(n):"🏛️ The Capitol · Gamemaker"}</div><div class="bulbname" aria-label="${esc(AKA[n]||n)}">${letters}</div></div>
+    <div class="bubble">“${esc(n==="Caleb"?"Fore! Here comes Cable!":I.hype[I.i%I.hype.length])}”</div></div>
     ${phones.length?`<div class="meter"><span class="mlab">📣 Crowd meter</span><div class="mbar ${(I.meter[n]||0)>=METER_MAX?"max":""}"><i id="mfill" style="width:${Math.min(100,(I.meter[n]||0)/METER_MAX*100).toFixed(0)}%"></i></div><b id="mnum">${I.meter[n]||0}</b></div>
     <div class="cheerhint">👏 Everyone else: tap emojis on your phone to cheer for ${esc(n)}!</div>`:""}
     <div class="idots">${I.who.map((_,k)=>`<i class="${k<=I.i?"on":""}"></i>`).join("")}</div>

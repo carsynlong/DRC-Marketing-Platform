@@ -15,16 +15,19 @@ XM.TRIBUTES=[
  {d:3,name:"Grandad",weapon:"A toolbox. He can fix anything.",strategy:"Offer to fix everyone's gear. Fix it wrong. On purpose.",odds:"7 to 1"},
  {d:4,name:"Dash",weapon:"Speed. It's in the name.",strategy:"Run first, ask questions later",odds:"3 to 1"},
  {d:5,name:"Jonny",weapon:"Daily motivation, straight from JT Motivation",strategy:"Stay fresh. Stay motivated. Stay undefeated.",odds:"5 to 1"},
- {d:6,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER · AKA CLO (CARSYN)"},
+ {d:6,name:"Caleb",weapon:"A 7-iron and an AI that does the math",strategy:"Let the robot pick, then invest the major award. Show me the money!",odds:"Up 6% since breakfast",label:"AKA CABLE"},
  {d:7,name:"Tinsley",weapon:"A brand-new driver's permit. Stay off the roads when you see her coming.",strategy:"Make everyone laugh till they drop, then floor it",odds:"3 to 1"},
  {d:8,name:"Natalie",weapon:"A rolling pin and a fresh batch of cookies",strategy:"Bribe the arena with cookies, break into song, and yell \"It's not fair!\" until the Gamemaker gives in",odds:"4 to 1"},
  {d:9,name:"Kamdon",weapon:"A Google Sheet with a formula for everything",strategy:"Calculate the odds, then audit everyone's score",odds:"5 to 1 (he double-checked the math)",label:"AKA BIG DADDY KAM"},
  {d:10,name:"Brandon",weapon:"The 5 D's: dodge, duck, dip, dive and dodge",strategy:"Never sit still. Will mow the lawn mid-game.",odds:"6 to 1",label:"AKA BUTCHUS BYRON MARVIN IRON BALLS III"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
  {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Rush the arena like it's pledge week",odds:"12 to 1",label:"AKA KACHOW"},
- {d:13,name:"Caleb",weapon:"A hand-crank radio and a bunker nobody can find",strategy:"Stay underground all night. Pop up for the win.",odds:"13 to 1 (the Capitol says Cable doesn't exist)",label:"AKA CABLE"},
+ // The Gamemaker lives in the Capitol, not a district (d:0). She still plays everything; her photo is the Capitol one.
+ {d:0,capitol:true,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER · AKA CLO (CARSYN)",img:"/xmas/tributes/capitol.jpg",full:"/xmas/tributes/full/capitol.jpg"},
 ];
-XM.TRIBUTES.forEach(t=>{const k=String(t.d).padStart(2,"0");t.img=`/xmas/tributes/d${k}.jpg`;t.full=`/xmas/tributes/full/d${k}.jpg`});
+XM.TRIBUTES.forEach(t=>{const k=String(t.d).padStart(2,"0");t.img=t.img||`/xmas/tributes/d${k}.jpg`;t.full=t.full||`/xmas/tributes/full/d${k}.jpg`});
+// where a tribute is from, for labels: "DISTRICT 6", or "THE CAPITOL" for the Gamemaker
+XM.where=x=>{const t=typeof x==="string"?XM.TRIBUTES.find(z=>z.name===x):x;return !t?"":t.capitol?"THE CAPITOL":`DISTRICT ${t.d}`};
 XM.NAMES=XM.TRIBUTES.map(t=>t.name);
 XM.photo=n=>{const t=XM.TRIBUTES.find(t=>t.name.toLowerCase()===String(n).trim().toLowerCase());return t?t.img:null};
 
@@ -475,7 +478,7 @@ XM.tiebreaker=function(opts={}){
 function closeTB(skipCb){clearT();if(window.Briefing&&Briefing.open())Briefing.close();XM.hush();XM.cancelCelebrate();const el=document.getElementById("xm-tb");if(el)el.remove();XM.stopSong();const cb=T&&T.onClose;T=null;if(cb&&skipCb!==true)cb()}
 XM.closeTiebreaker=closeTB;   // XM.closeTiebreaker(true): close without running its onClose
 const tied=()=>XM.NAMES.filter(n=>T.picked.has(n));
-const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">DISTRICT ${t.d}</span></button>`};
+const faceBtn=(n,attrs="",cls="")=>{const t=XM.TRIBUTES.find(t=>t.name===n);return `<button class="face ${cls}" ${attrs}><img src="${t.img}" alt=""><b>${esc(n)}</b><span class="d">${XM.where(t)}</span></button>`};
 const gameLabel=()=>T.game?XM.GAMES[T.game].name+" tiebreaker":"Tiebreaker";
 function shell(inner){
   return `<div class="tb-top"><span class="eyebrow" style="align-self:center">${esc(gameLabel())}${T.round>1?" · Round "+T.round:""}</span>

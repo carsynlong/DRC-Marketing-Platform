@@ -206,15 +206,16 @@ body.has-ticker .stage{max-height:42vh}
 <script src="/briefing.js"></script>
 <script>
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
-const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Caleb"];
-const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
+// Districts 1 to 12 in order (Caleb is District 6), then the Gamemaker, who lives in the Capitol (no district)
+const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Caleb","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Carsyn"];
+const AV=n=>n==="Carsyn"?"img/capitol.jpg":`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 const DOUBLE=new Set([7,16]); // last face of rounds 1 and 2: double points
 const NO_ANSWER=250; // points lost for not locking in a guess before the cannon fires
 const SLOW_PEN=NO_ANSWER; // phones show "⏰ Too slow −250" (howto.js)
 const HOST="Carsyn"; // runs the game: knows every face, so instead of guessing she predicts (🔮) and plays the mini-games
 const GIRLS=new Set(["Jessie","Elisha","Carsyn","Tinsley","Natalie","QUEEN MOTHER"]); // everyone else is in the boys' group
 const groupOf=n=>GIRLS.has(n)?"girls":"boys";
-const DISTRICT=Object.fromEntries(NAMES.map((n,i)=>[n,i+1]));
+const DISTRICT=Object.fromEntries(NAMES.filter(n=>n!=="Carsyn").map((n,i)=>[n,i+1]));   // the Gamemaker has none: she is from the Capitol
 const Q=[
  {q:"s01",r:"s02",a:"Dash"},{q:"s03",r:"s04",a:"Kyle"},{q:"s05",r:"s06",a:"Grandad"},{q:"s07",r:"s08",a:"Jessie"},
  {q:"s13",r:"s14",a:"Carsyn"},{q:"s15",r:"s16",a:"Jonny"},
@@ -432,7 +433,7 @@ function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>
 function showIntro(){
   const who=active().map(p=>p.name);
   if(!who.length||!window.Walkout)return newGame();
-  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker":n==="Brandon"?"Butchus Byron Marvin Iron Balls III":n==="Grandad"?"🧙 Ancient and wise":null});
+  const walk=()=>Walkout.run({names:who,district:n=>DISTRICT[n],photo:AV,theme:"tribute",style:"reaping",training:typeof Ambient!=="undefined"?n=>Ambient.training(n):null,sound:()=>S.sound,onDone:newGame,hypeFor:n=>n===HOST?"🔮 The Gamemaker":n==="Caleb"?"Fore! Here comes Cable!":n==="Brandon"?"Butchus Byron Marvin Iron Balls III":n==="Grandad"?"🧙 Ancient and wise":null});
   if(!window.Rules)return walk();
   // 📋 how to play, read out loud, then Ready starts the walk-outs
   stopSong();   // no music while the rules are read out loud
@@ -655,7 +656,7 @@ function lobbyView(){
     ${Sync.roster()}
     <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options${S.players.some(p=>!p.on)?` · ${S.players.filter(p=>!p.on).length} sitting out`:""}</summary>
     <div class="eyebrow">Tap a face to sit them out</div>
-    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">D${i+1}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button><button class="btn ghost" id="wipeall">↺ Start completely over</button></div></details>
+    <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">${DISTRICT[p.name]?"D"+DISTRICT[p.name]:"🏛️"}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button><button class="btn ghost" id="wipeall">↺ Start completely over</button></div></details>
     <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
@@ -686,7 +687,7 @@ function questionView(){
       :`<img class="${rev?"rev":"q"}" src="${img}" alt="${rev?esc(nickOf(x.a)):"Mystery tribute, zoomed in"}">`}
     ${!rev&&S.charting&&S.chartD?chartHTML(S.chartD,S.chartLit):""}
     ${!rev&&!S.locked&&S.look>0?`<div class="lookbig">👀 Look closely… <b id="lookn">${Math.ceil(S.look)}</b></div>`:""}
-    ${rev?`<div class="tag${m?" mt":""}">${m?`<small>Mutt Mashup</small>It's ${esc(x.a)} and ${esc(m.b)}!`:`<small>District ${DISTRICT[x.a]}</small>It's ${esc(x.a)}!`}</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
+    ${rev?`<div class="tag${m?" mt":""}">${m?`<small>Mutt Mashup</small>It's ${esc(x.a)} and ${esc(m.b)}!`:`<small>${DISTRICT[x.a]?"District "+DISTRICT[x.a]:"The Capitol"}</small>It's ${esc(x.a)}!`}</div><div class="flash"></div>`:S.locked?(S.mode==="type"?'<div class="locked">💥 Time! Answers locked</div>':'<div class="locked">💥 Time! Answers locked</div>'):""}</div>
   ${S.mode==="type"?typedView(x,rev):`<div class="answers">${ans}</div>${rev?scoring:`<div class="phoneprompt">${S.locked?"💥 Answers locked":"📱 Answer on your phone!"}<span class="count" id="answered">${Sync.countText()}</span></div>${Sync.whoIn()}`}`}
   <div class="ctl"><span class="hint tiny">${rev?"Space: show scores":S.locked?"Space: reveal":S.look>0?"Space: start typing now":"Space: lock answers"}</span>
     ${rev?`<button class="btn" id="score">Show scores</button>`:S.locked?`<button class="btn red" id="reveal">Reveal the tribute</button>`:`<button class="btn ghost" id="lock">Lock answers</button><button class="btn red" id="reveal">Reveal now</button>`}</div>`;

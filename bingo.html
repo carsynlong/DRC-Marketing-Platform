@@ -44,7 +44,7 @@ h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 
 .nowmode{display:flex;align-items:center;gap:12px;justify-content:center;background:var(--night-2);border-radius:14px;padding:8px 14px;box-shadow:0 0 0 2px var(--gold)}
 .nowmode .shape{grid-template-columns:repeat(5,12px)}.nowmode .shape i{width:12px;height:12px}
 .whose{display:grid;gap:10px;justify-items:center;margin-top:4px}
-.whose .wf{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:min(92vw,900px)}   /* 13 faces: 7 + 6, centered */
+.whose .wf{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:min(92vw,900px)}   /* 12 tributes + the Gamemaker: 7 + 6, centered */
 .wf>button{width:112px}
 .whose .wf button{display:grid;justify-items:center;gap:4px;background:rgba(255,255,255,.07);border:0;border-radius:14px;padding:8px 4px;color:var(--ink);font:800 .9rem "Outfit",sans-serif;cursor:pointer;line-height:1.1}
 .whose .wf button:hover{background:rgba(232,196,106,.25)}
@@ -98,8 +98,8 @@ function call(n){
     S.called.splice(i,1);sfx("untap");
   }else{S.called.push(n);sfx("reveal")}
   S.checked=null;save();render();
-  // 📣 B-1 to B-13: that number is a tribute's district (B-13 is District 13, Cable)
-  if(i<0&&n<=13){const t=XM.TRIBUTES.find(x=>x.d===n);if(t){
+  // 📣 B-1 to B-12: that number is a tribute's district (B-6 is Cable; the Gamemaker is from the Capitol, so no number is hers)
+  if(i<0&&n<=12){const t=XM.TRIBUTES.find(x=>x.d===n);if(t){
     const b=document.querySelector(".ballzone .ball");if(b){const f=document.createElement("div");f.className="dflash";f.innerHTML=`<img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b>`;b.appendChild(f);setTimeout(()=>f.remove(),2300)}}}
 }
 function rowLines(card){const has=(c,r)=>(c===2&&r===2)||S.called.includes(card[c][r]);const out=[];

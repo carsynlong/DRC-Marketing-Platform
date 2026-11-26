@@ -59,7 +59,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .signin h1{font-family:var(--deco);font-size:clamp(2rem,10vw,2.8rem);background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
 .signin p{margin:0;color:var(--muted)}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.pick>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 13 players: the last name sits in the middle */
+.pick>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 12 tributes + the Gamemaker: the last name sits in the middle */
 .pick button{min-height:62px;border-radius:12px;background:var(--parch);color:var(--parch-ink);font-family:var(--type);font-size:1.15rem;padding:8px;overflow-wrap:anywhere;
   box-shadow:0 4px 0 var(--parch-d),0 8px 16px rgba(0,0,0,.35);animation:rise .5s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--i)*40ms)}
 .pick button:nth-child(odd){transform:rotate(-1deg)}.pick button:nth-child(even){transform:rotate(1deg)}
@@ -238,7 +238,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-26-2";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-26-3";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -578,14 +578,18 @@ function effect(fx){
 /* ---------- screens ---------- */
 const fmt=n=>Number(n||0).toLocaleString();
 const meScore=()=>D.game?.scores?.find(s=>s.name===D.me);
-const dist=()=>D.game.names.indexOf(D.me)+1;
-const av=()=>`img/p${pad(dist())}.jpg`;
+// district by position in the TV's list (1 to 12); the Gamemaker (Carsyn) has none: she is from the Capitol, with her own photo
+const dOf=n=>n==="Carsyn"?0:D.game.names.indexOf(n)+1;
+const dist=()=>dOf(D.me);
+const fromTxt=()=>dist()?`District ${dist()}`:"🏛️ The Capitol";
+const avN=n=>dOf(n)?`img/p${pad(dOf(n))}.jpg`:"img/capitol.jpg";
+const av=()=>avN(D.me);
 /* the leader (or leaders, if tied), under your own name and points */
 function leadLine(){
   const sc=D.game?.scores||[],top=sc[0];if(!top||top.score<=0)return"";
   const leaders=sc.filter(x=>x.score===top.score),me=leaders.some(x=>x.name===D.me);
   if(me&&leaders.length===1)return `<div class="lead mine">👑 You're in the lead!</div>`;
-  const pic=n=>`<img src="img/p${pad(D.game.names.indexOf(n)+1)}.jpg" alt="">`;
+  const pic=n=>`<img src="${avN(n)}" alt="">`;
   return `<div class="lead">👑 ${leaders.length>1?"Tied for the lead":"In the lead"}: ${pic(leaders[0].name)}<b>${leaders.map(x=>esc(x.name)).join(" & ")}</b> · ${fmt(top.score)}</div>`;
 }
 /* top 3, plus you if you're further down */
@@ -594,13 +598,13 @@ function standings(){
   const top=sc.slice(0,3),me=sc.find(x=>x.name===D.me);
   if(me&&!top.includes(me)&&me.rank<=top[top.length-1].rank)top[top.length-1]=me;   // tied with 3rd: show you in the top 3
   const rows=[...top];
-  const pic=n=>`<img src="img/p${pad(D.game.names.indexOf(n)+1)}.jpg" alt="">`;
+  const pic=n=>`<img src="${avN(n)}" alt="">`;
   const row=x=>`<div class="mr${x.name===D.me?" me":""}"><span class="rk">${x.rank}</span>${pic(x.name)}<span class="nm">${esc(x.name)}${x.rank===1&&x.score>0?" 👑":""}</span><span class="pt">${fmt(x.score)}</span></div>`;
   return `<div class="mini"><div class="lbl">Leaderboard</div>${rows.map(row).join("")}${me&&!top.includes(me)?`<div class="mr gap">⋯</div>${row(me)}`:""}</div>`;
 }
 function header(){
   const s=meScore();
-  return `<div class="me"><div class="who"><img class="av" src="${av()}" alt=""><div><div class="eyebrow">District ${dist()}</div><div class="nm">${esc(D.me)}</div></div></div>
+  return `<div class="me"><div class="who"><img class="av" src="${av()}" alt=""><div><div class="eyebrow">${fromTxt()}</div><div class="nm">${esc(D.me)}</div></div></div>
     <div class="pts${s&&s.score!==shownScore?" bump":""}">${s?`<span data-from="${shownScore}" data-to="${s.score}">${fmt(s.score)}</span> pts<small>#${s.rank} of ${D.game.scores.length}</small>`:""}</div></div>${leadLine()}`;
 }
 const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div class="icon" aria-hidden="true">${icon}</div>`:""}<h1>${title}</h1>${body||""}</section>`;
@@ -623,7 +627,7 @@ function view(){
     if(!playing&&isHost())return [key+"host",msg("🔑","You're the host","<p>You're running the game tonight. Tap <b>🔑 Host tools</b> any time to approve bonus secrets.</p>")+notYou];
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
     return [key+"in"+editing+declined+mySecret+!!g.opts?.bonus+ttlEdit+ttlNo+JSON.stringify(myTTL)+!!g.opts?.ttl,`<section class="msg"><div class="eyebrow">Signed in</div>
-      <div class="card"><div class="eyebrow">District ${dist()} tribute</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
+      <div class="card"><div class="eyebrow">${dist()?`District ${dist()} tribute`:"🏛️ Gamemaker · The Capitol"}</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
       <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p>${D.me===HOST_NAME?`<p class="note">🕵️ You're the Gamemaker: each secret, bet on who the room will wrongly accuse most (+400), and guess in the bonus round!</p>`:""}</section>${writeCard()}${ttlCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
   if(!playing){   // the host (and anyone sitting out) still gets the same meme as everyone else
@@ -714,7 +718,7 @@ function view(){
 
   if(g.phase==="interro"){
     // 🔦 the Interrogation Room: keep your sealed guess or change it, while the room is open
-    const hot=(g.hot||[]).includes(D.me),pic=n=>`img/r${pad(g.names.indexOf(n)+1)}.jpg`,mine=D.myAnswer,k=`${g.gid}:${g.qi}`;
+    const hot=(g.hot||[]).includes(D.me),pic=n=>dOf(n)?`img/r${pad(dOf(n))}.jpg`:"img/rcapitol.jpg",mine=D.myAnswer,k=`${g.gid}:${g.qi}`;
     if(mySwitch.key!==k)mySwitch={key:k,to:null,open:false};
     const top=`<section class="msg" style="flex:none;padding:6px 0 0"><div class="eyebrow">🔦 The Interrogation Room</div>
       ${hot?`<img class="hot" src="${pic(D.me)}" alt="" style="width:min(40%,150px)"><h1 style="font-size:1.6rem">You're in the hot seat!</h1><p class="said">Defend yourself, out loud!</p>`

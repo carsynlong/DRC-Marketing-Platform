@@ -48,7 +48,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 
 /* name picker */
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.pick>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 13 players: the last name sits in the middle */
+.pick>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 12 tributes + the Gamemaker: the last name sits in the middle */
 .pick button{min-height:64px;border-radius:14px;background:var(--night-2);box-shadow:0 0 0 2px var(--line);font-weight:800;font-size:1.1rem;padding:8px;overflow-wrap:anywhere}
 .pick button:active{background:var(--gold);color:#2a1c05}
 .pick button:disabled{opacity:.35;cursor:not-allowed}
@@ -479,11 +479,14 @@ function effect(fx){
 
 /* ---------- screens ---------- */
 const meScore=()=>D.game?.scores?.find(s=>s.name===D.me);
+// district by position in the TV's list (Districts 1 to 12); the Gamemaker has none: she is from the Capitol and has her own photo
+const distOf=(g,n)=>n==="Carsyn"?0:(g.names||[]).filter(x=>x!=="Carsyn").indexOf(n)+1;
+const avOf=(g,n)=>{const d=distOf(g,n);return d?`img/p${String(d).padStart(2,"0")}.jpg`:"img/capitol.jpg"};
 const fmt=n=>Number(n||0).toLocaleString();
 function header(){
   const s=meScore();
-  const d=D.game.names.indexOf(D.me)+1, fire=s&&s.streak>=3;
-  return `<div class="me${fire?" fire":""}"><div class="who"><img class="av" src="img/p${String(d).padStart(2,"0")}.jpg" alt=""><div><div class="eyebrow">District ${d} · ⭐ ${Ambient.training(D.me)}${myCoins()?` · 🪙 ${myCoins()}`:""}${fire?" · 🔥":""}</div><div class="nm">${esc(D.me)}</div></div></div>
+  const d=distOf(D.game,D.me), fire=s&&s.streak>=3;
+  return `<div class="me${fire?" fire":""}"><div class="who"><img class="av" src="${avOf(D.game,D.me)}" alt=""><div><div class="eyebrow">${d?"District "+d:"🏛️ The Capitol"} · ⭐ ${Ambient.training(D.me)}${myCoins()?` · 🪙 ${myCoins()}`:""}${fire?" · 🔥":""}</div><div class="nm">${esc(D.me)}</div></div></div>
     <div class="pts${s&&s.score!==shownScore?" bump":""}">${s?`<span data-from="${shownScore}" data-to="${s.score}">${fmt(s.score)}</span> pts<small>#${s.rank} of ${D.game.scores.length}</small>`:""}</div></div>`;
 }
 const REACTS=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
@@ -513,7 +516,7 @@ function view(){
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
   const notYou=`<button class="switch" id="leave">🔄 Not ${esc(D.me)}? Switch name</button>`;
   if(g.phase==="lobby")return [key+playing, header()+(playing
-    ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">District ${g.names.indexOf(D.me)+1} tribute</div><img src="img/p${String(g.names.indexOf(D.me)+1).padStart(2,"0")}.jpg" alt=""><div class="nm">${esc(D.me)}</div><div class="eyebrow" style="margin-top:4px">Training score</div><div class="train"><span data-from="1" data-to="${Ambient.training(D.me)}">${Ambient.training(D.me)}</span><small>/ 12</small></div></div><p>You're in! Eyes on the TV. The Games begin soon.</p><p class="tiphint">🪂 While you wait: tap the care packages, swat the wasps, catch the bird!</p></section>`
+    ?`<section class="msg"><img src="bird.svg" alt="" style="width:96px;animation:spinin .9s cubic-bezier(.2,1.5,.4,1) both"><div class="eyebrow">The Reaping has chosen</div><div class="slip"><div class="eyebrow">${distOf(g,D.me)?`District ${distOf(g,D.me)} tribute`:"🏛️ Gamemaker · The Capitol"}</div><img src="${avOf(g,D.me)}" alt=""><div class="nm">${esc(D.me)}</div><div class="eyebrow" style="margin-top:4px">Training score</div><div class="train"><span data-from="1" data-to="${Ambient.training(D.me)}">${Ambient.training(D.me)}</span><small>/ 12</small></div></div><p>You're in! Eyes on the TV. The Games begin soon.</p><p class="tiphint">🪂 While you wait: tap the care packages, swat the wasps, catch the bird!</p></section>`
     :msg("🪑","You're sitting out","<p>Want to play? Ask the host to tap your name on the TV.</p>"))+(playing?reactBar():"")+soundBar()+notYou,playing?"reap":""];
   // 🎡 Second Chance Round: the winner sits out and watches; everyone else plays for the Second Victor
   if(g.sc&&g.phase!=="lobby"){

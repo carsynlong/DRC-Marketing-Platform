@@ -14,7 +14,7 @@ const Extras = (() => {
     smoke: { icon: "💨", title: "Smoke bomb!", text: "The photo starts blurry and slowly clears." },
     venom: { icon: "🐝", title: "Tracker jacker venom", text: "You're hallucinating. The colors are all wrong!" },
     night: { icon: "🔦", title: "Night falls", text: "The arena goes dark. Only a flashlight shows the face." },
-    frenzy: { icon: "🎁", title: "Sponsor frenzy", text: "Everyone scores double on this face!" },
+    frenzy: { icon: "🎁", title: "Double frenzy", text: "Everyone scores double on this face!" },
     freeze: { icon: "🧊", title: "Frozen arena", text: "The photo never zooms out!" },
     jackpot: { icon: "💰", title: "Capitol jackpot", text: "The fastest right answer wins +1,000 bonus!" },
     nohint: { icon: "🤐", title: "Gamemaker's silence", text: "No hint on this face." },
@@ -80,7 +80,7 @@ const Extras = (() => {
     // never letters: those give the name away
     const k = S.qi % 3;
     if (k === 0) return `It's one of the <b>${groupOf(a) === "girls" ? "girls" : "guys"}</b>`;
-    if (k === 1) return `From <b>District ${d <= 6 ? "1–6" : "7–12"}</b>`;
+    if (k === 1) return `From <b>District ${d <= 6 ? "1 to 6" : "7 to 12"}</b>`;
     return `From an <b>${d % 2 ? "odd" : "even"}-numbered district</b>`;
   }
   function tick() {

@@ -476,9 +476,9 @@ details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;fo
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
-const BUILD="ds-build-2026-11-26-1";
-const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
-const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
+const BUILD="ds-build-2026-11-26-2";
+const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Caleb"];
+const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
 const dn=n=>window.XM?.dn?XM.dn(n):(AKA[n]||n);   // nickname, for text the page's name swap can't reach (capitals, attributes)
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -553,7 +553,7 @@ const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john",
   "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
   "Grandad":["grandad","granddad","grandpa","grampa","papa","don","dawn","donjackson","grandadtheancientandwise","theancientandwise","ancientandwise"],"Elisha":["elisha","mom","momma","mama","lish","byefelicia","felicia","bye"],
   "Jessie":["jessie","jesse","jessi","jess","jessica","luckypompoms","pompoms","luckypompom","lucky"],"Kamdon":["kamdon","kamden","kam","bigdaddykam","bigdaddy"],
-  "Tinsley":["tinsley","tins","tinz","peepeeballs","peepee","peeballs","bigfatballs","fatballs","balls","jollyballs","jolly"],"Natalie":["natalie","nat","nattie","buzzbuzz","buzz"],"Brandon":["brandon","ironballs","ironballsiii","butchus","byron","marvin","butchusbyronmarvinironballs","butchusbyronmarvinironballsiii"],"Kyle":["kyle","kachow"],"Dash":["dash","chadthundercock","chad","thundercock"],"Carsyn":["carsyn","carson","clo","chlo","clow"]};
+  "Tinsley":["tinsley","tins","tinz","peepeeballs","peepee","peeballs","bigfatballs","fatballs","balls","jollyballs","jolly"],"Natalie":["natalie","nat","nattie","buzzbuzz","buzz"],"Brandon":["brandon","ironballs","ironballsiii","butchus","byron","marvin","butchusbyronmarvinironballs","butchusbyronmarvinironballsiii"],"Kyle":["kyle","kachow"],"Dash":["dash","chadthundercock","chad","thundercock"],"Carsyn":["carsyn","carson","clo","chlo","clow"],"Caleb":["caleb","kaleb","calab","cable","cabel","cabels","cables"]};
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
 function lev(a,b){const d=Array.from({length:a.length+1},(_,i)=>[i]);for(let j=1;j<=b.length;j++)d[0][j]=j;
   for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]}
@@ -1541,7 +1541,7 @@ function lobbyView(){
     <div class="hero">${EMBLEM}
       <div class="eyebrow">The 2026 Christmas Games · Game 6</div>
       <h1 class="title">District Secrets</h1>
-      <p class="tagline">${S.opts?.decoys?`${REAL.length} real secrets + ${DECOY_COUNT} decoys = ${REAL.length+DECOY_COUNT} files. Can you spot the fakes?`:`Twelve tributes. ${REAL.length} secrets. Every single one is true.`}</p>
+      <p class="tagline">${S.opts?.decoys?`${REAL.length} real secrets + ${DECOY_COUNT} decoys = ${REAL.length+DECOY_COUNT} files. Can you spot the fakes?`:`Thirteen tributes. ${REAL.length} secrets. Every single one is true.`}</p>
       ${joinCard()}
       <p class="rules">A real secret appears. Guess whose it is on your phone. <b>1,000</b> per right guess. Everyone starts at zero.</p>
     </div>

@@ -57,6 +57,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .logo span{color:var(--gold);text-shadow:0 2px 0 var(--gold2),0 4px 0 var(--red),0 7px 0 var(--red-d)}
 .signin p{margin:6px 0 0;color:var(--muted)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 13 players: the last name sits in the middle */
 .nb{display:flex;align-items:center;gap:8px;min-height:62px;border-radius:12px;padding:6px 10px 6px 6px;text-align:left;font-family:var(--display);font-size:1rem;text-transform:uppercase;line-height:1.05;overflow-wrap:anywhere;
   background:linear-gradient(180deg,var(--blue),var(--navy));box-shadow:inset 0 0 0 2px var(--sky),0 5px 0 #050d33;animation:rise .45s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--i)*35ms)}
 .nb img{width:46px;height:46px;border-radius:9px;object-fit:cover;flex:none}

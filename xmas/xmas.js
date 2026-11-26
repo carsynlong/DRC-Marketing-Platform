@@ -22,6 +22,7 @@ XM.TRIBUTES=[
  {d:10,name:"Brandon",weapon:"The 5 D's: dodge, duck, dip, dive and dodge",strategy:"Never sit still. Will mow the lawn mid-game.",odds:"6 to 1",label:"AKA BUTCHUS BYRON MARVIN IRON BALLS III"},
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
  {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Rush the arena like it's pledge week",odds:"12 to 1",label:"AKA KACHOW"},
+ {d:13,name:"Caleb",weapon:"A hand-crank radio and a bunker nobody can find",strategy:"Stay underground all night. Pop up for the win.",odds:"13 to 1 (the Capitol says Cable doesn't exist)",label:"AKA CABLE"},
 ];
 XM.TRIBUTES.forEach(t=>{const k=String(t.d).padStart(2,"0");t.img=`/xmas/tributes/d${k}.jpg`;t.full=`/xmas/tributes/full/d${k}.jpg`});
 XM.NAMES=XM.TRIBUTES.map(t=>t.name);
@@ -44,7 +45,7 @@ XM.GAMES={
 // the shared "how this works" briefing screen (/briefing.js) on every page that uses these helpers
 if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){const s=document.createElement("script");s.src="/briefing.js";document.head.appendChild(s)}
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
+XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 // typed name or nickname back to the real name: "kachow" -> "Kyle", "Iron Balls the Third" -> "Brandon". Unknown text comes back trimmed.

@@ -615,7 +615,7 @@ function countUps(){document.querySelectorAll(".cu[data-auto]:not(.started)").fo
 function confetti(n,big){FX(n);if(big){setTimeout(()=>FX(n),700);setTimeout(()=>FX(n),1500)}}
 
 /* ================= DISTRICT FEUD ================= */
-const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
+const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Caleb"];
 const AV=n=>`img/p${String(NAMES.indexOf(n)+1).padStart(2,"0")}.jpg`;
 
 /* The family's survey. Only the #1 answer is on the board (two names = a tie). Edit wording here. */
@@ -676,7 +676,7 @@ const stumpOn=()=>!!(S.present[HOST]&&phones.includes(HOST));
 const stumpable=()=>phones.filter(n=>n!==HOST&&S.present[n]);   // who she can bet on: signed in on a phone, here, and not her
 const HALFTIME_AFTER=5;   // halftime standings after this many questions (when the show has 7+)
 const HYPE=["Here to win the major award!","Trouble with a capital T!","The fan favorite!","Don't let the smile fool you!","Bringing the Christmas chaos!",
-  "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!"];
+  "Smells victory… and cookies!","Ready to feud!","The dark horse of the district!","Came to play, stayed for snacks!","Sleigh all day!","Born for the spotlight!","Ho-ho-ho-ld on tight!","Came out of nowhere!"];
 function startGame(){
   S.order=S.use.map((u,i)=>u?i:-1).filter(i=>i>=0);if(!S.order.length)return;
   forgetGame();S.phase="lobby";S.tie=null;S.revealK=-1;S.k=0;S.results=[];S.tbNext=0;S.tbq=TIEBREAKERS.slice().sort(()=>Math.random()-.5);S.tally={};S.bump={};S.pkg=null;S.streak={};S.leader=null;S.earn={};S.halfDone=false;S.brf={};gid=Date.now()%1e7;answers={};answersQi=-1;
@@ -1053,7 +1053,7 @@ function render(){
 function goSetup(){forgetGame();clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
-  const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};   // nickname on the nameplate (split letters dodge the page-wide swap)
+  const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};   // nickname on the nameplate (split letters dodge the page-wide swap)
   const letters=[...(AKA[n]||n)].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
   return `${calm?"":'<div class="curt l"></div><div class="curt r"></div><div class="xbeam l"></div><div class="xbeam r"></div>'}<div class="rays" style="--d:.6s"></div>
     <section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>

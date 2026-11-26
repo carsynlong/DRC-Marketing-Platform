@@ -245,8 +245,8 @@ body:has(.moment) .hud.bl{z-index:54}body:has(.moment) .hud.bl button:not(#mute)
 .chute{position:fixed;left:50%;top:-30vh;z-index:54;font-size:clamp(90px,12vw,190px);line-height:.9;text-align:center;pointer-events:none;animation:chute 4.2s cubic-bezier(.3,.6,.4,1) forwards}
 @keyframes chute{0%{transform:translate(-50%,0) rotate(-8deg)}25%{transform:translate(-40%,30vh) rotate(8deg)}50%{transform:translate(-58%,55vh) rotate(-6deg)}75%{transform:translate(-46%,75vh) rotate(5deg)}100%{transform:translate(-50%,130vh) rotate(0)}}
 /* votes, bets, snitches, awards, photo booth */
-.vgrid2{display:grid;grid-template-columns:repeat(6,1fr);gap:16px 22px;width:min(1500px,92vw)}
-.vgrid2 .vc{display:grid;justify-items:center;gap:4px;position:relative}
+.vgrid2{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 22px;width:min(1500px,92vw)}
+.vgrid2 .vc{display:grid;justify-items:center;gap:4px;position:relative;width:calc((100% - 132px)/7)}
 .vgrid2 img{width:min(120px,12vh);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px var(--line);transition:box-shadow .3s,transform .3s}
 .vgrid2 .vc.lead img{box-shadow:0 0 0 6px var(--gold);transform:scale(1.08)}
 .vgrid2 b{font-weight:800;font-size:1.1rem}
@@ -318,11 +318,12 @@ body:has(.moment) .momentcard{visibility:hidden}   /* the end-of-night title car
 @media (max-height:820px){.moment.inter .clock{font-size:clamp(3rem,9vh,6rem)!important}.moment.inter .qrbox svg{width:90px!important;height:90px!important}.moment.inter h1{font-size:clamp(2rem,6vh,4rem)}}
 /* lobby */
 .lobbycard{position:relative;width:560px;height:520px}
-/* who's joined on their phone: all 12 tributes, dim until they join */
-.tgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px 8px;width:770px;margin-top:8px}
+/* who's joined on their phone: all 13 tributes, dim until they join (7 + 6, centered; stops short of the QR code) */
+.tgrid{display:flex;flex-wrap:wrap;justify-content:center;gap:16px 4px;width:724px;margin:8px 0 0 -70px}
+.tgrid .t{width:100px}
 .tgrid .t{display:grid;justify-items:center;gap:4px;opacity:.32;filter:grayscale(1);transition:opacity .5s,filter .5s}
 .tgrid .t img{width:70px;height:70px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px rgba(255,255,255,.25)}
-.tgrid .t span{font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:0;line-height:1.05;text-align:center;white-space:normal;max-width:126px}
+.tgrid .t span{font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:0;line-height:1.05;text-align:center;white-space:normal;max-width:104px}
 .tgrid .t.in{opacity:1;filter:none}.tgrid .t.in img{box-shadow:0 0 0 4px var(--gold),0 0 18px rgba(232,176,75,.6)}
 .tgrid .t.in::after{content:"✓";position:absolute;margin:-4px 0 0 52px;width:24px;height:24px;border-radius:50%;background:#19a35a;color:#fff;display:grid;place-items:center;font-size:15px;font-weight:900}
 .tgrid .t{position:relative}.tgrid .t.pop{animation:popIn .6s cubic-bezier(.2,1.8,.4,1)}
@@ -615,7 +616,8 @@ const DISTRICT_FX={
  9:{ind:"GRAIN",g:["rgba(250,215,120,.7)","rgba(190,140,40,.35)"],p:[["fall","🌾",16]]},
  10:{ind:"LIVESTOCK",g:["rgba(200,230,150,.6)","rgba(110,140,60,.35)"],p:[["across","🐄",4],["across","🐑",4],["fall","🌾",5]]},
  11:{ind:"AGRICULTURE",g:["rgba(255,140,120,.6)","rgba(80,150,60,.35)"],p:[["fall","🍎",10],["fall","🍑",5],["fall","🍃",5]]},
- 12:{ind:"COAL MINING",g:["rgba(255,150,70,.32)","rgba(30,30,34,.55)"],p:[["fall","🪨",8],["twinkle","⛏️",5],["across","🐦",2]]}};  // coal dust, pickaxes, a mockingjay (no flames)
+ 12:{ind:"COAL MINING",g:["rgba(255,150,70,.32)","rgba(30,30,34,.55)"],p:[["fall","🪨",8],["twinkle","⛏️",5],["across","🐦",2]]},
+ 13:{ind:"SECRETS & BUNKERS",g:["rgba(120,230,170,.45)","rgba(20,40,34,.6)"],p:[["twinkle","📻",8],["rise","🛡️",5],["twinkle","🕳️",4],["across","🐦",2]]}};  // District 13, the district that doesn't exist: radios, bunker doors, a mockingjay. coal dust, pickaxes, a mockingjay (no flames)
 function districtFX(d){const f=DISTRICT_FX[d];if(!f)return fireHTML();const R=(a,b)=>a+Math.random()*(b-a);
   let h=f.fire?fireHTML().replace('<div class="fire">','').replace(/<\/div>$/,""):`<div class="aura" style="--g1:${f.g[0]};--g2:${f.g[1]}"></div>`;
   if(f.bolt)h+=`<div class="bolt" style="--d:${-R(0,2)}s"></div>`;
@@ -633,7 +635,7 @@ function fireHTML(){const R=(a,b)=>a+Math.random()*(b-a);let h="";
 /* ---------- deep-voice announcer for the tribute profiles ---------- */
 // Uses the laptop's built-in speech voice, pitched way down. Names are spelled for the voice the way they're said.
 const SAY=XM.SAY;
-const NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"];
+const NUM=["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen"];
 const announcer=(()=>{
   let gen=0;const synth=window.speechSynthesis;
   const pickVoice=()=>{if(!synth)return null;const v=synth.getVoices().filter(v=>/^en/i.test(v.lang));
@@ -1450,7 +1452,7 @@ function phoneReact(x){
   XM.sfx("pop");
 }
 function showLive(live){
-  const box=document.getElementById("livecorner");const names=Object.keys(live).slice(0,12);box.classList.toggle("many",names.length>4&&names.length<=8);box.classList.toggle("lots",names.length>8);
+  const box=document.getElementById("livecorner");const names=Object.keys(live).slice(0,13);box.classList.toggle("many",names.length>4&&names.length<=8);box.classList.toggle("lots",names.length>8);
   box.querySelectorAll("[data-live]").forEach(n=>{if(!names.includes(n.dataset.live))n.remove()});
   names.forEach(name=>{let n=box.querySelector(`[data-live="${CSS.escape(name)}"]`);
     if(!n){n=document.createElement("div");n.className="livecam";n.dataset.live=name;n.innerHTML=`<img alt=""><b>🔴 ${esc(XM.dn(name))}</b>`;box.appendChild(n);XM.sfx("stinger")}
@@ -1513,6 +1515,7 @@ const HG_FACTS=[
  "The Games started as punishment for the Dark Days, a failed uprising by the districts against the Capitol.",
  "Cinna's \"girl on fire\" costumes used synthetic flames that didn't burn.",
  "District 11 is agriculture, District 4 is fishing, District 3 is technology, and District 12 is coal mining.",
+ "The Capitol claimed District 13 was wiped out in the Dark Days. It was underground the whole time, in giant bunkers.",
 ];
 const XMAS_FACTS=[
  "Some historians think \"Jingle Bells\" was written for Thanksgiving, not Christmas. Very Thanksmas of it.",
@@ -1673,7 +1676,7 @@ const SLIDES=[
    enter(){for(let i=0;i<8;i++)st(()=>XM.sfx("pop"),500+i*150)}},
  {id:"tributes",music:"march",html:()=>`<div style="display:grid;gap:30px;width:100%"><div class="reaprow"><h1 class="title-l slam">Meet the Tributes</h1>
     <div class="bowl" id="bowl"><div class="glass"></div><div class="slips">${TRIBUTES.map((t,i)=>`<i style="left:${(i*37)%78}%;bottom:${(i*29)%46}px;transform:rotate(${(i*47)%60-30}deg)"></i>`).join("")}</div></div></div>
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:30px 20px">${TRIBUTES.map((t,i)=>`<div class="rp" data-rp="${esc(t.name)}" style="display:grid;justify-items:center;gap:10px;position:relative">
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:30px 20px;max-width:1560px;margin:0 auto">${TRIBUTES.map((t,i)=>`<div class="rp" data-rp="${esc(t.name)}" style="display:grid;justify-items:center;gap:10px;position:relative;width:200px">
       <img src="${t.img}" alt="" class="ring" style="width:180px;height:180px;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red),0 14px 30px rgba(0,0,0,.5)">
       <span style="position:absolute;top:-6px;left:22px;background:var(--red);font-family:var(--display);font-size:24px;padding:2px 12px;border-radius:8px;transform:rotate(-10deg)">D${t.d}</span>
       <b style="font-size:30px">${esc(t.name)}</b>${XM.aka(t.name)?`<span style="font-size:20px;font-weight:700;color:var(--gold);margin-top:-8px">a.k.a. ${esc(XM.aka(t.name))}</span>`:""}</div>`).join("")}</div></div>`,
@@ -2145,7 +2148,7 @@ const TICKER=["BREAKING: QUEEN MOTHER favored to win, odds 1 to 1, obviously","C
  "Weather: 100% chance of trash talk","Grandad spotted fixing something. Nobody knows what.","Kamdon has already calculated your odds. They are not good.",
  "Tinsley's memes reach the Capitol","Natalie breaks into song mid-broadcast","Brandon has not sat down in 3 hours","Gamemaker denies all rigging allegations. Probably.",
  "Kyle rushes the arena like it's pledge week","Jessie offers free trims to anyone who surrenders","Elisha seen out-planking a tribute","Jonny posts a pep talk. Morale soars.",
- "Dash spotted running. Reason unknown.","May the odds be ever in your favor",
+ "Dash spotted running. Reason unknown.","District 13 does not exist. Cable says hi anyway.","Cable was last seen entering a bunker. Nobody saw Cable leave.","May the odds be ever in your favor",
  "Natalie files official complaint: it's not fair","Capitol scientists confirm: Kachow is a valid greeting","Iron Balls III demands to be addressed by his full title",
  "Leftover turkey declared a Capitol treasure","Grandad the Ancient and Wise shares a story. It is long.","Major awards remain wrapped. Tension rises.",
  "Scan the QR code to join the Games on your phone","Thanksmas declared an official Capitol holiday","Pee Pee Balls refuses to comment","Chad Thundercock seen flexing at the snack table",
@@ -2247,7 +2250,7 @@ function orderView(k,area,blurb,slideEl){
       area.querySelector("#shuf").onclick=e=>{e.stopPropagation();shuffleOrder()};
       return;
     }
-    area.innerHTML=`<div class="ogrid" style="grid-template-columns:repeat(${order.length>8?6:Math.min(order.length,4)},220px)">${order.map((n,i)=>`<div class="oslot ${reveal?"":"pop"} ${i===0?"first":""}" ${reveal?"":d(i*.12)} data-i="${i}"><span class="num">${i+1}</span><img src="${XM.photo(n)}" alt=""><b>${esc(n)}</b></div>`).join("")}</div>
+    area.innerHTML=`<div class="ogrid" style="grid-template-columns:repeat(${order.length>12?7:order.length>8?6:Math.min(order.length,4)},220px)">${order.map((n,i)=>`<div class="oslot ${reveal?"":"pop"} ${i===0?"first":""}" ${reveal?"":d(i*.12)} data-i="${i}"><span class="num">${i+1}</span><img src="${XM.photo(n)}" alt=""><b>${esc(n)}</b></div>`).join("")}</div>
       <div class="row" style="display:flex;gap:16px;justify-content:center"><button class="btn red" style="font-size:26px" id="shuf">🔀 Shuffle again</button><button class="btn ghost" style="font-size:22px" id="who">Change who's playing</button></div>`;
     area.querySelector("#shuf").onclick=e=>{e.stopPropagation();shuffleOrder()};
     area.querySelector("#who").onclick=e=>{e.stopPropagation();XM.store.set(key,null);draw(null)};

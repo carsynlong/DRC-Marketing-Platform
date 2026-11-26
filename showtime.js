@@ -19,7 +19,7 @@
    })
    Space, Enter or the Skip button ends it early. While it runs, it sits on top of the game's lobby. */
 // everyone's nickname (attributes like alt and title aren't caught by the page-wide nickname swap in sabotage.js)
-window.NICK = window.NICK || (() => { const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
+window.NICK = window.NICK || (() => { const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo", Caleb: "Cable" };
   return n => AKA[n] || n; })();
 window.Walkout = (() => {
   const THEMES = {
@@ -28,14 +28,14 @@ window.Walkout = (() => {
       accent: "#e8b04b", accent2: "#b8322a", bg1: "#16302a", bg2: "#0d1f18",
       hype: ["Volunteered without blinking!", "Sponsors are already watching!", "Trained for this moment!", "Fierce, festive and ready!",
         "Victor material!", "Bringing the fire!", "The Capitol's new favorite!", "Here for the glory (and the cookies)!",
-        "Never misses a target!", "Cool as District 12 snow!", "A threat in a Santa hat!", "Ready for the arena!"],
+        "Never misses a target!", "Cool as District 12 snow!", "A threat in a Santa hat!", "Ready for the arena!", "Came out of nowhere!"],
     },
     secrets: {
       tag: "🔏 Presenting the suspects", font: '"Cinzel Decorative", "Cinzel", Georgia, serif', ink: "#f4ecdb",
       accent: "#d9b25f", accent2: "#a3182b", bg1: "#251a36", bg2: "#0b0a14",
       hype: ["Has a secret to hide…", "Keeps a perfect poker face!", "Trust no one. Especially them.", "Knows something you don't!",
         "The vault's most wanted!", "Never cracks under pressure!", "Smooth as candlelight!", "Leaves no fingerprints!",
-        "Hiding something under the tree…", "The master of misdirection!", "Sealed lips, sharp mind!", "Suspiciously innocent!"],
+        "Hiding something under the tree…", "The master of misdirection!", "Sealed lips, sharp mind!", "Suspiciously innocent!", "Officially doesn't exist!"],
     },
   };
 
@@ -47,9 +47,9 @@ window.Walkout = (() => {
   const STATS = ["🍪 Cookies eaten today: 14", "🤫 Secrets kept: 2 (allegedly)", "🎄 Ugly sweater rating: 11/10", "🦌 Reindeer games won: 3", "😴 Naps taken this week: 9",
     "🎁 Gifts peeked at early: ALL of them", "☕ Hot cocoa level: dangerous", "🕺 Dance moves: questionable", "🏹 Trash talk level: elite", "🧦 Socks received: 37 pairs",
     "📺 Hallmark movies watched: 22", "🍬 Candy canes hidden in pockets: 6", "🎶 Times sang Mariah this week: 40", "🛷 Sled crashes: undefeated"];
-  const WEAPONS = ["Wrapping paper", "A candy cane", "Tangled Christmas lights", "A fruitcake", "An ugly sweater", "Snowballs", "A rolling pin", "Jingle bells", "Scalding hot cocoa", "A nutcracker", "Tinsel", "A gingerbread shield"];
+  const WEAPONS = ["Wrapping paper", "A candy cane", "Tangled Christmas lights", "A fruitcake", "An ugly sweater", "Snowballs", "A rolling pin", "Jingle bells", "Scalding hot cocoa", "A nutcracker", "Tinsel", "A gingerbread shield", "A snow globe"];
   const ODDS = ["Ever in their favor", "Excellent", "Questionable", "50/50", "The sponsors are nervous", "Better than Santa's diet", "Suspiciously good", "Ask again after dessert"];
-  const ALIASES = ["The Cookie Bandit", "Sticky Fingers", "The Tinsel Thief", "Agent Eggnog", "The Silent Night", "The Candy Cane Kid", "The Re-Gifter", "The Midnight Snacker", "Agent Mistletoe", "The Gift Peeker", "Frosty Fingers", "The Fruitcake Fence"];
+  const ALIASES = ["The Cookie Bandit", "Sticky Fingers", "The Tinsel Thief", "Agent Eggnog", "The Silent Night", "The Candy Cane Kid", "The Re-Gifter", "The Midnight Snacker", "Agent Mistletoe", "The Gift Peeker", "Frosty Fingers", "The Fruitcake Fence", "The Stocking Stuffer"];
   const SEEN = ["near the cookie jar", "under the mistletoe", "behind the Christmas tree", "in the gift-wrap aisle", "at the dessert table", "by the fireplace", "in the Capitol archives", "on the naughty list"];
   const later = (fn, ms) => timers.push(setTimeout(fn, ms));
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

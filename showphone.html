@@ -18,6 +18,8 @@ h1.t{font-family:var(--display);font-weight:400;color:var(--gold);text-shadow:0 
 .grid button img{width:72px;height:72px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px var(--gold)}
 .grid button b{font-size:.9rem}
 .grid button:active{transform:scale(.96)}
+.grid>button:last-child:nth-child(3n+1){grid-column:2}   /* 13 tributes: the last face sits in the middle */
+#wfaces>button:last-child:nth-child(3n+1){grid-column:2}
 .grid button.taken{opacity:.35}
 .card{background:rgba(22,48,42,.95);border-radius:18px;padding:14px 16px;box-shadow:0 0 0 1px var(--line)}
 .me{display:flex;align-items:center;gap:12px}
@@ -79,6 +81,7 @@ details.more>.card{margin-top:12px;box-shadow:0 0 0 1px var(--line)}
 .qov .clk{font-family:var(--display);font-size:5.5rem;line-height:1;color:#fff}
 @keyframes qin{from{opacity:0;transform:scale(1.1)}}
 .qfaces{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px;margin-bottom:6px}
+.qfaces>button:last-child:nth-child(6n+1){grid-column:3/5;justify-self:center;width:calc(50% - 2px)}
 .qfaces button{display:grid;justify-items:center;gap:2px;padding:4px 0;border-radius:12px;font-size:.68rem;font-weight:800;background:rgba(255,255,255,.05)}
 .qfaces img,.qfaces .r{width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line);display:grid;place-items:center;font-size:1.6rem}
 .qfaces button.on img,.qfaces button.on .r{box-shadow:0 0 0 3px var(--gold)}
@@ -88,6 +91,7 @@ select,textarea{width:100%;font-size:16px;font-weight:600;font-family:inherit;pa
 .chips button{flex:1;padding:9px 0;border-radius:999px;background:rgba(255,255,255,.08);font-weight:800}
 .chips button.on{background:var(--gold);color:#13271f}
 .vfaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.vfaces>button:last-child:nth-child(4n+1){grid-column:2/4;justify-self:center;width:calc(50% - 4px)}   /* a lone last face sits in the middle */
 .vfaces button{display:grid;justify-items:center;gap:3px;padding:6px 2px;border-radius:12px;background:rgba(255,255,255,.05);font-size:.82rem;font-weight:800;line-height:1.1}
 .vfaces img{width:52px;height:52px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line)}
 .vfaces button.on{background:rgba(232,176,75,.28)}.vfaces button.on img{box-shadow:0 0 0 3px var(--gold)}
@@ -174,8 +178,8 @@ const DECREES=["Bring the QUEEN more iced tea","Bring the QUEEN a snack","Give t
  "Give the QUEEN a foot rub... just kidding, a hug","Tell the QUEEN why she's the best","Do your best royal wave","Fetch the QUEEN a napkin","Dance for 10 seconds","Speak in a British accent until the next game"];
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 // your own district's emojis (matches your profile on the TV)
-const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"]};
-const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
+const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Carsyn:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"],Caleb:["📻","🕳️","🛡️","🤫"]};
+const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining",13:"Secrets & Bunkers"};
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
 // if the phone got zoomed in, snap back to normal size (so full-screen pop-ups fit)
 function unzoom(){const m=document.querySelector('meta[name=viewport]');if(!m)return;const c=m.content;m.content=c.replace(/,?maximum-scale=[^,]*/,"")+",maximum-scale=1";window.scrollTo(0,window.scrollY);setTimeout(()=>{m.content=c},400)}
@@ -412,7 +416,7 @@ function myRace(r){
 /* ---- secret mission: only this phone ever sees it ---- */
 let lastIds=null,mission=null,vote=null,bet=null,lastExtras="",hot=null,mercy=null,predict=null;
 /* ---- your district's look (from the books) ---- */
-const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["⛏️","#2a2a2e"]};
+const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["⛏️","#2a2a2e"],13:["📻","#16302a"]};
 function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove());document.body.style.background="";const t=me&&TRIBUTES.find(x=>x.name===me);if(!t)return;const [em,col]=DLOOK[t.d]||[];if(!em)return;
   document.body.style.background=`radial-gradient(ellipse at top,${col},var(--night) 70%)`;const R=(a,b)=>a+Math.random()*(b-a);
   const l=document.createElement("div");l.className="dlayer";l.innerHTML=Array.from({length:12},()=>`<i style="left:${R(0,95)}%;font-size:${R(22,40)}px;--s:${R(9,16)}s;--d:${-R(0,16)}s;--dx:${R(-40,40)}px;--r:${R(-200,200)}deg">${em}</i>`).join("");document.body.prepend(l)}
@@ -731,7 +735,7 @@ function showSlide(){
 function coachNote(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,""),k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];
   const N={lobby:"Leave this up while people arrive. Check the joined count. Press → when it's time.",title:"The announcer welcomes everyone. Wait for it.",welcome:"Read your speech: \"Citizens of the living room!\"",
-    rules:"The announcer reads the rules. Let it finish.",phoneguide:"Phone guide: let it play, or tap Next to skip ahead.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes. Press →.",begin:"Your song plays. It stops when you press →.",
+    rules:"The announcer reads the rules. Let it finish.",phoneguide:"Phone guide: let it play, or tap Next to skip ahead.",lineup:"The 8 games. Press → when ready.",tributes:"All 13 tributes. Press →.",begin:"Your song plays. It stops when you press →.",
     halftime:"Games 1 to 4 victors and who's leading. Good time for a break or a twist.",victors:"Every victor. 2+ wins? Tap Reveal the Ultimate Victor (it reads how it's decided first). Then tap Next for the end-of-night slides.",
     "fin-predict":"Tap Next to reveal the predictions. Tap Next again to move on.","fin-awards":"Tap Next to start the awards. Each Next shows the next award, then moves on.",
     "fin-recap":"Tap Next to play the recap. It runs on its own; Next skips ahead.","fin-fallen":"Tap Next for the Fallen Tributes slideshow. It runs on its own; Next skips ahead.",

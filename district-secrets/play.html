@@ -59,6 +59,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold-hi);outlin
 .signin h1{font-family:var(--deco);font-size:clamp(2rem,10vw,2.8rem);background:linear-gradient(180deg,var(--gold-hi),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
 .signin p{margin:0;color:var(--muted)}
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 13 players: the last name sits in the middle */
 .pick button{min-height:62px;border-radius:12px;background:var(--parch);color:var(--parch-ink);font-family:var(--type);font-size:1.15rem;padding:8px;overflow-wrap:anywhere;
   box-shadow:0 4px 0 var(--parch-d),0 8px 16px rgba(0,0,0,.35);animation:rise .5s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--i)*40ms)}
 .pick button:nth-child(odd){transform:rotate(-1deg)}.pick button:nth-child(even){transform:rotate(1deg)}
@@ -237,7 +238,7 @@ const ENV=`<svg class="envelope" viewBox="0 0 64 46" aria-hidden="true"><rect x=
  <g class="wx"><circle cx="32" cy="25" r="9" fill="#a3182b"/><circle cx="32" cy="25" r="6" fill="none" stroke="#5e0a17" stroke-width="1.5"/><path d="M32 20.5l1.4 3h3l-2.4 2 1 3.1-3-1.9-3 1.9 1-3.1-2.4-2h3z" fill="#f6dfa0"/></g></svg>`;
 
 /* this phone's id, kept so a reload gets the same name back */
-const BUILD="ds-build-2026-11-26-1";   // must match the TV; when the TV is newer, this page reloads itself
+const BUILD="ds-build-2026-11-26-2";   // must match the TV; when the TV is newer, this page reloads itself
 let pid=store.get("ds-pid");
 if(!pid){pid=crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("ds-pid",pid)}
 let myName=store.get("ds-name");
@@ -297,7 +298,7 @@ const reactBar=()=>`<div class="reacts"><div class="lbl">Tap to pop it up on the
 /* 🔑 Host tools: the host's phone scanned the TV's host code once (host.html saves the key);
    when it's signed in as Carsyn, a button opens the bonus secrets to approve. Anonymous: text only, never who wrote it. */
 const HOST_NAME="Carsyn";
-const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo"};
+const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
 const dn=n=>window.XM?.dn?XM.dn(n):(AKA[n]||n);   // nickname, for text the page's name swap can't reach (pop-ups, capitals)
 const NO_GUESS=200;
 const FAKE="🃏 FAKE";   // sealed when you call a secret fake (matches the TV)   // points lost for not sealing a guess in time (matches the TV)

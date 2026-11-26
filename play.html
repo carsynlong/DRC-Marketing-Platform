@@ -48,6 +48,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-o
 
 /* name picker */
 .pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick>button:last-child:nth-child(odd){grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}   /* 13 players: the last name sits in the middle */
 .pick button{min-height:64px;border-radius:14px;background:var(--night-2);box-shadow:0 0 0 2px var(--line);font-weight:800;font-size:1.1rem;padding:8px;overflow-wrap:anywhere}
 .pick button:active{background:var(--gold);color:#2a1c05}
 .pick button:disabled{opacity:.35;cursor:not-allowed}

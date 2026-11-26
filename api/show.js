@@ -37,7 +37,7 @@ const MISSIONS = [
   "Sneak the word \"Mockingjay\" into a normal sentence 3 times",
   "Get QUEEN MOTHER to give you a hug",
   "Get someone to hand you a napkin without asking for one",
-  "Make someone say \"Merry Christmas\" to you first",
+  "Make someone say \"Merry Thanksmas\" to you first",
   "Get a high five from 3 different tributes",
   "Get someone to sing any Christmas song",
   "Steal one cookie without anyone noticing",
@@ -47,6 +47,15 @@ const MISSIONS = [
   "Get 2 people to switch seats without telling them why",
   "Get someone to say \"I'm full\"",
   "Start a slow clap and get 2 people to join"];
+// a secret mission never names its own target (no "Get Kyle to talk about cars" for Kyle)
+const NICK = { "QUEEN MOTHER": ["queen", "mother"], Grandad: ["grandad", "grandpa"], Carsyn: ["gamemaker"] };
+const missionFor = to => { const w = [String(to).toLowerCase(), ...(NICK[to] || [])];
+  const ok = MISSIONS.filter(m => !w.some(x => m.toLowerCase().includes(x))); return pick(ok.length ? ok : MISSIONS); };
+// Gamemaker actions that pay out or close something: a short lock stops double taps, and it is
+// dropped again if the database fails half way, so the Gamemaker can just tap again (the real
+// "done" state is the live value: poll closed, bet paid, quest done). Returns false if someone else holds it.
+const lock = (k, ex = 30) => redis.set(P + k, "1", { nx: true, ex });
+const unlockAnd = async (k, e) => { try { await redis.del(P + k); } catch {} throw e; };
 const others = (not = []) => NAMES.filter(n => n !== "Carsyn" && !not.includes(n));
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const TWISTS = ["wheel", "swap", "silence", "decree", "bounty", "alliance", "mission"];
@@ -131,7 +140,7 @@ async function main(req, res) {
     let vote = null, bet = null, walkup = null;
     if (live.poll && live.poll.open) { const mine = me ? await redis.hget(P + "votes:" + live.poll.id, me) : null; vote = { ...live.poll, mine, mt: mine ? Number(await redis.hget(P + "vt:" + live.poll.id, me)) || 0 : 0 }; }
     if (live.bet && live.bet.state !== "paid") { const mb = me ? await redis.hget(P + "bets:" + live.bet.id, me) : null; let mine = null; try { mine = mb ? (typeof mb === "string" ? JSON.parse(mb) : mb) : null; } catch {} bet = { ...live.bet, mine, mt: mine ? Number(await redis.hget(P + "bt:" + live.bet.id, me)) || 0 : 0 }; }
-    if (me && full) walkup = await redis.hget(P + "walkups", me); else walkup = undefined;
+    walkup = undefined;   // no page reads it any more (the walk-up picker is gone), so no database call for it
     const hot = live.hot ? { id: live.hot.id, to: live.hot.to } : null;
     let mercy = null, predict = null;
     if (live.mercy && live.mercy.open) { const mine = me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null; mercy = { ...live.mercy, mine, mt: mine ? Number(await redis.hget(P + "mt:" + live.mercy.id, me)) || 0 : 0 }; }
@@ -213,7 +222,10 @@ async function main(req, res) {
     const since = Number(req.query.since) || 0, csince = Number(req.query.csince) || 0;
     const full = req.query.full === "1";
     // the live-feature keys and the "someone is live on camera" flag in one MGET; the camera frames are only read while someone is live
-    const [log, players, lvraw, clog] = await Promise.all([redis.lrange(P + "reactlog", 0, 39), full ? hash(P + "players") : null, redis.mget(...LVK, P + "camon"), redis.lrange(P + "cmdlog", 0, 19)]);
+    // the reaction and command counters ride along in that MGET, so the two lists are only read when something new is in them
+    const [players, lvraw] = await Promise.all([full ? hash(P + "players") : null, redis.mget(...LVK, P + "camon", P + "reactid", P + "cmdid")]);
+    const rid = Number(lvraw[LVK.length + 1]) || 0, cid = Number(lvraw[LVK.length + 2]) || 0;
+    const [log, clog] = await Promise.all([rid > since ? redis.lrange(P + "reactlog", 0, 39) : [], cid > csince ? redis.lrange(P + "cmdlog", 0, 19) : []]);
     const cams = lvraw[LVK.length] ? await hash(P + "cams") : {};
     const cmds = [];
     for (const r of clog || []) { try { const o = typeof r === "string" ? JSON.parse(r) : r; if (o.id > csince) cmds.push(o); } catch {} }
@@ -319,13 +331,19 @@ async function main(req, res) {
       await pushCmd("poll", lv.poll); return reply(res, 200, { ok: true, poll: lv.poll });
     }
     if (a === "pollclose") {
-      if (!lv.poll || !lv.poll.open || !(await redis.set(P + "pollclosed:" + lv.poll.id, "1", { nx: true, ex: 43200 }))) return reply(res, 409, { error: "No vote running" });
-      const v = await hash(P + "votes:" + lv.poll.id), c = {};
-      for (const x of Object.values(v)) c[x] = (c[x] || 0) + 1;
-      const max = Math.max(0, ...Object.values(c)), win = Object.keys(c).filter(k => c[k] === max && max > 0);
-      for (const w of win) await stat("votewin:" + w);
-      lv.poll.open = false; await saveLive("poll", lv.poll);
-      await pushCmd("pollresult", { ...lv.poll, counts: c, win }); return reply(res, 200, { ok: true, counts: c, win });
+      const lk = "pollclosed:" + (lv.poll && lv.poll.id);
+      if (!lv.poll || !lv.poll.open || !(await lock(lk))) return reply(res, 409, { error: "No vote running" });
+      const c = {}; let win;
+      try {
+        const v = await hash(P + "votes:" + lv.poll.id);
+        for (const x of Object.values(v)) c[x] = (c[x] || 0) + 1;
+        const max = Math.max(0, ...Object.values(c)); win = Object.keys(c).filter(k => c[k] === max && max > 0);
+        // result first, then close: a failure after the result just shows it again on the retry
+        await pushCmd("pollresult", { ...lv.poll, open: false, counts: c, win });
+        lv.poll.open = false; await saveLive("poll", lv.poll);
+      } catch (e) { await unlockAnd(lk, e); }
+      try { for (const w of win) await stat("votewin:" + w); } catch {}   // award stats are nice to have
+      return reply(res, 200, { ok: true, counts: c, win });
     }
     if (a === "betopen") {
       lv.bet = { id: Date.now(), game: text(req.body?.game, 60) || "the next game", state: "open" };
@@ -333,14 +351,26 @@ async function main(req, res) {
     }
     if (!lv.bet || lv.bet.state === "paid") return reply(res, 409, { error: "No betting round" });
     if (a === "betpay" && !NAMES.includes(text(req.body?.winner, 40))) return reply(res, 400, { error: "Unknown tribute" });
-    if (!(await redis.set(P + "betdone:" + lv.bet.id, "1", { nx: true, ex: 43200 }))) return reply(res, 409, { error: "Already settled" });
-    if (a === "betcancel") { lv.bet.state = "paid"; await saveLive("bet", lv.bet); await pushCmd("betcancel", {}); return reply(res, 200, { ok: true }); }
-    const winner = text(req.body?.winner, 40); if (!NAMES.includes(winner)) return reply(res, 400, { error: "Unknown tribute" });
-    const b = await hash(P + "bets:" + lv.bet.id), results = [];
-    for (const [who, raw] of Object.entries(b)) { let x; try { x = JSON.parse(raw); } catch { continue; }
-      const n = x.on === winner ? x.amt : -x.amt; await redis.hincrby(P + "points", who, n); results.push({ who, on: x.on, amt: x.amt, n }); }
-    lv.bet.state = "paid"; await saveLive("bet", lv.bet);
-    await pushCmd("betpaid", { winner, game: lv.bet.game, results }); return reply(res, 200, { ok: true, results });
+    const lk = "betdone:" + lv.bet.id;
+    if (!(await lock(lk))) return reply(res, 409, { error: "Already settled" });
+    const paidK = P + "betpaid:" + lv.bet.id;   // bettor -> what they were paid, so a retry after a failure pays only the rest
+    try {
+      if (a === "betcancel") { await pushCmd("betcancel", {}); lv.bet.state = "paid"; await saveLive("bet", lv.bet); return reply(res, 200, { ok: true }); }
+      let winner = text(req.body?.winner, 40);
+      // a retry pays out on the same winner as the first try (some bettors may already be paid)
+      if (!(await redis.hsetnx(paidK, "_winner", winner))) winner = (await redis.hget(paidK, "_winner")) || winner;
+      await redis.expire(paidK, 43200);
+      const b = await hash(P + "bets:" + lv.bet.id), results = [];
+      for (const [who, raw] of Object.entries(b)) { let x; try { x = JSON.parse(raw); } catch { continue; }
+        const n = x.on === winner ? x.amt : -x.amt;
+        if (await redis.hsetnx(paidK, who, n)) {
+          try { await redis.hincrby(P + "points", who, n); } catch (e) { try { await redis.hdel(paidK, who); } catch {} throw e; }
+        }
+        results.push({ who, on: x.on, amt: x.amt, n }); }
+      await pushCmd("betpaid", { winner, game: lv.bet.game, results });
+      lv.bet.state = "paid"; await saveLive("bet", lv.bet);
+      return reply(res, 200, { ok: true, results, winner });
+    } catch (e) { await unlockAnd(lk, e); }
   }
   // 🧹 wipe only the end-of-night award stats (emoji counts, sabotages, snitches, quests...)
   if (a === "statsreset") {
@@ -369,10 +399,19 @@ async function main(req, res) {
     if (a === "predictopen") { await redis.del(P + "predict"); lv.predict = { open: true, id: Date.now() }; await save("predict"); await pushCmd("predictopen", {}); return reply(res, 200, { ok: true }); }
     if (a === "predictlock") { lv.predict = { ...(lv.predict || {}), open: false }; await save("predict"); await pushCmd("predictlock", {}); return reply(res, 200, { ok: true }); }
     if (a === "predictpay") { const win = [].concat(req.body?.winners || []).filter(n => NAMES.includes(n)); if (!win.length) return reply(res, 400, { error: "No winner" });
-      if (!lv.predict || lv.predict.paid || !(await redis.set(P + "predictpaid:" + (lv.predict.id || 0), "1", { nx: true, ex: 43200 }))) return reply(res, 409, { error: "Already paid" });
-      const pr = await hash(P + "predict"), right = [];
-      for (const [who, ch] of Object.entries(pr)) if (win.includes(ch)) { right.push(who); await redis.hincrby(P + "points", who, 3); }
-      lv.predict = { ...lv.predict, open: false, paid: true }; await save("predict"); await pushCmd("predictpaid", { win, right, all: pr }); return reply(res, 200, { ok: true, right }); }
+      const lk = "predictpaid:" + ((lv.predict && lv.predict.id) || 0);
+      if (!lv.predict || lv.predict.paid || !(await lock(lk))) return reply(res, 409, { error: "Already paid" });
+      const paidK = P + "predictpaidh:" + (lv.predict.id || 0);   // who already got their 3 points (a retry pays only the rest)
+      try {
+        const pr = await hash(P + "predict"), right = [];
+        for (const [who, ch] of Object.entries(pr)) if (win.includes(ch)) { right.push(who);
+          if (await redis.hsetnx(paidK, who, 3)) {
+            try { await redis.hincrby(P + "points", who, 3); } catch (e) { try { await redis.hdel(paidK, who); } catch {} throw e; }
+          } }
+        if (right.length) await redis.expire(paidK, 43200);
+        await pushCmd("predictpaid", { win, right, all: pr });
+        lv.predict = { ...lv.predict, open: false, paid: true }; await save("predict"); return reply(res, 200, { ok: true, right });
+      } catch (e) { await unlockAnd(lk, e); } }
     if (a === "say") { const t = text(req.body?.text, 200); if (!t) return reply(res, 400, { error: "Missing" }); await pushCmd("say", { text: t }); return reply(res, 200, { ok: true }); }
     const id = Number(req.body?.id); const l = (await redis.lrange(P + "shouts", 0, 29)) || []; let found = null, raw = null;
     for (const x of l) { let o; try { o = typeof x === "string" ? JSON.parse(x) : x; } catch { continue; } if (o.id === id) { found = o; raw = typeof x === "string" ? x : JSON.stringify(x); break; } }
@@ -436,7 +475,7 @@ async function main(req, res) {
       data.to = to || pick(others());
     }
     if (kind === "mission") {
-      const m = { id: Date.now(), text: pick(MISSIONS) };
+      const m = { id: Date.now(), text: missionFor(data.to) };
       await redis.hset(P + "missions", { [data.to]: JSON.stringify(m) });
       await pushCmd("tw", { kind, t: data.t });   // the TV never learns who
       return reply(res, 200, { ok: true, tw: { ...data, mission: m.text } });
@@ -468,19 +507,26 @@ async function main(req, res) {
     if (a === "questdone") {
       const q = await readQuest();
       if (!q || q.status !== "live") return reply(res, 409, { error: "No quest running" });
-      if (!(await redis.set(P + "qpaid:" + q.id, "1", { nx: true, ex: 3600 }))) return reply(res, 409, { error: "No quest running" });
-      const ok = req.body?.result === "done";
-      let pts = ok ? 1 : -1;
-      if (q.double) {   // double or nothing: win doubles what you have (at least +2), lose it all (at least -2)
-        const have = (await points())[q.to] || 0;
-        pts = ok ? Math.max(2, have) : -Math.max(2, have);
-      }
-      await redis.hincrby(P + "points", q.to, pts);
-      await stat((ok ? "qdone:" : "qfail:") + q.to);
-      q.status = ok ? "done" : "fail"; q.pts = pts;
-      await redis.set(P + "quest", JSON.stringify(q), { ex: 60 * 30 });
-      await pushCmd("questdone", q);
-      return reply(res, 200, { ok: true, quest: q, points: await points() });
+      const lk = "qlock:" + q.id;
+      if (!(await lock(lk))) return reply(res, 409, { error: "No quest running" });
+      let ok = req.body?.result === "done", pts;
+      try {
+        // sh:qpaid:<id> = what was paid ({ok,pts}), written just before paying: a retry after a failure reuses it instead of paying twice
+        const pk = P + "qpaid:" + q.id;
+        pts = ok ? 1 : -1;
+        if (q.double) {   // double or nothing: win doubles what you have (at least +2), lose it all (at least -2)
+          const have = (await points())[q.to] || 0;
+          pts = ok ? Math.max(2, have) : -Math.max(2, have);
+        }
+        if (await redis.set(pk, JSON.stringify({ ok, pts }), { nx: true, ex: 3600 })) {
+          try { await redis.hincrby(P + "points", q.to, pts); } catch (e) { try { await redis.del(pk); } catch {} throw e; }
+          try { await stat((ok ? "qdone:" : "qfail:") + q.to); } catch {}
+        } else { const was = pj(await redis.get(pk)); if (was) { ok = !!was.ok; pts = Number(was.pts) || 0; } }
+        q.status = ok ? "done" : "fail"; q.pts = pts;
+        await pushCmd("questdone", q);
+        await redis.set(P + "quest", JSON.stringify(q), { ex: 60 * 30 });
+      } catch (e) { await unlockAnd(lk, e); }
+      return reply(res, 200, { ok: true, quest: q, points: await points().catch(() => undefined) });
     }
     if (a === "pointsadd") {
       const to = text(req.body?.to, 40), n = Math.max(-10, Math.min(10, Math.round(Number(req.body?.n) || 0)));

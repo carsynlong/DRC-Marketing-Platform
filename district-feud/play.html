@@ -281,19 +281,32 @@ function view(){
     if(right)return [key+"right",header()+msg(e&&e.fire?"🔥":"🎯",`You called it! +${pts}`,`<p>The #1 answer: <b>${who}</b></p>${perks}`,"right"),"right"];
     return [key+"wrong",header()+msg("❌",mine?"Not this time":"Survey says…",`<p>The #1 answer: <b>${who}</b></p>${mine?`<p>You guessed ${esc(mine)}.</p>`:""}`,mine?"wrong":""),mine?"wrong":""];
   }
+  // 🎡 Second Chance Spin: the winner sits out, two tributes face off for the Second Victor
+  const sc=g.second;
+  if(sc&&sc.out===D.me&&!sc.winner&&(g.view==="scspin"||g.kind==="faceoff"))return [key+"scout",header()+msg("🏆","You already won!","<p>You sit out the Second Chance face-off. Sit back and enjoy the show.</p>","win")];
+  if(sc&&g.view==="scspin"){
+    if(!sc.pair)return [key+"scspin",header()+msg("🎡","Second Chance Spin!","<p>The wheel is picking two tributes. Eyes on the TV!</p>")];
+    if(sc.pair.includes(D.me))return [key+"scme",header()+msg("⚡","You're in the Second Chance face-off!",`<p>${sc.pair.map(n=>`<b>${esc(n)}</b>`).join(" vs ")}. Everyone else votes. Win it, win a major award!</p>`,"win"),"win"];
+    return [key+"scpair",header()+msg("⚡",`Second Chance face-off: ${esc(sc.pair[0])} vs ${esc(sc.pair[1])}`,"<p>Get ready to vote in secret!</p>")];
+  }
+  if(sc&&sc.pair&&g.kind==="faceoff"&&g.phase==="question"&&sc.pair.includes(D.me))return [key+"sctied",header()+qcard(g,"🎡 Second Chance face-off")+msg("⚡","You're in the Second Chance face-off!",`<p>Hands off! Everyone else votes in secret between ${sc.pair.map(n=>`<b>${esc(n)}</b>`).join(" and ")}.</p>`)];
   if(g.kind==="faceoff"&&g.phase==="question"){
     const tied=g.tied||[];
     if(tied.includes(D.me))return [key+"tied",header()+qcard(g,`⚡ Face-off ${g.round}`)+msg("⚡","You're in the face-off!",`<p>Hands off! Everyone else votes in secret between ${tied.map(n=>`<b>${esc(n)}</b>`).join(" and ")}.</p>`)];
     if(!g.playing.includes(D.me))return [key+"out",header()+msg("📺","Watch the TV","<p>Ask the host to tap your name on the TV to join in.</p>")];
     if(mine)return [key+"lock:"+mine,header()+lockedCard(mine,"Your secret face-off vote. Wait for the count on the TV!"),"lock"];
     if(g.locked)return [key+"late",header()+msg("🗳️","Counting the votes…","<p>Watch the TV!</p>")];
-    return [key+"ask",header()+ptimer(g)+qcard(g,`⚡ Face-off ${g.round} · Vote in secret`)+`<div class="ask">Tap your pick</div>`+nameBtns(tied,"big")+`<p class="priv" style="text-align:center;margin:0">🔒 Nobody sees who you vote for.</p>`];
+    return [key+"ask",header()+ptimer(g)+qcard(g,`${sc&&sc.pair?"🎡 Second Chance face-off":"⚡ Face-off "+g.round} · Vote in secret`)+`<div class="ask">Tap your pick</div>`+nameBtns(tied,"big")+`<p class="priv" style="text-align:center;margin:0">🔒 Nobody sees who you vote for.</p>`];
   }
   if(g.kind==="faceoff"&&g.phase==="reveal"){
     const lead=g.lead||[],won=lead.length===1;
     if(won&&lead[0]===D.me)return [key+"won",header()+msg("🏆","You won the face-off!","<p>The district has spoken!</p>","win"),"win"];
     if(won)return [key+"w",header()+msg("⚡",`${esc(lead[0])} wins!`,`<p>${mine?`You voted for ${esc(mine)}.`:"Eyes on the TV."}</p>`,mine===lead[0]?"right":""),mine===lead[0]?"right":""];
     return [key+"tie",header()+msg("❌","Still tied!","<p>Get ready for another face-off…</p>","wrong"),"wrong"];
+  }
+  if(g.phase==="final"&&sc&&sc.winner){
+    if(sc.winner===D.me)return [key+"scwin",header()+msg("🏆","You're the Second Victor!","<p>You won the Second Chance face-off. Go claim your major award!</p>","win")+soundBtn(),"win"];
+    return [key+"scw",header()+msg("🎡",`${esc(sc.winner)} is the Second Victor!`,`<p>${g.winner?`${esc(g.winner)} won the major award, and `:""}${esc(sc.winner)} takes the Second Chance major award. Merry Christmas from District Feud!</p>`)+soundBtn(),"ding"];
   }
   if(g.phase==="final"){
     if(g.winner===D.me)return [key+"pkgme",header()+msg("🏆","You won the major award!","<p>Top of the major award race. Go claim your major award!</p>","win")+soundBtn(),"win"];

@@ -638,10 +638,22 @@ function view(){
   if(g.phase==="roundcard")return [key,header()+msg("🗝️","The vault opens","<p>Eyes on the TV. You'll type your guesses here.</p>")+soundBtn()];
   if(g.phase==="ready")return [key,header()+msg("",`<span class="big">🔐</span>`,`<div class="eyebrow">Secret ${g.qi+1} of ${g.total}</div>${g.double?'<span class="gift">🎁 Double points</span>':""}<p>Unlocking the next file…</p>`)];
 
+  // 🎡 Second Chance Spin: the winner sits out, two tributes Quick Draw for the Second Victor
+  const sc=g.second;
+  if(sc&&sc.winner&&(g.phase==="final"||g.phase==="showdown")){
+    if(sc.winner===D.me)return [key+"scwin",header()+msg("🏆","You're the Second Victor!","<p>You won the Second Chance Quick Draw. Go claim your major award!</p>","win")+reactBar(),"win"];
+    return [key+"scw"+sc.winner,header()+msg("🎡",`${esc(sc.winner)} is the Second Victor!`,`<p>${sc.out?`${esc(sc.out)} won the game, and `:""}${esc(sc.winner)} takes the Second Chance major award.</p>`)+reactBar(),"right"];
+  }
+  if(sc&&!sc.winner&&sc.out===D.me&&(g.phase==="scspin"||g.phase==="showdown"))return [key+"scout",header()+msg("🏆","You already won!","<p>You sit out the Second Chance face-off. Sit back and enjoy the show.</p>","win")+reactBar()];
+  if(sc&&g.phase==="scspin"){
+    if(!sc.pair)return [key+"scspin",header()+msg("🎡","Second Chance Spin!","<p>The wheel is picking two tributes. Eyes on the TV!</p>")+reactBar()];
+    if(sc.pair.includes(D.me))return [key+"scme",header()+msg("⚡","You're in the Second Chance face-off!",`<p>${sc.pair.map(n=>`<b>${esc(n)}</b>`).join(" vs ")}. Quick Draw: when the TV says DRAW, tap fast. Win it, win a major award!</p>`,"win"),"win"];
+    return [key+"scpair",header()+msg("⚡",`Second Chance face-off: ${esc(sc.pair[0])} vs ${esc(sc.pair[1])}`,"<p>Cheer them on!</p>")+reactBar()];
+  }
   if(g.phase==="showdown"&&g.duel){   // ⚔️ Quick Draw
     const d=g.duel,me=[d.a,d.b].includes(D.me),k=`${g.gid}:${d.round}`,tapped=myDuel.key===k;
     if(d.winner)return [key+"dw"+d.winner,header()+msg(d.winner===D.me?"⚔️":"👑",d.winner===D.me?"You won the Quick Draw!":`${esc(d.winner)} wins!`,d.winner===D.me?"<p>The major award is yours!</p>":"<p>What a finish!</p>",d.winner===D.me?"win":"")+reactBar(),d.winner===D.me?"win":"right"];
-    if(!me)return [key+"dwatch"+d.round+d.state,header()+msg("⚔️","Quick Draw!",`<p class="said">${esc(d.a)} vs ${esc(d.b)}</p><p>Cheer them on!</p>`)+reactBar()];
+    if(!me)return [key+"dwatch"+d.round+d.state,header()+msg("⚔️",d.second?"Second Chance face-off!":"Quick Draw!",`<p class="said">${esc(d.a)} vs ${esc(d.b)}</p><p>Cheer them on!</p>`)+reactBar()];
     if(tapped)return [key+"dtap"+d.round,header()+msg("⚡","Tapped!","<p>Eyes on the TV…</p>")];
     return [key+"dtapper"+d.round+(d.state==="vs"||d.state==="again"),header()+`<section class="msg" style="flex:none"><div class="eyebrow">⚔️ Quick Draw vs ${esc(d.a===D.me?d.b:d.a)}</div><h1>Wait for DRAW on the TV…</h1><p>Then tap as fast as you can. Too soon and you lose!</p></section>
       <button id="drawtap" style="flex:1;min-height:52vh;border-radius:50%;aspect-ratio:1;justify-self:center;width:min(90vw,420px);margin:0 auto;background:radial-gradient(circle at 40% 35%,#ff5a4e,#a3182b 60%,#5e0a17);color:#fff;font-family:var(--deco);font-size:3rem;box-shadow:0 0 0 6px var(--gold),0 16px 40px rgba(0,0,0,.6)">TAP!</button>`,"gift"];

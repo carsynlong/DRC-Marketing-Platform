@@ -882,7 +882,7 @@ function nextTiebreaker(){
   T.votes=Object.fromEntries(T.names.map(n=>[n,0]));T.voted=[];T.voter=null;T.lead=null;T.qn=S.tbNext;T.enter=true;T.ends=Date.now()+FACEOFF_SECS*1000+FACEOFF_GRACE;   // a little extra so every phone has the face-off on screen before the clock really counts
   S.phase="tb";playSong("faceoff");sfx("whoosh");render();
 }
-const voters=()=>NAMES.filter(n=>S.present[n]&&!S.tie.names.includes(n));
+const voters=()=>NAMES.filter(n=>S.present[n]&&!S.tie.names.includes(n)&&!(S.tie.second&&S.pkg&&n===S.pkg.winner));   // the major award winner sits out the Second Chance face-off
 function openBallot(name){S.tie.voter=name;S.phase="ballot";stopSong();sfx("tap");render();}
 function castVote(pick){
   const T=S.tie;if(!T.voter||T.voted.includes(T.voter))return;
@@ -900,8 +900,9 @@ async function countVotes(auto){
   drumroll(1.9);
   later(()=>{mergePhoneVotes(true);const T=S.tie,max=Math.max(...T.names.map(n=>T.votes[n])),lead=T.names.filter(n=>T.votes[n]===max);
     T.lead=lead;
-    if(T.prize){   // 🏆 sudden death for the major award
+    if(T.prize){   // 🏆 sudden death for the major award (or the 🎡 Second Chance face-off)
       S.slow=[];   // the major award face-off takes no points, so no "too slow" list
+      if(lead.length===1&&T.second){S.pkg.second.winner=lead[0];S.phase="pkg";secondFx();render();return}
       if(lead.length===1){S.pkg.winner=lead[0];S.pkg.faceoff=true;S.phase="pkg";giftFx();render();return}
       S.phase="tbresult";later(()=>sfx("buzz"),150);shake(150);later(()=>playSong("faceoff"),1300);render();return}
     T.names.forEach(n=>addVotes(n,T.votes[n]*(S.mult||1)));
@@ -918,7 +919,9 @@ function spin(names,done){
   step();
 }
 function fate(){
-  const T=S.tie;if(T.prize){S.pkg.lead=T.names;return pkgFate()}
+  const T=S.tie;
+  if(T.second){S.phase="pkgfate";stopSong();render();return spin(T.names,w=>{S.pkg.second.winner=w;S.pkg.second.fate=true;S.phase="pkg";secondFx();render()})}
+  if(T.prize){S.pkg.lead=T.names;return pkgFate()}
   S.phase="fate";stopSong();render();
   spin(T.names,w=>{S.results[S.k]={name:w,votes:cur().top[0][1],tb:true,fate:true};T.lead=[w];S.phase="tbresult";winFx();applause();flash();later(()=>playSong("strut"),1400);render()});
 }
@@ -957,6 +960,46 @@ function pkgFate(){
   spin(P.lead,w=>{P.winner=w;P.fate=true;forgetGame();S.phase="pkg";giftFx();render()});
 }
 
+/* 🎡 SECOND CHANCE SPIN: the winner sits out, the wheel picks two tributes who played,
+   and the face-off (everyone else votes) decides the Second Victor. */
+const secondPool=()=>NAMES.filter(n=>S.present[n]&&n!==S.pkg.winner);
+function secondChance(){
+  const P=S.pkg;if(!P||!P.winner||P.second)return;
+  if(secondPool().length<2){alert("Not enough tributes left for a Second Chance face-off.");return}
+  if(brief("second",{eyebrow:"🎡 SECOND CHANCE",title:"The Second Chance Spin",start:"▶ Spin the wheel",onStart:secondSpin,
+    intro:"One more major award is up for grabs. Here's how it works.",steps:[
+    ["🚫",`<b>${esc(P.winner)}</b> already won, so they sit this one out.`,`${P.winner} already won, so they sit this one out.`],
+    ["🎡","The wheel picks <b>two tributes</b> at random.","The wheel picks two tributes at random."],
+    ["⚡","They go head to head in a <b>face-off</b>. Everyone else votes in secret.","They go head to head in a face-off. Everyone else votes in secret."],
+    ["🏆","Win the face-off, win the <b>Second Chance major award</b>.","Win the face-off, win the Second Chance major award."]]}))return;
+  secondSpin();
+}
+function secondSpin(){
+  const pool=secondPool().slice();if(pool.length<2)return;
+  const a=pool.splice(Math.random()*pool.length|0,1)[0],b=pool[Math.random()*pool.length|0];
+  S.pkg.second={pair:null,winner:null,fate:false};S.phase="scspin";stopSong();render();
+  const all=secondPool();let i=0,delay=70;
+  const step=()=>{const x=all[i++%all.length],y=all[(i*7+3)%all.length];const ea=$("#scA"),eb=$("#scB");
+    if(ea){ea.querySelector("img").src=AV(x);ea.querySelector(".nm").textContent=x}if(eb){eb.querySelector("img").src=AV(y);eb.querySelector(".nm").textContent=y}
+    sfx("tick");delay*=1.12;if(delay<600)later(step,delay);else later(()=>{S.pkg.second.pair=[a,b];sfx("fanfare");confetti(60);render()},400)};
+  later(step,300);
+}
+function secondFaceoff(){
+  const sc=S.pkg.second;if(!sc||!sc.pair)return;
+  S.tie={names:sc.pair.slice(),round:0,q:null,votes:{},voted:[],prize:true,second:true};
+  if(!voters().length)return fate();
+  nextTiebreaker();
+}
+function secondFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(()=>{winFx();applause(3500);fireworks(5);playSong("joy")},1600)}
+function scspinView(){
+  const sc=S.pkg.second||{},pr=sc.pair,ws=secondPool();
+  const slot=(id,n)=>`<div class="board spinbox" id="${id}"><img src="${AV(n)}" alt=""><div class="nm">${esc(n)}</div></div>`;
+  return `<section class="center"><span class="qtag">🎡 Second Chance Spin</span><h1 class="ptitle small">${pr?"Second Chance face-off!":"Spinning…"}</h1>
+    <div class="bulbs" style="display:flex;gap:28px;align-items:center;justify-content:center">${slot("scA",pr?pr[0]:ws[0])}<div class="vs" style="font-family:var(--display);font-size:56px;color:var(--gold)">VS</div>${slot("scB",pr?pr[1]:ws[1]||ws[0])}</div>
+    <p class="sub">🚫 ${esc(S.pkg.winner)} already won and sits this one out.</p>
+    ${pr?`<div class="ctl">${sndBtn()}<button class="btn red" id="scgo">⚡ Start the face-off</button></div><div class="hint">Space: start the face-off</div>`:""}</section>`;
+}
+
 /* the gift box shakes, the lid flies off, the winner pops out */
 function giftFx(){forgetGame();drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
@@ -985,7 +1028,7 @@ function raceBar(){
     :'<span class="rc" style="opacity:.75">Every vote and every correct guess counts toward the major award</span>'}</div></div>`;
 }
 function render(){
-  const v={fanfav:fanView,intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView}[S.phase];
+  const v={fanfav:fanView,intro:introView,double:doubleView,room:roomView,half:halfView,lock:suspense,lobby,question,suspense,reveal,tb,ballot,cast,tbsuspense,tbresult,fate:fateView,end,pkg:pkgView,pkgfate:pkgFateView,scspin:scspinView}[S.phase];
   const home=["lobby","ballot","cast"].includes(S.phase)?"":`<button class="home" id="home" aria-label="Back to setup" title="Back to setup">⚙<span>Back to setup</span></button>`;
   document.body.classList.toggle("focus",["suspense","tbsuspense"].includes(S.phase));
   if(window.Hurry&&!["question","tb"].includes(S.phase))Hurry.hide();
@@ -1089,7 +1132,7 @@ function tb(){
   const T=S.tie,vs=voters(),done=T.voted.length,all=done>=vs.length;setTimeout(()=>{T.enter=false});
   const left=Math.max(0,Math.ceil(((T.ends||Date.now())-Date.now())/1000));
   const timer=`<div class="timer ${left<=10?"low":""}" id="timer" aria-label="Seconds left"><svg viewBox="0 0 80 80"><circle class="bg" cx="40" cy="40" r="34"/><circle class="fg" id="tring" cx="40" cy="40" r="34"/></svg><b id="tsec">${left}</b></div>`;
-  return `<section class="center"><div class="tq"><span class="qtag">⚡ Face-off ${T.round}${T.round>1?" · still tied!":""}</span>${timer}</div>${board(T.q,"","Face-off question","","tight")}
+  return `<section class="center"><div class="tq"><span class="qtag">${T.second?"🎡 Second Chance · ":""}⚡ Face-off ${T.round}${T.round>1?" · still tied!":""}</span>${timer}</div>${board(T.q,"","Face-off question","","tight")}
     ${podiums(T.names,()=>"?",()=>"",T.enter?"enter":"")}
     <div class="eyebrow">${phones.length?"Vote on your phone, or tap your name here to vote in secret":"Voters: tap your name to vote in secret"}</div>
     <div class="chips voters">${vs.map(n=>{const d=T.voted.includes(n);return `<button class="chip ${d?"done":""}" data-vote="${esc(n)}" ${d?"disabled":""}><img src="${AV(n)}" alt="">${d?"✓ ":""}${esc(n)}${!d&&hasPhone(n)?' <span class="ph">📱</span>':""}</button>`}).join("")}</div>
@@ -1139,9 +1182,11 @@ function pkgView(){
   const list=board("Final totals",rowsW.map(([n,v],i)=>tile({n,v,num:i+1,state:"open",unit:"point"})).join(""),"Votes + correct guesses","compact one");
   return `<div class="rays" style="--d:1.6s"></div><section class="center"><h1 class="ptitle small">🏆 Major award winner</h1>
     <div class="final"><div class="win late"><div class="eyebrow">${P.fate?"The lucky spin has spoken":P.faceoff?"Won the sudden-death face-off":"Top of the major award race"}</div><div class="gift"><img class="av" src="${AV(P.winner)}" alt=""><div class="gbox"></div><div class="glid"></div></div><div class="nm late" style="--d:2s">${esc(P.winner)}</div><div class="votes late" style="--d:2.2s">${plural(S.tally[P.winner],"point")}</div>
-    <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button></div></div>${list}</div></section>`;
+    <div class="settings late" style="--d:2.4s">${sndBtn()}<button class="btn ghost" id="lobby">Back to setup</button><button class="btn" id="replay">Play again</button>${P.second&&P.second.winner?"":`<button class="btn red" id="scbtn">🎡 Second Chance Spin</button>`}</div>${P.second&&P.second.winner?"":`<div class="hint">Space: 🎡 Second Chance Spin</div>`}</div>${P.second&&P.second.winner?secondBlock():list}</div></section>`;
 }
-function pkgFateView(){return spinView("🎰 Lucky spin for the major award",S.pkg.lead[0]);}
+function secondBlock(){const sc=S.pkg.second;if(!sc||!sc.winner)return "";
+  return `<div class="win late" style="--d:.3s;align-self:center;display:grid;justify-items:center;gap:12px;text-align:center"><div class="eyebrow">🎡 Second Chance${sc.fate?" · lucky spin":" · face-off winner"}</div><img src="${AV(sc.winner)}" alt="" style="width:min(240px,26vh);height:min(240px,26vh);border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 40px rgba(255,210,90,.5)"><div class="nm" style="font-size:clamp(30px,5vh,52px);line-height:1.1">${esc(sc.winner)}<br>is the Second Victor!</div></div>`}
+function pkgFateView(){return S.tie&&S.tie.second?spinView("🎰 Lucky spin for the Second Victor",S.tie.names[0]):spinView("🎰 Lucky spin for the major award",S.pkg.lead[0]);}
 
 /* ---------- controls ---------- */
 function primary(){
@@ -1158,6 +1203,8 @@ function primary(){
   if(p==="tbresult")return S.tie.lead.length===1?nextQuestion():(voters().length&&S.tie.round<TB_PER_TIE?nextTiebreaker():fate());
   if(p==="end")return packageReveal();
   if(p==="pkg"&&S.pkg.done&&!S.pkg.winner)return prizeFaceoff();
+  if(p==="pkg"&&S.pkg.winner&&!S.pkg.second)return secondChance();
+  if(p==="scspin"&&S.pkg.second&&S.pkg.second.pair)return secondFaceoff();
 }
 const musicFor=()=>({intro:"strut",half:"half",lobby:"lobby",question:"think",tb:"faceoff",reveal:cur()&&isTie(cur())?"faceoff":"strut",tbresult:S.tie&&S.tie.lead&&S.tie.lead.length>1?"faceoff":"strut",end:"joy",pkg:S.pkg&&S.pkg.winner?"joy":"think"}[S.phase]);
 function wire(){
@@ -1168,7 +1215,7 @@ function wire(){
   on("resume",resumeGame);on("fresh",()=>{if(confirm("Start fresh? The game in progress will be lost."))forgetGame();render()});
   on("skipintro",finishIntro);on("fango",goQuestion);on("dblgo",showQuestion);on("half2",goQuestion);
   on("go",startGame);on("says",surveySays);on("next",nextQuestion);on("tie",startTie);on("count",countVotes);
-  on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",prizeFaceoff);
+  on("again",nextTiebreaker);on("fate",fate);on("pkgbtn",packageReveal);on("pkgfate",prizeFaceoff);on("scbtn",secondChance);on("scgo",secondFaceoff);
   on("notme",()=>{S.tie.voter=null;S.phase="tb";playSong("faceoff");render()});
   on("lobby",goSetup);
   on("replay",()=>{if(S.phase==="end"&&!confirm("Start the show over? The major award race goes back to zero."))return;clearTimers();stopSong();startGame()});
@@ -1200,7 +1247,8 @@ function snapshot(){
   if(p==="half"||p==="double")g.streak=S.streak;
   if(S.tie&&["tb","ballot","cast","tbsuspense"].includes(p))Object.assign(g,{phase:"question",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,choices:S.tie.names,tied:S.tie.names,round:S.tie.round,locked:p==="tbsuspense",ends:p==="tbsuspense"?0:S.tie.ends||0,secs:FACEOFF_SECS,hurry:p!=="tbsuspense"&&S.tie.ends&&S.tie.ends-Date.now()<=5500?S.tie.ends:0,hostPlays:!S.tie.names.includes(HOST)});   // the host votes in face-offs too, so she gets the hurry warning
   if(S.tie&&p==="tbresult")Object.assign(g,{phase:"reveal",kind:"faceoff",qi:50+S.tie.qn,q:S.tie.q,tied:S.tie.names,lead:S.tie.lead,votes:S.tie.votes,question:S.tie.prize?"The major award":cur().q,slow:S.slow,slowPen:SLOW_PEN,round:S.tie.round});
-  if(["end","pkg","pkgfate"].includes(p)){g.phase="final";if(p==="pkg"&&S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
+  if(["end","pkg","pkgfate","scspin"].includes(p)){g.phase="final";if(S.pkg&&S.pkg.winner)g.winner=S.pkg.winner}
+  if(S.pkg&&S.pkg.second){const sc=S.pkg.second;g.second={pair:sc.pair||null,winner:sc.winner||null,out:S.pkg.winner};if(p==="scspin")g.view="scspin"}
   if(window.Briefing&&Briefing.open())Object.assign(g,{phase:"watch",kind:undefined,view:"brief",brief:S.brfTitle||"How it works",locked:true});   // 📢 phones: "Listen up"
   return JSON.stringify(g);
 }

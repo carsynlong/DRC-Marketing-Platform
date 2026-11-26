@@ -13,7 +13,7 @@
 // TV:
 //   POST { a:"state", slide }              what's on screen (title + text), for phones to read along
 //   GET  ?a=tv&since=<reactId>             new reactions, who's live (with their latest frame), who joined
-import { redis, hash, reply, text } from "../lib/redis.js";
+import { redis, hash, reply, text, touch } from "../lib/redis.js";
 
 const NAMES = ["Jessie","Elisha","Grandad","Dash","Jonny","Carsyn","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle"];
 const EMOJI = ["🏹", "🔥", "🌹", "🍞", "🐦", "🎁", "😱", "😂", "🎂"];
@@ -58,19 +58,37 @@ const PAGES = ["show", "wheel", "bingo"];
 const BTNK = PAGES.map(p => P + "btns:" + p);
 const readLive = async () => { const v = await redis.mget(...LVK); const o = {}; LV.forEach((k, i) => { o[k] = pj(v[i]); }); return o; };
 const saveLive = (k, val) => val == null ? redis.del(P + "lv:" + k) : redis.set(P + "lv:" + k, JSON.stringify(val), { ex: 43200 });
-// wrong PIN guesses are limited (30 a minute per network; only actual PIN entries count, not background checks)
-const pinOk = async (req) => {
+// 🔒 wrong PIN guesses are limited PER PHONE (the whole house shares one Wi-Fi address, so a kid guessing
+// must never lock the Gamemaker out): 20 wrong in 10 minutes locks that phone for the rest of the 10 minutes.
+// Pages that send no phone id (the TV laptop, host page) count per network + browser instead.
+// A generous house-wide cap (300 wrong in 10 minutes) stops anyone faking new phone ids.
+// Carsyn's own signed-in phone with the right PIN is never locked out.
+const PIN_PER = 20, PIN_ALL = 300, PIN_WIN = 600;
+const djb = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = (h * 33 + s.charCodeAt(i)) >>> 0; return h.toString(36); };
+const pinKey = req => {
+  const pid = text(req.body?.pid, 64) || text(req.query?.pid, 64);
+  if (pid) return P + "pinbad:p:" + pid;
   const ip = String(req.headers?.["x-forwarded-for"] || req.headers?.["x-real-ip"] || "x").split(",")[0].trim().slice(0, 60);
-  if (req.body?.pin === HOST_PIN) return true;
-  const n = await redis.incr(P + "pinbad:" + ip); if (n === 1) await redis.expire?.(P + "pinbad:" + ip, 60);
+  return P + "pinbad:n:" + ip + ":" + djb(String(req.headers?.["user-agent"] || "").slice(0, 300));
+};
+// true = refuse this request (429). Costs one MGET; a wrong PIN also bumps two counters.
+const pinGate = async (req, given) => {
+  const k = pinKey(req), allK = P + "pinbad:all";
+  const [mine, all] = await redis.mget(k, allK);
+  if ((Number(mine) || 0) >= PIN_PER || (Number(all) || 0) >= PIN_ALL) {
+    const pid = text(req.body?.pid, 64) || text(req.query?.pid, 64);
+    return !(given === HOST_PIN && pid && (await redis.hget(P + "players", "Carsyn")) === pid);
+  }
+  if (given !== HOST_PIN) {
+    if ((await redis.incr(k)) === 1) await redis.expire(k, PIN_WIN);
+    if ((await redis.incr(allK)) === 1) await redis.expire(allK, PIN_WIN);
+  }
   return false;
 };
-const pinBlocked = async (req) => { const ip = String(req.headers?.["x-forwarded-for"] || req.headers?.["x-real-ip"] || "x").split(",")[0].trim().slice(0, 60);
-  return (Number(await redis.get(P + "pinbad:" + ip)) || 0) >= 30; };
 const pushCmd = async (cmd, data) => {
   const id = await redis.incr(P + "cmdid");
   await redis.lpush(P + "cmdlog", JSON.stringify({ id, cmd, data, t: Date.now() }));
-  await redis.ltrim(P + "cmdlog", 0, 19);
+  if (id % 5 === 0) await redis.ltrim(P + "cmdlog", 0, 19);   // readers only look at the newest 20; trimming every 5th saves calls
 };
 const readQuest = async () => { try { const r = await redis.get(P + "quest"); return r ? (typeof r === "string" ? JSON.parse(r) : r) : null; } catch { return null; } };
 const points = async () => { const h = await hash(P + "points"); const o = {}; for (const [k, v] of Object.entries(h)) o[k] = Number(v) || 0; return o; };
@@ -89,11 +107,10 @@ export default async function handler(req, res) {
 
 async function main(req, res) {
   const a = req.query?.a ?? req.body?.a;
-  // 🔒 any request that carries a PIN: too many wrong guesses from one device = locked out for a minute
+  // 🔒 any request that carries a PIN (POST body or GET ?pin=): too many wrong guesses from one phone = locked out for a while
   const givenPin = req.body?.pin ?? req.query?.pin;
-  if (req.method === "POST" && givenPin !== undefined && givenPin !== null) {
-    if (await pinBlocked(req)) return reply(res, 429, { error: "Too many wrong PINs. Wait a minute." });
-    if (givenPin !== HOST_PIN) await pinOk(req);
+  if (givenPin !== undefined && givenPin !== null) {
+    if (await pinGate(req, givenPin)) return reply(res, 429, { error: "Too many wrong PINs. Wait a few minutes." });
   }
 
   if (req.method === "GET" && a === "phone") {
@@ -195,7 +212,9 @@ async function main(req, res) {
   if (req.method === "GET" && a === "tv") {
     const since = Number(req.query.since) || 0, csince = Number(req.query.csince) || 0;
     const full = req.query.full === "1";
-    const [log, players, cams, clog] = await Promise.all([redis.lrange(P + "reactlog", 0, 39), full ? hash(P + "players") : null, hash(P + "cams"), redis.lrange(P + "cmdlog", 0, 19)]);
+    // the live-feature keys and the "someone is live on camera" flag in one MGET; the camera frames are only read while someone is live
+    const [log, players, lvraw, clog] = await Promise.all([redis.lrange(P + "reactlog", 0, 39), full ? hash(P + "players") : null, redis.mget(...LVK, P + "camon"), redis.lrange(P + "cmdlog", 0, 19)]);
+    const cams = lvraw[LVK.length] ? await hash(P + "cams") : {};
     const cmds = [];
     for (const r of clog || []) { try { const o = typeof r === "string" ? JSON.parse(r) : r; if (o.id > csince) cmds.push(o); } catch {} }
     const reacts = [];
@@ -205,7 +224,7 @@ async function main(req, res) {
       try { const o = JSON.parse(v); if (now - o.t < 6000) live[name] = o.img; else stale.push(name); } catch { stale.push(name); }
     }
     if (stale.length) await redis.hdel(P + "cams", ...stale);
-    const lv = await readLive();
+    const lv = {}; LV.forEach((k, i) => { lv[k] = pj(lvraw[i]); });
     let poll = null, bets = null;
     if (lv.poll && lv.poll.open) { const v = await hash(P + "votes:" + lv.poll.id); poll = { ...lv.poll, votes: v }; }
     if (lv.bet && lv.bet.state !== "paid") { const b = await hash(P + "bets:" + lv.bet.id); const o = {}; for (const [k, x] of Object.entries(b)) { try { o[k] = JSON.parse(x); } catch {} } bets = { ...lv.bet, bets: o }; }
@@ -250,14 +269,21 @@ async function main(req, res) {
   if (a === "join") {
     if (!pid || !NAMES.includes(name)) return reply(res, 400, { error: "Unknown name" });
     // a phone checking in from before the Gamemaker cleared the phones must join again
-    if (req.body?.epoch != null && Number(req.body.epoch) !== (Number(await redis.get(P + "epoch")) || 0)) return reply(res, 410, { error: "reset" });
-    const all = await hash(P + "players");
-    if (all[name] && all[name] !== pid && (await redis.get(`${P}seen:${name}`))) return reply(res, 409, { error: "taken" });
+    const [all, ep] = await Promise.all([hash(P + "players"), redis.get(P + "epoch")]), epoch = Number(ep) || 0;
+    if (req.body?.epoch != null && Number(req.body.epoch) !== epoch) return reply(res, 410, { error: "reset" });
+    if (all[name] !== pid) {
+      // HSETNX only writes if nobody has this name yet, so two phones can't both win a free name
+      if (!(await redis.hsetnx(P + "players", name, pid))) {
+        // someone else's phone has it: take it over only if that phone has gone quiet, and only one phone at a time
+        if (await redis.get(`${P}seen:${name}`)) return reply(res, 409, { error: "taken" });
+        if (!(await redis.set(`${P}joinlk:${name}`, pid, { nx: true, ex: 5 }))) return reply(res, 409, { error: "taken" });
+        await redis.hset(P + "players", { [name]: pid });
+      }
+    }
     const mine = Object.keys(all).filter(n => all[n] === pid && n !== name);
     if (mine.length) await redis.hdel(P + "players", ...mine);
-    await redis.hset(P + "players", { [name]: pid });
     await redis.set(`${P}seen:${name}`, "1", { ex: 120 });
-    return reply(res, 200, { me: name, epoch: Number(await redis.get(P + "epoch")) || 0 });
+    return reply(res, 200, { me: name, epoch });
   }
 
   // "Not you?" on a phone: free the name so someone else can take it
@@ -389,8 +415,8 @@ async function main(req, res) {
   if (a === "clearphones") {
     if (req.body?.pin !== HOST_PIN) return reply(res, 403, { error: "Gamemaker only" });
     await redis.incr(P + "epoch");
-    for (const k of ["players", "cams", "missions", "quest"]) await redis.del(P + k);
-    for (const n of NAMES) await redis.del(`${P}seen:${n}`);
+    // secret missions and the live side quest stay (Start completely over clears them with pointsreset first)
+    await redis.del(P + "players", P + "cams", ...NAMES.map(n => `${P}seen:${n}`));
     return reply(res, 200, { ok: true, epoch: Number(await redis.get(P + "epoch")) || 0 });
   }
 
@@ -483,7 +509,10 @@ async function main(req, res) {
     }
     if (c === "victor") {   // 🏆 record a game's Victor / Second Victor from the Gamemaker's phone; the TV celebrates it
       const G = ["cookie", "tribute", "mitten", "feud", "scoop", "secrets", "lrc", "bingo"], place = d.place === 2 ? 2 : 1;
-      if (!G.includes(d.g) || !NAMES.includes(d.n) || (place === 2 && d.g === "mitten")) return reply(res, 400, { error: "Bad winner" });
+      // Mitten Mayhem: EVERYONE wins, so no victor is recorded. District Bingo has a Victor only.
+      if (d.g === "mitten") return reply(res, 400, { error: "Everyone wins Mitten Mayhem, so there's no victor to record" });
+      if (d.g === "bingo" && place === 2) return reply(res, 400, { error: "District Bingo has one Victor only" });
+      if (!G.includes(d.g) || !NAMES.includes(d.n)) return reply(res, 400, { error: "Bad winner" });
       await pushCmd(c, { g: d.g, n: d.n, place }); return reply(res, 200, { ok: true });
     }
     if (c === "goto") {
@@ -497,7 +526,7 @@ async function main(req, res) {
     await pushCmd(req.body.cmd);
     return reply(res, 200, { ok: true });
   }
-  await redis.set(`${P}seen:${name}`, "1", { ex: 120 });
+  await touch(`${P}seen:${name}`, 120, 30000, pid);   // refreshed at most every 30 seconds (it lasts 120)
 
   if (a === "tap") {
     const lv = await readLive(); const r = lv.race;
@@ -619,9 +648,27 @@ async function main(req, res) {
   if (a === "walkup") {
     const song = req.body?.song; if (!SONGS.includes(song)) return reply(res, 400, { error: "Unknown song" });
     const OWN = { wu_boom: "Grandad", wu_jonny: "Jonny", wu_queen: "QUEEN MOTHER", wu_elisha: "Elisha", wu_jessie: "Jessie", wu_kyle: "Kyle", wu_brandon: "Brandon", wu_tinsley: "Tinsley", wu_carsyn: "Carsyn", wu_kamdon: "Kamdon", wu_dash: "Dash" }; if (OWN[song] && OWN[song] !== name) return reply(res, 403, { error: "That song belongs to someone else" });
-    const taken = await hash(P + "walkups"); const holder = Object.keys(taken).find(n => n !== name && taken[n] === song);
+    // tributes with their own personal song keep it (their phone doesn't offer the shared ones either)
+    if (Object.values(OWN).includes(name) && OWN[song] !== name) return reply(res, 403, { error: "You already have your own walk-up song" });
+    const taken = await hash(P + "walkups"), prev = taken[name] || null;
+    if (prev === song) return reply(res, 200, { ok: true });
+    const holder = Object.keys(taken).find(n => n !== name && taken[n] === song);
     if (holder) return reply(res, 409, { error: "taken", by: holder });
-    await redis.hset(P + "walkups", { [name]: song }); return reply(res, 200, { ok: true });
+    // first come first served, atomically: one claim key per song (sh:wu:<song> = name), SET NX so two phones can't both win
+    const wk = s => P + "wu:" + s, WEX = 60 * 60 * 24 * 3;
+    if (!(await redis.set(wk(song), name, { nx: true, ex: WEX }))) {
+      const by = await redis.get(wk(song));
+      if (by && by !== name) {
+        // a claim more than a minute old with no matching walkups entry (that phone died between the two writes) is stale;
+        // a fresh one is a phone that won the race a moment ago and is still saving
+        const stale = (await redis.hget(P + "walkups", by)) !== song && (Number(await redis.ttl(wk(song))) || 0) < WEX - 60;
+        if (!stale) return reply(res, 409, { error: "taken", by });
+        await redis.set(wk(song), name, { ex: WEX });
+      }
+    }
+    await redis.hset(P + "walkups", { [name]: song });
+    if (prev && (await redis.get(wk(prev))) === name) await redis.del(wk(prev));   // give the old song back
+    return reply(res, 200, { ok: true });
   }
 
   if (a === "react") {
@@ -629,7 +676,7 @@ async function main(req, res) {
     if (!(await redis.set(`${P}rl:${name}`, "1", { nx: true, px: 350 }))) return reply(res, 429, { error: "Slow down" });
     const id = await redis.incr(P + "reactid");
     await redis.lpush(P + "reactlog", JSON.stringify({ id, name, e: req.body.e }));
-    await redis.ltrim(P + "reactlog", 0, 39);
+    if (id % 10 === 0) await redis.ltrim(P + "reactlog", 0, 39);   // the TV only reads the newest 40; trim every 10th
     await stat("react:" + name);
     return reply(res, 200, { ok: true });
   }
@@ -650,6 +697,7 @@ async function main(req, res) {
     const img = req.body?.img;
     if (typeof img !== "string" || !img.startsWith("data:image/jpeg;base64,") || img.length > 140000) return reply(res, 400, { error: "Bad frame" });
     await redis.hset(P + "cams", { [name]: JSON.stringify({ img, t: Date.now() }) });
+    await touch(P + "camon", 15, 5000);   // tells the TV poll to read the frames (refreshed every ~5 seconds while live)
     return reply(res, 200, { ok: true });
   }
 

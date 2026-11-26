@@ -1,10 +1,10 @@
 // Sponsor shop (Who's That Tribute): spend Capitol coins on a power-up for the next face.
 // POST /api/shop { pid, name, item, target, qi } -> { ok, left }
-import { redis, reply, text, prefix } from "../lib/redis.js";
+import { redis, reply, text, prefix, safe } from "../lib/redis.js";
 
 export const PRICES = { shield: 3, spy: 2, dd: 4, rose: 3 };
 
-export default async function handler(req, res) {
+export default safe(async function handler(req, res) {
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const p = prefix(req), pid = text(req.body?.pid, 64), name = text(req.body?.name, 40), item = req.body?.item;
   const qi = Number.parseInt(req.body?.qi, 10), target = text(req.body?.target, 40);
@@ -17,4 +17,4 @@ export default async function handler(req, res) {
   if (!(await redis.hsetnx(`${p}buys:${qi}`, `${name}|${item}`, target || "1"))) return reply(res, 409, { error: "Already bought" });
   await redis.hincrby(p + "spent", name, PRICES[item]);
   reply(res, 200, { ok: true, left: coins - spent - PRICES[item] });
-}
+});

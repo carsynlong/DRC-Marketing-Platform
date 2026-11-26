@@ -1,8 +1,8 @@
 // Victor's interview (Who's That Tribute): a phone sends a question for the winner.
 // POST /api/ask { pid, name, q } -> { ok }
-import { redis, reply, text, prefix } from "../lib/redis.js";
+import { redis, reply, text, prefix, safe } from "../lib/redis.js";
 
-export default async function handler(req, res) {
+export default safe(async function handler(req, res) {
   if (req.method !== "POST") return reply(res, 405, { error: "POST only" });
   const p = prefix(req), pid = text(req.body?.pid, 64), name = text(req.body?.name, 40), q = text(req.body?.q, 140);
   if (!q) return reply(res, 400, { error: "Empty question" });
@@ -11,4 +11,4 @@ export default async function handler(req, res) {
   const id = await redis.incr(p + "askid");
   await redis.rpush(p + "asks", JSON.stringify({ id, name, q }));
   reply(res, 200, { ok: true });
-}
+});

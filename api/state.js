@@ -1,9 +1,9 @@
 // Phones poll this about every 1.5 seconds.
 // GET /api/state?pid=<phone id>&name=<name this phone thinks it has>
 // -> { game, me, taken, away, myAnswer }   away: taken names whose phone has gone quiet (they can rejoin)
-import { redis, hash, readGame, reply, text, prefix } from "../lib/redis.js";
+import { redis, hash, readGame, reply, text, prefix, safe, touch } from "../lib/redis.js";
 
-export default async function handler(req, res) {
+export default safe(async function handler(req, res) {
   const pid = text(req.query.pid, 64);
   const name = text(req.query.name, 40);
   const p = prefix(req);
@@ -24,9 +24,10 @@ export default async function handler(req, res) {
     }
   }
   // "I'm still here": a name whose phone stops checking in for 30 seconds can be picked up again (rejoin).
-  if (me) await redis.set(`${p}seen:${me}`, "1", { ex: 30 });
+  // Refreshed about every 7 seconds (not every poll) to save database calls; the key still lasts 30.
+  if (me) await touch(`${p}seen:${me}`, 30, 7000, pid);
   if (me && (game.phase === "question" || game.phase === "reveal" || game.phase === "interro")) {
     myAnswer = await redis.hget(`${p}answers:${game.qi}`, me);
   }
   reply(res, 200, { game, me, taken, away, myAnswer });
-}
+});

@@ -4,15 +4,15 @@
 // POST /api/host { action: "reset", total }     new game: wipe every face's answers and the coins
 // POST /api/host { action: "clearPlayers" }     everyone picks their name again
 // POST /api/host { action: "wipe" }             start completely over: all answers, points, scores (phones stay signed in)
-import { redis, hash, reply, prefix } from "../lib/redis.js";
+import { redis, hash, reply, prefix, safe } from "../lib/redis.js";
 
-export default async function handler(req, res) {
+export default safe(async function handler(req, res) {
   const p = prefix(req);
   if (req.method === "GET") {
     const players = Object.keys(await hash(p + "players"));
     const qi = Number.parseInt(req.query.qi, 10);
     const answers = Number.isInteger(qi) ? await hash(`${p}answers:${qi}`) : {};
-    const times = Number.isInteger(qi) ? await hash(`${p}anstime:${qi}`) : {};   // server time each answer arrived
+    const times = Number.isInteger(qi) && !p ? await hash(`${p}anstime:${qi}`) : {};   // server time each answer arrived (only Who's That Tribute records it)
     const coins = req.query.coins ? await hash(p + "coins") : undefined;
     const react = req.query.react ? await redis.lrange(p + "reactlog", 0, 59) : undefined;   // recent emoji bursts (District Secrets)
     const mini = req.query.mini ? await hash(p + "mini") : undefined;     // tap race / tree climb counts (Who's That Tribute)
@@ -65,4 +65,4 @@ export default async function handler(req, res) {
     return reply(res, 200, { ok: true });
   }
   reply(res, 400, { error: "Unknown action" });
-}
+});

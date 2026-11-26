@@ -197,6 +197,7 @@ body.has-ticker .stage{max-height:42vh}
 <div class="app" id="app"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
 
+<script src="/xmas/escort.js"></script>
 <script src="qrcode.js"></script>
 <script src="sync.js"></script>
 <script src="minigames.js"></script>
@@ -267,7 +268,7 @@ function freshState(){
     rounds:[],qi:0,elapsed:0,locked:false,correct:[]};
 }
 // a TV reload mid-face picks up the clock where it was (at least 8 seconds left), so nobody loses points to a refresh
-function start(data){ S=(data&&data.phase)?data:freshState(); if(S.charting){S.charting=false;S.chartD=null;S.charted=false} if(S.sc&&!S.sc.done)S.secs=SC_SECS;else if(S.secs!==10)S.secs=SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
+function start(data){ S=(data&&data.phase)?data:freshState(); if(S.charting){S.charting=false;S.chartD=null;S.charted=false} S.secs=(S.sc&&!S.sc.done)?SC_SECS:SECS;if(S.secsSaved)S.secsSaved=SECS; if(S.phase==="question"&&!S.locked){S.hurryEnds=0;S.elapsed=Math.max(0,Math.min(S.elapsed||0,S.secs-8))} render(); if(S.phase==="ready")beginQuestion(); }
 
 /* ================= MUSIC: original game-show loops over public-domain carols ================= */
 let AC=null, master, musicBus, sfxBus, noiseBuf, song=null, nextT=0, step=0, timerId=0, tempoMul=1;
@@ -466,7 +467,7 @@ function beginQuestion(){Extras.restore();Extras.loadBuys(false);S.phase="ready"
   readyT=setInterval(()=>{S.count--;if(S.count<=0){clearInterval(readyT);sfx("go");startQuestion();return}sfx("drum");const b=$(".ready .big");if(b){b.textContent=S.count;b.style.animation="none";b.offsetWidth;b.style.animation=""}},850);}
 // "N correct", or on a Mutt Mashup "N both · M half"
 const cntTxt=()=>{const h=(S.half||[]).length;return mash()&&h?`${S.correct.length} both · ${h} half`:`${S.correct.length} correct`};
-function startQuestion(){clearInterval(readyT);Extras.start();if(S.sc){S.secs=SC_SECS;S.qSecs=SC_SECS}S.hurryEnds=0;S.slow=[];S.phase="question";S.elapsed=0;S.look=S.sc?SC_LOOK:LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
+function startQuestion(){clearInterval(readyT);Extras.start();S.secs=S.sc?SC_SECS:SECS;S.hurryEnds=0; /* regular faces always get the full minute, even after a speed round */S.slow=[];S.phase="question";S.elapsed=0;S.look=S.sc?SC_LOOK:LOOK;S.locked=false;S.correct=[];S.half=[];S.charted=false;S.charting=false;S.typed={};S.ansAt={};S.qStart=Date.now();S.hostPick=null;playSong("count");render();
   if(S.mode==="type")document.querySelector(".typed input:not(:disabled):not([data-phone])")?.focus();}
 const isTb=()=>!!S.rounds[S.qi]?.tb;
 const faceLbl=()=>isTb()?"⚔️ Showdown face":S.sc?`🎡 Second Chance · Face ${S.qi-S.sc.start+1} of ${S.sc.n}`:`Face ${S.qi+1} of ${Q.length}`;

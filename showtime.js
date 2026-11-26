@@ -270,7 +270,9 @@ window.Walkout = (() => {
     const stats = STATS.slice().sort(() => Math.random() - .5), seed = Math.random() * 100 | 0;
     Music.start();
     const pick = (arr, k) => arr[(k + seed) % arr.length];
-    const letters = n => `<div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>`;
+    // nickname on the card (the letters are split up for the drop-in, so the page-wide nickname swap can't catch them)
+    const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo" };
+    const letters = n => (n = AKA[n] || n, `<div class="wo-name" aria-label="${esc(n)}">${[...String(n)].map((c, k) => `<span style="--k:${k}">${c === " " ? "&nbsp;" : esc(c)}</span>`).join("")}</div>`);
     const photoHTML = (n, prop) => `<div class="wo-photo"><img class="wo-av" src="${esc(o.photo ? o.photo(n) : "")}" alt="">${calm ? "" : `<span class="wo-prop${prop.eyes ? " eyes" : ""}" aria-hidden="true">${prop.e}</span>`}</div>`;
     const hypeLine = (n, i) => `<div class="wo-hype">${esc((o.hypeFor && o.hypeFor(n)) || hype[i % hype.length])}</div>`;
     function middle(style, n, dn, prop, stat, i) {

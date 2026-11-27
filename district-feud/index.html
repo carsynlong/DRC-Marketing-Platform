@@ -1061,7 +1061,7 @@ function introView(){
   const letters=[...(AKA[n]||n)].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
   return `${calm?"":'<div class="curt l"></div><div class="curt r"></div><div class="xbeam l"></div><div class="xbeam r"></div>'}<div class="rays" style="--d:.6s"></div>
     <section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>
-    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">${DNUM(n)?FROM(n):"🏛️ The Capitol · Gamemaker"}</div><div class="bulbname" aria-label="${esc(AKA[n]||n)}">${letters}</div></div>
+    <div class="entrance"><img class="iav" src="${AV(n)}" alt=""><div class="podium2"><div class="dplate">${DNUM(n)?FROM(n):"🏛️ The Capitol · Host & Gamemaker"}</div><div class="bulbname" aria-label="${esc(AKA[n]||n)}">${letters}</div></div>
     <div class="bubble">“${esc(n==="Caleb"?"Fore! Here comes Cable!":I.hype[I.i%I.hype.length])}”</div></div>
     ${phones.length?`<div class="meter"><span class="mlab">📣 Crowd meter</span><div class="mbar ${(I.meter[n]||0)>=METER_MAX?"max":""}"><i id="mfill" style="width:${Math.min(100,(I.meter[n]||0)/METER_MAX*100).toFixed(0)}%"></i></div><b id="mnum">${I.meter[n]||0}</b></div>
     <div class="cheerhint">👏 Everyone else: tap emojis on your phone to cheer for ${esc(n)}!</div>`:""}

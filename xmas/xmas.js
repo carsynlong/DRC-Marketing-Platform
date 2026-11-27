@@ -23,7 +23,7 @@ XM.TRIBUTES=[
  {d:11,name:"QUEEN MOTHER",weapon:"One look. That's all it takes.",strategy:"Royalty doesn't compete. Royalty wins.",odds:"1 to 1, obviously",label:"BOW WHEN YOU SAY HER NAME"},
  {d:12,name:"Kyle",weapon:"An equation so long it needs its own whiteboard",strategy:"Rush the arena like it's pledge week",odds:"12 to 1",label:"AKA KACHOW"},
  // The Gamemaker lives in the Capitol, not a district (d:0). She still plays everything; her photo is the Capitol one.
- {d:0,capitol:true,name:"Carsyn",weapon:"Spidey senses and total control of the scoreboard",strategy:"Run the Games. Rig nothing. Probably.",odds:"Gamemaker",label:"YOUR GAMEMAKER · AKA CLO (CARSYN)",img:"/xmas/tributes/capitol.jpg",full:"/xmas/tributes/full/capitol.jpg"},
+ {d:0,capitol:true,name:"Carsyn",weapon:"A sparkly microphone and total control of the scoreboard",strategy:"Host the show, interview the winners, rig nothing. Probably.",odds:"Host's privilege",label:"YOUR GAMEMAKER · AKA CLO (CARSYN)",img:"/xmas/tributes/capitol.jpg",full:"/xmas/tributes/full/capitol.jpg"},
 ];
 XM.TRIBUTES.forEach(t=>{const k=String(t.d).padStart(2,"0");t.img=t.img||`/xmas/tributes/d${k}.jpg`;t.full=t.full||`/xmas/tributes/full/d${k}.jpg`});
 // where a tribute is from, for labels: "DISTRICT 6", or "THE CAPITOL" for the Gamemaker

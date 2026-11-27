@@ -299,7 +299,7 @@ function render(){if(me!=="Carsyn")dropBar();
     return;
   }
   const t=TRIBUTES.find(x=>x.name===me);
-  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">${t.capitol?"🏛️ The Capitol · Gamemaker":"District "+t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(XM.dn(me))}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
+  app.innerHTML=`<div class="card me"><img src="${t.img}" alt=""><div><div class="eyebrow">${t.capitol?"🏛️ The Capitol · Host & Gamemaker":"District "+t.d}${XM.aka(me)?` · a.k.a. ${esc(XM.aka(me))}`:""}</div><b>${esc(XM.dn(me))}</b><div class="tiny" id="mypts" style="text-align:left"></div></div><a href="#" class="x" id="notme">Not you?</a></div>
     ${me==="Carsyn"?`<div class="card host" id="host"></div>`:""}
     ${me==="Carsyn"?"":`<div class="card tv"><div class="eyebrow"><span>📺 Now on the TV</span><span id="tvn"></span></div><h2 id="tvt">Waiting for the Gamemaker...</h2><div class="todo" id="tvdo"></div><p id="tvb"></p></div>`}
     ${me==="Carsyn"?`<div class="card own" id="ownwrap" hidden><button class="owntog" id="owntog"><span>🗳️ Your own vote</span><span id="owncnt"></span><span id="ownarr">▾</span></button><div id="extras" style="display:none;gap:16px;margin-top:12px"></div></div>`:`<div id="extras" style="display:grid;gap:16px"></div>`}

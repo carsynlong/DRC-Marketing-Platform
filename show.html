@@ -617,7 +617,7 @@ const DISTRICT_FX={
  10:{ind:"LIVESTOCK",g:["rgba(200,230,150,.6)","rgba(110,140,60,.35)"],p:[["across","🐄",4],["across","🐑",4],["fall","🌾",5]]},
  11:{ind:"AGRICULTURE",g:["rgba(255,140,120,.6)","rgba(80,150,60,.35)"],p:[["fall","🍎",10],["fall","🍑",5],["fall","🍃",5]]},
  12:{ind:"COAL MINING",g:["rgba(255,150,70,.32)","rgba(30,30,34,.55)"],p:[["fall","🪨",8],["twinkle","⛏️",5],["across","🐦",2]]},  // coal dust, pickaxes, a mockingjay (no flames)
- 0:{ind:"GAMEMAKER",g:["rgba(255,215,140,.7)","rgba(150,60,200,.4)"],p:[["twinkle","🏛️",6],["twinkle","🔮",6],["twinkle","✨",10],["rise","🎮",4]]}};  // the Capitol (the Gamemaker): columns, crystal ball, sparkle
+ 0:{ind:"HOST & GAMEMAKER",g:["rgba(255,215,140,.7)","rgba(150,60,200,.4)"],p:[["twinkle","🏛️",6],["twinkle","🔮",6],["twinkle","✨",10],["rise","🎮",4]]}};  // the Capitol (the Gamemaker): columns, crystal ball, sparkle
 function districtFX(d){const f=DISTRICT_FX[d];if(!f)return fireHTML();const R=(a,b)=>a+Math.random()*(b-a);
   let h=f.fire?fireHTML().replace('<div class="fire">','').replace(/<\/div>$/,""):`<div class="aura" style="--g1:${f.g[0]};--g2:${f.g[1]}"></div>`;
   if(f.bolt)h+=`<div class="bolt" style="--d:${-R(0,2)}s"></div>`;
@@ -1691,7 +1691,7 @@ const SLIDES=[
  ...TRIBUTES.map(t=>({id:"d"+t.d,music:"stop",html:()=>`<div style="display:grid;grid-template-columns:620px 1fr;gap:110px;align-items:center;text-align:left;width:100%">
     <div style="position:relative;display:grid;place-items:center;height:860px" class="spin"><span style="position:relative;display:inline-block;isolation:isolate">${districtFX(t.d)}${t.d===11?`<div class="qcrown">👑</div>`:""}${DISTRICT_FX[t.d]?`<div class="dbadge">${t.capitol?"🏛️ THE CAPITOL":"DISTRICT "+t.d} · ${DISTRICT_FX[t.d].ind}</div>`:""}<img src="${t.full}" alt="" style="display:block;max-width:600px;max-height:820px;border-radius:30px;box-shadow:0 0 0 10px var(--gold),0 0 0 22px var(--red),0 30px 70px rgba(0,0,0,.6)"></span><span class="dtag" style="top:0;left:-20px;z-index:4">${t.capitol?"THE CAPITOL":"DISTRICT "+t.d}</span></div>
     <div style="display:grid;gap:26px">
-      <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.capitol?"YOUR GAMEMAKER · THE CAPITOL":esc(t.label||"TRIBUTE PROFILE")}</div>
+      <div class="eb fr" ${d(.5)} style="color:var(--gold)">${t.capitol?"YOUR HOST & GAMEMAKER · THE CAPITOL":esc(t.label||"TRIBUTE PROFILE")}</div>
       <h1 class="title-xl slam" ${d(.7)} style="font-size:${XM.dn(t.name).length>18?96:XM.dn(t.name).length>8?118:150}px">${esc(t.name)}</h1>
       ${[["canes","WEAPON OF CHOICE",t.weapon],["snowflake","SURVIVAL STRATEGY",t.strategy],["coins","CAPITOL ODDS",t.odds]].map(([ic,k,v],i)=>`<div class="card stat" data-stat="${i}" style="opacity:0"><img src="${ICON(ic)}" alt=""><div><div class="k">${k}</div><div class="v">${esc(v)}</div></div></div>`).join("")}
     </div></div>`,enter(el){XM.sfx("whoosh");XM.sfx("cheer");XM.walkUp(t.name,()=>curEl===el).then(ok=>{if(!ok&&curEl===el)XM.playSong("march")});   // 🎵 their walk-up song (quieter while the announcer talks)
@@ -2133,7 +2133,7 @@ const QUESTIONS=["What was your secret strategy?","Who was robbed tonight?","Tha
 function interview(g){
   if(busy())return;const who=XM.victors()[g]||"Victor";const {m,T,close}=openMoment("interview");
   const qs=QUESTIONS.slice().sort(()=>Math.random()-.5);let i=0;
-  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · VICTOR'S INTERVIEW</div><h1>🎤 Caesar asks...</h1>
+  m.innerHTML=`<div class="inner"><div class="eb">${esc(GAMES[g].name)} · VICTOR'S INTERVIEW</div><h1>🎤 Your host asks...</h1>
     ${XM.photo(who)?`<img src="${XM.photo(who)}" alt="" style="width:clamp(130px,20vh,200px);aspect-ratio:1;border-radius:50%;object-fit:cover;box-shadow:0 0 0 6px var(--gold),0 0 0 12px var(--red)">`:""}
     <div style="font-family:var(--display);font-size:clamp(1.8rem,4vw,3rem);color:var(--gold)">${esc(who)}</div>
     <div class="q" id="iq"></div><div class="row"><button class="btn" id="i-next">🎤 Next question</button><button class="btn ghost" id="i-x">Done (Esc)</button></div></div>`;

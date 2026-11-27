@@ -627,7 +627,7 @@ function view(){
     if(!playing&&isHost())return [key+"host",msg("🔑","You're the host","<p>You're running the game tonight. Tap <b>🔑 Host tools</b> any time to approve bonus secrets.</p>")+notYou];
     if(!playing)return [key+"out",msg("🪑","You're sitting out","<p>Want in? Ask the host to tap your name on the TV.</p>")+notYou];
     return [key+"in"+editing+declined+mySecret+!!g.opts?.bonus+ttlEdit+ttlNo+JSON.stringify(myTTL)+!!g.opts?.ttl,`<section class="msg"><div class="eyebrow">Signed in</div>
-      <div class="card"><div class="eyebrow">${dist()?`District ${dist()} tribute`:"🏛️ Gamemaker · The Capitol"}</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
+      <div class="card"><div class="eyebrow">${dist()?`District ${dist()} tribute`:"🏛️ Host & Gamemaker · The Capitol"}</div><img src="${av()}" alt=""><div class="nm">${esc(D.me)}</div><div class="seal" aria-hidden="true">🔏</div></div>
       <p style="margin-top:14px">Welcome to the vault, <b style="color:var(--ink)">${esc(D.me)}</b>. Eyes on the TV. The secrets come out soon.</p>${D.me===HOST_NAME?`<p class="note">🕵️ You're the Gamemaker: each secret, bet on who the room will wrongly accuse most (+400), and guess in the bonus round!</p>`:""}</section>${writeCard()}${ttlCard()}${reactBar()}${soundBtn()}${notYou}`,"welcome"];
   }
   if(!playing){   // the host (and anyone sitting out) still gets the same meme as everyone else

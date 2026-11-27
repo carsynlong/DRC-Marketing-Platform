@@ -87,7 +87,7 @@ XM.POLLS=["Who's most likely to cheat?","Best dressed tribute?","Who would survi
  "Who would make the best Gamemaker?","Who tells the worst jokes?","Who's most likely to re-gift a present?","Who's the most competitive?"];
 /* 🎵 walk-up songs (the show's own music) */
 // 🎤 real walk-up songs (recorded clips in /xmas/walkups/, played once), then the built-in beats as backups
-XM.WALKFILES=[["wu_boom","Here Comes the Boom · Nelly"],["wu_natalie","Buzz Buzz's Walkout Song"],["wu_jonny","HumblePie1's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"],["wu_elisha","Bye Felicia's Walkout Song"],["wu_jessie","Lucky PomPoms' Walkout Song"],["wu_kyle","Kachow's Walkout Song"],["wu_brandon","Iron Balls III's Walkout Song"],["wu_tinsley","Pee Pee Balls' Walkout Song"],["wu_carsyn","Clo's Walkout Song"],["wu_kamdon","Big Daddy Kam's Walkout Song"],["wu_dash","Chad Thundercock's Walkout Song"]];
+XM.WALKFILES=[["wu_boom","Here Comes the Boom · Nelly"],["wu_caleb","Cable's Walkout Song"],["wu_natalie","Buzz Buzz's Walkout Song"],["wu_jonny","HumblePie1's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"],["wu_elisha","Bye Felicia's Walkout Song"],["wu_jessie","Lucky PomPoms' Walkout Song"],["wu_kyle","Kachow's Walkout Song"],["wu_brandon","Iron Balls III's Walkout Song"],["wu_tinsley","Pee Pee Balls' Walkout Song"],["wu_carsyn","Clo's Walkout Song"],["wu_kamdon","Big Daddy Kam's Walkout Song"],["wu_dash","Chad Thundercock's Walkout Song"]];
 XM.WALKUPS=[...XM.WALKFILES,["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
  ["hh_secrets","Secret Agent"],["hh_lrc","Dice Roll"],["hh_bingo","Bingo Bounce"],["hh_lounge","Lounge Lo-fi"],["battle","Battle March"],["march","Tribute Parade"],["board","Deck the Halls"],["lobby","Jingle Bells"]];
 XM.SOUNDBOARD=[["airhorn","📯","Air horn"],["cheer","🙌","Cheer"],["applause","👏","Applause"],["gasp","😮","Ohhh!"],["laugh","😂","Laugh"],["rimshot","🥁","Rimshot"],
@@ -323,7 +323,7 @@ XM.playSong=function(name,force){
 XM.stopSong=function(){clearInterval(timerId);timerId=0;clearTimeout(mixT);song=null;songName=null;if(fileSong){const a=fileSong;fileSong=null;try{a.pause()}catch(e){}}};
 XM.currentSong=()=>songName;
 // 🎵 a tribute's walk-up song: their own walkout song (phones no longer pick songs). No song of their own: returns false so the page plays its fallback.
-XM.OWN_SONG={Natalie:"wu_natalie",Jonny:"wu_jonny",Grandad:"wu_boom","QUEEN MOTHER":"wu_queen",Elisha:"wu_elisha",Jessie:"wu_jessie",Kyle:"wu_kyle",Brandon:"wu_brandon",Tinsley:"wu_tinsley",Carsyn:"wu_carsyn",Kamdon:"wu_kamdon",Dash:"wu_dash"};
+XM.OWN_SONG={Caleb:"wu_caleb",Natalie:"wu_natalie",Jonny:"wu_jonny",Grandad:"wu_boom","QUEEN MOTHER":"wu_queen",Elisha:"wu_elisha",Jessie:"wu_jessie",Kyle:"wu_kyle",Brandon:"wu_brandon",Tinsley:"wu_tinsley",Carsyn:"wu_carsyn",Kamdon:"wu_kamdon",Dash:"wu_dash"};
 XM.walkUp=async(n,still=()=>true)=>{const song=XM.OWN_SONG[XM.realName(n)];if(!still())return true;if(song){XM.playSong(song,true);return true}return false};   // still(): skip if the screen moved on
 XM.sfx=function(kind){
   if(!ensureAudio())return;const t=AC.currentTime+.01;

@@ -678,7 +678,7 @@ window.Track = (() => {
 /* 🎵 a tribute's walk-up song as their victory song (District Feud and District Secrets winners):
    their own walkout song. Resolves false if they have none. */
 window.walkUpSong = async name => {
-  const OWN = { Natalie: "natalie", Jonny: "jonny", Grandad: "boom", "QUEEN MOTHER": "queen", Elisha: "elisha", Jessie: "jessie", Kyle: "kyle", Brandon: "brandon", Tinsley: "tinsley", Carsyn: "carsyn", Kamdon: "kamdon", Dash: "dash" };
+  const OWN = { Caleb: "caleb", Natalie: "natalie", Jonny: "jonny", Grandad: "boom", "QUEEN MOTHER": "queen", Elisha: "elisha", Jessie: "jessie", Kyle: "kyle", Brandon: "brandon", Tinsley: "tinsley", Carsyn: "carsyn", Kamdon: "kamdon", Dash: "dash" };
   const VER = { kyle: "?v=2", elisha: "?v=2" };
   const k = OWN[name]; if (!k || !window.Track) return false;
   window.Track.stop(); return window.Track.play(`/xmas/walkups/${k}.m4a${VER[k] || ""}`);

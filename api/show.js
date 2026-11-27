@@ -145,7 +145,7 @@ async function main(req, res) {
     const hot = live.hot ? { id: live.hot.id, to: live.hot.to } : null;
     let mercy = null, predict = null;
     if (live.mercy && live.mercy.open) { const mine = me ? await redis.hget(P + "mercy:" + live.mercy.id, me) : null; mercy = { ...live.mercy, mine, mt: mine ? Number(await redis.hget(P + "mt:" + live.mercy.id, me)) || 0 : 0 }; }
-    if (live.predict && live.predict.open) predict = { open: true, mine: me ? await redis.hget(P + "predict", me) : null };
+    if (live.predict && (live.predict.open || !live.predict.paid)) predict = { open: !!live.predict.open, mine: me ? await redis.hget(P + "predict", me) : null };   // locked but not paid: phones still show their pick
     const bday = live.bday && Date.now() - live.bday.t < 120000 ? live.bday : null;
     const allrise = live.allrise && Date.now() - live.allrise.t < 20000 ? live.allrise : null;   // 👑 "BOW NOW" on QUEEN MOTHER's profile
     let race = null;

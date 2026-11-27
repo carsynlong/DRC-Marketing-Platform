@@ -92,7 +92,7 @@ select,textarea{width:100%;font-size:16px;font-weight:600;font-family:inherit;pa
 .chips button.on{background:var(--gold);color:#13271f}
 .vfaces{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .vfaces>button:last-child:nth-child(4n+1){grid-column:2/4;justify-self:center;width:calc(50% - 4px)}   /* a lone last face sits in the middle */
-.vfaces button{display:grid;justify-items:center;gap:3px;padding:6px 2px;border-radius:12px;background:rgba(255,255,255,.05);font-size:.82rem;font-weight:800;line-height:1.1}
+.vfaces button{overflow-wrap:anywhere;min-width:0;display:grid;justify-items:center;gap:3px;padding:6px 2px;border-radius:12px;background:rgba(255,255,255,.05);font-size:.82rem;font-weight:800;line-height:1.1}
 .vfaces img{width:52px;height:52px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--line)}
 .vfaces button.on{background:rgba(232,176,75,.28)}.vfaces button.on img{box-shadow:0 0 0 3px var(--gold)}
 .vote{box-shadow:0 0 0 2px var(--gold)}
@@ -447,7 +447,7 @@ function showExtras(){
   if(hot&&hot.to!==me)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🎭 ${esc(hot.to)} IS IN THE HOT SEAT</div><textarea id="askq" rows="2" maxlength="140" placeholder="Ask ${esc(XM.dn(hot.to))} anything (anonymous)" style="margin-top:8px"></textarea><button class="btn red" id="asksend" style="width:100%">Send question</button><div class="tiny" id="askmsg"></div></div>`;
   else if(hot&&hot.to===me)h+=`<div class="card vote" style="text-align:center"><div style="font-size:3rem">🎭</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">You're in the hot seat!</h2><div>Questions will show up on the TV. Answer honestly.</div></div>`;
   if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Who wins the most games tonight? Right = +3 points at the end.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div></div>`;
-  else if(predict&&predict.mine)h+=`<div class="card"><div class="eyebrow">🔮 Your prediction: ${esc(predict.mine)}</div></div>`;
+  else if(predict&&predict.mine)h+=`<div class="card"><div class="eyebrow">🔮 Your prediction: ${esc(XM.dn(predict.mine))}</div></div>`;
   const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div>`;
   if(vote&&vote.mine&&(winLeft(vote.mt)===0||!reopen["v"+vote.id]))h+=lockedCard(`🗳️ ${esc(vote.q)}`,`Voted: ${esc(XM.dn(vote.mine))}`,"v"+vote.id,winLeft(vote.mt),"vote");
   else if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(XM.dn(vote.mine))}. Tap someone else to change it (${winLeft(vote.mt)}s). ${unBtn("v")}`:"Tap a face to vote. You get 10 seconds to change your mind."}</div></div>`;

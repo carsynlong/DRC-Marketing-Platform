@@ -328,7 +328,7 @@ const Sync = (() => {
   function save() { if (wiping) return; try { localStorage.setItem(SAVE, JSON.stringify(S)); } catch (e) {} }
 
   setInterval(() => {
-    if (!S) return;
+    if (typeof S === "undefined" || !S) return;
     push();
     maybePoll();
     if (Date.now() - lastSave > 1000) { lastSave = Date.now(); save(); }

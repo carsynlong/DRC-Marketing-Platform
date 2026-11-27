@@ -441,6 +441,7 @@ body.focus .beam.r{animation:none;transform:rotate(-26deg);transition:transform 
 <script src="/qrcode.js"></script>
 <script src="/showtime.js"></script>
 <script src="/briefing.js"></script>
+<script src="/walkthrough.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 
@@ -953,6 +954,7 @@ function nextQuestion(){
 }
 
 const WIN_TRACK="/sfx/winner-feud.m4a";   // plays the moment the major award winner is revealed
+const afterWalkUp=()=>{if(!S.sound)return;if(window.Track)Track.play(WIN_TRACK).then(ok=>{if(!ok)playSong("joy")});else playSong("joy")};   // after the walk-up song has played twice
 /* Major award round: flip everyone's total from the bottom of the board up, #1 last. */
 function packageReveal(){
   clearTimers();const rows=Object.entries(S.tally).sort((a,b)=>b[1]-a[1]);
@@ -1010,7 +1012,7 @@ function secondFaceoff(){
   nextTiebreaker();
 }
 function secondFx(){drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(3500);fireworks(5);stopSong();   // the same champions track as the major award winner
-    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.second&&S.pkg.second.winner))return;   // 🎵 the Second Victor's own walk-up song
+    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.second&&S.pkg.second.winner,afterWalkUp))return;   // 🎵 the Second Victor's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 function scspinView(){
   const sc=S.pkg.second||{},pr=sc.pair,ws=secondPool();
@@ -1024,7 +1026,7 @@ function scspinView(){
 /* the gift box shakes, the lid flies off, the winner pops out */
 function giftFx(){saveGame("pkg");   // keep the save, so a refresh picks up at the Second Chance
   drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
-    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.winner))return;   // 🎵 the winner's own walk-up song
+    if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.winner,afterWalkUp))return;   // 🎵 the winner's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
 /* ---------- views ---------- */
@@ -1116,7 +1118,7 @@ function lobby(){
     <div class="eyebrow">Who's here? Tap to mark someone absent</div>
     ${checkinLine()}
     <div class="chips">${NAMES.map(n=>{const ph=apiOk&&hasPhone(n);return `<button class="chip ${ph?"in":""}" data-here="${esc(n)}" aria-pressed="${S.present[n]}"><img src="${AV(n)}" alt=""><span class="who">${esc(n)}${apiOk&&S.present[n]?`<span class="st">${ph?"✓ Checked in":"Waiting…"}</span>`:""}</span></button>`}).join("")}</div>
-    <div class="settings stick lob">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn red" id="go">Start the show</button></div>
+    <div class="settings stick lob">${sndBtn()}<button class="btn ghost" id="music">🎺 Play theme music</button><button class="btn ghost" id="walk">🎙️ Full walkthrough</button><button class="btn red" id="go">Start the show</button></div>
     <div class="settings"><button class="btn ghost" id="wipeall">↺ Start completely over</button></div>
     <div class="hint">${savedGame()?"Space: ▶ Resume the game":"Space moves the show along"} · M turns music on or off · <span style="opacity:.7">version QR-3</span></div></section>`;
 }
@@ -1247,6 +1249,7 @@ function wire(){
   on("home",async()=>{if(!confirm("Stop this game and go back to setup? The major award race goes back to zero, and every phone goes back to picking their name."))return;
     try{await post({action:"clearPlayers"})}catch(e){}phones=[];goSetup()});
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
+  on("walk",()=>{if(S.phase!=="lobby"||!window.Walkthrough)return;stopSong();Walkthrough.show("feud",{muted:()=>!S.sound})});   // 🎙️ voiced walkthrough (walkthrough.js): only a briefing, no game state
   on("wipeall",startOver);
   on("clearphones",async()=>{if(!confirm("Clear every phone's name? Everyone will need to scan and tap their name again."))return;try{await post({action:"clearPlayers"})}catch(e){}phones=[];render()});
   on("snd",window.toggleMusic=()=>{S.sound=!S.sound;if(!S.sound){stopSong();try{speechSynthesis.cancel()}catch(e){}}else if(!(window.Briefing&&Briefing.open())){const m=musicFor();m&&playSong(m)}

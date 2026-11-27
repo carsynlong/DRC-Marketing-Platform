@@ -204,6 +204,7 @@ body.has-ticker .stage{max-height:42vh}
 <script src="firetimer.js"></script>
 <script src="extras.js"></script>
 <script src="/briefing.js"></script>
+<script src="/walkthrough.js"></script>
 <script>
 /* ---------- Carsyn's Kahoot deck: question crop -> reveal photo, in her slide order ---------- */
 // Districts 1 to 12 in order (Caleb is District 6), then the Gamemaker, who lives in the Capitol (no district)
@@ -658,7 +659,7 @@ function lobbyView(){
     <details class="opts"${window.__wtOpts?" open":""} ontoggle="window.__wtOpts=this.open"><summary>⚙ Options${S.players.some(p=>!p.on)?` · ${S.players.filter(p=>!p.on).length} sitting out`:""}</summary>
     <div class="eyebrow">Tap a face to sit them out</div>
     <div class="chips">${S.players.map((p,i)=>`<button class="chip" data-tog="${i}" aria-pressed="${p.on}"><span class="d">${DISTRICT[p.name]?"D"+DISTRICT[p.name]:"🏛️"}</span>${esc(p.name)}${p.name===HOST?" 🔮":""}${Sync.hasPhone(p.name)?" 📱":""}</button>`).join("")}</div><div class="settings"><button class="btn ghost" id="music">🔔 Lobby music</button><button class="btn ghost" id="arena">⚔️ Arena music</button><button class="btn ghost" id="mutts" aria-pressed="${S.mutts!==false}">🐺 Mutt Mashups: ${S.mutts!==false?"ON":"OFF"}</button><button class="btn ghost" id="wipeall">↺ Start completely over</button></div></details>
-    <div class="settings stick">${sndBtn()}<button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
+    <div class="settings stick">${sndBtn()}<button class="btn ghost" id="walk">🎙️ Full walkthrough</button><button class="btn" id="go" ${active().length<1?"disabled":""}>Start the Games</button></div>
     <div class="tiny">${active().length} tributes playing · ${Q.length} faces in ${ROUNDS.length} rounds · press Space to move on</div>
   </section>`;
 }
@@ -817,6 +818,7 @@ function wire(){
   on("go",showIntro);on("begin",beginQuestion);on("lock",lock);on("reveal",reveal);on("score",score);on("next",next);
   on("again",newGame);on("lobby",()=>{clearInterval(readyT);S.phase="lobby";stopSong();render()});
   on("mutts",()=>{S.mutts=S.mutts===false;render()});
+  on("walk",()=>{if(S.phase!=="lobby"||!window.Walkthrough)return;stopSong();Walkthrough.show("wtt",{muted:()=>!S.sound})});   // 🎙️ voiced walkthrough (walkthrough.js): only a briefing, no game state
   on("scgo",startSecondChance);on("scbegin",scBegin);
   on("music",()=>{S.sound=true;stopSong();playSong("lobby");render()});
   on("arena",()=>{S.sound=true;stopSong();playSong("arena");render()});

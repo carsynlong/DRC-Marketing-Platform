@@ -473,6 +473,7 @@ details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;fo
 <script src="/ambient.js"></script>
 <script src="/showtime.js"></script>
 <script src="/briefing.js"></script>
+<script src="/walkthrough.js"></script>
 <script>
 /* ================= THE SECRETS ================= */
 /* Bump BUILD whenever this game changes: the TV reloads itself between rounds, and phones reload, so nobody plays an old copy. */
@@ -1316,7 +1317,7 @@ function checkDuel(taps){
   if(ok.length){d.ms=ok[0].t;duelEnd(ok[0].n)}
 }
 // 🎵 a winner gets their own walk-up song (the usual winner tune if they don't have one)
-async function winSong(name){stopSong();if(musicOn&&window.walkUpSong&&name&&await walkUpSong(name))return;playSong("winner")}
+async function winSong(name){stopSong();if(musicOn&&window.walkUpSong&&name&&await walkUpSong(name,()=>{if(musicOn)playSong("winner")}))return;playSong("winner")}
 function duelEnd(n){const d=S.duel;clearTimeout(duelT);clearInterval(duelPoll);d.state="done";if(d.second)S.second.winner=n;else S.champ=n;stopSong();sfx("fanfare");confetti(220,true);render()}
 function finishShowdown(){   // breaking the tie: the champion finishes on top
   if(S.duel?.second){S.phase="final";stopSong();confetti(260,true);winSong(S.second?.winner);render();return}
@@ -1569,7 +1570,7 @@ function lobbyView(){
       ${S.opts?.bonus?`<div class="bonusnote">📝 ${dsx.written?`${dsx.written} bonus secret${dsx.written>1?"s":""} written · ${dsx.tv?`${dsx.approved.length} approved · +500 points each if it's played`:"🔑 they can't load on this screen yet: close any other TV tabs"}`:"Write a bonus secret on your phone: +500 points if it's played"}</div>`:""}
       <div class="settings"><span class="tiny">Seconds per secret</span>
         <div class="seg" role="group" aria-label="Seconds per secret">${[20,30,45].map(s=>`<button data-secs="${s}" aria-pressed="${S.secs===s}">${s}</button>`).join("")}</div>${sndBtn()}</div>
-      <div class="settings stick lob"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
+      <div class="settings stick lob"><button class="btn ghost" id="music">🎶 Lobby music</button><button class="btn ghost" id="walk">🎙️ Full walkthrough</button><button class="btn wax" id="go" ${on.length<2?"disabled":""}>Open the vault</button></div>
       <div class="tiny" style="text-align:center">Space moves the game on · M mutes</div>
     </div></section>`;
 }
@@ -1799,6 +1800,7 @@ function wire(){
   on("host",()=>{hostOpen=!hostOpen;render()});
   on("lobby",()=>{clearInterval(readyT);stopReading();S.phase="lobby";stopSong();render()});
   on("music",()=>{musicOn=true;stopSong();playSong("lobby");render()});
+  on("walk",()=>{if(S.phase!=="lobby"||!window.Walkthrough)return;stopSong();Walkthrough.show("secrets",{muted:()=>!musicOn})});   // 🎙️ voiced walkthrough (walkthrough.js): only a briefing, no game state
   on("snd",window.toggleMusic=()=>{musicOn=!musicOn;if(!musicOn){stopSong();try{speechSynthesis.cancel()}catch(e){}}else{const m={lobby:"lobby",question:S.locked?null:"count",board:"board",final:"winner"}[S.phase];m&&playSong(m)}
     const e=$("#snd");if(e){e.textContent=musicOn?"🔊 Music on":"🔇 Music off";e.setAttribute("aria-pressed",musicOn)}});
   on("wipeall",startOver);

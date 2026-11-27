@@ -800,7 +800,7 @@ function snapshot(){
     g.scores=ranked().map((p,i)=>{if(p.score!==prev){rank=i+1;prev=p.score}return {name:p.name,score:p.score,delta:p.delta,streak:p.streak,rank,note:p.note||"",right:p.right||0,fooled:p.fooled||0,story:p.story||0}})}
   return JSON.stringify(g);
 }
-async function push(){
+async function push(){if(notOwner)return;
   const snap=snapshot();if(snap===lastPushed||pushing)return;pushing=true;
   try{const r=await post({action:"publish",game:JSON.parse(snap)});if(r.ok)lastPushed=snap}catch(e){}
   pushing=false;
@@ -957,7 +957,15 @@ function freshState(){
     players:NAMES.map(n=>({name:n,on:true,score:0,streak:0,delta:0,move:0,right:0,fooled:0,accused:0,story:0,note:""}))};
 }
 function saved(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.players?.length===NAMES.length&&g.total===BASE?g:null}catch(e){return null}}
-function save(){try{localStorage.setItem(SAVE,JSON.stringify({...S,total:BASE}))}catch(e){}}
+/* 🗂️ one TV tab at a time: the newest tab owns the game. An older tab stops saving and pushing (so it can't overwrite progress) */
+const TAB_ID=Math.random().toString(36).slice(2);let notOwner=false;
+try{localStorage.setItem("ds-tv-owner",TAB_ID)}catch(e){}
+addEventListener("storage",e=>{if(e.key!=="ds-tv-owner"||!e.newValue||e.newValue===TAB_ID||notOwner)return;notOwner=true;
+  const o=document.createElement("div");o.style.cssText="position:fixed;inset:0;z-index:2147483000;background:rgba(10,8,14,.94);color:#fff;display:grid;place-items:center;text-align:center;font:700 26px system-ui,sans-serif;padding:24px";
+  o.innerHTML='<div>⚠️ District Secrets is open in another tab.<br><span style="font-weight:500;font-size:20px">That tab has the game now. Close this one.</span><br><br><button style="font:700 18px system-ui;padding:12px 22px;border-radius:12px;border:0;background:#e8b04b;cursor:pointer">Use this tab instead</button></div>';
+  o.querySelector("button").onclick=()=>{try{localStorage.setItem("ds-tv-owner",TAB_ID)}catch(e){}location.reload()};
+  document.body.appendChild(o);try{speechSynthesis.cancel()}catch(e){}});
+function save(){if(notOwner)return;try{localStorage.setItem(SAVE,JSON.stringify({...S,total:BASE}))}catch(e){}}
 const active=()=>S.players.filter(p=>p.on);
 const cur=()=>Q[S.qi];
 function ranked(){return active().slice().sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name))}

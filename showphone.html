@@ -219,7 +219,7 @@ function confirmJoin(n,yes){const t=TRIBUTES.find(x=>x.name===n);const c=documen
   document.body.appendChild(c);c.querySelector("#cy").onclick=()=>{c.remove();yes()};c.querySelector("#cn").onclick=()=>c.remove()}
 let takenNames=[];
 function markTaken(){document.querySelectorAll(".grid [data-n]").forEach(b=>{const t=takenNames.includes(b.dataset.n);b.classList.toggle("taken",t);
-  let x=b.querySelector(".tk");if(t&&!x){x=document.createElement("span");x.className="tk tiny";x.textContent="on a phone";b.appendChild(x)}else if(!t&&x)x.remove()})}
+  let x=b.querySelector(".tk");if(t&&!x){x=document.createElement("span");x.className="tk tiny";x.textContent="already joined";b.appendChild(x)}else if(!t&&x)x.remove()})}
 // 🧩 the guest page: a few big buttons; each opens its own panel right under it (one at a time)
 function guestTiles(t){
   const others=TRIBUTES.filter(x=>x.name!==me&&x.name!=="Carsyn");   // decree / snitch / send points: never Clo (the Gamemaker)
@@ -232,19 +232,19 @@ function guestTiles(t){
       <button class="btn red" data-dt="random" style="width:100%;margin-bottom:10px;font-size:1.2rem">🎲 Random</button>${faces("data-dt")}</div>`]);
     P.push(["bday","🎂","Sing to me!",null]);
   }
-  P.push(["emoji","😀","Send emojis",`${DEMOJI[me]?`<div class="eyebrow" style="text-align:center;margin:2px 0 8px">${t.capitol?"The Capitol":`Your district: D${t.d} · ${DIND[t.d]||""}`}</div><div class="reacts">${DEMOJI[me].map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div><div class="eyebrow" style="text-align:center;margin:12px 0 8px">Arena classics</div>`:""}<div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div>`]);
+  P.push(["emoji","😀","Send emojis",`<div class="tiny" style="margin:0 0 8px">Tap any emoji. It pops up on the TV right away. Tap as many as you want!</div>${DEMOJI[me]?`<div class="eyebrow" style="text-align:center;margin:2px 0 8px">${t.capitol?"The Capitol":`Your district: D${t.d} · ${DIND[t.d]||""}`}</div><div class="reacts">${DEMOJI[me].map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div><div class="eyebrow" style="text-align:center;margin:12px 0 8px">Arena classics</div>`:""}<div class="reacts">${EMOJI.map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div>`]);
   P.push(["booth","📸","Photo booth",`<div id="booth" class="booth">
       <input type="file" id="phfile" accept="image/*" capture="user" hidden>
       <div id="phprev" class="phprev" hidden><img id="phimg" alt=""></div>
       <button class="btn red" id="phtake" style="width:100%;font-size:1.1rem">📸 Take a photo</button>
       <div class="phrow" id="phrow" hidden><button class="btn" id="phsend">📨 Send to the Capitol</button><button class="btn ghost" id="phretake">🔁 Retake</button></div>
-      <div class="tiny" id="phmsg">Saved for the end of the night.</div></div>`]);
-  P.push(["live","🎥","Go live",`<div id="live" class="live"><button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div></div>`]);
-  P.push(["snitch","🚨","Snitch",`${faces("data-sn")}<select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
+      <div class="tiny" id="phmsg">Tap Take a photo, then tap Send. Your photo shows up in the slideshow at the end of the night.</div></div>`]);
+  P.push(["live","🎥","Go live",`<div id="live" class="live"><button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Tap the red button. If your phone asks to use the camera, tap Allow. You're on the TV for 20 seconds!</div></div>`]);
+  P.push(["snitch","🚨","Snitch",`<div class="tiny" style="margin:0 0 8px;text-align:left">Catch someone breaking a rule? 1. Tap who. 2. Pick what they did. 3. Tap Report them. The Gamemaker decides.</div>${faces("data-sn")}<select id="snwhy" style="margin-top:10px">${XM.SNITCH.map(w=>`<option>${esc(w)}</option>`).join("")}</select>
       <button class="btn red" id="snsend" style="width:100%">🚨 Report them</button>`]);
-  P.push(["give","🤝","Send points",`${faces("data-gv")}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
+  P.push(["give","🤝","Send points",`<div class="tiny" style="margin:0 0 8px;text-align:left">Give some of YOUR Capitol points to someone. 1. Tap who. 2. Tap how many. 3. Tap Send points.</div>${faces("data-gv")}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-gn="${n}">${n} point${n>1?"s":""}</button>`).join("")}</div>
       <button class="btn" id="gvsend" style="width:100%">🤝 Send points</button>`]);
-  P.push(["shout","💌","Shout-out",`<textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas, QUEEN MOTHER!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button>`]);
+  P.push(["shout","💌","Shout-out",`<div class="tiny" style="margin:0 0 8px;text-align:left">Type a nice message for someone, then tap Send. It shows on the TV once the Gamemaker OKs it.</div><textarea id="sotext" rows="2" maxlength="90" placeholder="Happy Thanksmas, QUEEN MOTHER!"></textarea><button class="btn" id="sosend" style="width:100%">💌 Send shout-out</button>`]);
   P.push(["help","🆘","I'm lost",null]);
   const msgId={decree:"dqmsg",bday:"qbmsg",snitch:"snmsg",give:"gvmsg",shout:"somsg",help:"helpmsg"};
   return `${me==="Natalie"?`<button class="btn red nf" id="notfair">😤 IT'S NOT FAIR!</button><div class="tiny" id="nfmsg"></div>`:""}
@@ -291,7 +291,7 @@ function render(){if(me!=="Carsyn")dropBar();
   if(!me){
     districtLook();   // signed out ("Not you?"): drop the old district's background and emojis
     app.innerHTML=`<img src="/xmas/emblem.png" alt="" style="width:90px;justify-self:center"><h1 class="t">The 2026 Christmas Games</h1>
-      <div class="sub">Tap your face to join, tribute.</div>
+      <div class="sub">Find <b>your</b> face below and tap it.</div>
       <div class="grid">${TRIBUTES.map(t=>`<button data-n="${esc(t.name)}"><img src="${t.img}" alt=""><b>${esc(XM.dn(t.name))}</b></button>`).join("")}</div>`;
     app.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>confirmJoin(b.dataset.n,async()=>{b.disabled=true;const r=await api({a:"join",name:b.dataset.n});
       if(r.ok){me=r.me;myEpoch=r.epoch||0;XM.store.set("xmas-sh-me",me);XM.store.set("xmas-sh-epoch",myEpoch);render()}else{b.disabled=false;alert(r.status===409?"Someone else's phone is already using that tribute. If your old phone died, wait 2 minutes and tap again.":"Couldn't join. Check your internet and try again.")}}));
@@ -305,7 +305,7 @@ function render(){if(me!=="Carsyn")dropBar();
     ${me==="Carsyn"?`<div class="card own" id="ownwrap" hidden><button class="owntog" id="owntog"><span>🗳️ Your own vote</span><span id="owncnt"></span><span id="ownarr">▾</span></button><div id="extras" style="display:none;gap:16px;margin-top:12px"></div></div>`:`<div id="extras" style="display:grid;gap:16px"></div>`}
     ${me==="Carsyn"?"":guestTiles(t)}
     ${me==="Carsyn"?`<div class="card"><div class="eyebrow">😀 Send emojis</div><div class="reacts">${(DEMOJI[me]||[]).concat(EMOJI).map(e=>`<button data-e="${e}">${e}</button>`).join("")}</div></div>`:""}
-    ${me==="Carsyn"?`<div class="card"><div class="eyebrow">🎥 Go live</div><div id="live" class="live"><button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div></div></div>`:""}`;
+    ${me==="Carsyn"?`<div class="card"><div class="eyebrow">🎥 Go live</div><div id="live" class="live"><button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Tap the red button. If your phone asks to use the camera, tap Allow. You're on the TV for 20 seconds!</div></div></div>`:""}`;
   {const tg=app.querySelector("#owntog");if(tg)tg.onclick=()=>{ownOpen=!ownOpen;ownUI()}}
   wireTiles(app);wireDecree(app);
   const nfb=app.querySelector("#notfair");if(nfb)nfb.onclick=async()=>{const m=app.querySelector("#nfmsg");nfb.disabled=true;const r=await api({a:"notfair",name:me});
@@ -329,8 +329,8 @@ function render(){if(me!=="Carsyn")dropBar();
   districtLook();lastExtras="";showExtras();
   if(me!=="Carsyn"&&!XM.store.get("xmas-tour-seen",false)){XM.store.set("xmas-tour-seen",true);const ov=document.createElement("div");ov.className="qov ok";ov.style.background="radial-gradient(ellipse at center,#1d3b32,#06100c)";
     ov.innerHTML=`<div class="in" style="max-width:420px"><div class="ic">📱</div><h2>Your phone tonight</h2><div style="text-align:left;display:grid;gap:8px;font-size:1.02rem">
-      <div>📺 <b>Now on the TV</b> tells you what to do right now.</div><div>⚔️ Votes, bets and side quests pop up when they start.</div>
-      <div>👇 The big buttons open fun extras. Tap again to close.</div><div>🆘 Lost? Tap <b>I'm lost</b>.</div></div>
+      <div>📺 The <b>Now on the TV</b> box at the top tells you what to do right now. Check it whenever you're not sure.</div><div>⚔️ Votes, bets and side quests pop up on this screen by themselves. Your phone buzzes when one starts.</div>
+      <div>👇 The big buttons at the bottom are just for fun. Tap one to open it. Tap it again to close it.</div><div>🆘 Stuck? Tap <b>I'm lost</b> and the Gamemaker comes to help you.</div></div>
       <button class="btn" id="tourok" style="margin-top:12px">Got it</button></div>`;
     document.body.appendChild(ov);ov.querySelector("#tourok").onclick=()=>ov.remove()}
   showSlide();
@@ -443,19 +443,19 @@ function showExtras(){
   lastExtras=key;let h="";
   if(mercy)h+=mercy.to===me?`<div class="card vote" style="text-align:center"><div class="ic" style="font-size:3rem">🏳️</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">Beg for mercy!</h2><div>Everyone is voting on whether to spare you. Plead your case, out loud.</div></div>`
     :mercy.mine&&(winLeft(mercy.mt)===0||!reopen["m"+mercy.id])?lockedCard(`🏳️ Spare ${esc(XM.dn(mercy.to))}?`,`You voted ${mercy.mine==="up"?"👍 spare":"👎 no mercy"}`,"m"+mercy.id,winLeft(mercy.mt),"vote")
-    :`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🏳️ SPARE ${esc(mercy.to)}?</div><div class="hgrid" style="grid-template-columns:1fr 1fr;margin-top:8px"><button data-mv="up" class="${mercy.mine==="up"?"on":""}" style="font-size:2rem;min-height:70px;${mercy.mine==="up"?"background:var(--gold)":""}">👍</button><button data-mv="down" style="font-size:2rem;min-height:70px;${mercy.mine==="down"?"background:var(--gold)":""}">👎</button></div><div class="tiny">${mercy.mine?`You voted ${mercy.mine==="up"?"spare":"punish"}. Tap the other one to change (${winLeft(mercy.mt)}s). ${unBtn("m")}`:"Thumbs up spares them. Thumbs down, no mercy. You get 10 seconds to change your mind."}</div></div>`;
-  if(hot&&hot.to!==me)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🎭 ${esc(hot.to)} IS IN THE HOT SEAT</div><textarea id="askq" rows="2" maxlength="140" placeholder="Ask ${esc(XM.dn(hot.to))} anything (anonymous)" style="margin-top:8px"></textarea><button class="btn red" id="asksend" style="width:100%">Send question</button><div class="tiny" id="askmsg"></div></div>`;
+    :`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🏳️ SPARE ${esc(XM.dn(mercy.to))}?</div><div class="hgrid" style="grid-template-columns:1fr 1fr;margin-top:8px"><button data-mv="up" class="${mercy.mine==="up"?"on":""}" style="font-size:2rem;min-height:70px;${mercy.mine==="up"?"background:var(--gold)":""}">👍</button><button data-mv="down" style="font-size:2rem;min-height:70px;${mercy.mine==="down"?"background:var(--gold)":""}">👎</button></div><div class="tiny">${mercy.mine?`You voted ${mercy.mine==="up"?"spare":"punish"}. Tap the other one to change (${winLeft(mercy.mt)}s). ${unBtn("m")}`:"Tap 👍 to spare them or 👎 for no mercy. You get 10 seconds to change your mind."}</div></div>`;
+  if(hot&&hot.to!==me)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🎭 ${esc(XM.dn(hot.to))} IS IN THE HOT SEAT</div><textarea id="askq" rows="2" maxlength="140" placeholder="Ask ${esc(XM.dn(hot.to))} anything (anonymous)" style="margin-top:8px"></textarea><button class="btn red" id="asksend" style="width:100%">Send question</button><div class="tiny" id="askmsg">Type a question, then tap Send question. Nobody sees it came from you.</div></div>`;
   else if(hot&&hot.to===me)h+=`<div class="card vote" style="text-align:center"><div style="font-size:3rem">🎭</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:4px 0">You're in the hot seat!</h2><div>Questions will show up on the TV. Answer honestly.</div></div>`;
-  if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Who wins the most games tonight? Right = +3 points at the end.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div></div>`;
+  if(predict&&predict.open)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🔮 PREDICT THE ULTIMATE VICTOR</div><div class="tiny" style="margin:4px 0 8px;text-align:left">Tap the person you think wins the most games tonight. Guess right: +3 points at the end of the night.</div><div class="vfaces">${TRIBUTES.map(t=>`<button data-pr="${esc(t.name)}" class="${predict.mine===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div></div>`;
   else if(predict&&predict.mine)h+=`<div class="card"><div class="eyebrow">🔮 Your prediction: ${esc(XM.dn(predict.mine))}</div></div>`;
   const faces=(attr,sel)=>`<div class="vfaces">${TRIBUTES.map(t=>`<button ${attr}="${esc(t.name)}" class="${sel===t.name?"on":""}"><img src="${t.img}" alt="">${esc(XM.dn(t.name))}</button>`).join("")}</div>`;
   if(vote&&vote.mine&&(winLeft(vote.mt)===0||!reopen["v"+vote.id]))h+=lockedCard(`🗳️ ${esc(vote.q)}`,`Voted: ${esc(XM.dn(vote.mine))}`,"v"+vote.id,winLeft(vote.mt),"vote");
-  else if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(XM.dn(vote.mine))}. Tap someone else to change it (${winLeft(vote.mt)}s). ${unBtn("v")}`:"Tap a face to vote. You get 10 seconds to change your mind."}</div></div>`;
+  else if(vote)h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">🗳️ VOTE NOW</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">${esc(vote.q)}</h2>${faces("data-vt",vote.mine)}<div class="tiny" style="margin-top:8px">${vote.mine?`You voted ${esc(XM.dn(vote.mine))}. Tap someone else to change it (${winLeft(vote.mt)}s). ${unBtn("v")}`:"Tap a face to vote. You get 10 seconds to change your mind, then it locks."}</div></div>`;
   if(bet&&bet.state==="open"&&bet.mine&&(winLeft(bet.mt)===0||!reopen["b"+bet.id]))h+=lockedCard(`💰 Who wins ${esc(bet.game)}?`,`Your bet: ${bet.mine.amt} on ${esc(XM.dn(bet.mine.on))}`,"b"+bet.id,winLeft(bet.mt),"bet");
   else if(bet&&bet.state==="open")h+=`<div class="card vote"><div class="eyebrow" style="color:var(--gold)">💰 PLACE YOUR BET</div><h2 style="font-family:var(--display);font-weight:400;color:var(--gold);margin:6px 0 10px">Who wins ${esc(bet.game)}?</h2>
     ${faces("data-bo",bet.mine&&bet.mine.on)}<div class="chips" style="margin-top:10px">${[1,2,3].map(n=>`<button data-ba="${n}" class="${bet.mine&&bet.mine.amt===n?"on":""}">${n} point${n>1?"s":""}</button>`).join("")}</div>
-    <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(XM.dn(bet.mine.on))}. Change it and tap Place bet again (${winLeft(bet.mt)}s). ${unBtn("b")}`:"Right pick: win that many points. Wrong: lose them. You get 10 seconds to change it."}</div></div>`;
-  else if(bet&&bet.state==="locked")h+=`<div class="card"><div class="eyebrow">🔒 BETS LOCKED · ${esc(bet.game)}</div><div style="margin-top:6px;font-weight:800">${bet.mine?`You bet ${bet.mine.amt} on ${esc(bet.mine.on)}. Fingers crossed.`:"You didn't bet this round."}</div></div>`;
+    <button class="btn red" id="bsend" style="width:100%">💰 Place bet</button><div class="tiny" id="bmsg">${bet.mine?`Your bet: ${bet.mine.amt} on ${esc(XM.dn(bet.mine.on))}. Change it and tap Place bet again (${winLeft(bet.mt)}s). ${unBtn("b")}`:"1. Tap who you think wins. 2. Tap how many points. 3. Tap Place bet. Right: you win that many points. Wrong: you lose them. You get 10 seconds to change it."}</div></div>`;
+  else if(bet&&bet.state==="locked")h+=`<div class="card"><div class="eyebrow">🔒 BETS LOCKED · ${esc(bet.game)}</div><div style="margin-top:6px;font-weight:800">${bet.mine?`You bet ${bet.mine.amt} on ${esc(XM.dn(bet.mine.on))}. Fingers crossed.`:"You didn't bet this round."}</div></div>`;
   const keep=box.querySelector("#askq")?box.querySelector("#askq").value:"";
   const keepBo=box.querySelector("[data-bo].on"),keepBa=box.querySelector("[data-ba].on");
   box.innerHTML=h;if(keep&&box.querySelector("#askq"))box.querySelector("#askq").value=keep;
@@ -492,7 +492,7 @@ function myMission(m){
 let offN=0;function online(ok){let b=document.getElementById("offbar");if(ok){offN=0;if(b)b.remove();return}
   if(++offN<3||b)return;b=document.createElement("div");b.id="offbar";b.style.cssText="position:fixed;left:0;right:0;top:0;z-index:50;padding-top:calc(env(safe-area-inset-top,0px) + 8px)!important;background:#6e1712;color:#fff;font-weight:800;text-align:center;padding:8px 12px;font-size:.9rem";
   b.textContent="📶 Reconnecting... Check your Wi-Fi. The show on the TV keeps going.";document.body.appendChild(b)}
-function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"} (screen games only)`:""}
+function showMyPoints(){const e=document.getElementById("mypts");if(!e)return;const v=points[me]||0;e.textContent=v?`⭐ ${v>0?"+":""}${v} Capitol point${Math.abs(v)===1?"":"s"} (just for bragging rights)`:""}
 /* ---- side quest sent to me: full screen with a countdown ---- */
 function myQuest(q){
   const prevId=quest&&quest.id,prevSt=quest&&quest.status;quest=q;
@@ -796,7 +796,7 @@ async function goLive(){
 }
 function stopLive(){
   clearTimeout(liveTimer);if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;if(me)api({a:"camoff",name:me})}
-  const box=document.getElementById("live");if(box){box.innerHTML=`<button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Your camera shows on the TV for 20 seconds.</div>`;box.querySelector("#golive").onclick=goLive}
+  const box=document.getElementById("live");if(box){box.innerHTML=`<button class="btn red" id="golive" style="width:100%;font-size:1.15rem">🎥 Go live on the TV</button><div class="tiny">Tap the red button. If your phone asks to use the camera, tap Allow. You're on the TV for 20 seconds!</div>`;box.querySelector("#golive").onclick=goLive}
 }
 addEventListener("pagehide",stopLive);
 ["touchend","click"].forEach(t=>addEventListener(t,()=>{try{XM.ensureAudio()}catch(e){}},{passive:true}));

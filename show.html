@@ -748,8 +748,8 @@ function slideTodo(id){
   if(/^d\d+$/.test(id))return "Meet this tribute. Send emojis to cheer or boo!";
   const G={cookie:{game:"Next up: Smart Cookie Showdown. Get ready to be picked!",how:"Listen: cookie on your forehead, no hands.",wheel:"Watch the wheel. If it picks you, tilt your head back: cookie on your forehead, no hands!",tie:"Tied? Get ready for a tiebreaker."},
     scoop:{game:"Next up: Blind Snowball Scoop.",how:"Listen: blindfold on, scoop the snowballs into your bowl.",wheel:"Watch the wheel. If it picks you: blindfold on, spoon in hand!",tie:"Tied? Get ready for a tiebreaker."},
-    tribute:{game:"Scan the QR code on the TV to play Who's That Tribute on your phone."},feud:{game:"Scan the QR code on the TV to play District Feud on your phone."},
-    secrets:{game:"Scan the QR code on the TV to play District Secrets on your phone."},
+    tribute:{game:"Who's That Tribute opens on the TV. Point your phone camera at the QR code on the TV, tap the link that pops up, then tap your name."},feud:{game:"District Feud opens on the TV. Point your phone camera at the QR code on the TV, tap the link that pops up, then tap your name."},
+    secrets:{game:"District Secrets opens on the TV. Point your phone camera at the QR code on the TV, tap the link that pops up, then tap your name."},
     mitten:{game:"Next up: Mitten Mayhem.",idk:"QUEEN MOTHER explains the rules. Listen up!",order:"Find your turn in the order on the TV. Wait for your turn."},
     lrc:{game:"Next up: Left, Right, Capitol. Grab your chips. Two rounds, two winners!",idk:"Bye Felicia explains the rules. Listen up!",order:"Find your turn in the order on the TV. Two rounds: the Round 1 winner sits out Round 2.",tie:"Tied? Get ready for a tiebreaker."},
     bingo:{game:"Next up: District Bingo. Grab a card and a pen.",how:"Grab a bingo card and a pen. Write your name on it.",tie:"Tied? Get ready for a tiebreaker."}};
@@ -2111,7 +2111,7 @@ function intermission(){
     <div class="clock" id="iclock">☕</div><div id="imsg" style="font-family:var(--display);font-size:clamp(1.4rem,3vw,2.4rem);color:var(--gold);min-height:1.2em"></div>
     <div class="row" id="ipick"><span class="eb" style="align-self:center">Timer:</span>${[5,10,15].map(n=>`<button class="btn ghost" data-min="${n}">${n} min</button>`).join("")}<button class="btn ghost" data-min="0">No timer</button></div>
     <div class="row" id="iadj" style="display:none"><button class="btn ghost" id="iminus">−1 min</button><button class="btn ghost" id="iplus">+1 min</button></div>
-    <div style="display:flex;gap:20px;align-items:center;justify-content:center">${qrHTML(130)}<div class="eb" style="max-width:16ch;text-align:left;color:var(--ink)">Not joined yet? Scan with your phone camera.</div></div>
+    <div style="display:flex;gap:20px;align-items:center;justify-content:center">${qrHTML(130)}<div class="eb" style="max-width:18ch;text-align:left;color:var(--ink)">Not joined yet? Point your phone camera here and tap the link.</div></div>
     <div class="card fact" id="ifact" style="padding:16px 24px"></div>
     <button class="btn red" id="iresume" style="font-size:1.4rem;padding:.8em 2em">▶ Resume the Games (Esc)</button></div>`;
   const clock=m.querySelector("#iclock"),msg=m.querySelector("#imsg"),fact=m.querySelector("#ifact");

@@ -224,7 +224,7 @@ const Sync = (() => {
       <div class="qr" aria-label="QR code for ${esc(joinUrl())}">${qr}</div>
       <div class="join-t"><div class="eyebrow">Join on your phone</div>
         <div class="join-url">${esc(joinUrl().replace(/^https?:\/\//, ""))}</div>
-        <div class="tiny">Scan the code or type the link, then tap your name.</div>
+        <div class="tiny">Point your phone camera at the code, tap the link that pops up, then tap your name.</div>
         <div class="tiny">${n ? `📱 ${n} phone${n > 1 ? "s" : ""} connected` : "No phones connected yet"}
           ${n ? ` · <button class="linkbtn" id="clearphones">Clear phone names</button>` : ""}</div></div></div>`;
   }

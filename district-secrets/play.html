@@ -766,7 +766,7 @@ function view(){
       <p class="said">${mine===FAKE?"You called it: <b>🃏 FAKE</b>":`${mineSecret?"Your decoy":"You guessed"}: <b>${esc(mine)}</b>`}</p>${!mineSecret&&bl&&g.opts?.bets?`<p class="betnote">${bl}</p>`:""}<p>Only you can see this. Eyes on the TV for the reveal.</p>${Memes.html("secrets",g.gid,g.qi)}</section>${reactBar()}`,"seal"];
     if(g.locked)return [key+"late",header()+msg("💥","Time's up!",mineSecret?"<p>Eyes on the TV.</p>":((meScore()?.score||0)>0?`<p class="said">No guess sealed: −${Math.min(g.slowPen||NO_GUESS,meScore().score)} points.</p><p>Get the next one!</p>`:`<p class="said">No guess sealed this time.</p><p>Get the next one!</p>`),"wrong"),"wrong"];
     return [key+"ask"+mineSecret+b+!!g.left+(g.hide||[]).length+myFrameNow()+!!moleTarget(g),header()+fileCard(g)+(!mineSecret?moleNote(g)+betPicker():"")+(mineSecret
-      ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face. Type a decoy so nobody suspects you. It won't score.</span></div>${framer(g)}`:"")+
+      ?`<div class="mine"><b>🤫 Shh… this one is YOUR secret.</b><span>Keep a straight face! Type someone else's name so it looks like you're guessing. You get +150 for every person who doesn't guess you.</span></div>${framer(g)}`:"")+
       (g.left?`<div class="hurry" id="hurry">⏰ Hurry! <b>${g.left}</b> seconds left${mineSecret?"":` · no guess = −${g.slowPen||NO_GUESS}`}</div>`:"")+
       `<form class="guess" id="guess"><label for="g">Who is it?</label>
       <input id="g" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="40" placeholder="Type a name">

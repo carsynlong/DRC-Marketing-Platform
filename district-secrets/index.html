@@ -946,7 +946,7 @@ function joinCard(){
   let qr="";try{const q=qrcode(0,"M");q.addData(joinUrl());q.make();qr=q.createSvgTag({cellSize:6,margin:2,scalable:true})}catch(e){}
   return `<div class="join"><div class="qr" aria-label="QR code for ${esc(joinUrl())}">${qr||"📱"}</div>
     <div><div class="eyebrow">Sign in on your phone</div><div class="join-url">${esc(joinUrl().replace(/^https?:\/\//,""))}</div>
-    <div class="tiny">Scan the code, then tap your name. Your guesses stay on your phone. Nobody else sees them.</div>
+    <div class="tiny">Point your phone camera at the code, tap the link that pops up, then tap your name. Nobody else sees your guesses.</div>
     ${phones.length?`<div class="tiny" style="margin-top:6px"><button class="linkbtn" id="clearphones" style="color:#6b5233">Clear phone sign-ins</button></div>`:""}</div></div>`;
 }
 

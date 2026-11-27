@@ -506,12 +506,12 @@ const msg=(icon,title,body,cls="")=>`<section class="msg ${cls}">${icon?`<div cl
 function view(){
   const g=D.game;
   if(g===undefined)return ["load",msg("🎄","Loading…")];
-  if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>Ask the host to open the game on the TV, then this page will update.</p>")];
+  if(!g)return ["nogame",msg("📺","Waiting for the TV","<p>The game isn't open on the TV yet. Leave this page open. It changes by itself when the game starts.</p>")];
   if(!D.me){
     const taken=new Set(D.taken||[]), away=new Set(D.away||[]);
-    return ["pick:"+[...taken].join("|")+"/"+[...away].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Tap your name.</p></section>
+    return ["pick:"+[...taken].join("|")+"/"+[...away].join("|"),`<section class="msg" style="flex:none;padding-top:20px"><div class="eyebrow">Who's That Tribute?</div><h1>Who are you?</h1><p>Find your name below and tap it.</p></section>
       <div class="pick">${g.names.map((n,i)=>{const t=taken.has(n)&&!away.has(n),back=away.has(n);
-        return `<button style="--i:${i}" data-name="${esc(n)}" ${t?"disabled":""}>${esc(n)}${t?"<small>taken</small>":back?"<small>tap to rejoin</small>":""}</button>`}).join("")}</div>`];
+        return `<button style="--i:${i}" data-name="${esc(n)}" ${t?"disabled":""}>${esc(n)}${t?"<small>already joined</small>":back?"<small>tap to rejoin</small>":""}</button>`}).join("")}</div>`];
   }
   const s=meScore(), playing=g.playing.includes(D.me), key=`${g.gid}:${g.phase}:${g.qi}`;
   const notYou=`<button class="switch" id="leave">🔄 Not ${esc(D.me)}? Switch name</button>`;
@@ -554,7 +554,7 @@ function view(){
     return [key+"type",header()+`<div class="bar" style="display:flex;justify-content:space-between;align-items:center">${faceNo}${gift}</div>
       <form class="typeit" id="typeit"><label class="eyebrow" for="guess">${g.mash?"Who are BOTH of them?":"Who is it?"}</label>
       <input id="guess" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false" enterkeyhint="send" maxlength="80" placeholder="${g.mash?"Type BOTH names":"Type a name"}">
-      <button class="btn" type="submit">Lock it in</button>${g.speed?`<p class="tiphint">⚡ ${SPEED_RULES}</p>`:""}</form>`,"whistle"];
+      <button class="btn" type="submit">Lock it in</button>${g.speed?`<p class="tiphint">⚡ ${SPEED_RULES}</p>`:`<p class="tiphint">Type who it is (nicknames work too), then tap Lock it in. Only you see your answer.</p>`}</form>`,"whistle"];
   }
   if(g.phase==="reveal"){
     const mine=D.myAnswer, said=mine?`<p class="said">You said <b>${esc(mine)}</b></p>`:`<p class="said">You didn't answer</p>`;

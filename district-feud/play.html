@@ -267,7 +267,7 @@ function view(){
   if(g.kind==="guess"&&g.phase==="question"){
     if(mine)return [key+"lock:"+mine+g.locked,header()+ptimer(g)+(g.locked?`<div class="says" style="text-align:center">Survey says…</div>`:"")+lockedCard(mine,`Your guess for the #1 answer. ${g.locked?"Here comes the reveal!":"Eyes on the TV."}`),"lock"];
     if(g.locked)return [key+"late",header()+msg("🥁","Survey says…","<p>Guesses are locked. Watch the board!</p>")];
-    return [key+"ask"+(g.speedEnds&&Date.now()<g.speedEnds?1:0),header()+ptimer(g)+(g.mult>1?'<div class="perk x2">💰 DOUBLE POINTS ROUND 💰</div>':"")+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div>`
+    return [key+"ask"+(g.speedEnds&&Date.now()<g.speedEnds?1:0),header()+ptimer(g)+(g.mult>1?'<div class="perk x2">💰 DOUBLE POINTS ROUND 💰</div>':"")+qcard(g,`Question ${g.num} of ${g.total} · We surveyed the district`)+`<div class="ask">Who's the #1 answer?</div><p class="priv" style="text-align:center;margin:-6px 0 0">Tap the person you think most people picked. One tap locks it in.</p>`
       +(g.speedEnds&&Date.now()<g.speedEnds?`<div class="perk">⚡ Lock in fast for a speed bonus!</div>`:"")+nameBtns(g.names)];
   }
   if(g.kind==="guess"&&g.phase==="reveal"&&g.stumped&&(D.me===g.host||D.me===g.stumped.pick)){

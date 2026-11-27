@@ -178,7 +178,7 @@ const DECREES=["Bring the QUEEN more iced tea","Bring the QUEEN a snack","Give t
  "Give the QUEEN a foot rub... just kidding, a hug","Tell the QUEEN why she's the best","Do your best royal wave","Fetch the QUEEN a napkin","Dance for 10 seconds","Speak in a British accent until the next game"];
 const EMOJI=["🏹","🔥","🌹","🍞","🐦","🎁","😱","😂"];
 // your own district's emojis (matches your profile on the TV)
-const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🫧"],Jonny:["🔋","💥","☀️","⚡"],Caleb:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"],Carsyn:["🏛️","🎮","🔮","✨"]};   // the Gamemaker gets the Capitol's
+const DEMOJI={Jessie:["💎","✨","💍","👑"],Elisha:["🪨","🧱","🛡️","⚔️"],Grandad:["⚡","🔌","💡","🤖"],Dash:["🐟","🔱","🎣","🌊"],Jonny:["🔋","💥","☀️","⚡"],Caleb:["🚂","🚆","🚗","✈️"],Tinsley:["🪵","🌲","🪓","🍂"],Natalie:["🧵","🪡","🧶","👗"],Kamdon:["🌾","🍞","🥖","🌽"],Brandon:["🐄","🐑","🐖","🤠"],"QUEEN MOTHER":["🍎","🍑","🚜","🌻"],Kyle:["⛏️","🪨","🔦","🖤"],Carsyn:["🏛️","🎮","🔮","✨"]};   // the Gamemaker gets the Capitol's
 const DIND={1:"Luxury",2:"Masonry",3:"Technology",4:"Fishing",5:"Power",6:"Transportation",7:"Lumber",8:"Textiles",9:"Grain",10:"Livestock",11:"Agriculture",12:"Coal Mining"};
 // Android phones vibrate. iPhones can't (Apple blocks it for websites), so they get a flash and a sound instead.
 // if the phone got zoomed in, snap back to normal size (so full-screen pop-ups fit)
@@ -416,7 +416,7 @@ function myRace(r){
 /* ---- secret mission: only this phone ever sees it ---- */
 let lastIds=null,mission=null,vote=null,bet=null,lastExtras="",hot=null,mercy=null,predict=null;
 /* ---- your district's look (from the books) ---- */
-const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🫧","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["⛏️","#2a2a2e"],0:["🏛️","#3a2450"]};   // 0 = the Capitol (the Gamemaker)
+const DLOOK={1:["💎","#5a3a52"],2:["🪨","#3d3a35"],3:["⚡","#123a5a"],4:["🌊","#0e3a52"],5:["⚡","#4a3d0e"],6:["🚂","#2a3340"],7:["🍂","#1f3a1a"],8:["🧵","#3a1f45"],9:["🌾","#4a3a12"],10:["🐄","#2f3a1f"],11:["🍎","#4a1f1a"],12:["⛏️","#2a2a2e"],0:["🏛️","#3a2450"]};   // 0 = the Capitol (the Gamemaker)
 function districtLook(){document.querySelectorAll(".dlayer").forEach(n=>n.remove());document.body.style.background="";const t=me&&TRIBUTES.find(x=>x.name===me);if(!t)return;const [em,col]=DLOOK[t.d]||[];if(!em)return;
   document.body.style.background=`radial-gradient(ellipse at top,${col},var(--night) 70%)`;const R=(a,b)=>a+Math.random()*(b-a);
   const l=document.createElement("div");l.className="dlayer";l.innerHTML=Array.from({length:12},()=>`<i style="left:${R(0,95)}%;font-size:${R(22,40)}px;--s:${R(9,16)}s;--d:${-R(0,16)}s;--dx:${R(-40,40)}px;--r:${R(-200,200)}deg">${em}</i>`).join("");document.body.prepend(l)}

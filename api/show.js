@@ -394,9 +394,11 @@ async function main(req, res) {
       await pushCmd("askshow", { to: lv.hot.to, q }); return reply(res, 200, { ok: true }); }
     if (a === "mercyopen") { let to = text(req.body?.to, 40); if (!to || to === "random") to = pick(others()); if (!NAMES.includes(to)) return reply(res, 400, { error: "Unknown tribute" });
       lv.mercy = { id: Date.now(), to, open: true }; await save("mercy"); await pushCmd("mercy", lv.mercy); return reply(res, 200, { ok: true, mercy: lv.mercy }); }
-    if (a === "mercyclose") { if (!lv.mercy || !lv.mercy.open || !(await redis.set(P + "mercyclosed:" + lv.mercy.id, "1", { nx: true, ex: 43200 }))) return reply(res, 409, { error: "No mercy vote" });
-      const v = await hash(P + "mercy:" + lv.mercy.id); let up = 0, down = 0; Object.values(v).forEach(x => x === "up" ? up++ : down++);
-      lv.mercy.open = false; await save("mercy"); const r = { to: lv.mercy.to, up, down, spared: up > down }; await pushCmd("mercyresult", r); return reply(res, 200, { ok: true, ...r }); }
+    if (a === "mercyclose") { const lk = "mercyclosed:" + (lv.mercy && lv.mercy.id);
+      if (!lv.mercy || !lv.mercy.open || !(await lock(lk, 43200))) return reply(res, 409, { error: "No mercy vote" });
+      try { const v = await hash(P + "mercy:" + lv.mercy.id); let up = 0, down = 0; Object.values(v).forEach(x => x === "up" ? up++ : down++);
+        lv.mercy.open = false; await save("mercy"); const r = { to: lv.mercy.to, up, down, spared: up > down }; await pushCmd("mercyresult", r); return reply(res, 200, { ok: true, ...r });
+      } catch (e) { await unlockAnd(lk, e); } }
     if (a === "predictopen") { await redis.del(P + "predict"); lv.predict = { open: true, id: Date.now() }; await save("predict"); await pushCmd("predictopen", {}); return reply(res, 200, { ok: true }); }
     if (a === "predictlock") { lv.predict = { ...(lv.predict || {}), open: false }; await save("predict"); await pushCmd("predictlock", {}); return reply(res, 200, { ok: true }); }
     if (a === "predictpay") { const win = [].concat(req.body?.winners || []).filter(n => NAMES.includes(n)); if (!win.length) return reply(res, 400, { error: "No winner" });
@@ -657,7 +659,7 @@ async function main(req, res) {
   }
   // 👑 QUEEN MOTHER's royal decree: a side quest for any tribute (or a random one), 30 seconds
   if (a === "decree") {
-    if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only the QUEEN MOTHER can do that" });
+    if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only QUEEN MOTHER can do that" });
     const q = text(req.body?.q, 80); if (!q) return reply(res, 400, { error: "Pick a decree first" });
     let to = text(req.body?.to, 40);
     if (to === "random") { const pl = Object.keys(await hash(P + "players")).filter(n => n !== name && n !== "Carsyn"); const pool = pl.length ? pl : NAMES.filter(n => n !== name && n !== "Carsyn"); to = pool[Math.floor(Math.random() * pool.length)]; }
@@ -671,11 +673,11 @@ async function main(req, res) {
   }
   // 🎂 QUEEN MOTHER: "Everybody stop and sing Happy Birthday to me!" (once every 10 minutes)
   if (a === "qbday") {
-    if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only the QUEEN MOTHER can do that" });
+    if (name !== "QUEEN MOTHER") return reply(res, 403, { error: "Only QUEEN MOTHER can do that" });
     // exactly 2 uses for the whole night (reset by Start completely over / pointsreset)
     const now = Date.now();
-    if ((Number(await redis.get(P + "qbdayn")) || 0) >= 2) return reply(res, 429, { error: "All used up", uses: 0 });
-    const used = Number(await redis.incr(P + "qbdayn")) || 1; await redis.expire(P + "qbdayn", 60 * 60 * 36);
+    const used = Number(await redis.incr(P + "qbdayn")) || 1; await redis.expire(P + "qbdayn", 60 * 60 * 36);   // count first, so a double tap can't sneak past the limit
+    if (used > 2) return reply(res, 429, { error: "All used up", uses: 0 });
     const lv = await readLive(); lv.bday = { id: now, t: now, queen: true };
     await saveLive("bday", lv.bday); await pushCmd("bday", lv.bday); return reply(res, 200, { ok: true, uses: 2 - used });
   }

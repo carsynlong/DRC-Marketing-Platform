@@ -530,7 +530,7 @@ async function send(text){
 let AC=null;
 function sfx(kind){
   if(!sound)return;
-  try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume()}catch(e){return}
+  try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state!=="running")AC.resume()}catch(e){return}
   const t=AC.currentTime+.01,hz=m=>440*Math.pow(2,(m-69)/12);
   const tone=(m,d,dur,v,type="sine")=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=hz(m);o.connect(g);g.connect(AC.destination);
     g.gain.setValueAtTime(.0001,t+d);g.gain.exponentialRampToValueAtTime(v,t+d+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d+dur);o.start(t+d);o.stop(t+d+dur+.05)};

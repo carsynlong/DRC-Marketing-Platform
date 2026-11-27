@@ -1454,7 +1454,7 @@ function cardGo(){
 }
 function storyBrief(){
   const a=cur().a,n=esc(a),mult=qMult(S.qi),st=[
-    ["🎤",`It's <b>${n}</b>'s secret. Will they tell the story behind it?`,`It's ${a}'s secret. Will they tell the story behind it?`],
+    ["🎤",`It's <b>${n}</b>'s secret. Will they tell the story behind it?`,`The secret belongs to ${a}. Will they tell the story behind it?`],   // spoken without the 's so it stitches from recorded pieces
     hasPhone(a)?["📱",`${n}: accept or decline on your phone. You have <b>${STORY_ASK} seconds</b>.`,`${a}: accept or decline on your phone. You have ${STORY_ASK} seconds.`]
       :["🗣️",`${n}: say yes or no out loud, and the Gamemaker taps it in.`,`${a}: say yes or no out loud, and the game maker taps it in.`],
     ["✅",`Accept: <b>+${STORY_YES}</b>, and you get the stage for <b>30 seconds</b>.`,`Accept, and you get plus ${STORY_YES}, and the stage for 30 seconds.`],

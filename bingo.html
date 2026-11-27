@@ -15,6 +15,7 @@
 @keyframes pop{from{transform:scale(.4) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
 h1.title{font-size:clamp(2rem,5vw,3.4rem);color:var(--gold);text-shadow:0 3px 0 var(--red-d);line-height:1}
 .layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.35fr);gap:28px;align-items:start}
+.askcall{position:fixed;inset:0;z-index:60;background:rgba(5,15,10,.82);display:grid;place-items:center}.askbox{display:grid;justify-items:center;gap:18px;text-align:center;background:#13271f;border:3px solid var(--gold);border-radius:24px;padding:28px 34px;max-width:92vw}
 .ballzone{display:grid;justify-items:center;gap:14px;text-align:center}
 .ball{width:min(34vw,320px);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;align-content:center;background:radial-gradient(circle at 35% 30%,#fff 0 8%,var(--bc,#b8322a) 60%,#3a0c09);box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 -10px 30px rgba(0,0,0,.35);animation:pop .7s cubic-bezier(.2,1.5,.4,1)}
 .ball .face{width:62%;aspect-ratio:1;border-radius:50%;background:#fbf6ea;color:#13271f;display:grid;place-items:center;align-content:center;line-height:.9}
@@ -87,16 +88,38 @@ const save=()=>{XM.store.set("xmas-bingo-called",S.called)};
 let OWNERS=(v=>v&&typeof v==="object"&&!Array.isArray(v)?v:{})(XM.store.get("xmas-bingo-owners",{}));
 const ownerOf=(mode,k)=>OWNERS[mode]&&OWNERS[mode][k]||null;
 
+// 📣 the Capitol Escort calls the number out loud ("B 3"), only after you confirm it
+let callAudio=null;
+function announce(n){if(!XM.sound)return;const say=`${LET[letterOf(n)]} ${n}`;
+  try{if(callAudio)callAudio.pause()}catch(e){}
+  const a=new Audio(`/xmas/voice-bingo/${n}.mp3`);callAudio=a;a.volume=1;
+  const fb=()=>{if(callAudio===a){callAudio=null;XM.say(say,null,{interrupt:true})}};
+  a.onerror=fb;setTimeout(()=>{a.play().catch(fb)},350)}
+function askCall(n){const old=document.getElementById("askcall");if(old)old.remove();
+  const L=LET[letterOf(n)];const o=document.createElement("div");o.id="askcall";o.className="askcall";
+  o.innerHTML=`<div class="askbox"><div class="eyebrow">Call this number?</div>
+    <div class="ball" style="--bc:${LC[letterOf(n)]};width:min(26vw,220px)"><div class="face"><span class="l">${L}</span><span class="n">${n}</span></div></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"><button class="btn" id="askyes" style="font-size:1.3rem">📣 Yes, call ${L} ${n}</button><button class="btn ghost" id="askno" style="font-size:1.1rem">Oops, cancel</button></div>
+    <div class="tiny">Enter = yes · Esc = cancel</div></div>`;
+  document.body.appendChild(o);
+  const close=()=>{o.remove();document.removeEventListener("keydown",key,true)};
+  const yes=()=>{close();call(n,true)};
+  const key=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();yes()}else if(e.key==="Escape"){e.preventDefault();close()}};
+  document.addEventListener("keydown",key,true);
+  o.querySelector("#askyes").onclick=yes;o.querySelector("#askno").onclick=close;o.onclick=e=>{if(e.target===o)close()};
+  o.querySelector("#askyes").focus()}
+
 let lastTap={n:0,t:0};
-function call(n){
+function call(n,confirmed){
   ensureAudio();
   const i=S.called.indexOf(n);
   if(i>=0&&lastTap.n===n&&Date.now()-lastTap.t<700)return; // ignore an accidental double-tap
   lastTap={n,t:Date.now()};
+  if(i<0&&!confirmed)return askCall(n); // ✅ a new number: check it first, nothing is called or announced until you confirm
   if(i>=0){ // tapped a called number again: take it back
     if(n!==S.called[S.called.length-1]&&!confirm(`Un-call ${LET[letterOf(n)]} ${n}?`))return;
     S.called.splice(i,1);sfx("untap");
-  }else{S.called.push(n);sfx("reveal")}
+  }else{S.called.push(n);sfx("reveal");announce(n)}
   S.checked=null;save();render();
   // 📣 B-1 to B-12: that number is a tribute's district (B-6 is Cable; the Gamemaker is from the Capitol, so no number is hers)
   if(i<0&&n<=12){const t=XM.TRIBUTES.find(x=>x.d===n);if(t){

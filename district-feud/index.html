@@ -747,7 +747,8 @@ function goQuestion(){
    Resuming replays the interrupted question from the start, so nothing is counted twice. */
 const SAVE="df-save";
 function saveGame(phase){try{localStorage.setItem(SAVE,JSON.stringify({t:Date.now(),phase,order:S.order,k:S.k,tally:S.tally,results:S.results,streak:S.streak,
-  leader:S.leader,tbNext:S.tbNext,tbq:S.tbq,present:S.present,gid,halfDone:S.halfDone,fan:S.fan,brf:S.brf||{}}))}catch(e){}}
+  leader:S.leader,tbNext:S.tbNext,tbq:S.tbq,present:S.present,gid,halfDone:S.halfDone,fan:S.fan,brf:S.brf||{},
+  pkg:S.pkg&&S.pkg.winner?{rows:S.pkg.rows,winner:S.pkg.winner,fate:!!S.pkg.fate,faceoff:!!S.pkg.faceoff}:null}))}catch(e){}}
 function savedGame(){try{const g=JSON.parse(localStorage.getItem(SAVE));return g&&g.order&&g.order.length&&Date.now()-g.t<12*3600e3?g:null}catch(e){return null}}
 function forgetGame(){try{localStorage.removeItem(SAVE)}catch(e){}}
 /* ↺ Start completely over: wipe every answer, point and score for this game (server and this TV), then a fresh lobby.
@@ -762,7 +763,8 @@ function resumeGame(){
   Object.assign(S,{order:g.order,k:g.k,tally:g.tally||{},results:g.results||[],streak:g.streak||{},leader:g.leader||null,tbNext:g.tbNext||0,tbq:g.tbq,
     present:{...S.present,...(g.present||{})},halfDone:!!g.halfDone,fan:g.fan,brf:g.brf||{},bump:{},pkg:null,earn:{},tie:null,slow:[]});
   gid=g.gid||gid;answers={};answersQi=-1;S.preAns=true;sfx("fanfare");
-  if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
+  if(g.pkg&&g.pkg.winner){S.pkg={...g.pkg,done:true,lead:[g.pkg.winner]};S.phase="pkg";render()}   // 🏆 the major award was already won: pick up at the Second Chance
+  else if(g.phase==="end"){S.phase="end";playSong("joy");render()}else goQuestion();
 }
 function showQuestion(){if(window.Briefing&&Briefing.open())return;if(briefStump())return;clearTimers();clearBanners();S.phase="question";S.tie=null;S.slow=[];S.slowHit=[];S.mult=isFinal()?2:1;S.qStart=Date.now();S.seen={};S.earn={};S.ends=Date.now()+TIMER_SECS*1000;saveGame("q");playSong("think");render();}
 /* the countdown: ring on the TV, ticks in the last 10 seconds, buzzer and Survey says at zero */
@@ -963,7 +965,7 @@ function packageReveal(){
   later(()=>{stopSong();drumroll(2.3)},tFinal);
   later(()=>flipAt(0),tFinal+2350);
   later(()=>{const P=S.pkg,max=rows[0][1];P.lead=rows.filter(r=>r[1]===max).map(r=>r[0]);P.done=true;
-    if(P.lead.length===1){P.winner=P.lead[0];forgetGame();giftFx()}else{sfx("buzz");shake()}
+    if(P.lead.length===1){P.winner=P.lead[0];giftFx()}else{sfx("buzz");shake()}
     render()},tFinal+3500);
 }
 function prizeFaceoff(){   // tied for the major award: a face-off vote decides it (no random spin)
@@ -974,7 +976,7 @@ function prizeFaceoff(){   // tied for the major award: a face-off vote decides 
 }
 function pkgFate(){
   const P=S.pkg;S.phase="pkgfate";stopSong();render();
-  spin(P.lead,w=>{P.winner=w;P.fate=true;forgetGame();S.phase="pkg";giftFx();render()});
+  spin(P.lead,w=>{P.winner=w;P.fate=true;S.phase="pkg";giftFx();render()});
 }
 
 /* 🎡 SECOND CHANCE SPIN: the winner sits out, the wheel picks two tributes who played,
@@ -1020,7 +1022,8 @@ function scspinView(){
 }
 
 /* the gift box shakes, the lid flies off, the winner pops out */
-function giftFx(){forgetGame();drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
+function giftFx(){saveGame("pkg");   // keep the save, so a refresh picks up at the Second Chance
+  drumroll(1.4);later(()=>{sfx("pop");flash()},1450);later(async()=>{winFx();applause(4000);fireworks(7);stopSong();   // 🏆 Carsyn's champions track, from 0:30
     if(S.sound&&window.walkUpSong&&await walkUpSong(S.pkg&&S.pkg.winner))return;   // 🎵 the winner's own walk-up song
     if(S.sound&&window.Track&&await Track.play(WIN_TRACK))return;playSong("joy")},1600)}
 
@@ -1101,7 +1104,7 @@ function checkinLine(){
 }
 function resumeCard(){
   const g=savedGame();if(!g)return "";
-  const where=g.phase==="end"?"the major award round":`question ${g.k+1} of ${g.order.length}`,lead=Object.entries(g.tally||{}).sort((a,b)=>b[1]-a[1])[0];
+  const where=g.pkg&&g.pkg.winner?"the Second Chance Spin":g.phase==="end"?"the major award round":`question ${g.k+1} of ${g.order.length}`,lead=Object.entries(g.tally||{}).sort((a,b)=>b[1]-a[1])[0];
   return `<div class="resume"><div><b>⏯ A game is in progress</b><span>Pick up at ${where}${lead?` · ${esc(lead[0])} leads with ${lead[1]}`:""}</span></div>
     <button class="btn red" id="resume">▶ Resume</button><button class="btn ghost" id="fresh">Start fresh</button></div>`;
 }

@@ -19,7 +19,7 @@
    })
    Space, Enter or the Skip button ends it early. While it runs, it sits on top of the game's lobby. */
 // everyone's nickname (attributes like alt and title aren't caught by the page-wide nickname swap in sabotage.js)
-window.NICK = window.NICK || (() => { const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "HumblePie1", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo", Caleb: "Cable" };
+window.NICK = window.NICK || (() => { const AKA = { Jessie: "Lucky PomPoms", Tinsley: "Pee Pee Balls", Grandad: "Grandad the Ancient and Wise", Dash: "Chad Thundercock", Jonny: "The Ordained", Natalie: "Buzz Buzz", Elisha: "Bye Felicia", Kamdon: "Big Daddy Kam", Brandon: "Iron Balls III", Kyle: "Kachow", Carsyn: "Clo", Caleb: "Cable" };
   return n => AKA[n] || n; })();
 window.Walkout = (() => {
   const THEMES = {

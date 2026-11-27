@@ -1062,7 +1062,7 @@ function render(){
 function goSetup(){forgetGame();clearTimers();stopSong();S.phase="lobby";S.tie=null;S.pkg=null;S.tally={};S.results=[];render();window.scrollTo(0,0)}
 function introView(){
   const I=S.intro,n=I.who[Math.max(0,I.i)];if(!n)return "";
-  const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};   // nickname on the nameplate (split letters dodge the page-wide swap)
+  const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"The Ordained",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};   // nickname on the nameplate (split letters dodge the page-wide swap)
   const letters=[...(AKA[n]||n)].map((c,k)=>`<span style="--d:${(1.05+k*.07).toFixed(2)}s">${c===" "?"&nbsp;":esc(c)}</span>`).join("");
   return `${calm?"":'<div class="curt l"></div><div class="curt r"></div><div class="xbeam l"></div><div class="xbeam r"></div>'}<div class="rays" style="--d:.6s"></div>
     <section class="center introsec ${phones.length?"cheering":""}"><span class="qtag">🎤 Meet the contestants</span>

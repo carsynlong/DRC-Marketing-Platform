@@ -476,7 +476,7 @@ const isTb=()=>!!S.rounds[S.qi]?.tb;
 const faceLbl=()=>isTb()?"⚔️ Showdown face":S.sc?`🎡 Second Chance · Face ${S.qi-S.sc.start+1} of ${S.sc.n}`:`Face ${S.qi+1} of ${Q.length}`;
 const giftTag=()=>mash()?`<span class="gift">🐺 MUTT MASHUP: name both for double points</span>`:isTb()?`<span class="gift">⚔️ Fastest right answer wins</span>`:S.sc?`<span class="gift">🎡 Second Chance Round</span>`:S.qi>=FEAST?`<span class="gift">🍗 The Feast: triple points</span>`:DOUBLE.has(S.qi)?`<span class="gift">🎁 Double points</span>`:"";
 /* typed answers: forgiving match (nicknames, caps, spaces, one typo) */
-const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt","humblepie1","humblepie","humblepieone"],
+const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt","humblepie1","humblepie","humblepieone","ordained","theordained","ordain","reverend","rev"],
   "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
   "Grandad":["grandad","granddad","grandpa","grampa","papa","don","dawn","donjackson","grandadtheancientandwise","theancientandwise","ancientandwise"],"Elisha":["elisha","mom","momma","mama","lish","byefelicia","felicia","bye"],
   "Jessie":["jessie","jesse","jessi","jess","jessica","luckypompoms","pompoms","luckypompom","lucky"],"Kamdon":["kamdon","kamden","kam","bigdaddykam","bigdaddy"],

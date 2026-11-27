@@ -44,11 +44,11 @@ XM.GAMES={
 
 // The announcer says "Game maker", not "Gamemaker"
 (function(){const O=window.SpeechSynthesisUtterance;if(!O||O.__gm)return;
-  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/HumblePie1/g,"Humble Pie One").replace(/\bKachow\b/gi,"Kuh-chow").replace(/\bClo\b/g,"C.Lo"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
+  const W=function(t){return new O(typeof t==="string"?t.replace(/\bgame\s?maker(s?)\b/gi,(m,s)=>"game maker"+s).replace(/Iron Balls III/g,"Iron Balls the Third").replace(/HumblePie1/g,"The Ordained").replace(/\bKachow\b/gi,"Kuh-chow").replace(/\bClo\b/g,"C.Lo"):t)};W.prototype=O.prototype;W.__gm=true;window.SpeechSynthesisUtterance=W})();
 // the shared "how this works" briefing screen (/briefing.js) on every page that uses these helpers
 if(!window.Briefing&&!document.querySelector('script[src="/briefing.js"]')){const s=document.createElement("script");s.src="/briefing.js";document.head.appendChild(s)}
 /* Short nickname for labels ("a.k.a. Kachow"), from each tribute's show label */
-XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
+XM.AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"The Ordained",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
 // Nicknames ARE their names on screen now. The real names stay underneath (saved victors, phone sign-ins).
 XM.dn=n=>XM.AKA[n]||n;
 // typed name or nickname back to the real name: "kachow" -> "Kyle", "Iron Balls the Third" -> "Brandon". Unknown text comes back trimmed.
@@ -87,7 +87,7 @@ XM.POLLS=["Who's most likely to cheat?","Best dressed tribute?","Who would survi
  "Who would make the best Gamemaker?","Who tells the worst jokes?","Who's most likely to re-gift a present?","Who's the most competitive?"];
 /* 🎵 walk-up songs (the show's own music) */
 // 🎤 real walk-up songs (recorded clips in /xmas/walkups/, played once), then the built-in beats as backups
-XM.WALKFILES=[["wu_boom","Here Comes the Boom · Nelly"],["wu_caleb","Cable's Walkout Song"],["wu_natalie","Buzz Buzz's Walkout Song"],["wu_jonny","HumblePie1's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"],["wu_elisha","Bye Felicia's Walkout Song"],["wu_jessie","Lucky PomPoms' Walkout Song"],["wu_kyle","Kachow's Walkout Song"],["wu_brandon","Iron Balls III's Walkout Song"],["wu_tinsley","Pee Pee Balls' Walkout Song"],["wu_carsyn","Clo's Walkout Song"],["wu_kamdon","Big Daddy Kam's Walkout Song"],["wu_dash","Chad Thundercock's Walkout Song"]];
+XM.WALKFILES=[["wu_boom","Here Comes the Boom · Nelly"],["wu_caleb","Cable's Walkout Song"],["wu_natalie","Buzz Buzz's Walkout Song"],["wu_jonny","The Ordained's Walkout Song"],["wu_queen","QUEEN MOTHER's Royal Entrance"],["wu_elisha","Bye Felicia's Walkout Song"],["wu_jessie","Lucky PomPoms' Walkout Song"],["wu_kyle","Kachow's Walkout Song"],["wu_brandon","Iron Balls III's Walkout Song"],["wu_tinsley","Pee Pee Balls' Walkout Song"],["wu_carsyn","Clo's Walkout Song"],["wu_kamdon","Big Daddy Kam's Walkout Song"],["wu_dash","Chad Thundercock's Walkout Song"]];
 XM.WALKUPS=[...XM.WALKFILES,["hh_cookie","Cookie Crunch"],["hh_tribute","Tribute Trap"],["hh_mitten","Mitten Mayhem"],["hh_feud","Feud Beat"],["hh_scoop","Snowball Bounce"],
  ["hh_secrets","Secret Agent"],["hh_lrc","Dice Roll"],["hh_bingo","Bingo Bounce"],["hh_lounge","Lounge Lo-fi"],["battle","Battle March"],["march","Tribute Parade"],["board","Deck the Halls"],["lobby","Jingle Bells"]];
 XM.SOUNDBOARD=[["airhorn","📯","Air horn"],["cheer","🙌","Cheer"],["applause","👏","Applause"],["gasp","😮","Ohhh!"],["laugh","😂","Laugh"],["rimshot","🥁","Rimshot"],
@@ -383,7 +383,7 @@ XM.sfx=function(kind){
 };
 
 /* ================= ANNOUNCER (laptop's built-in voice, pitched down) ================= */
-XM.SAY={"Clo":"C.Lo","Kachow":"Kuh-chow","HumblePie1":"Humble Pie One","Iron Balls III":"Iron Balls the Third","QUEEN MOTHER":"Queen Mother"};
+XM.SAY={"Clo":"C.Lo","Kachow":"Kuh-chow","Iron Balls III":"Iron Balls the Third","QUEEN MOTHER":"Queen Mother"};
 XM.spoken=n=>{const d=XM.dn(n);return XM.SAY[d]||(d===n?XM.SAY[n]:null)||d};
 let sayGen=0;
 const pickVoice=()=>{const sy=window.speechSynthesis;if(!sy)return null;const v=sy.getVoices().filter(v=>/^en/i.test(v.lang));

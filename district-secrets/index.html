@@ -480,7 +480,7 @@ details.opts{width:100%;text-align:center}details.opts summary{cursor:pointer;fo
 const BUILD="ds-build-2026-11-26-3";
 // Districts 1 to 12 in order (Caleb is District 6), then the Gamemaker, who lives in the Capitol (no district, her own photos)
 const NAMES=["Jessie","Elisha","Grandad","Dash","Jonny","Caleb","Tinsley","Natalie","Kamdon","Brandon","QUEEN MOTHER","Kyle","Carsyn"];
-const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"HumblePie1",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
+const AKA={Jessie:"Lucky PomPoms",Tinsley:"Pee Pee Balls",Grandad:"Grandad the Ancient and Wise",Dash:"Chad Thundercock",Jonny:"The Ordained",Natalie:"Buzz Buzz",Elisha:"Bye Felicia",Kamdon:"Big Daddy Kam",Brandon:"Iron Balls III",Kyle:"Kachow",Carsyn:"Clo",Caleb:"Cable"};
 const dn=n=>window.XM?.dn?XM.dn(n):(AKA[n]||n);   // nickname, for text the page's name swap can't reach (capitals, attributes)
 const HOST="Carsyn";               // runs the TV and knows the real secrets, so she plays as the 🔮 Gamemaker:
                                     // she predicts how many crack each one (exact +500, off by one +200), and guesses normally in the bonus round
@@ -552,7 +552,7 @@ const RV=n=>DISTRICT(n)?`img/r${pad(DISTRICT(n))}.jpg`:"img/rcapitol.jpg";   // 
 Q.forEach(x=>{const i=new Image();i.src=RV(x.a)});
 
 /* typed guesses: forgiving match (nicknames, caps, spaces, one typo) */
-const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt","humblepie1","humblepie","humblepieone"],
+const ALIASES={"Jonny":["jonny","johnny","johnnie","jonnie","jony","jon","john","jt","jtjt","humblepie1","humblepie","humblepieone","ordained","theordained","ordain","reverend","rev"],
   "QUEEN MOTHER":["queenmother","queen","granny","grannie","kathy","grandma","nana","qm"],
   "Grandad":["grandad","granddad","grandpa","grampa","papa","don","dawn","donjackson","grandadtheancientandwise","theancientandwise","ancientandwise"],"Elisha":["elisha","mom","momma","mama","lish","byefelicia","felicia","bye"],
   "Jessie":["jessie","jesse","jessi","jess","jessica","luckypompoms","pompoms","luckypompom","lucky"],"Kamdon":["kamdon","kamden","kam","bigdaddykam","bigdaddy"],

@@ -1873,8 +1873,10 @@ function wireSlide(el){
       if(picked&&XM.victors()[k]&&free>=3000){clearInterval(iv);next()}},400)});   // picked, even the name the wheel already saved: move on
   const m=el.querySelector("#memo");if(m)m.onclick=e=>{e.stopPropagation();memorial()};
 }
-const next=()=>{const s=SLIDES[cur];if(s&&s.onNext&&curEl&&s.onNext(curEl))return;go(cur+1)},
-  prev=()=>{const s=SLIDES[cur];if(s&&s.onPrev&&curEl&&s.onPrev(curEl))return;go(cur-1)};
+// "Was There a Tie?" slides only show when the Gamemaker taps ⚔️ There's a tie on her phone; Next/Back skip them
+const isTie=i=>SLIDES[i]&&/^tie-/.test(SLIDES[i].id);
+const next=()=>{const s=SLIDES[cur];if(s&&s.onNext&&curEl&&s.onNext(curEl))return;let i=cur+1;while(isTie(i))i++;go(i)},
+  prev=()=>{const s=SLIDES[cur];if(s&&s.onPrev&&curEl&&s.onPrev(curEl))return;let i=cur-1;while(i>0&&isTie(i))i--;go(i)};
 function begin(){
   if(started)return;started=true;XM.ensureAudio();XM.setSound(XM.sound);
   if(!hostPin())setTimeout(pinBox,800);   // a small masked box, once

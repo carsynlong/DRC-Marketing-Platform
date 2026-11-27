@@ -534,7 +534,7 @@ function hostCard(){
   const sec=(t,h)=>`<div class="eyebrow" style="margin:10px 0 6px">${t}</div>${h}`;
   const P={
    show:sec("🏆 Record a winner (the TV celebrates)",`<select id="wg">${Object.entries(XM.GAMES).filter(([k])=>k!=="mitten").map(([k,g])=>`<option value="${k}">${g.n}. ${esc(g.name)}</option>`).join("")}</select>
-     <div class="chips" id="wplace" style="margin:6px 0"><button data-wp="1" class="on">🥇 Victor</button><button data-wp="2">🥈 Second Victor</button></div><div class="tiny" id="wnote" style="min-height:0"></div>
+     <div class="chips" id="wplace" style="margin:6px 0"><button data-wp="1" class="on">🥇 Victor</button><button data-wp="2">🥈 Second Victor</button></div><div class="tiny" id="wnote" style="min-height:0"></div><button class="btn red" id="wtie" style="width:100%;margin:4px 0 8px">⚔️ There's a tie (show the tiebreaker)</button>
      <div class="hgrid" id="wfaces">${XM.TRIBUTES.map(t=>`<button data-wn="${esc(t.name)}"><span class="i"><img src="${t.img}" alt="" style="width:34px;height:34px;border-radius:50%;object-fit:cover"></span>${esc(XM.dn(t.name))}</button>`).join("")}</div>`)+
     sec("📍 Jump to a slide",`<div class="hgrid" id="jquick"></div><div class="jump"><select id="jsel"></select><button class="btn" id="jgo">Go</button></div>`)+
     sec("🔊 Your voice on the TV",`<textarea id="saytext" rows="2" maxlength="200" placeholder="Grandad the Ancient and Wise, report to the kitchen."></textarea><button id="saysend" class="btn" style="width:100%">🔊 Announce it</button>`)+
@@ -624,6 +624,9 @@ function hostCard(){
   {let wp=1,wv={};const wg=box.querySelector("#wg"),wpl=box.querySelector("#wplace"),wnote=box.querySelector("#wnote");
    // Bingo has a Victor only (one per round); a Second Victor needs the game's Victor first, and can't be the same tribute
    const two=g=>g!=="mitten"&&g!=="bingo";
+   {const tb=box.querySelector("#wtie"),TIE=["cookie","scoop","lrc","bingo"];
+    const tSync=()=>{tb.hidden=!TIE.includes(wg.value)};wg.addEventListener("change",tSync);tSync();
+    tb.onclick=async()=>{const r=await gmCmd("goto",{id:"tie-"+wg.value});qmsg(r.ok?"⚔️ Tiebreaker is on the TV":"Couldn't send. Is the TV on?")}}
    const syncW=()=>{const g=wg.value;if(!two(g))wp=1;wpl.querySelectorAll("[data-wp]").forEach(x=>{x.classList.toggle("on",+x.dataset.wp===wp);x.hidden=!two(g)&&x.dataset.wp==="2"});
      const v=wp===2?XM.realName(wv[g]||""):"";
      box.querySelectorAll("[data-wn]").forEach(x=>{const isV=wp===2&&!!v&&x.dataset.wn===v;x.hidden=isV;x.disabled=wp===2&&!v;x.style.opacity=wp===2&&!v?.35:""});

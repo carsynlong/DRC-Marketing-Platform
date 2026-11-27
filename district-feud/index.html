@@ -715,7 +715,7 @@ function introStep(){
   /* next walk-out once the name line has been said in full: at least 3.4s (4.6s with phones, time to cheer), at most 8s */
   const id=++introId,t0=Date.now(),min=phones.length?4600:3400;let said=false;
   const go=()=>{if(id!==introId||S.phase!=="intro")return;introId++;introStep()};
-  const u=announce(DNUM(n)?`From District ${DNUM(n)}… ${n}!`:`Ladies and gentlemen… ${n}!`   // the Gamemaker (the Capitol): both pieces have recordings
+  const u=announce(DNUM(n)?`From District ${DNUM(n)}… ${n}!`:`From the Capitol… ${n}!`   // the Gamemaker (the Capitol): both pieces have recordings
     ,()=>{said=true;if(Date.now()-t0>=min)go()});
   later(()=>{if(said||!u)go()},min);later(go,8000);
 }

@@ -323,8 +323,8 @@ window.Walkout = (() => {
       const me = i; let spoke = false, minDone = false;
       const go = () => { if (root && i === me && spoke && minDone) step(); };
       const cap = () => { if (root && i === me) { spoke = minDone = true; go(); } };
-      // the Gamemaker has no district: "Ladies and gentlemen… give it up for… C.Lo!" (every piece has a recording; "From the Capitol" has none)
-      say(dn ? `${i === 0 ? "Ladies and gentlemen… " : ""}From District ${dn}… give it up for… ${n}!` : `Ladies and gentlemen… give it up for… ${n}!`, () => { spoke = true; later(go, 350); }, () => { if (root && i === me) later(cap, 12000); });
+      // the Gamemaker has no district: "From the Capitol… give it up for… C.Lo!" (every piece has a recording)
+      say(`${i === 0 ? "Ladies and gentlemen… " : ""}${dn ? `From District ${dn}…` : "From the Capitol…"} give it up for… ${n}!`, () => { spoke = true; later(go, 350); }, () => { if (root && i === me) later(cap, 12000); });
       later(() => { Music.bam(); Music.duck(talking ? .2 : .42); sfx("cheer"); if (!calm && root) { const f = document.createElement("div"); f.className = "wo-flash"; root.appendChild(f); setTimeout(() => f.remove(), 600); } }, 1250);
       later(() => sfx(funny), 1900);
       later(() => sfx("drop"), 3050); later(() => sfx("boing"), 3700);

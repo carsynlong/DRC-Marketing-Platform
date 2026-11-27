@@ -37,7 +37,7 @@
     layer.querySelectorAll("button,a[href]").forEach(el => {
       if (list.length >= 100) return;
       if (opts.exclude && el.closest(opts.exclude)) return;
-      if (el.disabled || !shown(el)) return;
+      if (el.disabled || !shown(el) || el.closest(".leaving")) return;   // the old slide fading out
       if (el.tagName === "A" && (el.getAttribute("href") || "").startsWith("#")) return;
       const t = label(el); if (!t) return;
       if (!el.dataset.rid) el.dataset.rid = String(++n);
@@ -54,7 +54,7 @@
     const k = JSON.stringify(body);
     if (!force && k === sig && Date.now() - sentAt < 20000) return;
     sig = k; sentAt = Date.now();
-    try { await fetch("/api/show", { method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true, body: JSON.stringify({ a: "btns", pin: pin(), ...body }) }); } catch (e) {}
+    try { await fetch("/api/show", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ a: "btns", pin: pin(), ...body }) }).then(r => r.text()).catch(() => {}); } catch (e) {}   // no keepalive here: unread keepalive replies used up the browser's allowance after ~36 posts
   }
   // press a button the remote picked
   function run(cmd, data) {

@@ -694,7 +694,7 @@ function tvCtl(all){
   if(!pages.length){c.classList.add("slim");c.innerHTML=`<div class="tiny" style="text-align:left">👆 The TV's buttons show here once the laptop is connected (your coach card says how).</div>`;return}
   c.classList.remove("slim");
   // the screen in front: an open Wheel or Bingo tab beats the show behind it
-  const front=pages.slice().sort((a,b)=>(all[b].visible-all[a].visible)||(a==="show")-(b==="show"))[0];
+  const front=pages.slice().sort((a,b)=>(all[b].visible-all[a].visible)||((all[b].t||0)-(all[a].t||0))||(a==="show")-(b==="show"))[0];
   const pg=pages.includes(tvPage)?tvPage:front,d=all[pg];
   const wasPop=c.dataset.pop==="1";c.dataset.pop=d.popup?"1":"0";c.classList.toggle("tvpop",!!d.popup);
   if(d.popup&&!wasPop){buzz([60,40,60]);c.scrollIntoView({behavior:"smooth",block:"start"})}
@@ -738,7 +738,7 @@ function showSlide(){
 function coachNote(id){
   const g=id.replace(/^(game|how|wheel|tie|order|idk)-/,""),k=(id.match(/^(game|how|wheel|tie|order|idk)-/)||[])[1];
   const N={lobby:"Leave this up while people arrive. Check the joined count. Press → when it's time.",title:"The announcer welcomes everyone. Wait for it.",welcome:"Read your speech: \"Citizens of the living room!\"",
-    rules:"The announcer reads the rules. Let it finish.",phoneguide:"Phone guide: let it play, or tap Next to skip ahead.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes and the Gamemaker. Press →.",begin:"Your song plays. It stops when you press →.",
+    rules:"The announcer reads the rules. Let it finish.",phoneguide:"Phone guide: let it play, or tap Next to skip ahead.",lineup:"The 8 games. Press → when ready.",tributes:"All 12 tributes and the Gamemaker. Press →.",begin:"Let the Games begin! Press → for the first game.",
     halftime:"Games 1 to 4 victors and who's leading. Good time for a break or a twist.",victors:"Every victor. 2+ wins? Tap Reveal the Ultimate Victor (it reads how it's decided first). Then tap Next for the end-of-night slides.",
     "fin-predict":"Tap Next to reveal the predictions. Tap Next again to move on.","fin-awards":"Tap Next to start the awards. Each Next shows the next award, then moves on.",
     "fin-recap":"Tap Next to play the recap. It runs on its own; Next skips ahead.","fin-fallen":"Tap Next for the Fallen Tributes slideshow. It runs on its own; Next skips ahead.",
@@ -746,7 +746,7 @@ function coachNote(id){
     end:"The end. Merry Thanksmas! The 🕯️ Fallen Tributes button is still here.","bingo-board":"Open the bingo board. Pick the round type (a briefing reads the pattern), tap each number, check BINGO card numbers."};
   if(N[id])return N[id];
   if(/^d\d+$/.test(id))return "Tribute profile. Let the announcer finish the weapon, strategy and odds, then →.";
-  const by={game:{cookie:"Title slide. Good time to open bets (Phones tab) and start the arena clock (Show tab).",scoop:"Title slide. Open bets (Phones tab)?",tribute:"Click Play (new tab). Close it when the game ends.",feud:"Click Play (new tab). Close it when the game ends.",secrets:"Click Play (new tab). Close it when the game ends.",mitten:"Title slide.",lrc:"Title slide. Chips and dice ready?",bingo:"Title slide. Hand out cards and pens."},
+  const by={game:{cookie:"Title slide. Good time to open bets (Phones tab) and start the arena clock (Show tab).",scoop:"Title slide. Open bets (Phones tab)?",tribute:"Click Play (new tab). When it ends: close the tab, then 🏆 Record Victor and 🥈 Second Victor (Record a winner, below).",feud:"Click Play (new tab). When it ends: close the tab, then 🏆 Record Victor and 🥈 Second Victor (Record a winner, below).",secrets:"Click Play (new tab). When it ends: close the tab, then 🏆 Record Victor and 🥈 Second Victor (Record a winner, below).",mitten:"Title slide.",lrc:"Title slide. Chips and dice ready?",bingo:"Title slide. Hand out cards and pens."},
     how:{cookie:"The announcer reads the steps.",scoop:"The announcer reads the steps.",bingo:"The announcer reads the steps."},
     wheel:{cookie:"Click SPIN THE WHEEL. Spin twice per face-off, tap who won. Winners go back on. Save the champion, close the tab.",scoop:"Same as Game 1, with a 30-second timer."},
     tie:{cookie:"Tie? Tap who tied (a briefing reads the tiebreaker). No tie: skip.",scoop:"Tie? Tap who tied. No tie: skip.",lrc:"Tie? Tap who tied. No tie: skip.",bingo:"Tie? Closest Call tiebreaker, or skip."},

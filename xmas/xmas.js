@@ -317,7 +317,12 @@ XM.playSong=function(name,force){
   XM.stopSong();if(!ensureAudio())return;
   if(name==="lobbymix"){songName=name;lobbyMix();return}
   if(/^wu_[a-z0-9]+$/.test(name)){   // a real recorded walk-up song: plays once
-    songName=name;playFile("/xmas/walkups/"+name.slice(3)+".m4a"+({wu_kyle:"?v=2",wu_elisha:"?v=2"}[name]||""),.9,()=>{if(songName===name)songName=null});return}
+    // 🎚️ plays to the end with a fade-out, then once more; after that the regular music takes over (XM.afterWalkUp, or the lobby mix)
+    songName=name;const url="/xmas/walkups/"+name.slice(3)+".m4a"+({wu_kyle:"?v=2",wu_elisha:"?v=2"}[name]||"");let left=2;
+    const go=()=>{const a=playFile(url,.9,()=>{if(songName!==name)return;if(--left>0)return go();songName=null;const m=(XM.afterWalkUp&&XM.afterWalkUp())||"lobbymix";if(m&&m!=="stop")XM.playSong(m)});
+      let fading=false;a.addEventListener("timeupdate",()=>{if(fading||!a.duration||a.duration-a.currentTime>3)return;fading=true;const v0=a.volume,t0=Date.now();
+        const step=()=>{if(fileSong!==a)return;const k=Math.max(0,1-(Date.now()-t0)/3000);a.volume=v0*k;if(k>0)setTimeout(step,100)};step()})};
+    go();return}
   if(!SONGS[name]){songName=null;return}songName=name;playSynth(name);
 };
 XM.stopSong=function(){clearInterval(timerId);timerId=0;clearTimeout(mixT);song=null;songName=null;if(fileSong){const a=fileSong;fileSong=null;try{a.pause()}catch(e){}}};

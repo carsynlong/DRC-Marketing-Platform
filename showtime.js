@@ -656,14 +656,24 @@ window.Track = (() => {
     return bufs[url];
   }
   function preload(url) { try { ctx(); load(url).catch(() => {}); } catch (e) {} }
-  async function play(url) {
+  // opts.times: play it that many times (each one fades out at the end), then run opts.after(). No opts: loops forever.
+  async function play(url, opts) {
     want = url;
     try {
       ctx(); const b = await load(url);
       if (want !== url || src) return true;
-      gain = ac.createGain(); gain.gain.value = .0001; gain.connect(ac.destination); gain.gain.setTargetAtTime(.95, ac.currentTime, .08);
-      src = ac.createBufferSource(); src.buffer = b; src.loop = true; src.connect(gain); src.start();
-      return true;
+      gain = ac.createGain(); gain.gain.value = .0001; gain.connect(ac.destination);
+      const g = gain, times = opts && opts.times;
+      if (!times) { gain.gain.setTargetAtTime(.95, ac.currentTime, .08); src = ac.createBufferSource(); src.buffer = b; src.loop = true; src.connect(gain); src.start(); return true; }
+      let left = times;
+      const once = () => {
+        const s = ac.createBufferSource(); s.buffer = b; s.connect(g); src = s; const t0 = ac.currentTime, fade = Math.min(3, b.duration / 4);
+        g.gain.cancelScheduledValues(t0); g.gain.setValueAtTime(.0001, t0); g.gain.setTargetAtTime(.95, t0, .08);
+        g.gain.setTargetAtTime(.0001, t0 + b.duration - fade, fade / 3);   // 🎚️ fade out as the song ends
+        s.onended = () => { if (src !== s) return; if (--left > 0) return once(); src = null; gain = null; want = null; try { g.disconnect(); } catch (e) {} if (opts.after) try { opts.after(); } catch (e) {} };
+        s.start(t0);
+      };
+      once(); return true;
     } catch (e) { return false; }
   }
   function stop() {
@@ -677,11 +687,11 @@ window.Track = (() => {
 })();
 /* 🎵 a tribute's walk-up song as their victory song (District Feud and District Secrets winners):
    their own walkout song. Resolves false if they have none. */
-window.walkUpSong = async name => {
+window.walkUpSong = async (name, after) => {   // plays twice (fading out each time), then after() (the page's own winner music)
   const OWN = { Caleb: "caleb", Natalie: "natalie", Jonny: "jonny", Grandad: "boom", "QUEEN MOTHER": "queen", Elisha: "elisha", Jessie: "jessie", Kyle: "kyle", Brandon: "brandon", Tinsley: "tinsley", Carsyn: "carsyn", Kamdon: "kamdon", Dash: "dash" };
   const VER = { kyle: "?v=2", elisha: "?v=2" };
   const k = OWN[name]; if (!k || !window.Track) return false;
-  window.Track.stop(); return window.Track.play(`/xmas/walkups/${k}.m4a${VER[k] || ""}`);
+  window.Track.stop(); return window.Track.play(`/xmas/walkups/${k}.m4a${VER[k] || ""}`, { times: 2, after });
 };
 
 

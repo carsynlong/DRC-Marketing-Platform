@@ -1075,7 +1075,7 @@ function betPaid(r){if((busy()||winMoment())&&!betQueue&&!r._q){betQueue={...r,_
 }
 /* ---------- 🚨 snitches from phones ---------- */
 /* ---------- 😤 IT'S NOT FAIR! (Buzz Buzz's catchphrase, from her phone) ---------- */
-const nfSound=()=>{if(XM.sound){try{const a=new Audio("/xmas/voice/notfair.mp3");a.volume=1;a.play().catch(()=>{})}catch(e){}}};   // 😭 a whiny kid (ElevenLabs)
+const nfSound=()=>{if(XM.sound){try{const a=new Audio("/xmas/voice/notfair.mp3?v=2");a.volume=1;a.play().catch(()=>{})}catch(e){}}};   // 😭 a whiny kid (ElevenLabs)
 function notFair(){
   if(!started)return;news("😤 Buzz Buzz has filed an official complaint: IT'S NOT FAIR!");
   // something else is on screen, the announcer is talking, or a tribute intro / the rules / the phone guide is up: just the sound and a note
